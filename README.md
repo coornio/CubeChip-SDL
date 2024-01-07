@@ -1,4 +1,4 @@
-# CubeChip (SDL)
+# CubeChip (SDL) - WORK IN PROGRESS
 
 An emulator written in C++ and SDL (currently still a WIP) that I started as an effort to learn the language, albeit belatedly. Aiming to be as accurate as possible from an HLE standpoint, while also aiming to be fairly fast on its feet. Input, audio and video are handled through SDL2, and the plan is to use ImGUI later to get an actual interface going, as everything is currently more or less hardcoded and inflexible.
 
@@ -15,20 +15,20 @@ Currently supports the following major platforms:
 [^3]: Also supports 4-planes rendering, and an instruction declined from the official spec.
 [^4]: Potentially officially the first emulator since Mega8 to [run the respective demo properly](https://www.youtube.com/watch?v=Z215BO9Gkko).
 
-The following platform extensions are available:
+The following platform extensions/mods are available:
 - HIRES MPD [^5]
 - CHIP-8E [^6]
 - CHIP-8X [^7]
 - HWCHIP64 [^8]
 - GIGACHIP [^9]
 
-Specific combinations aren't possible, see footnotes for now. Later I will add a proper table.
+Some extension combinations aren't possible, see footnotes for now. Later I will add a proper table.
 
 [^5]: Stands for Multi-Page-Display. Runs both original 2-page and 4-page roms, as well as patched roms.
 [^6]: Exclusive mod to CHIP-8 and SUPERCHIP. Does not work with HIRES MPD. Mutually exclusive with CHIP-8X.
 [^7]: Exclusive mod to CHIP-8 and SUPERCHIP. Works with HIRES MPD. Mutually exclusive with CHIP-8E.
 [^8]: Extension to XOCHIP, mutually exclusive with all aforementioned extensions. Designed by [@NinjaWeedle](https://github.com/NinjaWeedle/HyperWaveCHIP-64/tree/master).
-[^9]: Extension to MEGACHIP, though incompatible with it. Offers tons of new texture render features. (WIP). Own design.
+[^9]: Derivative of MEGACHIP, though incompatible with it. Offers tons of new texture render features. (WIP). Own design.
 
 ## Planned Features
 
