@@ -30,9 +30,9 @@ The following platform extensions are available, though specific combinations ar
 
 ## Planned Features
 
-[ ] Implement SHA1 encoding to compare roms and later hook up with a database for settings.
-[ ] Implement nlohmann's JSON class so that I can handle settings files and databases.
-[ ] Implement ImGUI to get a rudimentary and reactive interface going instead of the current single render window.
-[ ] Refactor the main loop logic so the SDL event loop isn't running only when a valid rom is present.
-[ ] Far future: refactor the class system to move away from the monolithic class system in favor of a component system as described in [this article](http://gameprogrammingpatterns.com/component.html).
-[ ] Refactor the guest class and separate the instruction tree into different platform variants for cleaner, more streamlined code with less branching.
+- [ ] Implement SHA1 encoding to compare roms and later hook up with a database for settings.
+- [ ] Implement nlohmann's JSON class so that I can handle settings files and databases.
+- [ ] Implement ImGUI to get a rudimentary and reactive interface going instead of the current single render window.
+- [ ] Refactor the main loop logic so the SDL event loop isn't running only when a valid rom is present.
+- [ ] Far future: refactor the class system to move away from the monolithic class system in favor of a component system as described in [this article](http://gameprogrammingpatterns.com/component.html).
+- [ ] Refactor the guest class and separate the instruction tree into different platform variants for cleaner, more streamlined code with less branching.
