@@ -14,17 +14,17 @@ void BasicKeyInput::updateKeyboardCopy() {
     );
 }
 
-bool BasicKeyInput::isKeyHeld(SDL_Scancode key, const bool prev) const noexcept {
+bool BasicKeyInput::isKeyHeld(const SDL_Scancode key, const bool prev) const noexcept {
     if (!key) return false;
     if (prev) return oldKeyboardState[key];
     else return SDL_GetKeyboardState(nullptr)[key];
 }
 
-bool BasicKeyInput::isKeyPressed(SDL_Scancode key) const noexcept {
+bool BasicKeyInput::isKeyPressed(const SDL_Scancode key) const noexcept {
     return !isKeyHeld(key, true) && isKeyHeld(key);
 }
 
-bool BasicKeyInput::isKeyReleased(SDL_Scancode key) const noexcept {
+bool BasicKeyInput::isKeyReleased(const SDL_Scancode key) const noexcept {
     return isKeyHeld(key, true) && !isKeyHeld(key);
 }
 

@@ -53,7 +53,7 @@ void FunctionsForMegachip::blendToDisplay(auto& src, auto& dst) {
 	vm.Host.Render.present(false);
 }
 
-u32 FunctionsForMegachip::blendPixel(u32 colorSrc, u32 colorDst) {
+u32 FunctionsForMegachip::blendPixel(const u32 colorSrc, const u32 colorDst) {
 	static constexpr float minA{ 1.0f / 255.0f };
 	src.A = (colorSrc >> 24) / 255.0f * vm.Trait.alpha;
 	if (src.A < minA) [[unlikely]] return colorDst;
@@ -70,7 +70,7 @@ u32 FunctionsForMegachip::blendPixel(u32 colorSrc, u32 colorDst) {
 	return applyBlend(blendType);
 };
 
-u32 FunctionsForMegachip::applyBlend(float (*blend)(float, float)) const {
+u32 FunctionsForMegachip::applyBlend(float (*blend)(const float, const float)) const {
 	float R{ blend(src.R, dst.R) };
 	float G{ blend(src.G, dst.G) };
 	float B{ blend(src.B, dst.B) };
@@ -90,7 +90,7 @@ u32 FunctionsForMegachip::applyBlend(float (*blend)(float, float)) const {
 		| as<u8>(std::roundf(B * 255.0f));
 }
 
-void FunctionsForMegachip::drawSprite(u8 VX, u8 VY, s32 N, u32 I) {
+void FunctionsForMegachip::drawSprite(u8 VX, u8 VY, const s32 N, u32 I) {
 	if (I < 0xF0) [[unlikely]] { // font sprite rendering
 		for (auto H{ 0 }; H < N; ++H, ++VY, ++I) {
 			if (VY >= vm.Plane.H) [[unlikely]] continue;
@@ -140,24 +140,24 @@ void FunctionsForMegachip::drawSprite(u8 VX, u8 VY, s32 N, u32 I) {
 	}
 };
 
-void FunctionsForMegachip::chooseBlend(s32 N) {
+void FunctionsForMegachip::chooseBlend(const s32 N) {
 	switch (N) {
 
 		case Blend::LINEAR_DODGE:
-			blendType = [](float src, float dst) {
+			blendType = [](const float src, const float dst) {
 				return std::min(src + dst, 1.0f);
 			};
 			break;
 
 		case Blend::MULTIPLY:
-			blendType = [](float src, float dst) {
+			blendType = [](const float src, const float dst) {
 				return src * dst;
 			};
 			break;
 
 		default:
 		case Blend::NORMAL:
-			blendType = [](float src, float) {
+			blendType = [](const float src, const float) {
 				return src;
 			};
 			break;

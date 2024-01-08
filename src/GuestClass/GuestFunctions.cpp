@@ -531,7 +531,7 @@ void VM_Guest::instructionLoop() {
 /*  struct  VM_Guest::TextureTraits                                 */
 /*------------------------------------------------------------------*/
 
-void VM_Guest::TextureTraits::transform(u8 bits) {
+void VM_Guest::TextureTraits::transform(const u8 bits) {
     rotate = bits >> 0 & 0x1; // false: as-is | true: 90° clockwise
     flip_X = bits >> 1 & 0x1; // flip on the X axis (rotation agnostic)
     flip_Y = bits >> 2 & 0x1; // flip on the Y axis (rotation agnostic)
@@ -551,18 +551,18 @@ VM_Guest::DisplayColors::DisplayColors(VM_Guest& parent) : vm(parent) {
     setMegaHex(0xFFFFFFFF);
 }
 
-void VM_Guest::DisplayColors::setBit332(u32 idx, u8 color) {
+void VM_Guest::DisplayColors::setBit332(const u32 idx, const u8 color) {
     bit[idx & 0xF] = 0xFF000000 | rgb332_888(color);
 }
 void VM_Guest::DisplayColors::cycleBackground() {
     bit[0]   = BackColors[bgindex++];
     bgindex &= 0x3;
 }
-u32 VM_Guest::DisplayColors::getFore8X(u8 idx) const {
+u32 VM_Guest::DisplayColors::getFore8X(const u8 idx) const {
     return ForeColors[idx & 0x7];
 }
 
-void VM_Guest::DisplayColors::setMegaHex(u32 color) {
+void VM_Guest::DisplayColors::setMegaHex(const u32 color) {
     megahex = color;
     for (auto idx{ 0 }; idx < hex.size(); ++idx) {
         const float mult{ 1.0f - 0.045f * idx };

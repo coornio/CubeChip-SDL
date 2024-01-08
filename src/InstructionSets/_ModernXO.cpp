@@ -30,7 +30,7 @@ void FunctionsForModernXO::scrollDN(const s32 N) {
 		display[H][X] |= vm.Plane.mask & display[H - N][X];
 	}
 };
-void FunctionsForModernXO::scrollLT(s32) {
+void FunctionsForModernXO::scrollLT(const s32) {
 	if (!vm.Plane.selected) return;
 	vm.State.push_display = true;
 	auto& display{ vm.Mem.display };
@@ -44,7 +44,7 @@ void FunctionsForModernXO::scrollLT(s32) {
 		display[H][X] |=  vm.Plane.mask & mask;
 	}
 };
-void FunctionsForModernXO::scrollRT(s32) {
+void FunctionsForModernXO::scrollRT(const s32) {
 	if (!vm.Plane.selected) return;
 	vm.State.push_display = true;
 	auto& display{ vm.Mem.display };
@@ -61,7 +61,7 @@ void FunctionsForModernXO::scrollRT(s32) {
 
 /*------------------------------------------------------------------*/
 
-void FunctionsForModernXO::applyBrush(u32& addr, u32 data) {
+void FunctionsForModernXO::applyBrush(u32& addr, const u32 data) {
 	switch (vm.Plane.brush) {
 		case VM_Guest::BrushType::XOR: addr ^=  data; return;
 		case VM_Guest::BrushType::SUB: addr &= ~data; return;

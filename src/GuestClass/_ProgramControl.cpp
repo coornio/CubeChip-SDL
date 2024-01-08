@@ -11,14 +11,14 @@ VM_Guest::ProgramControl::ProgramControl(VM_Guest& parent, FncSetInterface*& set
     , fncSet(set)
 {}
 
-void VM_Guest::ProgramControl::init(u32 _counter, s32 _ipf) {
+void VM_Guest::ProgramControl::init(const u32 _counter, const s32 _ipf) {
     counter   = _counter;
     ipf       = _ipf;
     framerate = 60.0;
     interrupt = Interrupt::NONE;
 }
 
-void VM_Guest::ProgramControl::setSpeed(s32 _ipf) {
+void VM_Guest::ProgramControl::setSpeed(const s32 _ipf) {
     if (_ipf) ipf = _ipf;
     boost = (ipf < 50) ? (ipf >> 1) : 0;
 }
@@ -43,19 +43,19 @@ void VM_Guest::ProgramControl::skipInstruction() {
     counter += 2;
 }
 
-void VM_Guest::ProgramControl::jumpInstruction(u32 next) {
+void VM_Guest::ProgramControl::jumpInstruction(const u32 next) {
     if ((counter - 2 & limiter) == next) [[unlikely]]
         setInterrupt(Interrupt::STOP);
     else counter = next;
 }
 
-void VM_Guest::ProgramControl::stepInstruction(s32 step) {
+void VM_Guest::ProgramControl::stepInstruction(const s32 step) {
     if (!step) [[unlikely]]
         setInterrupt(Interrupt::STOP);
     else counter = counter - 2 + step & limiter;
 }
 
-void VM_Guest::ProgramControl::setInterrupt(Interrupt type) {
+void VM_Guest::ProgramControl::setInterrupt(const Interrupt type) {
     interrupt = type;
     ipf *= -1;
 }

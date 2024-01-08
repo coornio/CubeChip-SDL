@@ -22,7 +22,7 @@ void FunctionsForClassic8::scrollDN(const s32 N) {
 	for (auto X{ 0 }; X < vm.Plane.X; ++X)
 		display[H][X] = (H < N) ? 0 : display[H - N][X];
 };
-void FunctionsForClassic8::scrollLT(s32) {
+void FunctionsForClassic8::scrollLT(const s32) {
 	vm.State.push_display = true;
 	auto& display{ vm.Mem.display };
 
@@ -34,7 +34,7 @@ void FunctionsForClassic8::scrollLT(s32) {
 		display[H][X] = as<u8>(mask);
 	};
 };
-void FunctionsForClassic8::scrollRT(s32) {
+void FunctionsForClassic8::scrollRT(const s32) {
 	vm.State.push_display = true;
 	auto& display{ vm.Mem.display };
 
@@ -104,7 +104,7 @@ void FunctionsForClassic8::drawSprite(u8 VX, u8 VY, s32 N, u32 I) {
 	}
 };
 
-void FunctionsForClassic8::drawColors(u8 VX, u8 VY, u8 idx, s32 N) {
+void FunctionsForClassic8::drawColors(u8 const VX, u8 const VY, const u8 idx, const s32 N) {
 	vm.State.push_display = true;
 
 	if (N) {

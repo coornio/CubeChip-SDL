@@ -8,7 +8,7 @@ public:
     bool programLoaded{ false };
     [[maybe_unused]] u64 cycles{};
 
-    VM_Host(char*);
+    VM_Host(const char*);
     ~VM_Host();
 
     class FileInfo {
@@ -21,7 +21,7 @@ public:
         
         explicit FileInfo(VM_Host&);
         void reset();
-        bool verifyFile(char*);
+        bool verifyFile(const char*);
     } File{ *this };
 
     struct AudioSettings {

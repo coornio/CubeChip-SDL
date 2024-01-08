@@ -151,7 +151,7 @@ bool VM_Guest::romTypeCheck() {
     return true;
 }
 
-bool VM_Guest::romSizeCheck(u32 size, u16 offset) {
+bool VM_Guest::romSizeCheck(const u32 size, const u16 offset) {
     if (Host.File.size + offset > size) {
         Host.addMessage("ROM exceeds expected platform-specified size, aborting.");
         return false;
@@ -220,7 +220,7 @@ void VM_Guest::initPlatform() {
     setupDisplay(Resolution::LO + State.hires_2paged + State.hires_4paged, true);
 }
 
-void VM_Guest::setupDisplay(u8 mode, const bool forced) {
+void VM_Guest::setupDisplay(const u8 mode, const bool forced) {
     //                            HI   LO   TP   FP   MC
     static constexpr s16 wArr[]{ 128,  64,  64,  64, 256 };
     static constexpr s16 hArr[]{  64,  32,  64, 128, 192 };

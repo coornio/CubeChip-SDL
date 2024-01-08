@@ -12,7 +12,7 @@ void VM_Host::FileInfo::reset() {
     size = 0;
 }
 
-bool VM_Host::FileInfo::verifyFile(char* newPath) {
+bool VM_Host::FileInfo::verifyFile(const char* newPath) {
     if (!newPath) return false;
     namespace fs = std::filesystem;
 

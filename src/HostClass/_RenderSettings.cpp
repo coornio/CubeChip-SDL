@@ -29,7 +29,7 @@ bool VM_Host::RenderSettings::createRenderer() {
     return false;
 }
 
-void VM_Host::RenderSettings::changeTitle(std::string_view name) {
+void VM_Host::RenderSettings::changeTitle(const std::string_view name) {
     title = emuVersion;
     title += " :: CubeChip :: "s;
     title += name;
@@ -55,13 +55,13 @@ void VM_Host::RenderSettings::lockTexture() {
 void VM_Host::RenderSettings::unlockTexture() {
     SDL_UnlockTexture(texture);
 }
-void VM_Host::RenderSettings::setTextureAlpha(u8 alpha) {
+void VM_Host::RenderSettings::setTextureAlpha(const u8 alpha) {
     SDL_SetTextureAlphaMod(texture, alpha);
 }
-void VM_Host::RenderSettings::setTextureBlend(SDL_BlendMode blend) {
+void VM_Host::RenderSettings::setTextureBlend(const SDL_BlendMode blend) {
     SDL_SetTextureBlendMode(texture, blend);
 }
-void VM_Host::RenderSettings::present(bool resize) {
+void VM_Host::RenderSettings::present(const bool resize) {
     if (resize) {
         window_W &= 0x0FFFFFFC;
         window_W = std::max(window_W, 640);

@@ -19,7 +19,7 @@ void VM_Guest::AudioCores::initializeCores() {
     MC.reset();
 }
 
-void VM_Guest::AudioCores::renderAudio(s16* samples, size_t frames) {
+void VM_Guest::AudioCores::renderAudio(s16* samples, u32 frames) {
     if (C8.beepFx0A) goto beepFx0A;
 
     if (MC.enabled) {

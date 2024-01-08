@@ -7,23 +7,23 @@
 
 VM_Guest::MemoryBanks::MemoryBanks(VM_Guest& parent) : vm(parent) {}
 
-void VM_Guest::MemoryBanks::changeViewportMask(BrushType type) {
+void VM_Guest::MemoryBanks::changeViewportMask(const BrushType type) {
     switch (type) {
 
         case BrushType::CLR:
-            applyViewportMask = [](u32& pos, u32) { pos = 0; };
+            applyViewportMask = [](u32& pos, const u32) { pos = 0; };
             return;
 
         case BrushType::XOR:
-            applyViewportMask = [](u32& pos, u32 mask) { pos ^= mask; };
+            applyViewportMask = [](u32& pos, const u32 mask) { pos ^= mask; };
             return;
 
         case BrushType::SUB:
-            applyViewportMask = [](u32& pos, u32 mask) { pos &= ~mask; };
+            applyViewportMask = [](u32& pos, const u32 mask) { pos &= ~mask; };
             return;
 
         case BrushType::ADD:
-            applyViewportMask = [](u32& pos, u32 mask) { pos |= mask; };
+            applyViewportMask = [](u32& pos, const u32 mask) { pos |= mask; };
             return;
     }
 }
@@ -48,7 +48,7 @@ void VM_Guest::MemoryBanks::resizeViewportBuffers() {
 }
 */
 
-void VM_Guest::MemoryBanks::modifyViewport(BrushType type) {
+void VM_Guest::MemoryBanks::modifyViewport(const BrushType type) {
     vm.State.push_display = true;
     changeViewportMask(type);
 
@@ -67,7 +67,7 @@ void VM_Guest::MemoryBanks::flushBuffers(const bool firstFlush) {
     for (auto& row : bufPalette) row.fill(0);
 }
 
-void VM_Guest::MemoryBanks::loadPalette(u32 index, u8 count) {
+void VM_Guest::MemoryBanks::loadPalette(u32 index, const u8 count) {
     for (auto idx{ 0 }; idx < count;) {
         palette[++idx] =
             vm.mrw(index++) << 24 |

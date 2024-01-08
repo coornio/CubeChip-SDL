@@ -115,7 +115,7 @@ public:
 
         explicit AudioCores(VM_Guest&);
         void initializeCores();
-        void renderAudio(s16*, size_t);
+        void renderAudio(s16*, u32);
 
         class Classic {
             AudioCores& Audio;
@@ -248,7 +248,7 @@ public:
         u32 getFore8X(u8) const;
 
     private:
-        u32 rgb332_888(u8 color) {
+        u32 rgb332_888(const u8 color) {
             static constexpr std::array<u8, 8> map3bits{ 0x00, 0x20, 0x40, 0x60, 0x80, 0xA0, 0xC0, 0xFF };
             static constexpr std::array<u8, 4> map2bits{ 0x00,             0x60,       0xA0,       0xFF };
             return map3bits[color >> 5 & 7] << 16 | // red
@@ -286,6 +286,6 @@ public:
     void instructionLoop();
 
     u8& mrw(u32 idx) { return Mem.ram[idx & Program.limiter]; }
-    u8& VX() { return Reg.V[(Program.opcode >> 8) & 0xF]; }
+    u8& VX()         { return Reg.V[(Program.opcode >> 8) & 0xF]; }
     u16 NNNN()       { return mrw(Program.counter) << 8 | mrw(Program.counter + 1); }
 };

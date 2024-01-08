@@ -6,7 +6,7 @@
 /*  class  VM_Host                                                  */
 /*------------------------------------------------------------------*/
 
-VM_Host::VM_Host(char* path) {
+VM_Host::VM_Host(const char* path) {
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
 
     if (!Render.createWindow())   goto fail;
@@ -33,7 +33,7 @@ VM_Host::~VM_Host() {
 bool VM_Host::machineValid() const { return machineLoaded; }
 bool VM_Host::programValid() const { return programLoaded; }
 
-void VM_Host::addMessage(std::string_view msg, const bool header, const u32 code) {
+void VM_Host::addMessage(const std::string_view msg, const bool header, const u32 code) {
     if (header) {
         std::cout << msg << std::endl;
         return;
@@ -53,7 +53,7 @@ void VM_Host::runMachine(VM_Guest& vm) {
 
     FrameLimiter Frame(vm.Program.framerate);
 
-    Audio.handler = [&](s16* buffer, u32 frames) {
+    Audio.handler = [&](s16* buffer, const u32 frames) {
         vm.Audio.renderAudio(buffer, frames);
     };
     SDL_PauseAudioDevice(Audio.device, 0);

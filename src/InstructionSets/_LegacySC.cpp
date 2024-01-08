@@ -22,7 +22,7 @@ void FunctionsForLegacySC::scrollDN(const s32 N) {
 	for (auto X{ 0 }; X < vm.Plane.X; ++X)
 		display[H][X] = (H < N) ? 0 : display[H - N][X];
 };
-void FunctionsForLegacySC::scrollLT(s32) {
+void FunctionsForLegacySC::scrollLT(const s32) {
 	vm.State.push_display = true;
 	auto& display{ vm.Mem.display };
 
@@ -34,7 +34,7 @@ void FunctionsForLegacySC::scrollLT(s32) {
 		display[H][X] = as<u8>(mask);
 	}
 };
-void FunctionsForLegacySC::scrollRT(s32) {
+void FunctionsForLegacySC::scrollRT(const s32) {
 	vm.State.push_display = true;
 	auto& display{ vm.Mem.display };
 
@@ -135,7 +135,7 @@ void FunctionsForLegacySC::drawSprite(u8 VX, u8 VY, s32 N, u32 I) {
 	}
 };
 
-void FunctionsForLegacySC::drawColors(u8 VX, u8 VY, u8 idx, s32 N) {
+void FunctionsForLegacySC::drawColors(u8 VX, u8 VY, const u8 idx, s32 N) {
 	vm.State.push_display = true;
 	auto mode{ vm.Program.screenMode };
 
