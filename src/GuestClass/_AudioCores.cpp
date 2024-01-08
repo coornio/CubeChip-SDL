@@ -33,8 +33,7 @@ void VM_Guest::AudioCores::renderAudio(s16* samples, size_t frames) {
     if (XO.enabled) {
         XO.render(samples, frames);
         return;
-    }
-    else {
+    } else {
     beepFx0A:
         C8.render(samples, frames);
         return;
@@ -89,7 +88,7 @@ void VM_Guest::AudioCores::XOchip::loadPattern(u32 idx) {
 
 void VM_Guest::AudioCores::XOchip::render(s16* samples, size_t frames) {
     const auto amplitude{ as<s16>(32767.0f * pow(10.0f, (1.0f - Audio.volume * 0.90f) * -96.0f / 20.0f)) };
-    const auto step{ 4000 * std::pow(2.0f, (pitch - 64.0f) / 48.0f) / 128 / Audio.outFreq };
+    const auto step{ 4000.0f * std::pow(2.0f, (pitch - 64.0f) / 48.0f) / 128.0f / Audio.outFreq };
 
     while (frames--) {
         const auto pos{ as<u8>(std::clamp(Audio.wavePhase * 128.0f, 0.0f, 127.0f)) };
@@ -132,16 +131,16 @@ void VM_Guest::AudioCores::MegaChip::enable(
 
 void VM_Guest::AudioCores::MegaChip::render(s16* samples, size_t frames) {
     while (frames--) {
-        u8     _val{ Audio.vm.mrw(start + as<u32>(pos)) };
+        auto   _val{ Audio.vm.mrw(start + as<u32>(pos)) };
         double _bit{ pos + step };
 
         if (_bit >= length) {
-            if (looping)
-                _bit -= as<double>(length);
-            else {
+            if (looping) {
+                _bit -= length;
+            } else {
                 _bit = 0.0;
-                length.store(0);
                 _val = 128;
+                length.store(0);
             }
         }
         pos.store(_bit);
