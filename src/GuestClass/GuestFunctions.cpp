@@ -190,6 +190,7 @@ void VM_Guest::instructionLoop() {
 							break;
 						case 0x216:						// 0216 - protect pages in V0 *CHIP-8 4PD*
 							Reg.pageGuard = (3 - (Reg.V[0] - 1 & 0x3)) << 5;
+							Reg.protectPages();
 							break;
 						case 0x200:						// 0200 - erase pages *CHIP-8 4PD*
 						case 0x230:						// 0230 - erase pages *CHIP-8 2PD*
@@ -590,4 +591,8 @@ void VM_Guest::Registers::routineCall(const u32 addr) {
 
 void VM_Guest::Registers::routineReturn() {
     vm.Program.counter = stack[--SP & 0xF];
+}
+
+void VM_Guest::Registers::protectPages() {
+	pageGuard = (3 - (V[0] - 1 & 0x3)) << 5;
 }

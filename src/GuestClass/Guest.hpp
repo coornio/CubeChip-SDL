@@ -173,6 +173,7 @@ public:
         explicit Registers(VM_Guest&);
         void routineCall(u32);
         void routineReturn();
+        void protectPages();
     } Reg{ *this };
 
     struct BitPlaneProperties {
