@@ -546,8 +546,7 @@ void VM_Guest::TextureTraits::transform(u8 bits) {
 /*------------------------------------------------------------------*/
 
 VM_Guest::DisplayColors::DisplayColors(VM_Guest& parent) : vm(parent) {
-    std::copy(BitColors.begin(), BitColors.end(), bit.begin());
-
+	bit    = BitColors;
     buzzer = bit[1];
     setMegaHex(0xFFFFFFFF);
 }
