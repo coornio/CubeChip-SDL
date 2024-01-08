@@ -125,6 +125,8 @@ public:
             
             explicit Classic(AudioCores&);
             void reset();
+            void setTone(u8, u32);
+            void setTone(u8);
             void render(s16*, size_t); 
         } C8{ *this };
 

@@ -424,21 +424,19 @@ void VM_Guest::instructionLoop() {
 						break;
 					case 0x0A:							// FX0A - set VX = key, wait for keypress
 						Program.setInterrupt(Interrupt::FX0A);
-						Audio.C8.tone.store(160.0f + 8.0f \
-							* ((Program.counter >> 1) + Reg.SP + 1 & 0x3E));
+						Audio.C8.setTone(Reg.SP, Program.counter);
 						if (State.mega_enabled) [[unlikely]]
 							Mem.flushBuffers(TO_DISPLAY);
 						break;
 					case 0x15:							// FX15 - set delay timer = VX
 						Program.Timer.delay = Reg.V[X];
 						break;
-					case 0x18: {						// FX18 - set sound timer = VX
-						const bool val{ Reg.V[X] == 1 };
-						Program.Timer.sound = Reg.V[X] + val;
+					case 0x18:							// FX18 - set sound timer = VX
+						Program.Timer.sound = Reg.V[X] + (Reg.V[X] == 1);
 						Audio.C8.beepFx0A   = false;
-						Audio.C8.tone.store(160.0f + 8.0f \
-							* ((Program.counter >> 1) + Reg.SP + 1 & 0x3E));
-					} break;
+						if (!State.chip8X_rom) [[likely]]
+							Audio.C8.setTone(Reg.SP, Program.counter);
+						break;
 					case 0x1B:							// FX1B - skip VX amount of bytes *CHIP-8E*
 						Program.counter += Reg.V[X];
 						break;
@@ -498,7 +496,7 @@ void VM_Guest::instructionLoop() {
 						Program.setInterrupt(Interrupt::ONCE);
 						break;
 					case 0xF8:							// FXF8 - output VX to port (sound freq) *CHIP-8X*
-						Audio.C8.tone.store(160.0f + (Reg.V[X] >> 3 << 4));
+						Audio.C8.setTone(Reg.V[X]);
 						break;
 					case 0xFB:							// FXFB - wait for port input, load to VX *CHIP-8X*
 						Program.setInterrupt(Interrupt::ONCE);

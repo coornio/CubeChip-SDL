@@ -56,6 +56,17 @@ void VM_Guest::AudioCores::Classic::reset() {
     tone.store(500.0f);
 }
 
+void VM_Guest::AudioCores::Classic::setTone(const u8 offset1, const u32 offset2) {
+    // sets a unique tone for each sound call
+    tone.store(160.0f + 8.0f \
+        * ((offset2 >> 1) + offset1 + 1 & 0x3E));
+}
+
+void VM_Guest::AudioCores::Classic::setTone(const u8 offset1) {
+    // sets the tone for each 8X sound call
+    tone.store(160.0f + (offset1 >> 3 << 4));
+}
+
 void VM_Guest::AudioCores::Classic::render(s16* samples, size_t frames) {
     const auto amplitude{ as<s16>(32767.0f * pow(10.0f, (1.0f - Audio.volume * 0.90f) * -96.0f / 20.0f)) };
     const auto step{ tone / Audio.outFreq };
