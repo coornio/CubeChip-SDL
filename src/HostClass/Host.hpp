@@ -44,7 +44,7 @@ public:
         SDL_Renderer* renderer{};
         SDL_Texture*  texture{};
 
-        const std::string emuVersion{ "[8.12.23]"s };
+        const std::string emuVersion{ "[10.01.24]"s };
               std::string title{};
 
         bool createWindow();
