@@ -6,6 +6,7 @@ class VM_Host {
 public:
     bool machineLoaded{ false };
     bool programLoaded{ false };
+    bool benchmarking{ false };
     [[maybe_unused]] u64 cycles{};
 
     VM_Host(const char*);

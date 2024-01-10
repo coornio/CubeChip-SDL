@@ -99,23 +99,25 @@ void VM_Host::runMachine(VM_Guest& vm) {
             }
         }
 
-        //std::cout << "\33[1;1H" << (cycles / 60.0f) << std::endl;
+        if (benchmarking) {
+            if (!Frame(SPINLOCK)) continue;
+            std::cout << "\33[1;1H" << (cycles++ / 60.0f) << std::endl;
+            std::cout << "cycles: " << cycles
+                << "\nipf: " << vm.Program.ipf
+                << std::endl;
 
-        if (!Frame(SLEEP)) continue;
+            if (!Frame.paced())
+                std::cout << "cannot keep up!!";
+            else
+                std::cout << "keeping up pace.";
 
-        /*
-        std::cout << "cycles: " << ++cycles
-            << "\nipf: " << vm.Program.ipf
-            << std::endl;
+            std::cout << "\ntime since last frame: " << Frame.elapsed();
+        } else if (!Frame(SLEEP)) continue;
 
-        if (!Frame.paced())
-            std::cout << "cannot keep up!!";
-        else
-            std::cout << "keeping up pace.";
-
-        std::cout << "\ntime since last frame: " << Frame.elapsed();
-        */
         using namespace bki;
+        if (kb.isKeyPressed(SDL_SCANCODE_RSHIFT)) {
+            benchmarking = !benchmarking;
+        }
         if (kb.isKeyPressed(SDL_SCANCODE_UP)) {
             Audio.setVolume(Audio.volume + 0.1f);
         }
