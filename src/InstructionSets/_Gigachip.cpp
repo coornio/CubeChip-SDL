@@ -129,7 +129,7 @@ void FunctionsForGigachip::drawSprite(u8 VX, u8 VY, const s32 N, u32 I) {
 
 	s32 memY{}, memX{}; // position vars for RAM access
 	
-	for (auto H{ 0 }; H < tH; ++H, ++VY % vm.Plane.H) {
+	for (auto H{ 0 }; H < tH; ++H, ++VY %= vm.Plane.H) {
 		for (auto W{ 0 }; W < tW; ++W, ++VX) {
 
 			if (vm.Trait.rotate) {
