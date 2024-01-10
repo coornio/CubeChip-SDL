@@ -48,12 +48,12 @@ void VM_Guest::MemoryBanks::flushBuffers(const bool firstFlush) {
 }
 
 void VM_Guest::MemoryBanks::loadPalette(u32 index, const u8 count) {
-    for (auto idx{ 0 }; idx < count;) {
+    for (auto idx{ 0 }; idx < count; index += 4) {
         palette[++idx] =
-            vm.mrw(index++) << 24 |
-            vm.mrw(index++) << 16 |
-            vm.mrw(index++) << 8 |
-            vm.mrw(index++);
+            vm.mrw(index + 0) << 24 |
+            vm.mrw(index + 1) << 16 |
+            vm.mrw(index + 2) <<  8 |
+            vm.mrw(index + 3);
     }
 }
 
