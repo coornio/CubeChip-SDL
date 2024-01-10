@@ -1,13 +1,22 @@
 
 #include "FrameLimiter.hpp"
 
-FrameLimiter::FrameLimiter(const double freq, const bool skip) {
-    setFreq(freq, skip);
+FrameLimiter::FrameLimiter(
+    const double framerate,
+    const bool   firstpass,
+    const bool   lostframe
+) {
+    setFreq(framerate, firstpass, lostframe);
 }
 
-void FrameLimiter::setFreq(const double freq, const bool skip) {
-    timeFrequency = 1000.0 / std::clamp(freq, 0.5, 1000.0);
-    timeSkipFirst = skip;
+void FrameLimiter::setFreq(
+    const double framerate,
+    const bool   firstpass,
+    const bool   lostframe
+) {
+    timeFrequency = 1000.0 / std::clamp(framerate, 0.5, 1000.0);
+    skipFirstPass = firstpass;
+    skipLostFrame = lostframe;
 }
 
 bool FrameLimiter::operator()(const bool state) {
@@ -26,8 +35,8 @@ bool FrameLimiter::isValidFrame() {
         initTimeCheck = true;
     }
 
-    if (timeSkipFirst) [[unlikely]] {
-        timeSkipFirst = false;
+    if (skipFirstPass) [[unlikely]] {
+        skipFirstPass = false;
         ++validFrameCnt;
         return true;
     }
@@ -40,7 +49,7 @@ bool FrameLimiter::isValidFrame() {
     if (timeVariation < timeFrequency) [[likely]]
         return false;
 
-    if (skipOvershoot)
+    if (skipLostFrame)
         timeOvershoot = std::fmod(timeVariation, timeFrequency);
     else
         timeOvershoot = timeVariation - timeFrequency;

@@ -14,8 +14,8 @@ class FrameLimiter {
     using uint64 = unsigned long long;
 
     bool   initTimeCheck{}; // updates timestamp on first check only
-    bool   timeSkipFirst{}; // unconditional valid frame on first check
-    bool   skipOvershoot{}; // timeOvershoot will never overtake timeFrequency
+    bool   skipFirstPass{}; // unconditional valid frame on first check
+    bool   skipLostFrame{}; // timeOvershoot will modulo with timeFrequency
 
     double timeFrequency{}; // time (ms) per unit Hertz
     double timeOvershoot{}; // time remainder (ms) after last check
@@ -26,8 +26,8 @@ class FrameLimiter {
     bool isValidFrame();
 
 public:
-    FrameLimiter(double = 60.0, bool = true);
-    void setFreq(double, bool);
+    FrameLimiter(double = 60.0, bool = true, bool = false);
+    void setFreq(double, bool, bool);
     bool operator()(bool = SPINLOCK);
 
     uint64 count()   const { return validFrameCnt; }
