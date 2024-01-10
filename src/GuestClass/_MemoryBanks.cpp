@@ -28,26 +28,6 @@ void VM_Guest::MemoryBanks::changeViewportMask(const BrushType type) {
     }
 }
 
-/*
-void VM_Guest::MemoryBanks::resizeViewportBuffers() {
-    if (vm.State.xochip_color) {
-        resize2Dvec(display, vm.Plane.X);
-        return;
-    }
-    static constexpr std::array<std::string, 1> var = { "spam" };
-    if (vm.State.mega_enabled) {
-        resize2Dvec(display, vm.Plane.W);
-        resize2Dvec(bufColorMC, vm.Plane.W);
-        resize2Dvec(bufPalette, vm.Plane.W);
-        return;
-    } else {
-        resize2Dvec(display, vm.Plane.X);
-        if (vm.State.chip8X_rom)
-            resize2Dvec(bufColor8x, vm.Plane.X);
-    }
-}
-*/
-
 void VM_Guest::MemoryBanks::modifyViewport(const BrushType type) {
     vm.State.push_display = true;
     changeViewportMask(type);
