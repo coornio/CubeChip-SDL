@@ -125,6 +125,7 @@ void VM_Guest::instructionLoop() {
 									setupDisplay(Resolution::LO);
 									Program.setFncSet(&SetClassic8);
 									Host.Render.setTextureAlpha(0xFF);
+									Audio.MC.reset();
 									Host.addMessage("MegaChip mode disabled!");
 									break;
 								case 0x11:			// 0011 - enable mega mode *MEGACHIP*
@@ -424,8 +425,8 @@ void VM_Guest::instructionLoop() {
 						Reg.V[X] = Program.Timer.delay;
 						break;
 					case 0x0A:							// FX0A - set VX = key, wait for keypress
-						Program.setInterrupt(Interrupt::FX0A);
 						Audio.C8.setTone(Reg.SP, Program.counter);
+						Program.setInterrupt(Interrupt::FX0A);
 						if (State.mega_enabled) [[unlikely]]
 							Mem.flushBuffers(TO_DISPLAY);
 						break;
@@ -433,10 +434,10 @@ void VM_Guest::instructionLoop() {
 						Program.Timer.delay = Reg.V[X];
 						break;
 					case 0x18:							// FX18 - set sound timer = VX
-						Program.Timer.sound = Reg.V[X] + (Reg.V[X] == 1);
-						Audio.C8.beepFx0A   = false;
 						if (!State.chip8X_rom) [[likely]]
 							Audio.C8.setTone(Reg.SP, Program.counter);
+						Audio.C8.beepFx0A = false;
+						Program.Timer.sound = Reg.V[X] + (Reg.V[X] == 1);
 						break;
 					case 0x1B:							// FX1B - skip VX amount of bytes *CHIP-8E*
 						Program.counter += Reg.V[X];
@@ -459,8 +460,7 @@ void VM_Guest::instructionLoop() {
 						mrw(Reg.I + 2) = Reg.V[X] % 10;
 						break;
 					case 0x3A:							// FX3A - set sound pitch = VX *XOCHIP*
-						Audio.XO.pitch.store(Reg.V[X]);
-						Audio.XO.enabled = true;
+						Audio.XO.setPitch(Reg.V[X]);
 						break;
 					case 0x4F:							// FX4F - set delay timer = VX and wait *CHIP-8E*
 						Program.setInterrupt(Interrupt::WAIT);

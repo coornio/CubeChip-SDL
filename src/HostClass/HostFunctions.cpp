@@ -116,11 +116,11 @@ void VM_Host::runMachine(VM_Guest& vm) {
         std::cout << "\ntime since last frame: " << Frame.elapsed();
         */
         using namespace bki;
-        if (kb.isKeyPressed(SDL_SCANCODE_LCTRL)) {
-            
+        if (kb.isKeyPressed(SDL_SCANCODE_UP)) {
+            Audio.setVolume(Audio.volume + 0.1f);
         }
-        if (kb.isKeyReleased(SDL_SCANCODE_LCTRL)) {
-            
+        if (kb.isKeyPressed(SDL_SCANCODE_DOWN)) {
+            Audio.setVolume(Audio.volume - 0.1f);
         }
         kb.updateKeyboardCopy();
         vm.cycle();

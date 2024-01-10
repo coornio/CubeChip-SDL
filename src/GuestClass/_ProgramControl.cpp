@@ -75,6 +75,8 @@ void VM_Guest::ProgramControl::requestHalt() {
 }
 
 void VM_Guest::ProgramControl::handleTimersDec() {
+    vm.Audio.modifyAmp();
+
     if (Timer.delay) --Timer.delay;
     if (Timer.sound) --Timer.sound;
     if (!Timer.sound) vm.Audio.C8.beepFx0A = false;

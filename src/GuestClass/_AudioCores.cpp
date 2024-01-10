@@ -9,15 +9,9 @@
 VM_Guest::AudioCores::AudioCores(VM_Guest& parent)
     : vm(parent)
     , outFreq(vm.Host.Audio.outFrequency)
-    , volume(vm.Host.Audio.volume)
+    , volume(vm.Host.Audio.volumeLog)
+    , wavePhase(0.0f)
 {}
-
-void VM_Guest::AudioCores::initializeCores() {
-    wavePhase = 0.0f;
-    C8.reset();
-    XO.reset();
-    MC.reset();
-}
 
 void VM_Guest::AudioCores::renderAudio(s16* samples, u32 frames) {
     if (C8.beepFx0A) goto beepFx0A;
@@ -45,35 +39,30 @@ blank:
         *samples++ = 0;
 }
 
+void VM_Guest::AudioCores::modifyAmp() {
+    amplitude = as<u16>(32767.0f * volume);
+}
+
 /*------------------------------------------------------------------*/
 /*  class  VM_Guest::AudioCores::Classic                            */
 /*------------------------------------------------------------------*/
 
 VM_Guest::AudioCores::Classic::Classic(AudioCores& parent) : Audio(parent) {}
 
-void VM_Guest::AudioCores::Classic::reset() {
-    beepFx0A = false;
-    tone.store(500.0f);
-}
-
-void VM_Guest::AudioCores::Classic::setTone(const u8 offset1, const u32 offset2) {
+void VM_Guest::AudioCores::Classic::setTone(const u8 sp, const u32 pc) {
     // sets a unique tone for each sound call
-    tone.store(160.0f + 8.0f \
-        * ((offset2 >> 1) + offset1 + 1 & 0x3E));
+    tone = (160.0f + 8.0f * ((pc >> 1) + sp + 1 & 0x3E)) / Audio.outFreq;
 }
 
-void VM_Guest::AudioCores::Classic::setTone(const u8 offset1) {
+void VM_Guest::AudioCores::Classic::setTone(const u8 vx) {
     // sets the tone for each 8X sound call
-    tone.store(160.0f + (offset1 >> 3 << 4));
+    tone = (160.0f + (vx >> 3 << 4)) / Audio.outFreq;
 }
 
 void VM_Guest::AudioCores::Classic::render(s16* samples, size_t frames) {
-    const auto amplitude{ as<s16>(32767.0f * pow(10.0f, (1.0f - Audio.volume * 0.90f) * -96.0f / 20.0f)) };
-    const auto step{ tone / Audio.outFreq };
-
     while (frames--) {
-        *samples++ = (Audio.wavePhase > 0.5f) ? amplitude : -amplitude;
-        Audio.wavePhase = std::fmod(Audio.wavePhase + step, 1.0f);
+        *samples++ = (Audio.wavePhase > 0.5f) ? Audio.amplitude : -Audio.amplitude;
+        Audio.wavePhase = std::fmod(Audio.wavePhase + tone, 1.0f);
     }
 }
 
@@ -81,11 +70,17 @@ void VM_Guest::AudioCores::Classic::render(s16* samples, size_t frames) {
 /*  class  VM_Guest::AudioCores::XOchip                             */
 /*------------------------------------------------------------------*/
 
-VM_Guest::AudioCores::XOchip::XOchip(AudioCores& parent) : Audio(parent) {}
-
-void VM_Guest::AudioCores::XOchip::reset() {
+VM_Guest::AudioCores::XOchip::XOchip(AudioCores& parent) : Audio(parent) {
+    setPitch(64);
     enabled = false;
-    pitch.store(64);
+}
+
+void VM_Guest::AudioCores::XOchip::setPitch(u8 pitch) {
+    tone.store(
+        4000.0f * std::pow(2.0f, (pitch - 64.0f) / 48.0f) \
+        / 128.0f / Audio.outFreq
+    );
+    enabled = true;
 }
 
 void VM_Guest::AudioCores::XOchip::loadPattern(u32 idx) {
@@ -98,13 +93,10 @@ void VM_Guest::AudioCores::XOchip::loadPattern(u32 idx) {
 }
 
 void VM_Guest::AudioCores::XOchip::render(s16* samples, size_t frames) {
-    const auto amplitude{ as<s16>(32767.0f * pow(10.0f, (1.0f - Audio.volume * 0.90f) * -96.0f / 20.0f)) };
-    const auto step{ 4000.0f * std::pow(2.0f, (pitch - 64.0f) / 48.0f) / 128.0f / Audio.outFreq };
-
     while (frames--) {
         const auto pos{ as<u8>(std::clamp(Audio.wavePhase * 128.0f, 0.0f, 127.0f)) };
-        *samples++ = pattern[pos >> 3] & (1 << (7 - (pos & 7))) ? amplitude : -amplitude;
-        Audio.wavePhase = std::fmod(Audio.wavePhase + step, 1.0f);
+        *samples++ = pattern[pos >> 3] & (1 << (7 - (pos & 7))) ? Audio.amplitude : -Audio.amplitude;
+        Audio.wavePhase = std::fmod(Audio.wavePhase + tone, 1.0f);
     }
 }
 

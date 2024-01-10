@@ -26,11 +26,13 @@ public:
 
     struct AudioSettings {
         SDL_AudioDeviceID device{};
-        u32 outFrequency{ 48000 };
+        const u32 outFrequency;
         SDL_AudioSpec spec{};
-        float volume{ 1.0f };
+        float volume{};
+        float volumeLog{};
         std::function<void(s16*, u32)> handler{};
 
+        AudioSettings();
         void setSpec(VM_Host*);
         void setVolume(float);
         static void audioCallback(void*, u8*, s32);

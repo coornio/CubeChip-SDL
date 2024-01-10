@@ -109,22 +109,22 @@ public:
     class AudioCores {
         VM_Guest& vm;
     public:
-        const u32& outFreq;
+        const u32&   outFreq;
         const float& volume;
+        s16   amplitude{};
         float wavePhase{};
 
         explicit AudioCores(VM_Guest&);
-        void initializeCores();
         void renderAudio(s16*, u32);
+        void modifyAmp();
 
         class Classic {
             AudioCores& Audio;
         public:
-            std::atomic<float> tone{};
+            float tone{};
             bool beepFx0A{};
             
             explicit Classic(AudioCores&);
-            void reset();
             void setTone(u8, u32);
             void setTone(u8);
             void render(s16*, size_t); 
@@ -134,11 +134,11 @@ public:
             AudioCores& Audio;
         public:
             std::array<u8, 16> pattern{};
-            std::atomic<u8> pitch{};
+            std::atomic<float> tone{};
             bool enabled{};
 
             explicit XOchip(AudioCores&);
-            void reset();
+            void setPitch(u8);
             void loadPattern(u32);
             void render(s16*, size_t);  
         } XO{ *this };

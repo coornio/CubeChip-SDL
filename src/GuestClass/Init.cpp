@@ -17,7 +17,6 @@ bool VM_Guest::setupMachine() {
 
     Host.addMessage("Successfully initialized rom/platform.");
     Host.Render.changeTitle(Host.File.name);
-    Audio.initializeCores();
     Host.programLoaded = true;
     return true;
 }
@@ -179,7 +178,7 @@ void VM_Guest::initPlatform() {
     //Quirk.shiftVX = true;
     //Quirk.idxRegNoInc = true;
     //State.schip_legacy = true;
-    Host.Audio.setVolume(0.8f);
+    //Host.Audio.setVolume(0.8f);
     Program.setSpeed(0);
     //Quirk.waitScroll = true;
     //Quirk.waitVblank = true;

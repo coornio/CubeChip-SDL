@@ -5,6 +5,10 @@
 /*  class  VM_Host::AudioSettings                                   */
 /*------------------------------------------------------------------*/
 
+VM_Host::AudioSettings::AudioSettings() : outFrequency(48000) {
+    setVolume(0.9f);
+}
+
 void VM_Host::AudioSettings::setSpec(VM_Host* parent) {
     SDL_zero(spec);
     spec.freq     = outFrequency;
@@ -17,7 +21,8 @@ void VM_Host::AudioSettings::setSpec(VM_Host* parent) {
 }
 
 void VM_Host::AudioSettings::setVolume(const float vol) {
-    volume = std::clamp(vol, 0.0f, 1.0f);
+    volume    = std::clamp(vol, 0.0f, 1.0f);
+    volumeLog = std::pow(10.0f, (1.0f - volume * 0.90f) * -96.0f / 20.0f);
 }
 
 void VM_Host::AudioSettings::audioCallback(void* data, u8* buffer, const s32 bytes) {
