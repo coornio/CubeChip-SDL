@@ -3,7 +3,6 @@
 #include <chrono>
 #include <ratio>
 #include <thread>
-#include <type_traits>
 #include <algorithm>
 
 enum : bool { SPINLOCK, SLEEP };
@@ -16,6 +15,7 @@ class FrameLimiter {
     bool   initTimeCheck{}; // updates timestamp on first check only
     bool   skipFirstPass{}; // unconditional valid frame on first check
     bool   skipLostFrame{}; // timeOvershoot will modulo with timeFrequency
+    bool   lastFrameLost{}; // indicator of missed frame when using skipLostFrame
 
     double timeFrequency{}; // time (ms) per unit Hertz
     double timeOvershoot{}; // time remainder (ms) after last check
@@ -34,5 +34,5 @@ public:
     double elapsed() const { return timeVariation; }
     double remains() const { return timeFrequency - timeVariation; }
     double percent() const { return timeVariation / timeFrequency; }
-    bool   paced()   const { return timeOvershoot < timeFrequency; }
+    bool   paced()   const { return timeOvershoot < timeFrequency && !lastFrameLost; }
 };

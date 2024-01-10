@@ -49,10 +49,12 @@ bool FrameLimiter::isValidFrame() {
     if (timeVariation < timeFrequency) [[likely]]
         return false;
 
-    if (skipLostFrame)
+    if (skipLostFrame) {
+        lastFrameLost = timeVariation >= timeFrequency * 1.002f;
         timeOvershoot = std::fmod(timeVariation, timeFrequency);
-    else
+    } else {
         timeOvershoot = timeVariation - timeFrequency;
+    }
 
     timePastFrame = steady_clock::now();
     ++validFrameCnt;
