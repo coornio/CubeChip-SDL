@@ -76,8 +76,8 @@ void VM_Guest::AudioCores::Classic::render(s16* samples, size_t frames) {
 /*------------------------------------------------------------------*/
 
 VM_Guest::AudioCores::XOchip::XOchip(AudioCores& parent) : Audio(parent) {
-    setPitch(64);
-    enabled = false;
+    static constexpr float defaultPitch{ 0.0006510417f };
+    tone.store(defaultPitch);
 }
 
 void VM_Guest::AudioCores::XOchip::setPitch(u8 pitch) {
