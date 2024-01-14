@@ -22,12 +22,16 @@ void VM_Guest::AudioCores::renderAudio(s16* samples, u32 frames) {
     if (C8.beepFx0A) goto beepFx0A;
 
     if (MC.enabled) {
-        if (!MC.length.load()) goto blank;
         MC.render(samples, frames);
         return;
     }
 
-    if (!vm.Program.Timer.sound) goto blank;
+    if (!vm.Program.Timer.sound) {
+        wavePhase = 0.0f;
+        while (frames--)
+            *samples++ = 0;
+        return;
+    }
 
     if (XO.enabled) {
         XO.render(samples, frames);
@@ -37,11 +41,6 @@ void VM_Guest::AudioCores::renderAudio(s16* samples, u32 frames) {
         C8.render(samples, frames);
         return;
     }
-
-blank:
-    wavePhase = 0.0f;
-    while (frames--)
-        *samples++ = 0;
 }
 
 void VM_Guest::AudioCores::modifyAmp() {
@@ -151,6 +150,7 @@ void VM_Guest::AudioCores::MegaChip::render(s16* samples, size_t frames) {
                 _offset = 0.0;
                 _curidx = 128;
                 length.store(0);
+                enabled = false;
             }
         }
         pos.store(_offset);
