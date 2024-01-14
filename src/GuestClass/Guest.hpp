@@ -127,7 +127,7 @@ public:
         class Classic {
             AudioCores& Audio;
         public:
-            float tone{};
+            std::atomic<float> tone{};
             bool beepFx0A{};
             
             explicit Classic(AudioCores&);

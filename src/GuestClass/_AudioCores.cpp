@@ -56,18 +56,18 @@ VM_Guest::AudioCores::Classic::Classic(AudioCores& parent) : Audio(parent) {}
 
 void VM_Guest::AudioCores::Classic::setTone(const u8 sp, const u32 pc) {
     // sets a unique tone for each sound call
-    tone = (160.0f + 8.0f * ((pc >> 1) + sp + 1 & 0x3E)) / Audio.outFreq;
+    tone.store((160.0f + 8.0f * ((pc >> 1) + sp + 1 & 0x3E)) / Audio.outFreq);
 }
 
 void VM_Guest::AudioCores::Classic::setTone(const u8 vx) {
     // sets the tone for each 8X sound call
-    tone = (160.0f + (vx >> 3 << 4)) / Audio.outFreq;
+    tone.store((160.0f + (vx >> 3 << 4)) / Audio.outFreq);
 }
 
 void VM_Guest::AudioCores::Classic::render(s16* samples, size_t frames) {
     while (frames--) {
-        *samples++ = (Audio.wavePhase > 0.5f) ? Audio.amplitude : -Audio.amplitude;
-        Audio.wavePhase = std::fmod(Audio.wavePhase + tone, 1.0f);
+        *samples++ = Audio.wavePhase > 0.5f ? Audio.amplitude : -Audio.amplitude;
+        Audio.wavePhase = std::fmod(Audio.wavePhase + tone.load(), 1.0f);
     }
 }
 
