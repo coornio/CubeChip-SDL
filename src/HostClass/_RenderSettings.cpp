@@ -6,6 +6,8 @@
 
 #include "Host.hpp"
 
+VM_Host::RenderSettings::RenderSettings() : emuVersion("[14.01.24]"s) {}
+
 bool VM_Host::RenderSettings::createWindow() {
     window = SDL_CreateWindow(
         title.c_str(),

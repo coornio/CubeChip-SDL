@@ -50,7 +50,7 @@ public:
         SDL_Renderer* renderer{};
         SDL_Texture*  texture{};
 
-        const std::string emuVersion{ "[10.01.24]"s };
+        const std::string emuVersion{};
               std::string title{};
 
         bool createWindow();
@@ -68,6 +68,7 @@ public:
         s32  pitch{};
         u32* pixels{};
 
+        RenderSettings();
         void lockTexture();
         void unlockTexture();
         void setTexture(s16, s16, float);
