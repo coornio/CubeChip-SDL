@@ -45,7 +45,7 @@ blank:
 }
 
 void VM_Guest::AudioCores::modifyAmp() {
-    amplitude = as<u16>(32767.0f * volume);
+    amplitude = as<u16>(32767.0f * volume * 0.2f);
 }
 
 /*------------------------------------------------------------------*/
@@ -138,20 +138,21 @@ void VM_Guest::AudioCores::MegaChip::enable(
 }
 
 void VM_Guest::AudioCores::MegaChip::render(s16* samples, size_t frames) {
+    const auto _volume{ Audio.volume * 256.0f };
     while (frames--) {
-        auto   _val{ Audio.vm.mrw(start + as<u32>(pos)) };
-        double _bit{ pos + step };
+        auto   _curidx{ Audio.vm.mrw(start.load() + as<u32>(pos.load()))};
+        double _offset{ pos.load() + step.load()};
 
-        if (_bit >= length) {
+        if (_offset >= length.load()) {
             if (looping) {
-                _bit -= length;
+                _offset -= length.load();
             } else {
-                _bit = 0.0;
-                _val = 128;
+                _offset = 0.0;
+                _curidx = 128;
                 length.store(0);
             }
         }
-        pos.store(_bit);
-        *samples++ = as<u16>(_val - 128) * 256;
+        pos.store(_offset);
+        *samples++ = as<u16>((_curidx - 128) * _volume);
     }
 }
