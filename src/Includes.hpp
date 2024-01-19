@@ -40,14 +40,24 @@ using s8  =  int8_t;
 
 template <typename R, typename T>
 #ifdef _MSC_VER
-[[msvc::forceinline, msvc::flatten]]
+[[msvc::forceinline]]
 #else
-[[gnu::always_inline, gnu::flatten]]
+[[gnu::always_inline]]
 #endif
-constexpr R as(T&& t) noexcept {
+constexpr R as(T&& t) {
     return static_cast<R>(std::forward<T>(t));
 }
-constexpr auto cexprHash(const char* str, std::size_t v = 0) noexcept -> std::size_t {
+template <typename R, typename T>
+#ifdef _MSC_VER
+[[msvc::forceinline]]
+#else
+[[gnu::always_inline]]
+#endif
+constexpr R to(T&& t) {
+    return reinterpret_cast<R>(std::forward<T>(t));
+}
+
+constexpr std::size_t cexprHash(const char* str, std::size_t v = 0) noexcept {
     return (*str == 0) ? v : 31 * cexprHash(str + 1) + *str;
 }
 

@@ -31,7 +31,7 @@ void VM_Host::AudioSettings::setVolume(const float vol) {
 }
 
 void VM_Host::AudioSettings::audioCallback(void* data, u8* buffer, const s32 bytes) {
-    auto* self = reinterpret_cast<VM_Host*>(data);
+    auto* self = to<VM_Host*>(data);
     if (self->Audio.handler)
-        self->Audio.handler(reinterpret_cast<s16*>(buffer), bytes >> 1);
+        self->Audio.handler(to<s16*>(buffer), bytes >> 1);
 }

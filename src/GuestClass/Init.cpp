@@ -166,7 +166,7 @@ bool VM_Guest::romSizeCheck(const u32 size, const u16 offset) {
 
     std::ifstream ifs(Host.File.path, std::ios::binary);
     if (ifs.read(
-        reinterpret_cast<char*>(Mem.ram.data() + offset),
+        to<char*>(Mem.ram.data() + offset),
         Host.File.size
     )) return true;
     return false;
