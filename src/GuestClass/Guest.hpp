@@ -119,6 +119,7 @@ public:
         const s16& amplitude;
         const float& volume;
         float wavePhase{};
+        bool  beepFx0A{};
 
         explicit AudioCores(VM_Guest&);
         void renderAudio(s16*, u32);
@@ -127,7 +128,6 @@ public:
             AudioCores& Audio;
         public:
             std::atomic<float> tone{};
-            bool beepFx0A{};
             
             explicit Classic(AudioCores&);
             void setTone(u8, u32);

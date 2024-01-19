@@ -82,7 +82,7 @@ void VM_Guest::ProgramControl::requestHalt() {
 void VM_Guest::ProgramControl::handleTimersDec() {
     if (Timer.delay) --Timer.delay;
     if (Timer.sound) --Timer.sound;
-    if (!Timer.sound) vm.Audio.C8.beepFx0A = false;
+    if (!Timer.sound) vm.Audio.beepFx0A = false;
 }
 
 void VM_Guest::ProgramControl::handleInterrupt() {
@@ -108,7 +108,7 @@ void VM_Guest::ProgramControl::handleInterrupt() {
                 interrupt   = Interrupt::NONE;
                 ipf         = std::abs(ipf);
                 Timer.sound = 2;
-                vm.Audio.C8.beepFx0A = true;
+                vm.Audio.beepFx0A = true;
             }
             return;
     }

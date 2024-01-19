@@ -12,15 +12,14 @@
 /*------------------------------------------------------------------*/
 
 VM_Guest::AudioCores::AudioCores(VM_Guest& parent)
-    : vm(parent)
-    , outFreq(vm.Host.Audio.outFrequency)
-    , amplitude(vm.Host.Audio.amplitude)
-    , volume(vm.Host.Audio.volume)
-    , wavePhase(0.0f)
+    : vm        (parent)
+    , outFreq   (vm.Host.Audio.outFrequency)
+    , amplitude (vm.Host.Audio.amplitude)
+    , volume    (vm.Host.Audio.volume)
 {}
 
 void VM_Guest::AudioCores::renderAudio(s16* samples, u32 frames) {
-    if (C8.beepFx0A) goto beepFx0A;
+    if (beepFx0A) goto beepFx0A;
 
     if (MC.enabled) {
         MC.render(samples, frames);

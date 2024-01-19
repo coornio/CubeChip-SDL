@@ -441,7 +441,7 @@ void VM_Guest::instructionLoop() {
 					case 0x18:							// FX18 - set sound timer = VX
 						if (!State.chip8X_rom) [[likely]]
 							Audio.C8.setTone(Reg.SP, Program.counter);
-						Audio.C8.beepFx0A = false;
+						Audio.beepFx0A = false;
 						Program.Timer.sound = Reg.V[X] + (Reg.V[X] == 1);
 						break;
 					case 0x1B:							// FX1B - skip VX amount of bytes *CHIP-8E*
