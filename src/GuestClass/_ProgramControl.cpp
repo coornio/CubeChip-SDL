@@ -66,17 +66,15 @@ void VM_Guest::ProgramControl::setInterrupt(const Interrupt type) {
 }
 
 void VM_Guest::ProgramControl::requestHalt() {
-    if (opcode & 0xF000) {
-        vm.Host.addMessage("Unknown instruction:", false, opcode);
-        setInterrupt(Interrupt::STOP);
-        return;
-    }
-    if (opcode & 0x0FFF) {
-        vm.Host.addMessage("Machine language not supported:", false, opcode);
-        setInterrupt(Interrupt::ONCE);
-        return;
-    }
     setInterrupt(Interrupt::STOP);
+    switch (opcode & 0xF000) {
+        case 0x0:
+            vm.Host.addMessage("ML routines are unsupported:", false, opcode);
+            return;
+        default:
+            vm.Host.addMessage("Unknown instruction detected:", false, opcode);
+            return;
+    }
 }
 
 void VM_Guest::ProgramControl::handleTimersDec() {
