@@ -14,7 +14,8 @@
 VM_Guest::AudioCores::AudioCores(VM_Guest& parent)
     : vm(parent)
     , outFreq(vm.Host.Audio.outFrequency)
-    , volume(vm.Host.Audio.volumeLog)
+    , amplitude(vm.Host.Audio.amplitude)
+    , volume(vm.Host.Audio.vol256)
     , wavePhase(0.0f)
 {}
 
@@ -41,10 +42,6 @@ void VM_Guest::AudioCores::renderAudio(s16* samples, u32 frames) {
         C8.render(samples, frames);
         return;
     }
-}
-
-void VM_Guest::AudioCores::modifyAmp() {
-    amplitude = as<u16>(32767.0f * volume * 0.2f);
 }
 
 /*------------------------------------------------------------------*/
@@ -138,7 +135,6 @@ void VM_Guest::AudioCores::MegaChip::enable(
 }
 
 void VM_Guest::AudioCores::MegaChip::render(s16* samples, size_t frames) {
-    const auto _volume{ Audio.volume * 256.0f };
     while (frames--) {
         auto   _curidx{ Audio.vm.mrw(start.load() + as<u32>(pos.load()))};
         double _offset{ pos.load() + step.load()};
@@ -154,6 +150,6 @@ void VM_Guest::AudioCores::MegaChip::render(s16* samples, size_t frames) {
             }
         }
         pos.store(_offset);
-        *samples++ = as<u16>((_curidx - 128) * _volume);
+        *samples++ = as<u16>((_curidx - 128) * Audio.volume);
     }
 }

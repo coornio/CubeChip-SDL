@@ -116,13 +116,12 @@ public:
         VM_Guest& vm;
     public:
         const u32&   outFreq;
+        const s16& amplitude;
         const float& volume;
-        s16   amplitude{};
         float wavePhase{};
 
         explicit AudioCores(VM_Guest&);
         void renderAudio(s16*, u32);
-        void modifyAmp();
 
         class Classic {
             AudioCores& Audio;

@@ -16,7 +16,6 @@ VM_Guest::VM_Guest(VM_Host& hostref) : Host(hostref) {}
 void VM_Guest::cycle() {
 	if (!Program.ipf) return;
 
-	Audio.modifyAmp();
 	Input.refresh();
 	Program.handleTimersDec();
 	Program.handleInterrupt();
