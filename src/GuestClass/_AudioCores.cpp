@@ -14,8 +14,8 @@
 VM_Guest::AudioCores::AudioCores(VM_Guest& parent)
     : vm        (parent)
     , outFreq   (vm.Host.Audio.outFrequency)
-    , amplitude (vm.Host.Audio.amplitude)
     , volume    (vm.Host.Audio.volume)
+    , amplitude (vm.Host.Audio.amplitude)
 {}
 
 void VM_Guest::AudioCores::renderAudio(s16* samples, u32 frames) {

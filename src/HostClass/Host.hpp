@@ -34,8 +34,8 @@ public:
     struct AudioSettings {
         SDL_AudioDeviceID device{};
         u32 outFrequency{};
+        u32 volume{};
         s16 amplitude{};
-        float volume{};
         SDL_AudioSpec spec{};
         std::function<void(s16*, u32)> handler{};
 

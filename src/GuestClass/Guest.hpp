@@ -115,9 +115,9 @@ public:
     class AudioCores {
         VM_Guest& vm;
     public:
-        const u32&   outFreq;
+        const u32& outFreq;
+        const u32& volume;
         const s16& amplitude;
-        const float& volume;
         float wavePhase{};
         bool  beepFx0A{};
 
