@@ -52,11 +52,9 @@ void VM_Host::RenderSettings::errorMessage(const char* newTitle) {
 }
 
 void VM_Host::RenderSettings::lockTexture() {
-    SDL_LockTexture(
-        texture, nullptr,
-        reinterpret_cast<void**>(&pixels),
-        &pitch
-    );
+    void* pixel_ptr{ pixels };
+    SDL_LockTexture(texture, nullptr, as<void**>(&pixel_ptr), &pitch);
+    pixels = as<u32*>(pixel_ptr);
 }
 
 void VM_Host::RenderSettings::unlockTexture() {
