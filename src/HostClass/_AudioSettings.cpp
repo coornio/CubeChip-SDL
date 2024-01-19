@@ -11,7 +11,7 @@
 /*------------------------------------------------------------------*/
 
 VM_Host::AudioSettings::AudioSettings() : outFrequency(48000) {
-    setVolume(1.0f);
+    setVolume(255);
 }
 
 void VM_Host::AudioSettings::setSpec(VM_Host* parent) {
@@ -25,10 +25,9 @@ void VM_Host::AudioSettings::setSpec(VM_Host* parent) {
     device = SDL_OpenAudioDevice(nullptr, 0, &spec, nullptr, 0);
 }
 
-void VM_Host::AudioSettings::setVolume(const float vol) {
-    volume = std::clamp(vol, 0.0f, 1.0f);
-    vol256 = volume * 256.0f;
-    amplitude = as<s16>(4'096.0f * volume);
+void VM_Host::AudioSettings::setVolume(const s32 vol) {
+    volume = std::clamp(vol, 0, 255);
+    amplitude = as<s16>(16 * volume);
 }
 
 void VM_Host::AudioSettings::audioCallback(void* data, u8* buffer, const s32 bytes) {

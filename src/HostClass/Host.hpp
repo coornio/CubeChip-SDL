@@ -37,12 +37,11 @@ public:
         u32 outFrequency{};
         s16 amplitude{};
         float volume{};
-        float vol256{};
         std::function<void(s16*, u32)> handler{};
 
         AudioSettings();
         void setSpec(VM_Host*);
-        void setVolume(float);
+        void setVolume(s32);
         static void audioCallback(void*, u8*, s32);
     } Audio;
 

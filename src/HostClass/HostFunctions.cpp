@@ -124,10 +124,10 @@ void VM_Host::runMachine(VM_Guest& vm) {
             benchmarking = !benchmarking;
         }
         if (kb.isKeyPressed(SDL_SCANCODE_UP)) {
-            Audio.setVolume(Audio.volume + 0.1f);
+            Audio.setVolume(Audio.volume + 15);
         }
         if (kb.isKeyPressed(SDL_SCANCODE_DOWN)) {
-            Audio.setVolume(Audio.volume - 0.1f);
+            Audio.setVolume(Audio.volume - 15);
         }
         kb.updateKeyboardCopy();
         vm.cycle();
