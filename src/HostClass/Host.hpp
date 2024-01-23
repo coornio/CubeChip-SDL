@@ -24,7 +24,7 @@ public:
         std::string path{};
         std::string name{};
         std::string type{};
-        u64 size{};
+        std::size_t size{};
         
         explicit FileInfo(VM_Host&);
         void reset();
