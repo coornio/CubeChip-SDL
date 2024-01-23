@@ -32,8 +32,8 @@ public:
     } File{ *this };
 
     struct AudioSettings {
+        const u32 outFrequency;
         SDL_AudioDeviceID device{};
-        u32 outFrequency{};
         u32 volume{};
         s16 amplitude{};
         SDL_AudioSpec spec{};

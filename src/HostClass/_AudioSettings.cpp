@@ -10,7 +10,9 @@
 /*  class  VM_Host::AudioSettings                                   */
 /*------------------------------------------------------------------*/
 
-VM_Host::AudioSettings::AudioSettings() : outFrequency(48000) {
+VM_Host::AudioSettings::AudioSettings()
+    : outFrequency(48000)
+{
     setVolume(255);
 }
 
