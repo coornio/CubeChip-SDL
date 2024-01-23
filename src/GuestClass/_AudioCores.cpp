@@ -70,16 +70,14 @@ void VM_Guest::AudioCores::Classic::render(s16* samples, s32 frames) {
 /*  class  VM_Guest::AudioCores::XOchip                             */
 /*------------------------------------------------------------------*/
 
-VM_Guest::AudioCores::XOchip::XOchip(AudioCores& parent) : Audio(parent) {
-    static constexpr float defaultPitch{ 0.0006510417f };
-    tone.store(defaultPitch);
-}
+VM_Guest::AudioCores::XOchip::XOchip(AudioCores& parent)
+    : Audio(parent)
+    , rate(4000.0f / 128.0f / Audio.outFreq)
+    , tone(rate)
+{}
 
 void VM_Guest::AudioCores::XOchip::setPitch(u8 pitch) {
-    tone.store(
-        4000.0f * std::pow(2.0f, (pitch - 64.0f) / 48.0f) \
-        / 128.0f / Audio.outFreq
-    );
+    tone.store(rate * std::pow(2.0f, (pitch - 64.0f) / 48.0f));
     enabled = true;
 }
 
