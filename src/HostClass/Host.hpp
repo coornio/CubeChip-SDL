@@ -8,7 +8,7 @@
 
 #include "../Includes.hpp"
 
-class VM_Host {
+class VM_Host final {
 public:
     bool machineLoaded{ false };
     bool programLoaded{ false };
@@ -18,7 +18,7 @@ public:
     VM_Host(const char*);
     ~VM_Host();
 
-    class FileInfo {
+    class FileInfo final {
         VM_Host& Host;
     public:
         std::string path{};
@@ -31,7 +31,7 @@ public:
         bool verifyFile(const char*);
     } File{ *this };
 
-    struct AudioSettings {
+    struct AudioSettings final {
         const u32 outFrequency;
         SDL_AudioDeviceID device{};
         u32 volume{};
@@ -45,7 +45,7 @@ public:
         static void audioCallback(void*, u8*, s32);
     } Audio;
 
-    struct RenderSettings {
+    struct RenderSettings final {
         SDL_Window*   window{};
         SDL_Renderer* renderer{};
         SDL_Texture*  texture{};

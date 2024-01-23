@@ -9,7 +9,7 @@
 #include "../Includes.hpp"
 #include "../InstructionSets/Interface.hpp"
 
-class VM_Guest {
+class VM_Guest final {
     FunctionsForMegachip SetGigachip{ *this };
     FunctionsForMegachip SetMegachip{ *this };
     FunctionsForModernXO SetModernXO{ *this };
@@ -50,7 +50,7 @@ public:
         ADD,
     };
 
-    class MemoryBanks {
+    class MemoryBanks final {
         VM_Guest& vm;
         void (*applyViewportMask)(u32&, u32) {};
     public:
@@ -77,7 +77,7 @@ public:
     };
     MemoryBanks& Mem{ *MemoryBanksPtr.get() };
 
-    class ProgramControl {
+    class ProgramControl final {
         VM_Guest& vm;
         FncSetInterface*& fncSet;
     public:
@@ -112,7 +112,7 @@ public:
         void handleInterrupt();
     } Program{ *this, currFncSet };
 
-    class AudioCores {
+    class AudioCores final {
         VM_Guest& vm;
     public:
         const u32& outFreq;
@@ -124,9 +124,8 @@ public:
         explicit AudioCores(VM_Guest&);
         void renderAudio(s16*, s32);
 
-        class Classic {
+        class Classic final {
             AudioCores& Audio;
-        public:
             std::atomic<float> tone{};
         public:
             explicit Classic(AudioCores&);
@@ -136,7 +135,7 @@ public:
             void render(s16*, s32);
         } C8{ *this };
 
-        class XOchip {
+        class XOchip final {
             AudioCores& Audio;
             const float rate;
             std::array<std::atomic<u8>, 16> pattern{};
@@ -151,29 +150,25 @@ public:
             void render(s16*, s32);
         } XO{ *this };
 
-        class MegaChip {
+        class MegaChip final {
             AudioCores& Audio;
-        public:
             std::atomic<u32> length{};
             std::atomic<u32> start{};
-
             std::atomic<double> step{};
             std::atomic<double> pos{};
-
             bool enabled{};
             bool looping{};
         public:
             explicit MegaChip(AudioCores&);
             bool isOn() const;
 
-            explicit MegaChip(AudioCores&);
             void reset();
             void enable(u32, u32, u32, bool);
             void render(s16*, s32);
         } MC{ *this };
     } Audio{ *this };
 
-    class Registers {
+    class Registers final {
         VM_Guest& vm;
     public:
         std::array<u32, 16> stack{};
@@ -187,7 +182,7 @@ public:
         void protectPages();
     } Reg{ *this };
 
-    struct BitPlaneProperties {
+    struct BitPlaneProperties final {
         s16 W{},  H{},  X{};
         s16 Wb{}, Hb{}, Xb{};
         u32 selected{ 1 };
@@ -197,7 +192,7 @@ public:
         u32 mask{ 0x11111111 };
     } Plane;
 
-    struct TextureTraits {
+    struct TextureTraits final {
         u16 W{}, H{};
         float alpha{ 1.0f };
         u8 collision{ 0xFF };
@@ -213,7 +208,7 @@ public:
         void transform(u8);
     } Trait;
 
-    struct EmulationQuirks {
+    struct EmulationQuirks final {
         bool clearVF{};
         bool jmpRegX{};
         bool shiftVX{};
@@ -225,7 +220,7 @@ public:
         bool accuCycles{};
     } Quirk;
 
-    struct BehaviorStates {
+    struct BehaviorStates final {
         bool chip8E_rom{};
         bool chip8X_rom{};
         bool chip8X_hires{};
@@ -242,7 +237,7 @@ public:
         bool push_display{};
     } State;
 
-    class DisplayColors {
+    class DisplayColors final {
         VM_Guest& vm;
     public:
         std::array<u32, 16> bit{}; // pixel bit color (planes)

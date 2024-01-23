@@ -18,7 +18,7 @@ template <typename R, typename T>
 concept RangeOf = std::ranges::range<R> &&
 std::convertible_to<std::ranges::range_value_t<R>, T>;
 
-class BasicKeyInput {
+class BasicKeyInput final {
     static std::vector<Uint8> oldKeyboardState;
     static std::unique_ptr<BasicKeyInput> _self;
 

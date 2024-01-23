@@ -8,7 +8,7 @@
 
 #include "BasicKeyInput.hpp"
 
-class HexInput {
+class HexInput final {
     struct KeyInfo {
         unsigned int idx; // key index on chip8 pad
         SDL_Scancode key; // main keyboard equivalent

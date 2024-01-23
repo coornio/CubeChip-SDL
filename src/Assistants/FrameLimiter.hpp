@@ -13,7 +13,7 @@
 
 enum : bool { SPINLOCK, SLEEP };
 
-class FrameLimiter {
+class FrameLimiter final {
     using chrono = std::chrono::steady_clock::time_point;
     using millis = std::chrono::milliseconds;
     using uint64 = unsigned long long;
