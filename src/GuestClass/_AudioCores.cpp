@@ -87,7 +87,7 @@ void VM_Guest::AudioCores::XOchip::loadPattern(u32 idx) {
     for (auto& byte : pattern) {
         byte.store(Audio.vm.mrw(idx++));
 
-        if (byte > 0x0 && byte < 0xFF)
+        if (!enabled && byte > 0x0 && byte < 0xFF)
             enabled = true;
     }
 }
