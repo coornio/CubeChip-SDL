@@ -138,7 +138,7 @@ public:
         class XOchip {
             AudioCores& Audio;
         public:
-            std::array<u8, 16> pattern{};
+            std::array<std::atomic<u8>, 16> pattern{};
             std::atomic<float> tone{};
             bool enabled{};
 

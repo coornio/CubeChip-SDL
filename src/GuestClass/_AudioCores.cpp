@@ -61,7 +61,7 @@ void VM_Guest::AudioCores::Classic::setTone(const u8 vx) {
 
 void VM_Guest::AudioCores::Classic::render(s16* samples, s32 frames) {
     while (frames--) {
-        *samples++ = as<s16>(Audio.wavePhase > 0.5f ? Audio.amplitude : -Audio.amplitude);
+        *samples++ = Audio.wavePhase > 0.5f ? Audio.amplitude : -Audio.amplitude;
         Audio.wavePhase = std::fmod(Audio.wavePhase + tone.load(), 1.0f);
     }
 }
@@ -85,7 +85,7 @@ void VM_Guest::AudioCores::XOchip::setPitch(u8 pitch) {
 
 void VM_Guest::AudioCores::XOchip::loadPattern(u32 idx) {
     for (auto& byte : pattern) {
-        byte = Audio.vm.mrw(idx++);
+        byte.store(Audio.vm.mrw(idx++));
 
         if (byte > 0x0 && byte < 0xFF)
             enabled = true;
@@ -94,9 +94,9 @@ void VM_Guest::AudioCores::XOchip::loadPattern(u32 idx) {
 
 void VM_Guest::AudioCores::XOchip::render(s16* samples, s32 frames) {
     while (frames--) {
-        const auto step{ as<u8>(std::clamp(Audio.wavePhase * 128.0f, 0.0f, 127.0f)) };
+        const auto step{ std::clamp<u8>(Audio.wavePhase * 128.0f, 0.0f, 127.0f) };
         const auto mask{ 1 << (7 - (step & 7)) };
-        *samples++ = as<s16>(pattern[step >> 3] & mask ? Audio.amplitude : -Audio.amplitude);
+        *samples++ = pattern[step >> 3].load() & mask ? Audio.amplitude : -Audio.amplitude;
         Audio.wavePhase = std::fmod(Audio.wavePhase + tone.load(), 1.0f);
     }
 }
