@@ -205,7 +205,7 @@ public:
         bool nodraw{};
         bool uneven{};
 
-        void transform(u8);
+        void setFlags(u8);
     } Trait;
 
     struct EmulationQuirks final {

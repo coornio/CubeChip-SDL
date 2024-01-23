@@ -172,9 +172,9 @@ void VM_Guest::instructionLoop() {
 							case 0x7:					// 0700 - stop digital sound *MEGACHIP*
 								Audio.MC.reset();
 								break;
-							case 0x8:					// 08YN - set transform mode to VY (Y > 0), blend mode to N *GIGACHIP*
+							case 0x8:					// 08YN - set trait flags to VY (Y > 0), blend mode to N *GIGACHIP*
 								if (State.gigachip_rom) {
-									Trait.transform(Reg.V[Y]);
+									Trait.setFlags(Reg.V[Y]);
 									SetGigachip.chooseBlend(N);
 								} else {				// 080N - set blend mode to N *MEGACHIP*
 									Trait.alpha = std::array{ 1.0f, 0.25f, 0.50f, 0.75f }[N > 3 ? 0 : N];
@@ -536,7 +536,7 @@ void VM_Guest::instructionLoop() {
 /*  struct  VM_Guest::TextureTraits                                 */
 /*------------------------------------------------------------------*/
 
-void VM_Guest::TextureTraits::transform(const u8 bits) {
+void VM_Guest::TextureTraits::setFlags(const u8 bits) {
     rotate = bits >> 0 & 0x1; // false: as-is | true: 90° clockwise
     flip_X = bits >> 1 & 0x1; // flip on the X axis (rotation agnostic)
     flip_Y = bits >> 2 & 0x1; // flip on the Y axis (rotation agnostic)
