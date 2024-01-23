@@ -69,6 +69,9 @@
     <ClCompile Include="src\Assistants\SHA1_digest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Assistants\HexInput.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\InstructionSets\Interface.hpp">

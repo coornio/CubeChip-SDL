@@ -36,4 +36,4 @@ bool BasicKeyInput::isKeyReleased(const SDL_Scancode key) const noexcept {
 std::unique_ptr<BasicKeyInput> BasicKeyInput::_self = nullptr;
 std::vector<Uint8> BasicKeyInput::oldKeyboardState(SDL_NUM_SCANCODES);
 
-BasicKeyInput& bki::kb{ BasicKeyInput::create() };
+BasicKeyInput& bic::kb{ BasicKeyInput::create() };

@@ -48,6 +48,6 @@ public:
     }
 };
 
-namespace bki {
+namespace bic { // basic input class
     extern BasicKeyInput& kb;
 }

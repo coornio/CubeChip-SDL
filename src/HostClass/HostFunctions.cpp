@@ -119,14 +119,14 @@ void VM_Host::runMachine(VM_Guest& vm) {
             std::cout << "\ntime since last frame: " << Frame.elapsed();
         } else if (!Frame(SLEEP)) continue;
 
-        using namespace bki;
-        if (kb.isKeyPressed(SDL_SCANCODE_RSHIFT)) {
+        using namespace bic;
+        if (kb.isKeyPressed(KEY(RSHIFT))) {
             benchmarking = !benchmarking;
         }
-        if (kb.isKeyPressed(SDL_SCANCODE_UP)) {
+        if (kb.isKeyPressed(KEY(UP))) {
             Audio.setVolume(Audio.volume + 15);
         }
-        if (kb.isKeyPressed(SDL_SCANCODE_DOWN)) {
+        if (kb.isKeyPressed(KEY(DOWN))) {
             Audio.setVolume(Audio.volume - 15);
         }
         kb.updateKeyboardCopy();
