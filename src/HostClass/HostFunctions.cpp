@@ -58,7 +58,7 @@ void VM_Host::runMachine(VM_Guest& vm) {
 
     FrameLimiter Frame(vm.Program.framerate);
 
-    Audio.handler = [&](s16* buffer, const u32 frames) {
+    Audio.handler = [&](s16* buffer, const s32 frames) {
         vm.Audio.renderAudio(buffer, frames);
     };
     SDL_PauseAudioDevice(Audio.device, 0);
