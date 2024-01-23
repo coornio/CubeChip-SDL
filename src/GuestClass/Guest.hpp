@@ -122,7 +122,7 @@ public:
         bool  beepFx0A{};
 
         explicit AudioCores(VM_Guest&);
-        void renderAudio(s16*, u32);
+        void renderAudio(s16*, s32);
 
         class Classic {
             AudioCores& Audio;
@@ -132,7 +132,7 @@ public:
             explicit Classic(AudioCores&);
             void setTone(u8, u32);
             void setTone(u8);
-            void render(s16*, size_t); 
+            void render(s16*, s32);
         } C8{ *this };
 
         class XOchip {
@@ -145,7 +145,7 @@ public:
             explicit XOchip(AudioCores&);
             void setPitch(u8);
             void loadPattern(u32);
-            void render(s16*, size_t);  
+            void render(s16*, s32);
         } XO{ *this };
 
         class MegaChip {
@@ -163,7 +163,7 @@ public:
             explicit MegaChip(AudioCores&);
             void reset();
             void enable(u32, u32, u32, bool);
-            void render(s16*, size_t);
+            void render(s16*, s32);
         } MC{ *this };
     } Audio{ *this };
 

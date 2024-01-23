@@ -18,7 +18,7 @@ VM_Guest::AudioCores::AudioCores(VM_Guest& parent)
     , amplitude (vm.Host.Audio.amplitude)
 {}
 
-void VM_Guest::AudioCores::renderAudio(s16* samples, u32 frames) {
+void VM_Guest::AudioCores::renderAudio(s16* samples, s32 frames) {
     if (beepFx0A) goto beepFx0A;
 
     if (MC.enabled) {
@@ -59,7 +59,7 @@ void VM_Guest::AudioCores::Classic::setTone(const u8 vx) {
     tone.store((160.0f + (vx >> 3 << 4)) / Audio.outFreq);
 }
 
-void VM_Guest::AudioCores::Classic::render(s16* samples, size_t frames) {
+void VM_Guest::AudioCores::Classic::render(s16* samples, s32 frames) {
     while (frames--) {
         *samples++ = as<s16>(Audio.wavePhase > 0.5f ? Audio.amplitude : -Audio.amplitude);
         Audio.wavePhase = std::fmod(Audio.wavePhase + tone.load(), 1.0f);
@@ -92,7 +92,7 @@ void VM_Guest::AudioCores::XOchip::loadPattern(u32 idx) {
     }
 }
 
-void VM_Guest::AudioCores::XOchip::render(s16* samples, size_t frames) {
+void VM_Guest::AudioCores::XOchip::render(s16* samples, s32 frames) {
     while (frames--) {
         const auto step{ as<u8>(std::clamp(Audio.wavePhase * 128.0f, 0.0f, 127.0f)) };
         const auto mask{ 1 << (7 - (step & 7)) };
@@ -133,7 +133,7 @@ void VM_Guest::AudioCores::MegaChip::enable(
     pos.store(0.0);
 }
 
-void VM_Guest::AudioCores::MegaChip::render(s16* samples, size_t frames) {
+void VM_Guest::AudioCores::MegaChip::render(s16* samples, s32 frames) {
     while (frames--) {
         auto   _curidx{ Audio.vm.mrw(start.load() + as<u32>(pos.load()))};
         double _offset{ pos.load() + step.load()};
