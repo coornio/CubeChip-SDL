@@ -21,7 +21,7 @@ VM_Guest::AudioCores::AudioCores(VM_Guest& parent)
 void VM_Guest::AudioCores::renderAudio(s16* samples, s32 frames) {
     if (beepFx0A) goto beepFx0A;
 
-    if (MC.enabled) {
+    if (MC.isOn()) {
         MC.render(samples, frames);
         return;
     }
@@ -33,7 +33,7 @@ void VM_Guest::AudioCores::renderAudio(s16* samples, s32 frames) {
         return;
     }
 
-    if (XO.enabled) {
+    if (XO.isOn()) {
         XO.render(samples, frames);
         return;
     } else {
@@ -76,6 +76,10 @@ VM_Guest::AudioCores::XOchip::XOchip(AudioCores& parent)
     , tone(rate)
 {}
 
+bool VM_Guest::AudioCores::XOchip::isOn() const {
+    return enabled;
+}
+
 void VM_Guest::AudioCores::XOchip::setPitch(u8 pitch) {
     tone.store(rate * std::pow(2.0f, (pitch - 64.0f) / 48.0f));
     enabled = true;
@@ -103,7 +107,13 @@ void VM_Guest::AudioCores::XOchip::render(s16* samples, s32 frames) {
 /*  class  VM_Guest::AudioCores::MegaChip                           */
 /*------------------------------------------------------------------*/
 
-VM_Guest::AudioCores::MegaChip::MegaChip(AudioCores& parent) : Audio(parent) {}
+VM_Guest::AudioCores::MegaChip::MegaChip(AudioCores& parent)
+    : Audio(parent)
+{}
+
+bool VM_Guest::AudioCores::MegaChip::isOn() const {
+    return enabled;
+}
 
 void VM_Guest::AudioCores::MegaChip::reset() {
     enabled = false;

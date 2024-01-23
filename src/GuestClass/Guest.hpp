@@ -128,8 +128,9 @@ public:
             AudioCores& Audio;
         public:
             std::atomic<float> tone{};
-            
+        public:
             explicit Classic(AudioCores&);
+
             void setTone(u8, u32);
             void setTone(u8);
             void render(s16*, s32);
@@ -141,8 +142,10 @@ public:
             std::array<std::atomic<u8>, 16> pattern{};
             std::atomic<float> tone{};
             bool enabled{};
-
+        public:
             explicit XOchip(AudioCores&);
+            bool isOn() const;
+
             void setPitch(u8);
             void loadPattern(u32);
             void render(s16*, s32);
@@ -159,6 +162,9 @@ public:
 
             bool enabled{};
             bool looping{};
+        public:
+            explicit MegaChip(AudioCores&);
+            bool isOn() const;
 
             explicit MegaChip(AudioCores&);
             void reset();
