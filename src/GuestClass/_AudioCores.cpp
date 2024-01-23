@@ -94,7 +94,7 @@ void VM_Guest::AudioCores::XOchip::loadPattern(u32 idx) {
 
 void VM_Guest::AudioCores::XOchip::render(s16* samples, s32 frames) {
     while (frames--) {
-        const auto step{ std::clamp<u8>(Audio.wavePhase * 128.0f, 0.0f, 127.0f) };
+        const auto step{ as<s32>(std::clamp(Audio.wavePhase * 128.0f, 0.0f, 127.0f)) };
         const auto mask{ 1 << (7 - (step & 7)) };
         *samples++ = pattern[step >> 3].load() & mask ? Audio.amplitude : -Audio.amplitude;
         Audio.wavePhase = std::fmod(Audio.wavePhase + tone.load(), 1.0f);
