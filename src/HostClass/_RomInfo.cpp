@@ -13,6 +13,7 @@
 VM_Host::FileInfo::FileInfo(VM_Host& ref) : Host(ref) {};
 
 void VM_Host::FileInfo::reset() {
+    Host.programLoaded = false;
     path = name = type = {};
     size = 0;
 }
@@ -44,4 +45,3 @@ bool VM_Host::FileInfo::verifyFile(const char* newPath) {
     size = ifs_length;
     return true;
 }
-

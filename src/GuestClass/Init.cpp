@@ -9,11 +9,11 @@
 #include "Guest.hpp"
 
 bool VM_Guest::setupMachine() {
-    if (Host.File.path.empty())
+    if (Host.File.path.empty()) {
         return false;
+    }
     if (!romTypeCheck()) {
         Host.File.reset();
-        Host.programLoaded = false;
         return false;
     }
 
