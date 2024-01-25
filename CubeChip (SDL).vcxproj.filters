@@ -72,6 +72,9 @@
     <ClCompile Include="src\Assistants\HexInput.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\GuestClass\_DisplayColors.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\InstructionSets\Interface.hpp">
