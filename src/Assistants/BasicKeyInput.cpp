@@ -12,15 +12,14 @@ BasicKeyInput& BasicKeyInput::create() {
 }
 
 void BasicKeyInput::updateKeyboardCopy() {
-    std::copy(
+    std::copy_n(
         SDL_GetKeyboardState(nullptr),
-        SDL_GetKeyboardState(nullptr) + SDL_NUM_SCANCODES,
+        SDL_NUM_SCANCODES,
         oldKeyboardState.begin()
     );
 }
 
 bool BasicKeyInput::isKeyHeld(const SDL_Scancode key, const bool prev) const noexcept {
-    if (!key) return false;
     if (prev) return oldKeyboardState[key];
     else return SDL_GetKeyboardState(nullptr)[key];
 }

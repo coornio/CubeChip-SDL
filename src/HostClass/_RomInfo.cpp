@@ -10,7 +10,9 @@
 /*  class  VM_Host::FileInfo                                         */
 /*------------------------------------------------------------------*/
 
-VM_Host::FileInfo::FileInfo(VM_Host& ref) : Host(ref) {};
+VM_Host::FileInfo::FileInfo(VM_Host& ref)
+    : Host(ref)
+{};
 
 void VM_Host::FileInfo::reset() {
     Host.programLoaded = false;

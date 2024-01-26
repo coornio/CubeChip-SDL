@@ -11,7 +11,9 @@
 /*  class  VM_Guest                                                 */
 /*------------------------------------------------------------------*/
 
-VM_Guest::VM_Guest(VM_Host& hostref) : Host(hostref) {}
+VM_Guest::VM_Guest(VM_Host& hostref)
+	: Host(hostref)
+{}
 
 void VM_Guest::cycle() {
 	if (!Program.ipf) return;
@@ -533,6 +535,12 @@ void VM_Guest::instructionLoop() {
 // _AudioCores.cpp
 
 /*------------------------------------------------------------------*/
+/*  class  VM_Guest::DisplayColors                                  */
+/*------------------------------------------------------------------*/
+
+// _DisplayColors.cpp
+
+/*------------------------------------------------------------------*/
 /*  struct  VM_Guest::TextureTraits                                 */
 /*------------------------------------------------------------------*/
 
@@ -547,16 +555,12 @@ void VM_Guest::TextureTraits::setFlags(const u8 bits) {
 }
 
 /*------------------------------------------------------------------*/
-/*  class  VM_Guest::DisplayColors                                  */
-/*------------------------------------------------------------------*/
-
-// _DisplayColors.cpp
-
-/*------------------------------------------------------------------*/
 /*  class  VM_Guest::Registers                                      */
 /*------------------------------------------------------------------*/
 
-VM_Guest::Registers::Registers(VM_Guest& parent) : vm(parent) {}
+VM_Guest::Registers::Registers(VM_Guest& parent)
+	: vm(parent)
+{}
 
 void VM_Guest::Registers::routineCall(const u32 addr) {
     stack[SP++ & 0xF] = vm.Program.counter;

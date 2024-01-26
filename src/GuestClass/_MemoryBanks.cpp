@@ -10,7 +10,9 @@
 /*  struct  VM_Guest::MemoryBanks                                   */
 /*------------------------------------------------------------------*/
 
-VM_Guest::MemoryBanks::MemoryBanks(VM_Guest& parent) : vm(parent) {}
+VM_Guest::MemoryBanks::MemoryBanks(VM_Guest& parent)
+    : vm(parent)
+{}
 
 void VM_Guest::MemoryBanks::changeViewportMask(const BrushType type) {
     switch (type) {
