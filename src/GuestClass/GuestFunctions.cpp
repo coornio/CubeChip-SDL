@@ -245,7 +245,7 @@ void VM_Guest::instructionLoop() {
 						else [[unlikely]]
 							Program.setInterrupt(Interrupt::ONCE);
 					} else {							// 5XY2 - store range of registers to memory *XOCHIP*
-						const auto dist{ abs(X - Y) + 1 };
+						const auto dist{ std::abs(X - Y) + 1 };
 						if (X < Y) for (auto Z{ 0 }; Z < dist; ++Z)
 							mrw(Reg.I + Z) = Reg.V[X + Z];
 						else       for (auto Z{ 0 }; Z < dist; ++Z)
@@ -259,7 +259,7 @@ void VM_Guest::instructionLoop() {
 						else [[unlikely]]
 							Program.setInterrupt(Interrupt::ONCE);
 					} else {							// 5XY3 - load range of registers from memory *XOCHIP*
-						const auto dist{ abs(X - Y) + 1 };
+						const auto dist{ std::abs(X - Y) + 1 };
 						if (X < Y) for (auto Z{ 0 }; Z < dist; ++Z)
 							Reg.V[X + Z] = mrw(Reg.I + Z);
 						else       for (auto Z{ 0 }; Z < dist; ++Z)
@@ -267,7 +267,7 @@ void VM_Guest::instructionLoop() {
 					}
 				} break;
 				case 0x4: {								// 5XY4 - load range of colors from memory *EXPERIMENTAL*
-					const auto dist{ abs(X - Y) + 1 };
+					const auto dist{ std::abs(X - Y) + 1 };
 					if (X < Y) for (auto Z{ 0 }; Z < dist; ++Z)
 						Color.setBit332(X + Z, mrw(Reg.I + Z));
 					else       for (auto Z{ 0 }; Z < dist; ++Z)
@@ -330,18 +330,18 @@ void VM_Guest::instructionLoop() {
 					Reg.V[0xF] = as<u8>(mul >> 8);
 				} break;
 				case 0xD: {								// 8XYD - set VX = VX / VY, VF = VX % VY *HWCHIP64*
-					if (!Reg.V[Y])
+					if (!Reg.V[Y]) {
 						Reg.V[0xF] = Reg.V[X] = 0;
-					else {
+					} else {
 						const auto remainder{ Reg.V[X] % Reg.V[Y] };
 						Reg.V[X]   = Reg.V[X] / Reg.V[Y];
 						Reg.V[0xF] = as<u8>(remainder);
 					}
 				} break;
 				case 0xF: {								// 8XYF - set VX = VY / VX, VF = VX % VY *HWCHIP64*
-					if (!Reg.V[X])
+					if (!Reg.V[X]) {
 						Reg.V[0xF] = 0;
-					else {
+					} else {
 						const auto remainder{ Reg.V[Y] % Reg.V[X] };
 						Reg.V[X]   = Reg.V[Y] / Reg.V[X];
 						Reg.V[0xF] = as<u8>(remainder);
