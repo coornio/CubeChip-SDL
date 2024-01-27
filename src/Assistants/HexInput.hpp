@@ -7,14 +7,15 @@
 #pragma once
 
 #include "BasicKeyInput.hpp"
+#include <cstdint>
 
 #define KEY(i) (SDL_SCANCODE_##i)
 
 class HexInput final {
     struct KeyInfo {
-        Uint32       idx; // key index on chip8 pad
-        SDL_Scancode key; // main keyboard equivalent
-        SDL_Scancode alt; // alternative option
+        std::uint32_t idx; // key index on chip8 pad
+        SDL_Scancode  key; // main keyboard equivalent
+        SDL_Scancode  alt; // alternative option
     };
     std::vector<KeyInfo> hexPad;
 
@@ -27,9 +28,9 @@ class HexInput final {
         {0xA, KEY(Z), _}, {0x0, KEY(X), _}, {0xB, KEY(C), _}, {0xF, KEY(V), _},
     };
 
-    Uint32 keysCurr{}; // bitfield of key states in current frame
-    Uint32 keysPrev{}; // bitfield of key states in previous frame
-    Uint32 keysLock{}; // bitfield of keys excluded from input checks
+    std::uint32_t keysCurr{}; // bitfield of key states in current frame
+    std::uint32_t keysPrev{}; // bitfield of key states in previous frame
+    std::uint32_t keysLock{}; // bitfield of keys excluded from input checks
 
 public:
     explicit HexInput();
@@ -37,8 +38,8 @@ public:
     void reset();
     void refresh();
 
-    void setup(const std::vector<KeyInfo>&);
-    bool keyPressed(Uint8&);
-    bool keyPressed(Uint32, Uint32) const;
-    Uint32 currKeys(Uint32) const;
+    void setup(const std::vector<KeyInfo>& bindings);
+    bool keyPressed(std::uint8_t& vregister);
+    bool keyPressed(std::size_t index, std::size_t offset) const;
+    std::uint32_t currKeys(std::size_t index) const;
 };
