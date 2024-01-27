@@ -22,7 +22,7 @@
     <ClCompile Include="src\Assistants\BasicKeyInput.cpp" />
     <ClCompile Include="src\Assistants\FrameLimiter.cpp" />
     <ClCompile Include="src\Assistants\HexInput.cpp" />
-    <ClCompile Include="src\Assistants\SHA1_digest.cpp" />
+    <ClCompile Include="src\Assistants\SHA1.cpp" />
     <ClCompile Include="src\CubeChip.cpp" />
     <ClCompile Include="src\GuestClass\_DisplayColors.cpp" />
     <ClCompile Include="src\GuestClass\_MemoryBanks.cpp" />
@@ -44,7 +44,7 @@
     <ClInclude Include="src\Assistants\BasicKeyInput.hpp" />
     <ClInclude Include="src\Assistants\FrameLimiter.hpp" />
     <ClInclude Include="src\Assistants\HexInput.hpp" />
-    <ClInclude Include="src\Assistants\SHA1_digest.hpp" />
+    <ClInclude Include="src\Assistants\SHA1.hpp" />
     <ClInclude Include="src\Assistants\Well512.hpp" />
     <ClInclude Include="src\GuestClass\Guest.hpp" />
     <ClInclude Include="src\HostClass\Host.hpp" />
