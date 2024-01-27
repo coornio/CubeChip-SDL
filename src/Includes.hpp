@@ -27,7 +27,6 @@
 #include <string>
 #include <vector>
 #include <bitset>
-
 #include <cstdint>
 
 using u64 = std::uint64_t;
@@ -77,3 +76,4 @@ class VM_Guest;
 #include "Assistants/BasicKeyInput.hpp"
 #include "Assistants/HexInput.hpp"
 #include "Assistants/Well512.hpp"
+#include "Assistants/SHA1.hpp"

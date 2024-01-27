@@ -66,7 +66,7 @@
     <ClCompile Include="src\Assistants\FrameLimiter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Assistants\SHA1_digest.cpp">
+    <ClCompile Include="src\Assistants\SHA1.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Assistants\HexInput.cpp">
@@ -101,7 +101,7 @@
     <ClInclude Include="src\Assistants\Well512.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Assistants\SHA1_digest.hpp">
+    <ClInclude Include="src\Assistants\SHA1.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
