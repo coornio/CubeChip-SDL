@@ -33,7 +33,6 @@ inline static void reset(
     transforms = 0;
 }
 
-
 inline static std::uint32_t blk(
     const std::uint32_t block[BLOCK_INTS],
     const std::size_t   i
