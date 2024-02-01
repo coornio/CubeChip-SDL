@@ -34,7 +34,7 @@ void HexInput::setup(const std::vector<KeyInfo>& bindings) {
 bool HexInput::keyPressed(std::uint8_t& vregister) {
     if (!hexPad.size()) return false;
 
-    const auto mask{ (keysCurr & ~keysPrev) & ~keysLock };
+    const auto mask{ keysCurr & ~keysPrev & ~keysLock };
     if (mask) {
         vregister = static_cast<std::uint8_t>
             (std::countr_zero(mask & ~(mask - 1)));
@@ -45,9 +45,9 @@ bool HexInput::keyPressed(std::uint8_t& vregister) {
 }
 
 bool HexInput::keyPressed(const std::size_t index, const std::size_t offset) const {
-    return (keysCurr & ~keysLock) & (1 << ((index & 0xF) + offset));
+    return keysCurr & ~keysLock & 1 << ((index & 0xF) + offset);
 }
 
 std::uint32_t HexInput::currKeys(const std::size_t index) const {
-    return (keysLock >> index) & 0x1;
+    return keysLock >> index & 0x1;
 }
