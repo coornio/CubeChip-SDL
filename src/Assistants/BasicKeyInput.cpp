@@ -6,33 +6,72 @@
 
 #include "BasicKeyInput.hpp"
 
+/*------------------------------------------------------------------*/
+/*  class  BasicKeyInput                                            */
+/*------------------------------------------------------------------*/
+
 BasicKeyInput& BasicKeyInput::create() {
     if (!_self) _self = std::make_unique<BasicKeyInput>();
     return *_self.get();
 }
 
-void BasicKeyInput::updateKeyboardCopy() {
+std::unique_ptr<BasicKeyInput> BasicKeyInput::_self = nullptr;
+std::vector<Uint8> BasicKeyInput::oldState(SDL_NUM_SCANCODES);
+BasicKeyInput& bic::kb{ BasicKeyInput::create() };
+
+void BasicKeyInput::updateCopy() {
     std::copy_n(
         SDL_GetKeyboardState(nullptr),
         SDL_NUM_SCANCODES,
-        oldKeyboardState.begin()
+        oldState.begin()
     );
 }
 
-bool BasicKeyInput::isKeyHeld(const SDL_Scancode key, const bool prev) const noexcept {
-    if (prev) return oldKeyboardState[key];
-    else return SDL_GetKeyboardState(nullptr)[key];
+bool BasicKeyInput::isPrevHeld(const SDL_Scancode key) const noexcept {
+    return oldState[key];
 }
 
-bool BasicKeyInput::isKeyPressed(const SDL_Scancode key) const noexcept {
-    return !isKeyHeld(key, true) && isKeyHeld(key);
+bool BasicKeyInput::isHeld(const SDL_Scancode key) const noexcept {
+    return SDL_GetKeyboardState(nullptr)[key];
 }
 
-bool BasicKeyInput::isKeyReleased(const SDL_Scancode key) const noexcept {
-    return isKeyHeld(key, true) && !isKeyHeld(key);
+bool BasicKeyInput::isPressed(const SDL_Scancode key) const noexcept {
+    return !isPrevHeld(key) && isHeld(key);
 }
 
-std::unique_ptr<BasicKeyInput> BasicKeyInput::_self = nullptr;
-std::vector<Uint8> BasicKeyInput::oldKeyboardState(SDL_NUM_SCANCODES);
+bool BasicKeyInput::isReleased(const SDL_Scancode key) const noexcept {
+    return isPrevHeld(key) && !isHeld(key);
+}
 
-BasicKeyInput& bic::kb{ BasicKeyInput::create() };
+/*------------------------------------------------------------------*/
+/*  class  BasicMouseInput                                          */
+/*------------------------------------------------------------------*/
+
+BasicMouseInput& BasicMouseInput::create() {
+    if (!_self) _self = std::make_unique<BasicMouseInput>();
+    return *_self.get();
+}
+
+std::unique_ptr<BasicMouseInput> BasicMouseInput::_self = nullptr;
+Uint32 BasicMouseInput::oldState{};
+BasicMouseInput& bic::mb{ BasicMouseInput::create() };
+
+void BasicMouseInput::updateCopy() {
+    oldState = SDL_GetMouseState(nullptr, nullptr);
+}
+
+bool BasicMouseInput::isPrevHeld(const BIC_Button key) const noexcept {
+    return oldState & key;
+}
+
+bool BasicMouseInput::isHeld(const BIC_Button key) const noexcept {
+    return SDL_GetMouseState(nullptr, nullptr) & key;
+}
+
+bool BasicMouseInput::isPressed(const BIC_Button key) const noexcept {
+    return !isPrevHeld(key) && isHeld(key);
+}
+
+bool BasicMouseInput::isReleased(const BIC_Button key) const noexcept {
+    return isPrevHeld(key) && !isHeld(key);
+}

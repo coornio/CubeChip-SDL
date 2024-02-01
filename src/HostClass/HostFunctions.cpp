@@ -120,16 +120,16 @@ void VM_Host::runMachine(VM_Guest& vm) {
         } else if (!Frame(SLEEP)) continue;
 
         using namespace bic;
-        if (kb.isKeyPressed(KEY(RSHIFT))) {
+        if (kb.isPressed(KEY(RSHIFT))) {
             benchmarking = !benchmarking;
         }
-        if (kb.isKeyPressed(KEY(UP))) {
+        if (kb.isPressed(KEY(UP))) {
             Audio.setVolume(Audio.volume + 15);
         }
-        if (kb.isKeyPressed(KEY(DOWN))) {
+        if (kb.isPressed(KEY(DOWN))) {
             Audio.setVolume(Audio.volume - 15);
         }
-        kb.updateKeyboardCopy();
+        kb.updateCopy();
         vm.cycle();
     }
 exit:

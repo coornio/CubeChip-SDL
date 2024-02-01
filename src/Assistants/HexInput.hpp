@@ -9,8 +9,6 @@
 #include "BasicKeyInput.hpp"
 #include <cstdint>
 
-#define KEY(i) (SDL_SCANCODE_##i)
-
 class HexInput final {
     struct KeyInfo {
         std::uint32_t idx; // key index on chip8 pad

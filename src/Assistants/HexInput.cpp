@@ -21,7 +21,7 @@ void HexInput::refresh() {
     keysCurr = 0;
 
     for (const KeyInfo& mapping : hexPad)
-        if (bic::kb.isKeyHeld(mapping.key, mapping.alt))
+        if (bic::kb.areAnyHeld(mapping.key, mapping.alt))
             keysCurr |= 1 << mapping.idx;
     keysLock &= ~(keysPrev ^ keysCurr);
 }
