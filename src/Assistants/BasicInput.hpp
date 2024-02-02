@@ -24,66 +24,76 @@ enum BIC_Button {
     BIC_MOUSE_X2     = SDL_BUTTON_X2MASK,
 };
 
-class BasicKeyInput final {
-    static std::unique_ptr<BasicKeyInput> _self;
-    static std::vector<Uint8> oldState;
+/*------------------------------------------------------------------*/
+/*  singleton class  Keyboard                                       */
+/*------------------------------------------------------------------*/
 
-    BasicKeyInput() {};
-    BasicKeyInput(const BasicKeyInput&) = delete;
-    BasicKeyInput& operator=(const BasicKeyInput&) = delete;
-    friend std::unique_ptr<BasicKeyInput> std::make_unique<BasicKeyInput>();
+class BasicKeyboard final {
+    static std::unique_ptr<BasicKeyboard> _self;
+    std::vector<Uint8> oldState;
+
+    BasicKeyboard() : oldState(SDL_NUM_SCANCODES) {};
+    BasicKeyboard(const BasicKeyboard&) = delete;
+    BasicKeyboard& operator=(const BasicKeyboard&) = delete;
+    friend std::unique_ptr<BasicKeyboard> std::make_unique<BasicKeyboard>();
 
 public:
-    static BasicKeyInput& create();
-    static void updateCopy();
+    static BasicKeyboard& create();
 
+    void updateCopy();
     bool isPrevHeld(SDL_Scancode) const noexcept;
     bool isHeld(SDL_Scancode)     const noexcept;
     bool isPressed(SDL_Scancode)  const noexcept;
     bool isReleased(SDL_Scancode) const noexcept;
 
     template <std::same_as<SDL_Scancode>... S>
-        requires (sizeof...(S) >= 2)
+        requires (sizeof...(S) >= 1)
     bool areAllHeld(const S... code) const noexcept {
         const auto* const state{ SDL_GetKeyboardState(nullptr) };
-        return (state[code] && ...);
+        return (state[code] && ...) && true;
     }
 
     template <std::same_as<SDL_Scancode>... S>
-        requires (sizeof...(S) >= 2)
+        requires (sizeof...(S) >= 1)
     bool areAnyHeld(const S... code) const noexcept {
         const auto* const state{ SDL_GetKeyboardState(nullptr) };
         return (state[code] || ...);
     }
 };
 
-class BasicMouseInput final {
-    static std::unique_ptr<BasicMouseInput> _self;
-    static Uint32 oldState;
+/*------------------------------------------------------------------*/
+/*  singleton class  Mouse                                          */
+/*------------------------------------------------------------------*/
 
-    BasicMouseInput() {};
-    BasicMouseInput(const BasicMouseInput&) = delete;
-    BasicMouseInput& operator=(const BasicMouseInput&) = delete;
-    friend std::unique_ptr<BasicMouseInput> std::make_unique<BasicMouseInput>();
+class BasicMouse final {
+    static std::unique_ptr<BasicMouse> _self;
+    Uint32 curState{}, oldState{};
+    Sint32 posX{}, posY{};
+    Sint32 relX{}, relY{};
+
+    BasicMouse() {};
+    BasicMouse(const BasicMouse&) = delete;
+    BasicMouse& operator=(const BasicMouse&) = delete;
+    friend std::unique_ptr<BasicMouse> std::make_unique<BasicMouse>();
 
 public:
-    static BasicMouseInput& create();
-    static void updateCopy();
+    static BasicMouse& create();
 
+    void updateCopy();
     bool isPrevHeld(BIC_Button) const noexcept;
     bool isHeld(BIC_Button)     const noexcept;
     bool isPressed(BIC_Button)  const noexcept;
     bool isReleased(BIC_Button) const noexcept;
 
     template <std::same_as<BIC_Button>... S>
-        requires (sizeof...(S) >= 2)
+        requires (sizeof...(S) >= 1)
     bool areAllHeld(const S... code) const noexcept {
         const auto state{ SDL_GetMouseState(nullptr, nullptr) };
-        return ((state & code) && ...);
+        return ((state & code) && ...) && true;
     }
 
     template <std::same_as<BIC_Button>... S>
-        requires (sizeof...(S) >= 2)
+        requires (sizeof...(S) >= 1)
     bool areAnyHeld(const S... code) const noexcept {
         const auto state{ SDL_GetMouseState(nullptr, nullptr) };
         return ((state & code) || ...);
@@ -91,6 +101,6 @@ public:
 };
 
 namespace bic { // basic input class
-    extern BasicKeyInput& kb;
-    extern BasicMouseInput& mb;
+    extern BasicKeyboard& kb;
+    extern BasicMouse&    mb;
 }

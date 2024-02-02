@@ -73,7 +73,7 @@ class VM_Host;
 class VM_Guest;
 
 #include "Assistants/FrameLimiter.hpp"
-#include "Assistants/BasicKeyInput.hpp"
+#include "Assistants/BasicInput.hpp"
 #include "Assistants/HexInput.hpp"
 #include "Assistants/Well512.hpp"
 #include "Assistants/SHA1.hpp"

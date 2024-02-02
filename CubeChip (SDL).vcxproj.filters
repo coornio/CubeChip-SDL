@@ -54,7 +54,7 @@
     <ClCompile Include="src\InstructionSets\_ModernXO.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Assistants\BasicKeyInput.cpp">
+    <ClCompile Include="src\Assistants\BasicInput.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\GuestClass\_ProgramControl.cpp">
@@ -86,7 +86,7 @@
     <ClInclude Include="src\Assistants\HexInput.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Assistants\BasicKeyInput.hpp">
+    <ClInclude Include="src\Assistants\BasicInput.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\GuestClass\Guest.hpp">
