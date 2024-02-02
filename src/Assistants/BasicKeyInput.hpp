@@ -11,9 +11,7 @@
 #include <SDL_mouse.h>
 
 #include <vector>
-#include <ranges>
 #include <memory>
-#include <algorithm>
 
 #define KEY(i) SDL_SCANCODE_##i
 #define BTN(i) BIC_MOUSE_##i
@@ -26,10 +24,6 @@ enum BIC_Button {
     BIC_MOUSE_X2     = SDL_BUTTON_X2MASK,
 };
 
-template <typename R, typename T>
-concept RangeOf = std::ranges::range<R>&&
-std::convertible_to<std::ranges::range_value_t<R>, T>;
-
 class BasicKeyInput final {
     static std::unique_ptr<BasicKeyInput> _self;
     static std::vector<Uint8> oldState;
@@ -38,7 +32,6 @@ class BasicKeyInput final {
     BasicKeyInput(const BasicKeyInput&) = delete;
     BasicKeyInput& operator=(const BasicKeyInput&) = delete;
     friend std::unique_ptr<BasicKeyInput> std::make_unique<BasicKeyInput>();
-    
 
 public:
     static BasicKeyInput& create();
@@ -49,30 +42,18 @@ public:
     bool isPressed(SDL_Scancode)  const noexcept;
     bool isReleased(SDL_Scancode) const noexcept;
 
-    template <RangeOf<SDL_Scancode> R>
-    bool areAllHeld(const R& keys) const noexcept {
+    template <std::same_as<SDL_Scancode>... S>
+        requires (sizeof...(S) >= 2)
+    bool areAllHeld(S... code) const noexcept {
         const auto* const state{ SDL_GetKeyboardState(nullptr) };
-        return std::ranges::all_of(keys, [state](const SDL_Scancode code) {
-            return code && state[code];
-        });
+        return (state[code] && ...);
     }
 
     template <std::same_as<SDL_Scancode>... S>
-    bool areAllHeld(S... keys) const noexcept {
-        return areAllHeld(std::array{ keys... });
-    }
-
-    template <RangeOf<SDL_Scancode> R>
-    bool areAnyHeld(const R& keys) const noexcept {
+        requires (sizeof...(S) >= 2)
+    bool areAnyHeld(S... code) const noexcept {
         const auto* const state{ SDL_GetKeyboardState(nullptr) };
-        return std::ranges::any_of(keys, [state](const SDL_Scancode code) {
-            return code && state[code];
-        });
-    }
-
-    template <std::same_as<SDL_Scancode>... S>
-    bool areAnyHeld(S... keys) const noexcept {
-        return areAnyHeld(std::array{ keys... });
+        return (state[code] || ...);
     }
 };
 
@@ -94,30 +75,18 @@ public:
     bool isPressed(BIC_Button)  const noexcept;
     bool isReleased(BIC_Button) const noexcept;
 
-    template <RangeOf<BIC_Button> R>
-    bool areAllHeld(const R& keys) const noexcept {
+    template <std::same_as<BIC_Button>... S>
+        requires (sizeof...(S) >= 2)
+    bool areAllHeld(S... code) const noexcept {
         const auto state{ SDL_GetMouseState(nullptr, nullptr) };
-        return std::ranges::all_of(keys, [state](const BIC_Button code) {
-            return state & code;
-        });
+        return ((state & code) && ...);
     }
 
     template <std::same_as<BIC_Button>... S>
-    bool areAllHeld(S... keys) const noexcept {
-        return areAllHeld(std::array{ keys... });
-    }
-
-    template <RangeOf<BIC_Button> R>
-    bool areAnyHeld(const R& keys) const noexcept {
+        requires (sizeof...(S) >= 2)
+    bool areAnyHeld(S... code) const noexcept {
         const auto state{ SDL_GetMouseState(nullptr, nullptr) };
-        return std::ranges::any_of(keys, [state](const BIC_Button code) {
-            return state & code;
-        });
-    }
-
-    template <std::same_as<BIC_Button>... S>
-    bool areAnyHeld(S... keys) const noexcept {
-        return areAnyHeld(std::array{ keys... });
+        return ((state & code) || ...);
     }
 };
 
