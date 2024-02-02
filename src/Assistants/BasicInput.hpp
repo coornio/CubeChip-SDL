@@ -85,6 +85,11 @@ public:
     bool isPressed(BIC_Button)  const noexcept;
     bool isReleased(BIC_Button) const noexcept;
 
+    Sint32 getRelX() const noexcept;
+    Sint32 getRelY() const noexcept;
+    Sint32 getPosX() const noexcept;
+    Sint32 getPosY() const noexcept;
+
     template <std::same_as<BIC_Button>... S>
         requires (sizeof...(S) >= 1)
     bool areAllHeld(const S... code) const noexcept {
