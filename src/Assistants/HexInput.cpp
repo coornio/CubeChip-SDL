@@ -4,40 +4,48 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include "BasicKeyInput.hpp"
 #include "HexInput.hpp"
+#include <bit>
 
 HexInput::HexInput()
-    : hexPad(32)
+    : currentBinds(32)
+    , defaultBinds{
+        {0x1, KEY(1), _}, {0x2, KEY(2), _}, {0x3, KEY(3), _}, {0xC, KEY(4), _},
+        {0x4, KEY(Q), _}, {0x5, KEY(W), _}, {0x6, KEY(E), _}, {0xD, KEY(R), _},
+        {0x7, KEY(A), _}, {0x8, KEY(S), _}, {0x9, KEY(D), _}, {0xE, KEY(F), _},
+        {0xA, KEY(Z), _}, {0x0, KEY(X), _}, {0xB, KEY(C), _}, {0xF, KEY(V), _},
+    }
 {}
 
 void HexInput::reset() {
-    setup(defaultKeys);
+    setup(defaultBinds);
 }
 
 void HexInput::refresh() {
-    if (!hexPad.size()) return;
+    if (!currentBinds.size()) return;
 
     keysPrev = keysCurr;
-    keysCurr = 0;
+    keysCurr = 0u;
 
-    for (const KeyInfo& mapping : hexPad)
+    for (const KeyInfo& mapping : currentBinds)
         if (bic::kb.areAnyHeld(mapping.key, mapping.alt))
-            keysCurr |= 1 << mapping.idx;
+            keysCurr |= 1u << mapping.idx;
     keysLock &= ~(keysPrev ^ keysCurr);
 }
 
 void HexInput::setup(const std::vector<KeyInfo>& bindings) {
-    (hexPad = bindings).resize(bindings.size());
-    keysPrev = keysCurr = keysLock = 0;
+    (currentBinds = bindings).resize(bindings.size());
+    keysPrev = keysCurr = keysLock = 0u;
 }
 
-bool HexInput::keyPressed(std::uint8_t& vregister) {
-    if (!hexPad.size()) return false;
+bool HexInput::keyPressed(Uint8& vregister) {
+    if (!currentBinds.size()) return false;
 
     const auto mask{ keysCurr & ~keysPrev & ~keysLock };
     if (mask) {
-        vregister = static_cast<std::uint8_t>
-            (std::countr_zero(mask & ~(mask - 1)));
+        vregister = static_cast<Uint8>
+            (std::countr_zero(mask & ~(mask - 1u)));
         keysLock |= mask;
         return true;
     }
@@ -48,6 +56,6 @@ bool HexInput::keyPressed(const std::size_t index, const std::size_t offset) con
     return keysCurr & ~keysLock & 1 << ((index & 0xF) + offset);
 }
 
-std::uint32_t HexInput::currKeys(const std::size_t index) const {
+Uint32 HexInput::currKeys(const std::size_t index) const {
     return keysLock >> index & 0x1;
 }
