@@ -54,9 +54,10 @@ void VM_Host::addMessage(const std::string_view msg, const bool header, const u3
 }
 
 void VM_Host::runMachine(VM_Guest& vm) {
-    SDL_Event event{};
-
+    SDL_Event    event;
     FrameLimiter Frame(vm.Program.framerate);
+
+    using namespace bic;
 
     Audio.handler = [&](s16* buffer, const s32 frames) {
         vm.Audio.renderAudio(buffer, frames);
@@ -69,16 +70,6 @@ void VM_Host::runMachine(VM_Guest& vm) {
                 case SDL_QUIT: {
                     programLoaded = true;
                     goto exit;
-                } break;
-                case SDL_KEYDOWN: {
-                    switch (event.key.keysym.scancode) {
-                        case SDL_SCANCODE_ESCAPE:
-                            programLoaded = true;
-                            goto exit;
-                        case SDL_SCANCODE_BACKSPACE:
-                            programLoaded = false;
-                            goto exit;
-                    }
                 } break;
                 case SDL_DROPFILE: {
                     const bool dropSuccess{ File.verifyFile(event.drop.file) };
@@ -119,7 +110,14 @@ void VM_Host::runMachine(VM_Guest& vm) {
             std::cout << "\ntime since last frame: " << Frame.elapsed();
         } else if (!Frame(SLEEP)) continue;
 
-        using namespace bic;
+        if (kb.isPressed(KEY(BACKSPACE))) {
+            programLoaded = false;
+            goto exit;
+        }
+        if (kb.isPressed(KEY(ESCAPE))) {
+            programLoaded = true;
+            goto exit;
+        }
         if (kb.isPressed(KEY(RSHIFT))) {
             benchmarking = !benchmarking;
         }
@@ -133,6 +131,7 @@ void VM_Host::runMachine(VM_Guest& vm) {
         vm.cycle();
     }
 exit:
+    kb.updateCopy();
     SDL_PauseAudioDevice(Audio.device, 1);
 }
 
