@@ -44,14 +44,14 @@ public:
 
     template <std::same_as<SDL_Scancode>... S>
         requires (sizeof...(S) >= 2)
-    bool areAllHeld(S... code) const noexcept {
+    bool areAllHeld(const S... code) const noexcept {
         const auto* const state{ SDL_GetKeyboardState(nullptr) };
         return (state[code] && ...);
     }
 
     template <std::same_as<SDL_Scancode>... S>
         requires (sizeof...(S) >= 2)
-    bool areAnyHeld(S... code) const noexcept {
+    bool areAnyHeld(const S... code) const noexcept {
         const auto* const state{ SDL_GetKeyboardState(nullptr) };
         return (state[code] || ...);
     }
@@ -77,14 +77,14 @@ public:
 
     template <std::same_as<BIC_Button>... S>
         requires (sizeof...(S) >= 2)
-    bool areAllHeld(S... code) const noexcept {
+    bool areAllHeld(const S... code) const noexcept {
         const auto state{ SDL_GetMouseState(nullptr, nullptr) };
         return ((state & code) && ...);
     }
 
     template <std::same_as<BIC_Button>... S>
         requires (sizeof...(S) >= 2)
-    bool areAnyHeld(S... code) const noexcept {
+    bool areAnyHeld(const S... code) const noexcept {
         const auto state{ SDL_GetMouseState(nullptr, nullptr) };
         return ((state & code) || ...);
     }
