@@ -53,9 +53,9 @@ bool HexInput::keyPressed(Uint8& vregister) {
 }
 
 bool HexInput::keyPressed(const std::size_t index, const std::size_t offset) const {
-    return keysCurr & ~keysLock & 1 << ((index & 0xF) + offset);
+    return keysCurr & ~keysLock & 1u << ((index & 0xFu) + offset);
 }
 
 Uint32 HexInput::currKeys(const std::size_t index) const {
-    return keysLock >> index & 0x1;
+    return keysLock >> index & 0x1u;
 }
