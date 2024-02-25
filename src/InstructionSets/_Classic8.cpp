@@ -81,6 +81,7 @@ void FunctionsForClassic8::drawSprite(u8 VX, u8 VY, s32 N, u32 I) {
 
 	VX &= vm.Plane.Wb;
 	VY &= vm.Plane.Hb;
+	vm.Reg.V[0xF] = 0;
 
 	const bool wide{ N == 0 };
 	N = VY + (wide ? 16 : N);

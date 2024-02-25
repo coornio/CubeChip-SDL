@@ -102,11 +102,16 @@ void FunctionsForModernXO::drawByte(
 }
 
 void FunctionsForModernXO::drawSprite(u8 VX, u8 VY, s32 N, u32 I) {
-	if (!vm.Plane.selected) return;
+	if (!vm.Plane.selected) {
+		vm.Reg.V[0xF] = 0;
+		return;
+	}
+
 	vm.State.push_display = true;
 
 	VX &= vm.Plane.Wb;
 	VY &= vm.Plane.Hb;
+	vm.Reg.V[0xF] = 0;
 
 	const bool wide{ N == 0 };
 	N = VY + (wide ? 16 : N);

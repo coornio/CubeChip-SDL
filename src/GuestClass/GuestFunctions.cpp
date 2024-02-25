@@ -377,7 +377,6 @@ void VM_Guest::instructionLoop() {
 				Reg.V[X] = Wrand() & LO;
 				break;
 			case 0xD:									// DXYN - draw N sprite rows at VX and VY
-				Reg.V[0xF] = 0;
 				if (Quirk.waitVblank) [[unlikely]]
 					Program.setInterrupt(Interrupt::ONCE);
 				currFncSet->drawSprite(Reg.V[X], Reg.V[Y], N, Reg.I);

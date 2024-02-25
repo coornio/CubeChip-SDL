@@ -119,6 +119,8 @@ u32 FunctionsForGigachip::applyBlend(float (*blend)(const float, const float)) c
 }
 
 void FunctionsForGigachip::drawSprite(u8 VX, u8 VY, const s32 N, u32 I) {
+	vm.Reg.V[0xF] = 0;
+	
 	const auto oW{ vm.Trait.W }; auto tW{ oW };
 	const auto oH{ vm.Trait.H }; auto tH{ oH };
 
@@ -164,7 +166,6 @@ void FunctionsForGigachip::drawSprite(u8 VX, u8 VY, const s32 N, u32 I) {
 			if (vm.Trait.nodraw) continue;
 
 			colorDst = blendPixel(vm.Mem.palette[srcIndex], colorDst);
-			//blendPixel(vm.Mem.palette[srcIndex], colorDst);
 		}
 		VX -= as<u8>(vm.Trait.W);
 	}

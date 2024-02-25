@@ -96,6 +96,8 @@ u32 FunctionsForMegachip::applyBlend(float (*blend)(const float, const float)) c
 }
 
 void FunctionsForMegachip::drawSprite(u8 VX, u8 VY, const s32 N, u32 I) {
+	vm.Reg.V[0xF] = 0;
+
 	if (I < 0xF0) [[unlikely]] { // font sprite rendering
 		for (auto H{ 0 }; H < N; ++H, ++VY, ++I) {
 			if (VY >= vm.Plane.H) [[unlikely]] continue;

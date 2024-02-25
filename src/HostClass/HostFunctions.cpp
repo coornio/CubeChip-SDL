@@ -103,11 +103,11 @@ void VM_Host::runMachine(VM_Guest& vm) {
                 << std::endl;
 
             if (!Frame.paced())
-                std::cout << "cannot keep up!!";
+                std::cout << "cannot keep up!!" << std::endl;
             else
-                std::cout << "keeping up pace.";
+                std::cout << "keeping up pace." << std::endl;
 
-            std::cout << "\ntime since last frame: " << Frame.elapsed();
+            std::cout << "time since last frame: " << Frame.elapsed() << std::endl;
         } else if (!Frame(SLEEP)) continue;
 
         if (kb.isPressed(KEY(BACKSPACE))) {
@@ -127,6 +127,7 @@ void VM_Host::runMachine(VM_Guest& vm) {
         if (kb.isPressed(KEY(DOWN))) {
             Audio.setVolume(Audio.volume - 15);
         }
+        mb.updateCopy();
         kb.updateCopy();
         vm.cycle();
     }
