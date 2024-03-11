@@ -11,30 +11,38 @@
 #include <thread>
 #include <algorithm>
 
-enum : bool { SPINLOCK, SLEEP };
-
 class FrameLimiter final {
     using chrono = std::chrono::steady_clock::time_point;
     using millis = std::chrono::milliseconds;
     using uint64 = unsigned long long;
 
-    bool   initTimeCheck{}; // updates timestamp on first check only
-    bool   skipFirstPass{}; // unconditional valid frame on first check
-    bool   skipLostFrame{}; // timeOvershoot will modulo with timeFrequency
-    bool   lastFrameLost{}; // indicator of missed frame when using skipLostFrame
+    bool   initTimeCheck{}; // forces timestamp update on first check only
+    bool   skipFirstPass{}; // forces valid frame return on first check only
+    bool   skipLostFrame{}; // forces frameskip if timeOvershoot > timeFrequency
+    bool   lastFrameLost{}; // missed frame indicator when frameskip is enabled
 
-    double timeFrequency{}; // time (ms) per unit Hertz
-    double timeOvershoot{}; // time remainder (ms) after last check
-    double timeVariation{}; // time difference between frames
-    chrono timePastFrame{}; // timestamp of the last frame check
-    uint64 validFrameCnt{}; // counts total successful frame checks
+    double timeFrequency{}; // holds time (ms) per unit Hertz
+    double timeOvershoot{}; // holds time remainder (ms) from last successful check
+    double timeVariation{}; // holds time difference between last check and now
+    chrono timePastFrame{}; // holds timestamp of the last frame's check
+    uint64 validFrameCnt{}; // counter of successful frame checks performed
 
     bool isValidFrame();
 
 public:
-    FrameLimiter(double = 60.0, bool = true, bool = false);
-    void setFreq(double, bool, bool);
-    bool operator()(bool = SPINLOCK);
+    explicit FrameLimiter(
+        const double framerate = 60.0, // 0.5 ... 1000 range
+        const bool   firstpass = true, // skipFirstPass flag
+        const bool   lostframe = false // skipLostFrame flag
+    );
+    void setFreq(
+        const double framerate, // 0.5 ... 1000 range
+        const bool   firstpass, // skipFirstPass flag
+        const bool   lostframe  // skipLostFrame flag
+    );
+
+    enum : bool { SPINLOCK, SLEEP };
+    bool operator()(const bool mode = SPINLOCK);
 
     uint64 count()   const { return validFrameCnt; }
     double elapsed() const { return timeVariation; }

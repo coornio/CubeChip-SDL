@@ -24,10 +24,10 @@ void FrameLimiter::setFreq(
     skipLostFrame = lostframe;
 }
 
-bool FrameLimiter::operator()(const bool state) {
+bool FrameLimiter::operator()(const bool mode) {
     if (isValidFrame()) return true;
 
-    if (state == SLEEP && remains() >= 2.0)
+    if (mode == SLEEP && remains() >= 2.0)
         std::this_thread::sleep_for(millis(1));
     return false;
 }

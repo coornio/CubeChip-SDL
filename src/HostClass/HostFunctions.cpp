@@ -96,7 +96,7 @@ void VM_Host::runMachine(VM_Guest& vm) {
         }
 
         if (benchmarking) {
-            if (!Frame(SPINLOCK)) continue;
+            if (!Frame(FrameLimiter::SPINLOCK)) continue;
             std::cout << "\33[1;1H" << (cycles++ / 60.0f) << std::endl;
             std::cout << "cycles: " << cycles
                 << "\nipf: " << vm.Program.ipf
@@ -108,7 +108,7 @@ void VM_Host::runMachine(VM_Guest& vm) {
                 std::cout << "keeping up pace." << std::endl;
 
             std::cout << "time since last frame: " << Frame.elapsed() << std::endl;
-        } else if (!Frame(SLEEP)) continue;
+        } else if (!Frame(FrameLimiter::SLEEP)) continue;
 
         if (kb.isPressed(KEY(BACKSPACE))) {
             programLoaded = false;
