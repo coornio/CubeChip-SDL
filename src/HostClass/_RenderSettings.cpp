@@ -94,6 +94,8 @@ void VM_Host::RenderSettings::present(const bool resize) {
     SDL_RenderPresent(renderer);
 }
 void VM_Host::RenderSettings::setTexture(const s16 length, const s16 width, const float ratio) {
+    if (texture) SDL_DestroyTexture(texture);
+    
     pitch = width * 4;
     aspect = ratio;
 
