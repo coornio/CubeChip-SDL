@@ -10,7 +10,7 @@
 /*  class  FncSetInterface -> FunctionsForLegacySC                  */
 /*------------------------------------------------------------------*/
 
-void FunctionsForLegacySC::scrollUP(const s32 N) {
+void FunctionsForLegacySC::scrollUP(const usz N) {
 	vm.State.push_display = true;
 	auto& display{ vm.Mem.display };
 	const auto N2{ vm.Plane.H - N };
@@ -19,7 +19,7 @@ void FunctionsForLegacySC::scrollUP(const s32 N) {
 	for (auto X{ 0 }; X < vm.Plane.X; ++X)
 		display[H][X] = (H >= N2) ? 0 : display[H + N][X];
 };
-void FunctionsForLegacySC::scrollDN(const s32 N) {
+void FunctionsForLegacySC::scrollDN(const usz N) {
 	vm.State.push_display = true;
 	auto& display{ vm.Mem.display };
 
@@ -27,7 +27,7 @@ void FunctionsForLegacySC::scrollDN(const s32 N) {
 	for (auto X{ 0 }; X < vm.Plane.X; ++X)
 		display[H][X] = (H < N) ? 0 : display[H - N][X];
 };
-void FunctionsForLegacySC::scrollLT(const s32) {
+void FunctionsForLegacySC::scrollLT(const usz) {
 	vm.State.push_display = true;
 	auto& display{ vm.Mem.display };
 
@@ -39,7 +39,7 @@ void FunctionsForLegacySC::scrollLT(const s32) {
 		display[H][X] = as<u8>(mask);
 	}
 };
-void FunctionsForLegacySC::scrollRT(const s32) {
+void FunctionsForLegacySC::scrollRT(const usz) {
 	vm.State.push_display = true;
 	auto& display{ vm.Mem.display };
 
@@ -54,7 +54,7 @@ void FunctionsForLegacySC::scrollRT(const s32) {
 
 /*------------------------------------------------------------------*/
 
-u16 FunctionsForLegacySC::bitBloat(u16 byte) {
+usz  FunctionsForLegacySC::bitBloat(usz byte) {
 	if (!byte) return 0;
 	byte = (byte << 4 | byte) & 0x0F0F;
 	byte = (byte << 2 | byte) & 0x3333;
@@ -63,44 +63,44 @@ u16 FunctionsForLegacySC::bitBloat(u16 byte) {
 }
 
 void FunctionsForLegacySC::drawByte(
-	const s32 L, const s32 SHL,
-	const s32 R, const s32 SHR,
-	const s32 Y, const u8  DATA
+	const usz L, const usz SHL,
+	const usz R, const usz SHR,
+	const usz Y, const usz DATA
 ) {
 	if (!DATA || L >= vm.Plane.X) return;
-	const auto DATA_L{ as<u8>(DATA >> SHR) };
+	const auto DATA_L{ DATA >> SHR & 0xFF };
 
 	vm.Reg.V[0xF]        += (DATA_L & vm.Mem.display[Y][L]) != 0;
 	vm.Mem.display[Y][L] ^=  DATA_L;
 
 	if (!SHR || R >= vm.Plane.X) return;
-	const auto DATA_R{ as<u8>(DATA << SHL) };
+	const auto DATA_R{ DATA << SHL & 0xFF };
 
 	vm.Reg.V[0xF]        += (DATA_R & vm.Mem.display[Y][R]) != 0;
 	vm.Mem.display[Y][R] ^=  DATA_R;
 }
 
 void FunctionsForLegacySC::drawShort(
-	const s32 L, const s32 SHL,
-	const s32 R, const s32 SHR,
-	const s32 Y, const u8  DATA
+	const usz L, const usz SHL,
+	const usz R, const usz SHR,
+	const usz Y, const usz DATA
 ) {
 	if (!DATA || L >= vm.Plane.X) return;
-	const auto DATA_L{ as<u8>(DATA >> SHR) };
+	const auto DATA_L{ DATA >> SHR & 0xFF };
 	
 	if (!vm.Reg.V[0xF]) [[unlikely]]
 		vm.Reg.V[0xF]        = (vm.Mem.display[Y][L]  & DATA_L) != 0;
 	vm.Mem.display[Y + 1][L] =  vm.Mem.display[Y][L] ^= DATA_L;
 
 	if (!SHR || R >= vm.Plane.X) return;
-	const auto DATA_R{ as<u8>(DATA << SHL) };
+	const auto DATA_R{ DATA << SHL & 0xFF };
 
 	if (!vm.Reg.V[0xF]) [[unlikely]]
 		vm.Reg.V[0xF]        = (vm.Mem.display[Y][R]  & DATA_R) != 0;
 	vm.Mem.display[Y + 1][R] =  vm.Mem.display[Y][R] ^= DATA_R;
 }
 
-void FunctionsForLegacySC::drawSprite(u8 VX, u8 VY, s32 N, u32 I) {
+void FunctionsForLegacySC::drawSprite(usz VX, usz VY, usz N, usz I) {
 	vm.State.push_display = true;
 	const auto mode{ vm.Program.screenMode };
 
@@ -110,7 +110,6 @@ void FunctionsForLegacySC::drawSprite(u8 VX, u8 VY, s32 N, u32 I) {
 
 	const bool wide{ N == 0 };
 	N = VY + (wide ? 16 : N) * mode;
-
 
 	const auto SHR{ VX & 7 };
 	const auto SHL{ 8 - SHR };
@@ -130,9 +129,9 @@ void FunctionsForLegacySC::drawSprite(u8 VX, u8 VY, s32 N, u32 I) {
 		const auto Y{ H & vm.Plane.Hb };
 
 		if (mode == vm.Resolution::LO) { // lores 8xN (doubled)
-			const auto DATA = bitBloat(vm.mrw(I++));
-			drawShort(X0, SHL, X1, SHR, Y, as<u8>(DATA >> 0x8));
-			drawShort(X1, SHL, X2, SHR, Y, as<u8>(DATA & 0xFF));
+			const auto DATA{ bitBloat(vm.mrw(I++)) & 0xFFFFu };
+			drawShort(X0, SHL, X1, SHR, Y, DATA >> 0x8u);
+			drawShort(X1, SHL, X2, SHR, Y, DATA & 0xFFu);
 		} else {						 // hires 8xN / 16xN
 			drawByte(X0, SHL, X1, SHR, Y, vm.mrw(I++));
 			if (!wide) continue;
@@ -141,7 +140,7 @@ void FunctionsForLegacySC::drawSprite(u8 VX, u8 VY, s32 N, u32 I) {
 	}
 };
 
-void FunctionsForLegacySC::drawColors(u8 VX, u8 VY, const u8 idx, s32 N) {
+void FunctionsForLegacySC::drawColors(usz VX, usz VY, usz idx, usz N) {
 	vm.State.push_display = true;
 	auto mode{ vm.Program.screenMode };
 

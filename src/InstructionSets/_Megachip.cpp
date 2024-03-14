@@ -11,7 +11,7 @@
 /*  class  FncSetInterface -> FunctionsForMegachip                  */
 /*------------------------------------------------------------------*/
 
-void FunctionsForMegachip::scrollUP(const s32 N) {
+void FunctionsForMegachip::scrollUP(const usz N) {
 	auto& display = vm.Mem.display;
 
 	std::rotate(display.begin(), display.begin() + N, display.end());
@@ -20,7 +20,7 @@ void FunctionsForMegachip::scrollUP(const s32 N) {
 	}
 	blendToDisplay(display, vm.Mem.bufColorMC);
 };
-void FunctionsForMegachip::scrollDN(const s32 N) {
+void FunctionsForMegachip::scrollDN(const usz N) {
 	auto& display = vm.Mem.display;
 
 	std::rotate(display.begin(), display.end() - N, display.end());
@@ -29,14 +29,14 @@ void FunctionsForMegachip::scrollDN(const s32 N) {
 	}
 	blendToDisplay(display, vm.Mem.bufColorMC);
 };
-void FunctionsForMegachip::scrollLT(const s32 N) {
+void FunctionsForMegachip::scrollLT(const usz N) {
 	for (auto& row : vm.Mem.display) {
 		std::rotate(row.begin(), row.begin() + N, row.end());
 		std::fill_n(row.end() - N, N, 0);
 	}
 	blendToDisplay(vm.Mem.display, vm.Mem.bufColorMC);
 };
-void FunctionsForMegachip::scrollRT(const s32 N) {
+void FunctionsForMegachip::scrollRT(const usz N) {
 	for (auto& row : vm.Mem.display) {
 		std::rotate(row.begin(), row.end() - N, row.end());
 		std::fill_n(row.begin(), N, 0);
@@ -95,17 +95,17 @@ u32 FunctionsForMegachip::applyBlend(float (*blend)(const float, const float)) c
 		| as<u8>(std::roundf(B * 255.0f));
 }
 
-void FunctionsForMegachip::drawSprite(u8 VX, u8 VY, const s32 N, u32 I) {
+void FunctionsForMegachip::drawSprite(usz VX, usz VY, usz N, usz I) {
 	vm.Reg.V[0xF] = 0;
 
 	if (I < 0xF0) [[unlikely]] { // font sprite rendering
-		for (auto H{ 0 }; H < N; ++H, ++VY, ++I) {
+		for (auto H{ 0 }; H < N; ++I, ++H, ++VY &= 0xFFu) {
 			if (VY >= vm.Plane.H) [[unlikely]] continue;
 
 			auto X{ VX };
 			const auto srcIndex{ vm.mrw(I) }; // font byte
 
-			for (auto W{ 7 }; W >= 0; --W, ++X) {
+			for (auto W{ 7 }; W >= 0; --W, ++X &= 0xFFu) {
 				if (!(srcIndex >> W & 0x1)) continue;
 
 				auto& colorIdx{ vm.Mem.bufPalette[VY][X] }; // DESTINATION pixel's collision palette index
@@ -115,8 +115,7 @@ void FunctionsForMegachip::drawSprite(u8 VX, u8 VY, const s32 N, u32 I) {
 					colorIdx = 0;
 					colorDst = 0;
 					vm.Reg.V[0xF] = 1;
-				}
-				else {
+				} else {
 					colorIdx = 254;
 					colorDst = vm.Color.hex[H];
 				}
@@ -125,13 +124,13 @@ void FunctionsForMegachip::drawSprite(u8 VX, u8 VY, const s32 N, u32 I) {
 		return;
 	}
 
-	for (auto H{ 0 }; H < vm.Trait.H; ++H, ++VY) {
+	for (auto H{ 0 }; H < vm.Trait.H; ++H, ++VY &= 0xFFu) {
 		if (VY >= vm.Plane.H) [[unlikely]] {
 			I += vm.Trait.W; 
 			continue;
 		}
 		auto X{ VX };
-		for (auto W{ 0 }; W < vm.Trait.W; ++W, ++X) {
+		for (auto W{ 0 }; W < vm.Trait.W; ++W, ++X &= 0xFFu) {
 			const auto srcIndex{ vm.mrw(I++) }; // palette index from RAM 
 			if (!srcIndex) continue;
 
@@ -147,7 +146,7 @@ void FunctionsForMegachip::drawSprite(u8 VX, u8 VY, const s32 N, u32 I) {
 	}
 };
 
-void FunctionsForMegachip::chooseBlend(const s32 N) {
+void FunctionsForMegachip::chooseBlend(const usz N) {
 	switch (N) {
 
 		case Blend::LINEAR_DODGE:

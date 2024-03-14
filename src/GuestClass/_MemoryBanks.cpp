@@ -18,19 +18,19 @@ void VM_Guest::MemoryBanks::changeViewportMask(const BrushType type) {
     switch (type) {
 
         case BrushType::CLR:
-            applyViewportMask = [](u32& pos, const u32) { pos = 0; };
+            applyViewportMask = [](u32& pos, const usz) { pos = 0; };
             return;
 
         case BrushType::XOR:
-            applyViewportMask = [](u32& pos, const u32 mask) { pos ^= mask; };
+            applyViewportMask = [](u32& pos, const usz mask) { pos ^= mask; };
             return;
 
         case BrushType::SUB:
-            applyViewportMask = [](u32& pos, const u32 mask) { pos &= ~mask; };
+            applyViewportMask = [](u32& pos, const usz mask) { pos &= ~mask; };
             return;
 
         case BrushType::ADD:
-            applyViewportMask = [](u32& pos, const u32 mask) { pos |= mask; };
+            applyViewportMask = [](u32& pos, const usz mask) { pos |= mask; };
             return;
     }
 }
@@ -54,7 +54,7 @@ void VM_Guest::MemoryBanks::flushBuffers(const bool firstFlush) {
     for (auto& row : bufPalette) row.fill(0);
 }
 
-void VM_Guest::MemoryBanks::loadPalette(u32 index, const u8 count) {
+void VM_Guest::MemoryBanks::loadPalette(usz index, const usz count) {
     for (auto idx{ 0 }; idx < count; index += 4) {
         palette[++idx] =
             vm.mrw(index + 0) << 24 |
@@ -64,7 +64,7 @@ void VM_Guest::MemoryBanks::loadPalette(u32 index, const u8 count) {
     }
 }
 
-void VM_Guest::MemoryBanks::clearPages(s32 H) {
+void VM_Guest::MemoryBanks::clearPages(usz H) {
     vm.State.push_display = true;
 
     while (H++ < vm.Plane.H)

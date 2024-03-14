@@ -10,7 +10,7 @@
 /*  class  FncSetInterface -> FunctionsForClassic8                  */
 /*------------------------------------------------------------------*/
 
-void FunctionsForClassic8::scrollUP(const s32 N) {
+void FunctionsForClassic8::scrollUP(const usz N) {
 	vm.State.push_display = true;
 	auto& display{ vm.Mem.display };
 	const auto N2{ vm.Plane.H - N };
@@ -19,7 +19,7 @@ void FunctionsForClassic8::scrollUP(const s32 N) {
 	for (auto X{ 0 }; X < vm.Plane.X; ++X)
 		display[H][X] = (H >= N2) ? 0 : display[H + N][X];
 };
-void FunctionsForClassic8::scrollDN(const s32 N) {
+void FunctionsForClassic8::scrollDN(const usz N) {
 	vm.State.push_display = true;
 	auto& display{ vm.Mem.display };
 
@@ -27,7 +27,7 @@ void FunctionsForClassic8::scrollDN(const s32 N) {
 	for (auto X{ 0 }; X < vm.Plane.X; ++X)
 		display[H][X] = (H < N) ? 0 : display[H - N][X];
 };
-void FunctionsForClassic8::scrollLT(const s32) {
+void FunctionsForClassic8::scrollLT(const usz) {
 	vm.State.push_display = true;
 	auto& display{ vm.Mem.display };
 
@@ -39,7 +39,7 @@ void FunctionsForClassic8::scrollLT(const s32) {
 		display[H][X] = as<u8>(mask);
 	};
 };
-void FunctionsForClassic8::scrollRT(const s32) {
+void FunctionsForClassic8::scrollRT(const usz) {
 	vm.State.push_display = true;
 	auto& display{ vm.Mem.display };
 
@@ -55,28 +55,26 @@ void FunctionsForClassic8::scrollRT(const s32) {
 /*------------------------------------------------------------------*/
 
 void FunctionsForClassic8::drawByte(
-	const s32 L, const s32 SHL,
-	const s32 R, const s32 SHR,
-	const s32 Y, const u8  DATA
+	const usz L, const usz SHL,
+	const usz R, const usz SHR,
+	const usz Y, const usz DATA
 ) {
 	if (!DATA || L >= vm.Plane.X) return;
-	const auto DATA_L{ as<u8>(DATA >> SHR) };
+	const auto DATA_L{ DATA >> SHR & 0xFF };
 	
 	if (!vm.Reg.V[0xF]) [[unlikely]]
 		vm.Reg.V[0xF]     = (vm.Mem.display[Y][L] & DATA_L) != 0;
 	vm.Mem.display[Y][L] ^= DATA_L;
 
 	if (!SHR || R >= vm.Plane.X) return;
-	const auto DATA_R{ as<u8>(DATA << SHL) };
+	const auto DATA_R{ DATA << SHL & 0xFF };
 
 	if (!vm.Reg.V[0xF]) [[unlikely]]
 		vm.Reg.V[0xF]     = (vm.Mem.display[Y][R] & DATA_R) != 0;
 	vm.Mem.display[Y][R] ^= DATA_R;
 }
 
-
-
-void FunctionsForClassic8::drawSprite(u8 VX, u8 VY, s32 N, u32 I) {
+void FunctionsForClassic8::drawSprite(usz VX, usz VY, usz N, usz I) {
 	vm.State.push_display = true;
 
 	VX &= vm.Plane.Wb;
@@ -110,7 +108,7 @@ void FunctionsForClassic8::drawSprite(u8 VX, u8 VY, s32 N, u32 I) {
 	}
 };
 
-void FunctionsForClassic8::drawColors(u8 const VX, u8 const VY, const u8 idx, const s32 N) {
+void FunctionsForClassic8::drawColors(const usz VX, const usz VY, const usz idx, const usz N) {
 	vm.State.push_display = true;
 
 	if (N) {
@@ -122,8 +120,8 @@ void FunctionsForClassic8::drawColors(u8 const VX, u8 const VY, const u8 idx, co
 		vm.State.chip8X_hires = true;
 	}
 	else {
-		const auto H{ (VY >> 4) + 1 };
-		const auto W{ (VX >> 4) + 1 };
+		const auto H{ (VY >> 4u) + 1u };
+		const auto W{ (VX >> 4u) + 1u };
 
 		for (auto _Y{ 0 }; _Y < H; ++_Y) {
 			const auto Y{ ((VY + _Y) << 2) & vm.Plane.Hb };

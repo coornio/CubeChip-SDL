@@ -15,7 +15,7 @@ VM_Host::VM_Host(const char* path) {
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
 
     if (!Render.createWindow())   goto fail;
-    Render.changeTitle("Waiting"s);
+    Render.changeTitle("Waiting"sv);
     if (!Render.createRenderer()) goto fail;
 
     Audio.setSpec(this);
@@ -38,16 +38,16 @@ VM_Host::~VM_Host() {
 bool VM_Host::machineValid() const { return machineLoaded; }
 bool VM_Host::programValid() const { return programLoaded; }
 
-void VM_Host::addMessage(const std::string_view msg, const bool header, const u32 code) {
+void VM_Host::addMessage(const std::string_view msg, const bool header, const usz code) {
     if (header) {
         std::cout << msg << std::endl;
         return;
     }
     if (!code) {
-        std::cout << "  >>  "s << msg << std::endl;
+        std::cout << "  >>  "sv << msg << std::endl;
         return;
     }
-    std::cout << "  >>  "s         << msg << " 0x"s
+    std::cout << "  >>  "sv        << msg << " 0x"sv
               << std::setfill('0') << std::setw(4)
               << std::uppercase    << std::hex
               << code              << std::endl;

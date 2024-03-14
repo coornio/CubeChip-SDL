@@ -6,7 +6,8 @@
 
 #pragma once
 
-#pragma warning(push, 0)
+#pragma warning(push)
+#pragma warning(disable : 26819) // C fallthrough warning disabled
 #include <SDL.h>
 #include <SDL_audio.h>
 #include <SDL_events.h>
@@ -29,6 +30,7 @@
 #include <bitset>
 #include <cstdint>
 
+using usz = std::size_t;
 using u64 = std::uint64_t;
 using s64 = std::int64_t;
 using u32 = std::uint32_t;
@@ -68,6 +70,7 @@ template <typename T, auto X, auto Y = X>
 using arr2D = std::array<std::array<T, X>, Y>;
 
 using namespace std::string_literals;
+using namespace std::string_view_literals;
 
 class VM_Host;
 class VM_Guest;

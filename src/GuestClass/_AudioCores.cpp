@@ -49,12 +49,12 @@ void VM_Guest::AudioCores::renderAudio(s16* samples, s32 frames) {
 
 VM_Guest::AudioCores::Classic::Classic(AudioCores& parent) : Audio(parent) {}
 
-void VM_Guest::AudioCores::Classic::setTone(const u8 sp, const u32 pc) {
+void VM_Guest::AudioCores::Classic::setTone(const usz sp, const usz pc) {
     // sets a unique tone for each sound call
     tone.store((160.0f + 8.0f * ((pc >> 1) + sp + 1 & 0x3E)) / Audio.outFreq);
 }
 
-void VM_Guest::AudioCores::Classic::setTone(const u8 vx) {
+void VM_Guest::AudioCores::Classic::setTone(const usz vx) {
     // sets the tone for each 8X sound call
     tone.store((160.0f + (vx >> 3 << 4)) / Audio.outFreq);
 }
@@ -80,12 +80,12 @@ bool VM_Guest::AudioCores::XOchip::isOn() const {
     return enabled;
 }
 
-void VM_Guest::AudioCores::XOchip::setPitch(u8 pitch) {
+void VM_Guest::AudioCores::XOchip::setPitch(const usz pitch) {
     tone.store(rate * std::pow(2.0f, (pitch - 64.0f) / 48.0f));
     enabled = true;
 }
 
-void VM_Guest::AudioCores::XOchip::loadPattern(u32 idx) {
+void VM_Guest::AudioCores::XOchip::loadPattern(usz idx) {
     for (auto& byte : pattern) {
         byte.store(Audio.vm.mrw(idx++));
 
@@ -127,9 +127,9 @@ void VM_Guest::AudioCores::MegaChip::reset() {
 }
 
 void VM_Guest::AudioCores::MegaChip::enable(
-    const u32 freq,
-    const u32 len,
-    const u32 offset,
+    const usz freq,
+    const usz len,
+    const usz offset,
     const bool loop
 ) {
     enabled = true;

@@ -135,7 +135,7 @@ void VM_Guest::instructionLoop() {
 									Audio.MC.reset();
 									Host.addMessage("MegaChip mode disabled!");
 									break;
-								case 0x11:			// 0011 - enable mega mode *MEGACHIP*
+								case 0x11:				// 0011 - enable mega mode *MEGACHIP*
 									State.mega_enabled = true;
 									Quirk.waitScroll   = true;
 									Quirk.idxRegNoInc  = true;
@@ -543,7 +543,7 @@ void VM_Guest::instructionLoop() {
 /*  struct  VM_Guest::TextureTraits                                 */
 /*------------------------------------------------------------------*/
 
-void VM_Guest::TextureTraits::setFlags(const u8 bits) {
+void VM_Guest::TextureTraits::setFlags(const usz bits) {
     rotate = bits >> 0 & 0x1; // false: as-is | true: 90° clockwise
     flip_X = bits >> 1 & 0x1; // flip on the X axis (rotation agnostic)
     flip_Y = bits >> 2 & 0x1; // flip on the Y axis (rotation agnostic)

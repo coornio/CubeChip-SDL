@@ -21,7 +21,7 @@ bool VM_Host::RenderSettings::createWindow() {
         SDL_WINDOW_ALLOW_HIGHDPI
     );
     if (window) return true;
-    errorMessage("Window init error");
+    errorMessage("Window init error"s);
     return false;
 }
 
@@ -34,21 +34,22 @@ bool VM_Host::RenderSettings::createRenderer() {
         // don't know how to marry the two..
     );
     if (renderer) return true;
-    errorMessage("Renderer init error");
+    errorMessage("Renderer init error"s);
     return false;
 }
 
 void VM_Host::RenderSettings::changeTitle(const std::string_view name) {
-    title = emuVersion;
+    title  = emuVersion;
     title += " :: CubeChip :: "s;
     title += name;
     SDL_SetWindowTitle(window, title.data());
 }
 
-void VM_Host::RenderSettings::errorMessage(const char* newTitle) {
+void VM_Host::RenderSettings::errorMessage(std::string&& newTitle) {
     SDL_ShowSimpleMessageBox(
         SDL_MESSAGEBOX_ERROR,
-        newTitle, SDL_GetError(),
+        newTitle.data(),
+        SDL_GetError(),
         window
     );
 }
@@ -62,8 +63,8 @@ void VM_Host::RenderSettings::lockTexture() {
 void VM_Host::RenderSettings::unlockTexture() {
     SDL_UnlockTexture(texture);
 }
-void VM_Host::RenderSettings::setTextureAlpha(const u8 alpha) {
-    SDL_SetTextureAlphaMod(texture, alpha);
+void VM_Host::RenderSettings::setTextureAlpha(const usz alpha) {
+    SDL_SetTextureAlphaMod(texture, as<u8>(alpha));
 }
 void VM_Host::RenderSettings::setTextureBlend(const SDL_BlendMode blend) {
     SDL_SetTextureBlendMode(texture, blend);
@@ -93,7 +94,11 @@ void VM_Host::RenderSettings::present(const bool resize) {
     SDL_RenderCopy(renderer, texture, nullptr, nullptr);
     SDL_RenderPresent(renderer);
 }
-void VM_Host::RenderSettings::setTexture(const s16 length, const s16 width, const float ratio) {
+void VM_Host::RenderSettings::setTexture(
+    const s32   length,
+    const s32   width,
+    const float ratio
+) {
     if (texture) SDL_DestroyTexture(texture);
     
     pitch = width * 4;

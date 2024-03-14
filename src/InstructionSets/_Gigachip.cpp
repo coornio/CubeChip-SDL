@@ -10,25 +10,25 @@
 /*  class  FncSetInterface -> FunctionsForGigachip                  */
 /*------------------------------------------------------------------*/
 
-void FunctionsForGigachip::scrollUP(const s32 N) {
+void FunctionsForGigachip::scrollUP(const usz N) {
 	auto& display = vm.Mem.display;
 	std::rotate(display.begin(), display.begin() + N, display.end());
 
 	vm.State.push_display = true;
 };
-void FunctionsForGigachip::scrollDN(const s32 N) {
+void FunctionsForGigachip::scrollDN(const usz N) {
 	auto& display = vm.Mem.display;
 	std::rotate(display.begin(), display.end() - N, display.end());
 
 	vm.State.push_display = true;
 };
-void FunctionsForGigachip::scrollLT(const s32 N) {
+void FunctionsForGigachip::scrollLT(const usz N) {
 	for (auto& display : vm.Mem.display) {
 		std::rotate(display.begin(), display.begin() + N, display.end());
 	}
 	vm.State.push_display = true;
 };
-void FunctionsForGigachip::scrollRT(const s32 N) {
+void FunctionsForGigachip::scrollRT(const usz N) {
 	for (auto& display : vm.Mem.display) {
 		std::rotate(display.begin(), display.end() - N, display.end());
 	}
@@ -118,7 +118,7 @@ u32 FunctionsForGigachip::applyBlend(float (*blend)(const float, const float)) c
 		 | as<u8>(std::roundf(B * 255.0f));
 }
 
-void FunctionsForGigachip::drawSprite(u8 VX, u8 VY, const s32 N, u32 I) {
+void FunctionsForGigachip::drawSprite(usz VX, usz VY, usz N, usz I) {
 	vm.Reg.V[0xF] = 0;
 	
 	const auto oW{ vm.Trait.W }; auto tW{ oW };
@@ -134,10 +134,10 @@ void FunctionsForGigachip::drawSprite(u8 VX, u8 VY, const s32 N, u32 I) {
 		std::swap(fX, fY);
 	}
 
-	s32 memY{}, memX{}; // position vars for RAM access
+	usz memY{}, memX{}; // position vars for RAM access
 	
 	for (auto H{ 0 }; H < tH; ++H, ++VY %= vm.Plane.H) {
-		for (auto W{ 0 }; W < tW; ++W, ++VX) {
+		for (auto W{ 0 }; W < tW; ++W, ++VX &= 0xFFu) {
 
 			if (vm.Trait.rotate) {
 				memX = H;
@@ -167,11 +167,11 @@ void FunctionsForGigachip::drawSprite(u8 VX, u8 VY, const s32 N, u32 I) {
 
 			colorDst = blendPixel(vm.Mem.palette[srcIndex], colorDst);
 		}
-		VX -= as<u8>(vm.Trait.W);
+		VX -= vm.Trait.W;
 	}
 };
 
-void FunctionsForGigachip::chooseBlend(const s32 N) {
+void FunctionsForGigachip::chooseBlend(const usz N) {
 	switch (N) {
 
 		case Blend::NORMAL:

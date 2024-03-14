@@ -57,29 +57,28 @@ public:
         bool createRenderer();
 
         void changeTitle(std::string_view);
-        void errorMessage(const char*);
+        void errorMessage(std::string&&);
 
         //SDL_Rect screen{};
         float aspect{};
+        u32* pixels{};
+        s32  pitch{};
 
         s32 window_W{ 800 };
         s32 window_H{ 400 };
 
-        s32  pitch{};
-        u32* pixels{};
-
         RenderSettings();
         void lockTexture();
         void unlockTexture();
-        void setTexture(s16, s16, float);
-        void setTextureAlpha(u8);
+        void setTexture(s32, s32, float);
+        void setTextureAlpha(usz);
         void setTextureBlend(SDL_BlendMode);
 
         void present(bool);
     } Render;
 
     void runMachine(VM_Guest&);
-    void addMessage(std::string_view, bool = true, u32 = 0);
+    void addMessage(std::string_view, bool = true, usz = 0);
 
     [[nodiscard]] bool machineValid() const;
     [[nodiscard]] bool programValid() const;

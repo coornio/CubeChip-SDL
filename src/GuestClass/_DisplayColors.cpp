@@ -29,13 +29,13 @@ void VM_Guest::DisplayColors::setMegaHex(const u32 color) {
     }
 }
 
-void VM_Guest::DisplayColors::setBit332(const u32 idx, const u8 color) {
+void VM_Guest::DisplayColors::setBit332(const usz idx, const usz color) {
     static constexpr std::array<u8, 8> map3b{ 0x00, 0x20, 0x40, 0x60, 0x80, 0xA0, 0xC0, 0xFF };
     static constexpr std::array<u8, 4> map2b{ 0x00,             0x60,       0xA0,       0xFF };
     bit[idx & 0xF] = 0xFF000000
         | map3b[color >> 5 & 7] << 16 // red
         | map3b[color >> 2 & 7] <<  8 // green
-        | map2b[color & 3];           // blue
+        | map2b[color      & 3];      // blue
 }
 
 void VM_Guest::DisplayColors::cycleBackground() {
@@ -43,7 +43,7 @@ void VM_Guest::DisplayColors::cycleBackground() {
     bgindex &= 0x3;
 }
 
-u32 VM_Guest::DisplayColors::getFore8X(const u8 idx) const {
+u32 VM_Guest::DisplayColors::getFore8X(const usz idx) const {
     return ForeColors[idx & 0x7];
 }
 

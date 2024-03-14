@@ -26,7 +26,7 @@ public:
     HexInput Input;
     Well512  Wrand;
 
-    enum Resolution : u8 {
+    enum Resolution : unsigned {
         ERROR,
         HI, // 128 x  64
         LO, //  64 x  32
@@ -35,7 +35,7 @@ public:
         MC, // 256 x 192
     };
 
-    enum class Interrupt : u32 {
+    enum class Interrupt : unsigned {
         NONE,
         ONCE,
         STOP,
@@ -43,7 +43,7 @@ public:
         FX0A,
     };
 
-    enum class BrushType : u32 {
+    enum class BrushType : unsigned {
         CLR,
         XOR,
         SUB,
@@ -52,7 +52,7 @@ public:
 
     class MemoryBanks final {
         VM_Guest& vm;
-        void (*applyViewportMask)(u32&, u32) {};
+        void (*applyViewportMask)(u32&, usz) {};
     public:
         arr2D<u32, 256, 192> display{};
         arr2D<u32,  16, 128> bufColor8x{};
@@ -67,9 +67,9 @@ public:
         void changeViewportMask(BrushType);
 
         void flushBuffers(bool);
-        void loadPalette(u32, u8);
+        void loadPalette(usz, usz);
 
-        void clearPages(s32);
+        void clearPages(usz);
     };
 
     std::unique_ptr<MemoryBanks> MemoryBanksPtr{
@@ -84,12 +84,12 @@ public:
         s32 ipf{}, boost{};
         double framerate{};
 
-        Interrupt interrupt{};
-        u32 limiter{};
+        usz limiter{};
+        usz screenMode{};
         u32 opcode{};
         u32 counter{};
-
-        u8 screenMode{};
+        
+        Interrupt interrupt{};
 
         struct TimerData {
             u8 delay{};
@@ -130,8 +130,8 @@ public:
         public:
             explicit Classic(AudioCores&);
 
-            void setTone(u8, u32);
-            void setTone(u8);
+            void setTone(usz, usz);
+            void setTone(usz);
             void render(s16*, s32);
         } C8{ *this };
 
@@ -145,15 +145,15 @@ public:
             explicit XOchip(AudioCores&);
             bool isOn() const;
 
-            void setPitch(u8);
-            void loadPattern(u32);
+            void setPitch(usz);
+            void loadPattern(usz);
             void render(s16*, s32);
         } XO{ *this };
 
         class MegaChip final {
             AudioCores& Audio;
-            std::atomic<u32> length{};
-            std::atomic<u32> start{};
+            std::atomic<usz> length{};
+            std::atomic<usz> start{};
             std::atomic<double> step{};
             std::atomic<double> pos{};
             bool enabled{};
@@ -163,7 +163,7 @@ public:
             bool isOn() const;
 
             void reset();
-            void enable(u32, u32, u32, bool);
+            void enable(usz, usz, usz, bool);
             void render(s16*, s32);
         } MC{ *this };
     } Audio{ *this };
@@ -174,7 +174,7 @@ public:
         std::array<u32, 16> stack{};
         std::array<u8,  16> V{};
         std::array<u8,  16> P{};
-        u32 I{}; u8 SP{}, pageGuard{};
+        u32 I{}, SP{}, pageGuard{};
 
         explicit Registers(VM_Guest&);
         void routineCall(u32);
@@ -183,20 +183,20 @@ public:
     } Reg{ *this };
 
     struct BitPlaneProperties final {
-        s16 W{},  H{},  X{};
-        s16 Wb{}, Hb{}, Xb{};
+        s32 W{},  H{},  X{};
+        s32 Wb{}, Hb{}, Xb{};
+
         u32 selected{ 1 };
+        u32 mask{ 0x11111111 };
 
         using enum BrushType;
         BrushType brush{ XOR };
-        u32 mask{ 0x11111111 };
     } Plane;
 
     struct TextureTraits final {
-        u16 W{}, H{};
-        float alpha{ 1.0f };
-        u8 collision{ 0xFF };
-
+        s32 W{}, H{};
+        
+        u8   collision{ 0xFF };
         bool rotate{};
         bool flip_X{};
         bool flip_Y{};
@@ -205,7 +205,9 @@ public:
         bool nodraw{};
         bool uneven{};
 
-        void setFlags(u8);
+        float alpha{ 1.0f };
+
+        void setFlags(usz);
     } Trait;
 
     struct EmulationQuirks final {
@@ -263,9 +265,9 @@ public:
 
         explicit DisplayColors(VM_Guest&);
         void setMegaHex(u32);
-        void setBit332(u32, u8);
+        void setBit332(usz, usz);
         void cycleBackground();
-        u32  getFore8X(u8) const;
+        u32  getFore8X(const usz) const;
         u32  getBuzzer()   const;
     } Color{ *this };
 
@@ -273,17 +275,17 @@ public:
     // init functions
     bool setupMachine();
     bool romTypeCheck();
-    bool romSizeCheck(u32, u16);
+    bool romSizeCheck(const usz, const usz);
     void initPlatform();
     void loadFontData();
-    void setupDisplay(u8, bool = false);
+    void setupDisplay(const usz, const bool = false);
     void flushDisplay();
 
     // core functions
     void cycle();
     void instructionLoop();
 
-    u8& mrw(u32 idx) { return Mem.ram[idx & Program.limiter]; }
+    u8& mrw(usz idx) { return Mem.ram[idx & Program.limiter]; }
     u8& VX()         { return Reg.V[(Program.opcode >> 8) & 0xF]; }
     u16 NNNN()       { return mrw(Program.counter) << 8 | mrw(Program.counter + 1); }
 };

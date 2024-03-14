@@ -10,7 +10,7 @@
 /*  class  FncSetInterface -> FunctionsForModernXO                  */
 /*------------------------------------------------------------------*/
 
-void FunctionsForModernXO::scrollUP(const s32 N) {
+void FunctionsForModernXO::scrollUP(const usz N) {
 	if (!vm.Plane.selected) return;
 	vm.State.push_display = true;
 	auto& display{ vm.Mem.display };
@@ -23,7 +23,7 @@ void FunctionsForModernXO::scrollUP(const s32 N) {
 		display[H][X] |= vm.Plane.mask & display[H + N][X];
 	}
 };
-void FunctionsForModernXO::scrollDN(const s32 N) {
+void FunctionsForModernXO::scrollDN(const usz N) {
 	if (!vm.Plane.selected) return;
 	vm.State.push_display = true;
 	auto& display{ vm.Mem.display };
@@ -35,7 +35,7 @@ void FunctionsForModernXO::scrollDN(const s32 N) {
 		display[H][X] |= vm.Plane.mask & display[H - N][X];
 	}
 };
-void FunctionsForModernXO::scrollLT(const s32) {
+void FunctionsForModernXO::scrollLT(const usz) {
 	if (!vm.Plane.selected) return;
 	vm.State.push_display = true;
 	auto& display{ vm.Mem.display };
@@ -49,7 +49,7 @@ void FunctionsForModernXO::scrollLT(const s32) {
 		display[H][X] |=  vm.Plane.mask & mask;
 	}
 };
-void FunctionsForModernXO::scrollRT(const s32) {
+void FunctionsForModernXO::scrollRT(const usz) {
 	if (!vm.Plane.selected) return;
 	vm.State.push_display = true;
 	auto& display{ vm.Mem.display };
@@ -66,7 +66,7 @@ void FunctionsForModernXO::scrollRT(const s32) {
 
 /*------------------------------------------------------------------*/
 
-void FunctionsForModernXO::applyBrush(u32& addr, const u32 data) {
+void FunctionsForModernXO::applyBrush(u32& addr, const usz data) {
 	switch (vm.Plane.brush) {
 		case VM_Guest::BrushType::XOR: addr ^=  data; return;
 		case VM_Guest::BrushType::SUB: addr &= ~data; return;
@@ -74,7 +74,7 @@ void FunctionsForModernXO::applyBrush(u32& addr, const u32 data) {
 	}
 }
 
-u32 FunctionsForModernXO::bitBloat(u32 byte) {
+usz  FunctionsForModernXO::bitBloat(usz byte) {
 	if (!byte) return 0;
 	byte = (byte << 12 | byte) & 0x000F000F;
 	byte = (byte <<  6 | byte) & 0x03030303;
@@ -82,26 +82,26 @@ u32 FunctionsForModernXO::bitBloat(u32 byte) {
 }
 
 void FunctionsForModernXO::drawByte(
-	const s32 L, const s32 SHL,
-	const s32 R, const s32 SHR,
-	const s32 Y, const u32 DATA
+	const usz L, const usz SHL,
+	const usz R, const usz SHR,
+	const usz Y, const usz DATA
 ) {
 	if (!DATA || L >= vm.Plane.X) return;
-	const auto DATA_L{ DATA >> SHR };
+	const auto DATA_L{ DATA >> SHR & 0xFFFFFFFF };
 
 	if (!vm.Reg.V[0xF]) [[unlikely]]
 		vm.Reg.V[0xF]  = (DATA_L & vm.Mem.display[Y][L]) != 0;
 	applyBrush(vm.Mem.display[Y][L], DATA_L);
 
 	if (!SHR || R >= vm.Plane.X) return;
-	const auto DATA_R{ DATA << SHL };
+	const auto DATA_R{ DATA << SHL & 0xFFFFFFFF };
 
 	if (!vm.Reg.V[0xF]) [[unlikely]]
 		vm.Reg.V[0xF]  = (DATA_R & vm.Mem.display[Y][R]) != 0;
 	applyBrush(vm.Mem.display[Y][R], DATA_R);
 }
 
-void FunctionsForModernXO::drawSprite(u8 VX, u8 VY, s32 N, u32 I) {
+void FunctionsForModernXO::drawSprite(usz VX, usz VY, usz N, usz I) {
 	if (!vm.Plane.selected) {
 		vm.Reg.V[0xF] = 0;
 		return;
@@ -128,8 +128,8 @@ void FunctionsForModernXO::drawSprite(u8 VX, u8 VY, s32 N, u32 I) {
 		X2 &= vm.Plane.Xb;
 	}
 
-	for (auto bitplane{ 1 }; bitplane <= 0x8; bitplane <<= 1) {
-		if (!(bitplane & vm.Plane.selected)) continue;
+	for (auto mask{ 1 }; mask <= 0x8; mask <<= 1) {
+		if (!(mask & vm.Plane.selected)) continue;
 
 		for (auto H{ VY }; H < N; ++H) {
 			if (!vm.Quirk.wrapSprite)
@@ -137,9 +137,9 @@ void FunctionsForModernXO::drawSprite(u8 VX, u8 VY, s32 N, u32 I) {
 
 			const auto Y{ H & vm.Plane.Hb };
 
-			drawByte(X0, SHL, X1, SHR, Y, bitBloat(vm.mrw(I++)) * bitplane);
+			drawByte(X0, SHL, X1, SHR, Y, bitBloat(vm.mrw(I++)) * mask);
 			if (!wide) continue;
-			drawByte(X1, SHL, X2, SHR, Y, bitBloat(vm.mrw(I++)) * bitplane);
+			drawByte(X1, SHL, X2, SHR, Y, bitBloat(vm.mrw(I++)) * mask);
 		}
 	}
 };

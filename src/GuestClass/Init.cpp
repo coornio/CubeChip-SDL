@@ -155,7 +155,7 @@ bool VM_Guest::romTypeCheck() {
     return true;
 }
 
-bool VM_Guest::romSizeCheck(const u32 size, const u16 offset) {
+bool VM_Guest::romSizeCheck(const usz size, const usz offset) {
     if (Host.File.size + offset > size) {
         Host.addMessage("ROM exceeds expected platform-specified size, aborting.");
         return false;
@@ -220,7 +220,7 @@ void VM_Guest::initPlatform() {
     setupDisplay(Resolution::LO + State.hires_2paged + State.hires_4paged, true);
 }
 
-void VM_Guest::setupDisplay(const u8 mode, const bool forced) {
+void VM_Guest::setupDisplay(const usz mode, const bool forced) {
     //                            HI   LO   TP   FP   MC
     static constexpr s16 wArr[]{ 128,  64,  64,  64, 256 };
     static constexpr s16 hArr[]{  64,  32,  64, 128, 192 };
@@ -246,7 +246,7 @@ void VM_Guest::setupDisplay(const u8 mode, const bool forced) {
 };
 
 void VM_Guest::loadFontData() {
-    static constexpr std::array<uint8_t, 80 + 160> FONT_DATA{
+    static constexpr std::array<u8, 80 + 160> FONT_DATA{
         0x60, 0xA0, 0xA0, 0xA0, 0xC0, // 0
         0x40, 0xC0, 0x40, 0x40, 0xE0, // 1
         0xC0, 0x20, 0x40, 0x80, 0xE0, // 2
@@ -283,7 +283,7 @@ void VM_Guest::loadFontData() {
         0xFE, 0x66, 0x62, 0x64, 0x7C, 0x64, 0x60, 0x60, 0xF0, 0x00, // F
     };
 
-    static constexpr std::array<uint8_t, 80 + 160> MEGA_FONT_DATA{
+    static constexpr std::array<u8, 80 + 160> MEGA_FONT_DATA{
         0x3C, 0x7E, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0x7E, 0x3C, // 0
         0x18, 0x38, 0x58, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x3C, // 1
         0x3E, 0x7F, 0xC3, 0x06, 0x0C, 0x18, 0x30, 0x60, 0xFF, 0xFF, // 2
