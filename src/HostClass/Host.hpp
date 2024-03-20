@@ -24,6 +24,7 @@ public:
         std::string path{};
         std::string name{};
         std::string type{};
+        std::string sha1{};
         std::size_t size{};
         
         explicit FileInfo(VM_Host&);

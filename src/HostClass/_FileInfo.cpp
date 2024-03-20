@@ -44,6 +44,7 @@ bool VM_Host::FileInfo::verifyFile(const char* newPath) {
     path = newPath;
     name = fspath.stem().string();
     type = fspath.extension().string();
+    sha1 = SHA1::from_file(newPath);
     size = ifs_length;
     return true;
 }

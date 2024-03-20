@@ -72,9 +72,11 @@ public:
         void clearPages(usz);
     };
 
+private:
     std::unique_ptr<MemoryBanks> MemoryBanksPtr{
         std::make_unique<MemoryBanks>(*this)
     };
+public:
     MemoryBanks& Mem{ *MemoryBanksPtr.get() };
 
     class ProgramControl final {
@@ -173,13 +175,14 @@ public:
     public:
         std::array<u32, 16> stack{};
         std::array<u8,  16> V{};
-        std::array<u8,  16> P{};
         u32 I{}, SP{}, pageGuard{};
 
         explicit Registers(VM_Guest&);
         void routineCall(u32);
         void routineReturn();
         void protectPages();
+        bool readPermRegs(usz);
+        bool writePermRegs(usz);
     } Reg{ *this };
 
     struct BitPlaneProperties final {

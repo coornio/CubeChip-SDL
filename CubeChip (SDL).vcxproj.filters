@@ -30,7 +30,7 @@
     <ClCompile Include="src\HostClass\_RenderSettings.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\HostClass\_RomInfo.cpp">
+    <ClCompile Include="src\HostClass\_FileInfo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\GuestClass\_AudioCores.cpp">
@@ -73,6 +73,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\GuestClass\_DisplayColors.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GuestClass\_Registers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -487,14 +487,12 @@ void VM_Guest::instructionLoop() {
 					case 0x75:							// FX75 - store V0..VX to the P flags *XOCHIP*
 						if (State.schip_legacy) [[unlikely]]
 							X = std::min(X, 7);
-						for (auto idx{ 0 }; idx <= X; ++idx)
-							Reg.P[idx] = Reg.V[idx];
+						Reg.writePermRegs(X + 1);
 						break;
 					case 0x85:							// FX85 - load V0..VX from the P flags *XOCHIP*
 						if (State.schip_legacy) [[unlikely]]
 							X = std::min(X, 7);
-						for (auto idx{ 0 }; idx <= X; ++idx)
-							Reg.V[idx] = Reg.P[idx];
+						Reg.readPermRegs(X + 1);
 						break;
 					case 0xE3:							// FXE3 - wait for port 3 input, load into VX *CHIP-8E*
 						Program.setInterrupt(Interrupt::ONCE);
@@ -557,19 +555,4 @@ void VM_Guest::TextureTraits::setFlags(const usz bits) {
 /*  class  VM_Guest::Registers                                      */
 /*------------------------------------------------------------------*/
 
-VM_Guest::Registers::Registers(VM_Guest& parent)
-	: vm(parent)
-{}
-
-void VM_Guest::Registers::routineCall(const u32 addr) {
-    stack[SP++ & 0xF] = vm.Program.counter;
-    vm.Program.counter = addr;
-}
-
-void VM_Guest::Registers::routineReturn() {
-    vm.Program.counter = stack[--SP & 0xF];
-}
-
-void VM_Guest::Registers::protectPages() {
-	pageGuard = (3 - (V[0] - 1 & 0x3)) << 5;
-}
+// _Registers.cpp
