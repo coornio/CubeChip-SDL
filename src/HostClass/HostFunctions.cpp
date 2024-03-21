@@ -14,17 +14,16 @@
 VM_Host::VM_Host(const char* path) {
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
 
-    if (!Render.createWindow())   goto fail;
+    if (!Render.createWindow())   return;
+    if (!Render.createRenderer()) return;
+    if (!File.verifyHome())       return;
+    if (!File.verifyFile(path))   return;
+    
     Render.changeTitle("Waiting"sv);
-    if (!Render.createRenderer()) goto fail;
-
     Audio.setSpec(this);
-    File.verifyFile(path);
 
     machineLoaded = true;
     return;
-fail:
-    machineLoaded = false;
 }
 
 VM_Host::~VM_Host() {

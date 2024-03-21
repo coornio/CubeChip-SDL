@@ -21,6 +21,8 @@ public:
     class FileInfo final {
         VM_Host& Host;
     public:
+        std::filesystem::path homeDirectory{};
+        std::filesystem::path permRegs{};
         std::string path{};
         std::string name{};
         std::string type{};
@@ -29,6 +31,7 @@ public:
         
         explicit FileInfo(VM_Host&);
         void reset();
+        bool verifyHome();
         bool verifyFile(const char*);
     } File{ *this };
 
@@ -50,6 +53,8 @@ public:
         SDL_Window*   window{};
         SDL_Renderer* renderer{};
         SDL_Texture*  texture{};
+
+        const std::string emuName{ "[21.03.24]"sv };
 
         const std::string emuVersion{};
               std::string title{};

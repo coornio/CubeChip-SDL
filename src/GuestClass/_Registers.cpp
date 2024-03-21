@@ -29,14 +29,13 @@ void VM_Guest::Registers::protectPages() {
 }
 
 bool VM_Guest::Registers::readPermRegs(const usz X) {
-	namespace fs = std::filesystem;
+	static const std::filesystem::path sha1{
+		vm.Host.File.permRegs / vm.Host.File.sha1
+	};
 
-	static const fs::path dir{ "regdata"sv };
-	       const fs::path sha1{ dir / vm.Host.File.sha1 };
-
-	if (fs::exists(sha1)) {
-		if (!fs::is_regular_file(sha1)) {
-			vm.Host.addMessage("SHA1 path doesn't lead to file? : "s + sha1.string(), false);
+	if (std::filesystem::exists(sha1)) {
+		if (!std::filesystem::is_regular_file(sha1)) {
+			vm.Host.addMessage("SHA1 file isn't actually a file? : "s + sha1.string(), false);
 			return false;
 		}
 
@@ -63,14 +62,13 @@ bool VM_Guest::Registers::readPermRegs(const usz X) {
 }
 
 bool VM_Guest::Registers::writePermRegs(const usz X) {
-	namespace fs = std::filesystem;
+	static const std::filesystem::path sha1{
+		vm.Host.File.permRegs / vm.Host.File.sha1
+	};
 
-	static const fs::path dir{ "regdata"sv };
-	const fs::path sha1{ dir / vm.Host.File.sha1 };
-
-	if (fs::exists(sha1)) {
-		if (!fs::is_regular_file(sha1)) {
-			vm.Host.addMessage("SHA1 path doesn't lead to file? : "s + sha1.string(), false);
+	if (std::filesystem::exists(sha1)) {
+		if (!std::filesystem::is_regular_file(sha1)) {
+			vm.Host.addMessage("SHA1 file isn't actually a file? : "s + sha1.string(), false);
 			return false;
 		}
 
@@ -100,11 +98,6 @@ bool VM_Guest::Registers::writePermRegs(const usz X) {
 			return false;
 		}
 	} else {
-		if (!fs::create_directories(sha1)) {
-			vm.Host.addMessage("Could not create directory!"s + sha1.string(), false);
-			return false;
-		}
-
 		std::ofstream out(sha1, std::ios::binary);
 		if (out.is_open()) {
 			out.write(to<const char*>(V.data()), X);

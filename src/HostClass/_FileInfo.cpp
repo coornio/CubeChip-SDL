@@ -12,12 +12,28 @@
 
 VM_Host::FileInfo::FileInfo(VM_Host& ref)
     : Host(ref)
-{};
+{}
 
 void VM_Host::FileInfo::reset() {
     Host.programLoaded = false;
     path = name = type = {};
     size = 0;
+}
+
+bool VM_Host::FileInfo::verifyHome() {
+    char* platformHome{ SDL_GetPrefPath(nullptr, "CubeChip_SDL") };
+    if (!platformHome) return false;
+
+    homeDirectory = platformHome;
+    SDL_free(to<void*>(platformHome));
+
+    permRegs = homeDirectory / "permRegs"sv;
+
+    if (!std::filesystem::create_directories(permRegs)) {
+        Host.addMessage("Could not create directory!"s + permRegs.string(), false);
+        return false;
+    }
+    return true;
 }
 
 bool VM_Host::FileInfo::verifyFile(const char* newPath) {
