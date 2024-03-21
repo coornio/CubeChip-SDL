@@ -222,8 +222,8 @@ void VM_Guest::initPlatform() {
 
 void VM_Guest::setupDisplay(const usz mode, const bool forced) {
     //                            HI   LO   TP   FP   MC
-    static constexpr s16 wArr[]{ 128,  64,  64,  64, 256 };
-    static constexpr s16 hArr[]{  64,  32,  64, 128, 192 };
+    static constexpr s32 wArr[]{ 128,  64,  64,  64, 256 };
+    static constexpr s32 hArr[]{  64,  32,  64, 128, 192 };
 
     Plane.W = wArr[State.schip_legacy ? 0 : mode - 1]; Plane.Wb = Plane.W - 1;
     Plane.H = hArr[State.schip_legacy ? 0 : mode - 1]; Plane.Hb = Plane.H - 1;
@@ -242,8 +242,10 @@ void VM_Guest::setupDisplay(const usz mode, const bool forced) {
             Quirk.waitVblank = lores;
         }
     }
-    else if (forced && Quirk.waitVblank)
+    else if (forced && Quirk.waitVblank) {
         Program.ipf -= Program.boost *= -1;
+    }
+        
 };
 
 void VM_Guest::loadFontData() {
