@@ -31,37 +31,32 @@ void VM_Guest::Registers::protectPages() {
 bool VM_Guest::Registers::readPermRegs(const usz X) {
 	namespace fs = std::filesystem;
 
-	const std::string& sha1path{ vm.Host.File.sha1 };
-	const fs::path fspath{ "../../regdata/"s + sha1path };
+	static const fs::path dir{ "regdata"sv };
+	       const fs::path sha1{ dir / vm.Host.File.sha1 };
 
-	if (fs::exists(fspath)) {
-		if (!fs::is_regular_file(fspath)) {
-			vm.Host.addMessage("SHA1 path doesn't lead to file? : "s + fspath.string(), false);
+	if (fs::exists(sha1)) {
+		if (!fs::is_regular_file(sha1)) {
+			vm.Host.addMessage("SHA1 path doesn't lead to file? : "s + sha1.string(), false);
 			return false;
 		}
 
-		std::ifstream in(fspath, std::ios::binary);
+		std::ifstream in(sha1, std::ios::binary);
+		if (in.is_open()) {
+			in.seekg(0, std::ios::end);
+			const auto totalBytes{ as<usz>(in.tellg()) };
+			in.seekg(0, std::ios::beg);
 
-		if (!in.is_open()) {
-			vm.Host.addMessage("Could not open SHA1 file to read!"s, false, vm.Program.opcode);
+			in.read(to<char*>(V.data()), std::min(totalBytes, X));
+			in.close();
+
+			if (totalBytes < X) {
+				std::fill_n(V.begin() + totalBytes, X - totalBytes, u8{ 0 });
+			}
+		} else {
+			vm.Host.addMessage("Could not open SHA1 file to read!"s + sha1.string(), false);
 			return false;
 		}
-
-		// calculate bytes in file
-		in.seekg(0, std::ios::end);
-		const auto totalBytes{ as<usz>(in.tellg()) };
-		in.seekg(0, std::ios::beg);
-		// read eligible bytes to V regs
-		in.read(to<char*>(V.data()), std::min(totalBytes, X));
-		in.close();
-
-		// if eligible bytes were less, zero out the rest
-		if (totalBytes < X) {
-			std::fill_n(V.begin() + totalBytes, X - totalBytes, u8{ 0 });
-		}
-
-	}
-	else {
+	} else {
 		std::fill_n(V.begin(), X, u8{ 0 });
 	}
 	return true;
@@ -70,55 +65,58 @@ bool VM_Guest::Registers::readPermRegs(const usz X) {
 bool VM_Guest::Registers::writePermRegs(const usz X) {
 	namespace fs = std::filesystem;
 
-	const std::string& sha1path{ vm.Host.File.sha1 };
-	const fs::path fspath{ "../../regdata/"s + sha1path };
+	static const fs::path dir{ "regdata"sv };
+	const fs::path sha1{ dir / vm.Host.File.sha1 };
 
-	if (fs::exists(fspath)) {
-		if (!fs::is_regular_file(fspath)) {
-			vm.Host.addMessage("SHA1 path doesn't lead to file? : "s + fspath.string(), false);
+	if (fs::exists(sha1)) {
+		if (!fs::is_regular_file(sha1)) {
+			vm.Host.addMessage("SHA1 path doesn't lead to file? : "s + sha1.string(), false);
 			return false;
 		}
 
-		std::array<char, 16> tempRegs{};
-		std::ifstream in(fspath, std::ios::binary);
+		std::array<char, 16> tempV{};
+		std::ifstream in(sha1, std::ios::binary);
 
-		if (!in.is_open()) {
-			vm.Host.addMessage("Could not open SHA1 file to read!"s, false, vm.Program.opcode);
+		if (in.is_open()) {
+			in.seekg(0, std::ios::end);
+			const auto totalBytes{ as<usz>(in.tellg()) };
+			in.seekg(0, std::ios::beg);
+			
+			in.read(tempV.data(), std::min(totalBytes, X));
+			in.close();
+		} else {
+			vm.Host.addMessage("Could not open SHA1 file to read!"s + sha1.string(), false);
 			return false;
 		}
 
-		// calculate bytes in file
-		in.seekg(0, std::ios::end);
-		const auto totalBytes{ as<usz>(in.tellg()) };
-		in.seekg(0, std::ios::beg);
-		// read eligible bytes to temp array
-		in.read(tempRegs.data(), std::min(totalBytes, X));
-		in.close();
+		std::copy_n(V.begin(), X, tempV.begin());
 
-		// copy and overwrite eligible bytes from V to temp
-		std::copy_n(V.begin(), X, tempRegs.begin());
-
-		std::ofstream out(fspath, std::ios::binary);
-		if (!out.is_open()) {
-			vm.Host.addMessage("Could not open SHA1 file to write!"s, false, vm.Program.opcode);
+		std::ofstream out(sha1, std::ios::binary);
+		if (out.is_open()) {
+			out.write(tempV.data(), tempV.size());
+			out.close();
+		} else {
+			vm.Host.addMessage("Could not open SHA1 file to write!"s + sha1.string(), false);
 			return false;
 		}
-		// write all temp bytes back to the file
-		out.write(tempRegs.data(), tempRegs.size());
-		out.close();
-
-	}
-	else {
-		std::ofstream out(fspath, std::ios::binary);
-		if (!out.is_open()) return false;
-
-		out.write(to<const char*>(V.data()), X);
-
-		if (X < 16) {
-			const std::vector<char> padding(16 - X, '\x00');
-			out.write(padding.data(), padding.size());
+	} else {
+		if (!fs::create_directories(sha1)) {
+			vm.Host.addMessage("Could not create directory!"s + sha1.string(), false);
+			return false;
 		}
-		out.close();
+
+		std::ofstream out(sha1, std::ios::binary);
+		if (out.is_open()) {
+			out.write(to<const char*>(V.data()), X);
+			if (X < 16) {
+				const std::vector<char> padding(16 - X, '\x00');
+				out.write(padding.data(), padding.size());
+			}
+			out.close();
+		} else {
+			vm.Host.addMessage("Could not open SHA1 file to write!"s + sha1.string(), false);
+			return false;
+		}
 	}
 	return true;
 }
