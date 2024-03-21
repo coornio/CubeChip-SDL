@@ -24,15 +24,17 @@ bool VM_Host::FileInfo::verifyHome() {
     char* platformHome{ SDL_GetPrefPath(nullptr, "CubeChip_SDL") };
     if (!platformHome) return false;
 
+    namespace fs = std::filesystem;
     homeDirectory = platformHome;
     SDL_free(to<void*>(platformHome));
 
     permRegs = homeDirectory / "permRegs"sv;
-
-    if (!std::filesystem::create_directories(permRegs)) {
+    std::filesystem::create_directories(permRegs);
+    if (!std::filesystem::exists(permRegs)) {
         Host.addMessage("Could not create directory!"s + permRegs.string(), false);
         return false;
     }
+
     return true;
 }
 
