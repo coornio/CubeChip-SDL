@@ -20,7 +20,7 @@ bool VM_Guest::setupMachine() {
     initPlatform();
     loadFontData();
 
-    Host.addMessage("Successfully initialized rom/platform.");
+    Host.addMessage("Successfully initialized rom/platform."sv);
     Host.Render.changeTitle(Host.File.name);
     Host.programLoaded = true;
     return true;
@@ -91,7 +91,7 @@ bool VM_Guest::romTypeCheck() {
             if (!romSizeCheck(4'096, 0x200))
                 return false;
             if (mrw(0x200) != 0x12 || mrw(0x201) != 0x60) {
-                Host.addMessage("Invalid TPD rom patch, aborting.");
+                Host.addMessage("Invalid TPD rom patch, aborting."sv);
                 return false;
             }
             Program.init(0x2C0, 15);
@@ -150,14 +150,14 @@ bool VM_Guest::romTypeCheck() {
             Program.init(0x200, 2'800'000);
             Program.setFncSet(&SetClassic8);
             State.chip_classic = true;
-            Host.addMessage("Unknown rom type, default parameters apply.");
+            Host.addMessage("Unknown rom type, default parameters apply."sv);
     }
     return true;
 }
 
 bool VM_Guest::romSizeCheck(const usz size, const usz offset) {
     if (Host.File.size + offset > size) {
-        Host.addMessage("ROM exceeds expected platform-specified size, aborting.");
+        Host.addMessage("ROM exceeds expected platform-specified size, aborting."sv);
         return false;
     }
 

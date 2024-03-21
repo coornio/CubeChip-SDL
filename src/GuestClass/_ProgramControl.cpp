@@ -69,10 +69,10 @@ void VM_Guest::ProgramControl::requestHalt() {
     setInterrupt(Interrupt::STOP);
     switch (opcode & 0xF000) {
         case 0x0:
-            vm.Host.addMessage("ML routines are unsupported:", false, opcode);
+            vm.Host.addMessage("ML routines are unsupported:"sv, false, opcode);
             return;
         default:
-            vm.Host.addMessage("Unknown instruction detected:", false, opcode);
+            vm.Host.addMessage("Unknown instruction detected:"sv, false, opcode);
             return;
     }
 }

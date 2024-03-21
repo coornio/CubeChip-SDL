@@ -133,7 +133,7 @@ void VM_Guest::instructionLoop() {
 									Program.setFncSet(&SetClassic8);
 									Host.Render.setTextureAlpha(0xFF);
 									Audio.MC.reset();
-									Host.addMessage("MegaChip mode disabled!");
+									Host.addMessage("MegaChip mode disabled!"sv);
 									break;
 								case 0x11:				// 0011 - enable mega mode *MEGACHIP*
 									State.mega_enabled = true;
@@ -144,7 +144,7 @@ void VM_Guest::instructionLoop() {
 									setupDisplay(Resolution::MC);
 									Program.setFncSet(&SetMegachip);
 									Mem.flushBuffers(CLEAR_ALL);
-									Host.addMessage("MegaChip mode enabled!");
+									Host.addMessage("MegaChip mode enabled!"sv);
 									break;
 								[[unlikely]] default: Program.requestHalt();
 							} break;
