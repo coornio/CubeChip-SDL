@@ -487,12 +487,14 @@ void VM_Guest::instructionLoop() {
 					case 0x75:							// FX75 - store V0..VX to the P flags *XOCHIP*
 						if (State.schip_legacy) [[unlikely]]
 							X = std::min(X, 7);
-						Reg.writePermRegs(X + 1);
+						if (!Reg.writePermRegs(X + 1))
+							Program.setInterrupt(Interrupt::STOP);
 						break;
 					case 0x85:							// FX85 - load V0..VX from the P flags *XOCHIP*
 						if (State.schip_legacy) [[unlikely]]
 							X = std::min(X, 7);
-						Reg.readPermRegs(X + 1);
+						if (!Reg.readPermRegs(X + 1))
+							Program.setInterrupt(Interrupt::STOP);
 						break;
 					case 0xE3:							// FXE3 - wait for port 3 input, load into VX *CHIP-8E*
 						Program.setInterrupt(Interrupt::ONCE);
