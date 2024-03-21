@@ -71,9 +71,10 @@ public:
         RenderSettings();
         void lockTexture();
         void unlockTexture();
-        void setTexture(s32, s32, float);
+        void createTexture(s32, s32);
         void setTextureAlpha(usz);
         void setTextureBlend(SDL_BlendMode);
+        void setAspectRatio(float);
 
         void present(bool);
     } Render;

@@ -230,13 +230,14 @@ void VM_Guest::setupDisplay(const usz mode, const bool forced) {
     Plane.X = Plane.W >> 3; Program.screenMode = mode; Plane.Xb = Plane.X - 1;
 
     if (forced) Mem.modifyViewport(BrushType::CLR);
-    Host.Render.setTexture(Plane.H, Plane.W, State.mega_enabled ? 1.25f : 2.00f);
+    Host.Render.createTexture(Plane.H, Plane.W);
+    Host.Render.setAspectRatio(State.mega_enabled ? 1.25f : 2.00f);
     Host.Render.setTextureBlend(SDL_BLENDMODE_BLEND);
     State.push_display = true;
 
     if (State.chip8X_rom || State.schip_legacy) {
         const bool lores{ Program.screenMode == Resolution::LO };
-        if (forced ? forced : Quirk.waitVblank ^ lores) {
+        if (forced || Quirk.waitVblank ^ lores) {
             Program.ipf -= Program.boost *= -1;
             Quirk.waitVblank = lores;
         }

@@ -11,6 +11,8 @@ VM_Host::RenderSettings::RenderSettings()
 {}
 
 bool VM_Host::RenderSettings::createWindow() {
+    if (window) SDL_DestroyWindow(window);
+
     window = SDL_CreateWindow(
         title.c_str(),
         SDL_WINDOWPOS_CENTERED,
@@ -20,12 +22,15 @@ bool VM_Host::RenderSettings::createWindow() {
         SDL_WINDOW_INPUT_FOCUS |
         SDL_WINDOW_ALLOW_HIGHDPI
     );
+
     if (window) return true;
     errorMessage("Window init error"s);
     return false;
 }
 
 bool VM_Host::RenderSettings::createRenderer() {
+    if (renderer) SDL_DestroyRenderer(renderer);
+
     renderer = SDL_CreateRenderer(
         window, -1,
         SDL_RENDERER_ACCELERATED /*|
@@ -33,6 +38,7 @@ bool VM_Host::RenderSettings::createRenderer() {
         // conflicts with the current frameLimiter setup
         // don't know how to marry the two..
     );
+
     if (renderer) return true;
     errorMessage("Renderer init error"s);
     return false;
@@ -94,15 +100,10 @@ void VM_Host::RenderSettings::present(const bool resize) {
     SDL_RenderCopy(renderer, texture, nullptr, nullptr);
     SDL_RenderPresent(renderer);
 }
-void VM_Host::RenderSettings::setTexture(
-    const s32   length,
-    const s32   width,
-    const float ratio
-) {
+void VM_Host::RenderSettings::createTexture(const s32 length, const s32 width) {
     if (texture) SDL_DestroyTexture(texture);
     
     pitch = width * 4;
-    aspect = ratio;
 
     texture = SDL_CreateTexture(
         renderer,
@@ -111,4 +112,8 @@ void VM_Host::RenderSettings::setTexture(
         width, length
     );
     present(true);
+}
+void VM_Host::RenderSettings::setAspectRatio(const float ratio) {
+    aspect = ratio;
+    // lackluster ain't it
 }
