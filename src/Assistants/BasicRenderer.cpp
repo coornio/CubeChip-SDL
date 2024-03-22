@@ -27,7 +27,7 @@ bool BasicRenderer::createWindow() {
 	);
 
 	if (window) return true;
-	errorMessage("Window init error"s);
+	errorMessage("Window init error");
 	return false;
 }
 
@@ -43,7 +43,7 @@ bool BasicRenderer::createRenderer() {
 	);
 
 	if (renderer) return true;
-	errorMessage("Renderer init error"s);
+	errorMessage("Renderer init error");
 	return false;
 }
 
@@ -64,8 +64,8 @@ bool BasicRenderer::createTexture(const s32 width, const s32 height) {
 }
 
 void BasicRenderer::changeTitle(const std::string_view name) {
-	windowTitle  = emuVersion + " :: "s;
-	windowTitle += emuName    + " :: "s;
+	windowTitle  = emuVersion + " :: ";
+	windowTitle += emuName    + " :: ";
 	windowTitle += name;
 	SDL_SetWindowTitle(window, windowTitle.c_str());
 }
@@ -120,6 +120,7 @@ void BasicRenderer::quitSDL() {
 }
 
 void BasicRenderer::getWindowSize(const bool resize) {
+	// const auto old_W{ window_W }, old_H{ window_H };
 	SDL_GetWindowSize(window, &window_W, &window_H);
 
 	if (resize) {
@@ -134,8 +135,7 @@ void BasicRenderer::getWindowSize(const bool resize) {
 		if (aspect > aspect_window) {
 			screen.w = window_W;
 			screen.h = as<s32>(window_W / aspect);
-		}
-		else {
+		} else {
 			screen.h = window_H;
 			screen.w = as<s32>(window_H / aspect);
 		}

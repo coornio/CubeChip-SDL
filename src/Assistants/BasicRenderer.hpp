@@ -18,8 +18,8 @@ class BasicRenderer {
 	SDL_Renderer* renderer{};
 	SDL_Texture*  texture{};
 
-	const std::string emuName    { "CubeChip"s   };
-	const std::string emuVersion { "[22.03.24]"s };
+	const std::string emuName    { "CubeChip"   };
+	const std::string emuVersion { "[22.03.24]" };
 		  std::string windowTitle{};
 
 	void errorMessage(std::string&&);

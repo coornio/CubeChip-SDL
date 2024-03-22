@@ -78,6 +78,9 @@
     <ClCompile Include="src\Assistants\BasicRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Assistants\BasicLogger.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\InstructionSets\Interface.hpp">
@@ -114,6 +117,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Assistants\BasicRenderer.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\BasicLogger.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

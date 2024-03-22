@@ -12,7 +12,6 @@
 #include <SDL_audio.h>
 #include <SDL_events.h>
 #include <SDL_video.h>
-#include <SDL_rect.h>
 #include <SDL_render.h>
 #include <SDL_stdinc.h>
 #pragma warning(pop)
@@ -75,13 +74,19 @@ using namespace std::string_view_literals;
 class VM_Host;
 class VM_Guest;
 
-#include "Assistants/FrameLimiter.hpp"
+#include "Assistants/BasicLogger.hpp"
 #include "Assistants/BasicRenderer.hpp"
 #include "Assistants/BasicInput.hpp"
+
+#include "Assistants/FrameLimiter.hpp"
 #include "Assistants/HexInput.hpp"
 #include "Assistants/Well512.hpp"
 #include "Assistants/SHA1.hpp"
+
 #include "_nlohmann/json.hpp"
 
 // for convenience
 using json = nlohmann::json;
+
+using namespace blogger;
+using namespace bic;

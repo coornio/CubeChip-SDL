@@ -99,6 +99,8 @@ public:
         } Timer;
 
         explicit ProgramControl(VM_Guest&, FncSetInterface*&);
+        std::string hexOpcode() const;
+
         void init(u32, s32);
         void setSpeed(s32);
         void setFncSet(FncSetInterface*);
@@ -273,7 +275,6 @@ public:
         u32  getFore8X(const usz) const;
         u32  getBuzzer()   const;
     } Color{ *this };
-
 
     // init functions
     bool setupMachine();

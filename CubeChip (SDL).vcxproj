@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="src\Assistants\BasicInput.cpp" />
     <ClCompile Include="src\Assistants\BasicRenderer.cpp" />
+    <ClCompile Include="src\Assistants\BasicLogger.cpp" />
     <ClCompile Include="src\Assistants\FrameLimiter.cpp" />
     <ClCompile Include="src\Assistants\HexInput.cpp" />
     <ClCompile Include="src\Assistants\SHA1.cpp" />
@@ -44,6 +45,7 @@
   <ItemGroup>
     <ClInclude Include="src\Assistants\BasicInput.hpp" />
     <ClInclude Include="src\Assistants\BasicRenderer.hpp" />
+    <ClInclude Include="src\Assistants\BasicLogger.hpp" />
     <ClInclude Include="src\Assistants\FrameLimiter.hpp" />
     <ClInclude Include="src\Assistants\HexInput.hpp" />
     <ClInclude Include="src\Assistants\SHA1.hpp" />

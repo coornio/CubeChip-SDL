@@ -52,7 +52,7 @@ public:
     } Audio;
 
     void runMachine(VM_Guest&);
-    void addMessage(std::string_view, bool = true, usz = 0);
+    void addMessage(std::string_view);
 
     [[nodiscard]] bool machineValid() const;
     [[nodiscard]] bool programValid() const;

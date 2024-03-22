@@ -19,7 +19,7 @@ VM_Host::VM_Host(const char* path) {
     if (!File.verifyHome())       return;
     if (!File.verifyFile(path))   return;
     
-    Render.changeTitle("Waiting"sv);
+    Render.changeTitle("Waiting");
     Audio.setSpec(this);
 
     machineLoaded = true;
@@ -34,26 +34,13 @@ VM_Host::~VM_Host() {
 bool VM_Host::machineValid() const { return machineLoaded; }
 bool VM_Host::programValid() const { return programLoaded; }
 
-void VM_Host::addMessage(const std::string_view msg, const bool header, const usz code) {
-    if (header) {
-        std::cout << msg << std::endl;
-        return;
-    }
-    if (!code) {
-        std::cout << "  >>  "sv << msg << std::endl;
-        return;
-    }
-    std::cout << "  >>  "sv        << msg << " 0x"sv
-              << std::setfill('0') << std::setw(4)
-              << std::uppercase    << std::hex
-              << code              << std::endl;
+void VM_Host::addMessage(const std::string_view msg) {
+    std::cout << "  >>  " << msg << std::endl;
 }
 
 void VM_Host::runMachine(VM_Guest& vm) {
     SDL_Event    event;
     FrameLimiter Frame(vm.Program.framerate);
-
-    using namespace bic;
 
     Audio.handler = [&](s16* buffer, const s32 frames) {
         vm.Audio.renderAudio(buffer, frames);
@@ -71,7 +58,7 @@ void VM_Host::runMachine(VM_Guest& vm) {
                     const bool dropSuccess{ File.verifyFile(event.drop.file) };
                     SDL_free(event.drop.file);
                     if (dropSuccess) {
-                        addMessage("Hotswapping ROM: "s + File.name);
+                        blog.stdLogOut("Hotswapping ROM : " + File.name);
                         programLoaded = false;
                         goto exit;
                     }

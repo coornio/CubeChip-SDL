@@ -16,6 +16,14 @@ VM_Guest::ProgramControl::ProgramControl(VM_Guest& parent, FncSetInterface*& set
     , fncSet(set)
 {}
 
+std::string VM_Guest::ProgramControl::hexOpcode() const {
+    std::stringstream out;
+    out << std::setfill('0') << std::setw(4)
+        << std::uppercase    << std::hex
+        << opcode;
+    return out.str();
+}
+
 void VM_Guest::ProgramControl::init(const u32 _counter, const s32 _ipf) {
     counter   = _counter;
     ipf       = _ipf;
@@ -69,10 +77,10 @@ void VM_Guest::ProgramControl::requestHalt() {
     setInterrupt(Interrupt::STOP);
     switch (opcode & 0xF000) {
         case 0x0:
-            vm.Host.addMessage("ML routines are unsupported:"sv, false, opcode);
+            blog.errLogOut("ML routines are unsupported: " + hexOpcode());
             return;
         default:
-            vm.Host.addMessage("Unknown instruction detected:"sv, false, opcode);
+            blog.errLogOut("Unknown instruction detected: " + hexOpcode());
             return;
     }
 }

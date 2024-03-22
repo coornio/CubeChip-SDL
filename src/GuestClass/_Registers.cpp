@@ -8,7 +8,7 @@
 #include "../HostClass/Host.hpp"
 
 /*------------------------------------------------------------------*/
-/*  struct  VM_Guest::Registers                                     */
+/*  class  VM_Guest::Registers                                      */
 /*------------------------------------------------------------------*/
 
 VM_Guest::Registers::Registers(VM_Guest& parent)
@@ -35,7 +35,7 @@ bool VM_Guest::Registers::readPermRegs(const usz X) {
 
 	if (std::filesystem::exists(sha1)) {
 		if (!std::filesystem::is_regular_file(sha1)) {
-			vm.Host.addMessage("SHA1 file isn't actually a file: "s + sha1.string(), false);
+			blog.errLogOut("Log file is malformed: " + sha1.string());
 			return false;
 		}
 
@@ -52,7 +52,7 @@ bool VM_Guest::Registers::readPermRegs(const usz X) {
 				std::fill_n(V.begin() + totalBytes, X - totalBytes, u8{ 0 });
 			}
 		} else {
-			vm.Host.addMessage("Could not open SHA1 file to read: "s + sha1.string(), false);
+			blog.errLogOut("Could not open SHA1 file to read: " + sha1.string());
 			return false;
 		}
 	} else {
@@ -68,7 +68,7 @@ bool VM_Guest::Registers::writePermRegs(const usz X) {
 
 	if (std::filesystem::exists(sha1)) {
 		if (!std::filesystem::is_regular_file(sha1)) {
-			vm.Host.addMessage("SHA1 file isn't actually a file: "s + sha1.string(), false);
+			blog.errLogOut("Log file is malformed: " + sha1.string());
 			return false;
 		}
 
@@ -83,7 +83,7 @@ bool VM_Guest::Registers::writePermRegs(const usz X) {
 			in.read(tempV.data(), std::min(totalBytes, X));
 			in.close();
 		} else {
-			vm.Host.addMessage("Could not open SHA1 file to read: "s + sha1.string(), false);
+			blog.errLogOut("Could not open SHA1 file to read: " + sha1.string());
 			return false;
 		}
 
@@ -94,7 +94,7 @@ bool VM_Guest::Registers::writePermRegs(const usz X) {
 			out.write(tempV.data(), tempV.size());
 			out.close();
 		} else {
-			vm.Host.addMessage("Could not open SHA1 file to write: "s + sha1.string(), false);
+			blog.errLogOut("Could not open SHA1 file to write: " + sha1.string());
 			return false;
 		}
 	} else {
@@ -107,7 +107,7 @@ bool VM_Guest::Registers::writePermRegs(const usz X) {
 			}
 			out.close();
 		} else {
-			vm.Host.addMessage("Could not open SHA1 file to write: "s + sha1.string(), false);
+			blog.errLogOut("Could not open SHA1 file to write: " + sha1.string());
 			return false;
 		}
 	}
