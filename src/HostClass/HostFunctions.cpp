@@ -28,10 +28,7 @@ VM_Host::VM_Host(const char* path) {
 
 VM_Host::~VM_Host() {
     if (Audio.device)    SDL_CloseAudioDevice(Audio.device);
-    if (Render.texture)  SDL_DestroyTexture(Render.texture);
-    if (Render.renderer) SDL_DestroyRenderer(Render.renderer);
-    if (Render.window)   SDL_DestroyWindow(Render.window);
-    SDL_Quit();
+    Render.quitSDL();
 }
 
 bool VM_Host::machineValid() const { return machineLoaded; }
@@ -82,12 +79,8 @@ void VM_Host::runMachine(VM_Guest& vm) {
                 case SDL_WINDOWEVENT: {
                     switch (event.window.event) {
                         case SDL_WINDOWEVENT_RESIZED: {
-                            SDL_GetWindowSize(
-                                Render.window,
-                                &Render.window_W,
-                                &Render.window_H
-                            );
-                            Render.present(true);
+                            Render.getWindowSize(true);
+                            Render.renderPresent();
                         }
                     }
                 } break;
@@ -136,16 +129,10 @@ exit:
 }
 
 /*------------------------------------------------------------------*/
-/*  class  VM_Host::RomInfo                                         */
+/*  class  VM_Host::FileInfo                                        */
 /*------------------------------------------------------------------*/
 
-// _RomInfo.cpp
-
-/*------------------------------------------------------------------*/
-/*  class  VM_Host::RenderSettings                                  */
-/*------------------------------------------------------------------*/
-
-// _RenderSettings.cpp
+// _FileInfo.cpp
 
 /*------------------------------------------------------------------*/
 /*  class  VM_Host::AudioSettings                                   */

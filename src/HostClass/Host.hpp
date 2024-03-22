@@ -15,6 +15,8 @@ public:
     bool benchmarking{ false };
     [[maybe_unused]] u64 cycles{};
 
+    BasicRenderer Render{};
+
     VM_Host(const char*);
     ~VM_Host();
 
@@ -48,41 +50,6 @@ public:
         void setVolume(s32);
         static void audioCallback(void*, u8*, s32);
     } Audio;
-
-    struct RenderSettings final {
-        SDL_Window*   window{};
-        SDL_Renderer* renderer{};
-        SDL_Texture*  texture{};
-
-        const std::string emuName{ "[21.03.24]"sv };
-
-        const std::string emuVersion{};
-              std::string title{};
-
-        bool createWindow();
-        bool createRenderer();
-
-        void changeTitle(std::string_view);
-        void errorMessage(std::string&&);
-
-        //SDL_Rect screen{};
-        float aspect{};
-        u32* pixels{};
-        s32  pitch{};
-
-        s32 window_W{ 800 };
-        s32 window_H{ 400 };
-
-        RenderSettings();
-        void lockTexture();
-        void unlockTexture();
-        void createTexture(s32, s32);
-        void setTextureAlpha(usz);
-        void setTextureBlend(SDL_BlendMode);
-        void setAspectRatio(float);
-
-        void present(bool);
-    } Render;
 
     void runMachine(VM_Guest&);
     void addMessage(std::string_view, bool = true, usz = 0);

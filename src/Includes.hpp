@@ -76,6 +76,7 @@ class VM_Host;
 class VM_Guest;
 
 #include "Assistants/FrameLimiter.hpp"
+#include "Assistants/BasicRenderer.hpp"
 #include "Assistants/BasicInput.hpp"
 #include "Assistants/HexInput.hpp"
 #include "Assistants/Well512.hpp"

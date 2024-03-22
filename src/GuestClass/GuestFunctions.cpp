@@ -26,7 +26,7 @@ void VM_Guest::cycle() {
 	if (!State.push_display) return;
 	flushDisplay();
 
-	Host.Render.present(false);
+	Host.Render.renderPresent();
 	State.push_display = false;
 }
 

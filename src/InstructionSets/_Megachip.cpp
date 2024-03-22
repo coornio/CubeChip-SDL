@@ -55,7 +55,7 @@ void FunctionsForMegachip::blendToDisplay(auto& src, auto& dst) {
 			*pixels++ = blendPixel(src[H][W], dst[H][W]);
 
 	vm.Host.Render.unlockTexture();
-	vm.Host.Render.present(false);
+	vm.Host.Render.renderPresent();
 }
 
 u32 FunctionsForMegachip::blendPixel(const u32 colorSrc, const u32 colorDst) {

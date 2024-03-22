@@ -230,9 +230,10 @@ void VM_Guest::setupDisplay(const usz mode, const bool forced) {
     Plane.X = Plane.W >> 3; Program.screenMode = mode; Plane.Xb = Plane.X - 1;
 
     if (forced) Mem.modifyViewport(BrushType::CLR);
-    Host.Render.createTexture(Plane.H, Plane.W);
+    Host.Render.createTexture(Plane.W, Plane.H);
     Host.Render.setAspectRatio(State.mega_enabled ? 1.25f : 2.00f);
     Host.Render.setTextureBlend(SDL_BLENDMODE_BLEND);
+    Host.Render.getWindowSize(true);
     State.push_display = true;
 
     if (State.chip8X_rom || State.schip_legacy) {
