@@ -51,6 +51,8 @@
     <ClInclude Include="src\HostClass\Host.hpp" />
     <ClInclude Include="src\Includes.hpp" />
     <ClInclude Include="src\InstructionSets\Interface.hpp" />
+    <ClInclude Include="src\_nlohmann\json.hpp" />
+    <ClInclude Include="src\_nlohmann\json_fwd.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
