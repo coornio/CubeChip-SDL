@@ -4,12 +4,11 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include "BasicLogger.hpp"
 #include <iostream>
 #include <fstream>
 
-using namespace std::string_literals;
-using namespace std::string_view_literals;
+#include "BasicLogger.hpp"
+#include "PathExceptionClass.hpp"
 
 /*------------------------------------------------------------------*/
 /*  class  BasicLogger                                              */
@@ -28,50 +27,50 @@ BasicLogger& blogger::blog{ BasicLogger::create() };
 
 void BasicLogger::createDirectory(
     const std::string& filename,
-    std::filesystem::path& directory,
+    const std::filesystem::path& directory,
     std::filesystem::path& logFilePath
 ) const {
     if (filename.empty() || directory.empty())
-        throw std::invalid_argument("The log file must have a path/name!");
+        throw PathException("The log file must have a path/name!", "");
 
     std::filesystem::create_directories(directory);
 
     if (!std::filesystem::exists(directory))
-        throw std::runtime_error("Unable to create directory at: " + directory.string());
+        throw PathException("Unable to create directory at: ", directory);
 
     // append file.ext to directory, save to path
     logFilePath = directory / filename;
 
     // attempt to delete file if it exists already
-    if (std::filesystem::exists(logFilePath))
-        std::filesystem::remove(logFilePath);
+    if (std::filesystem::exists(logFilePath)) {
+        if (!std::filesystem::remove(logFilePath))
+            throw PathException("Unable to clear old log file: ", logFilePath);
+    }
 }
 
-bool BasicLogger::setStdLogFile(
+void BasicLogger::setStdLogFile(
     const std::string& name,
-    std::filesystem::path& path
+    const std::filesystem::path& path
 ) {
     try {
         createDirectory(name, path, stdLogPath);
-        return true;
     }
     catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
-        return false;
+        throw;
     }
 }
 
-bool BasicLogger::setErrLogFile(
+void BasicLogger::setErrLogFile(
     const std::string& name,
-    std::filesystem::path& path
+    const std::filesystem::path& path
 ) {
     try {
         createDirectory(name, path, errLogPath);
-        return true;
     }
     catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
-        return false;
+        throw;
     }
 }
 
@@ -80,18 +79,18 @@ bool BasicLogger::setErrLogFile(
 
 void BasicLogger::writeLogFile(
     const std::string& message,
-    std::filesystem::path& logFilePath,
+    const std::filesystem::path& logFilePath,
     std::size_t& counter
 ) const {
     if (std::filesystem::exists(logFilePath)) {
         if (!std::filesystem::is_regular_file(logFilePath)) {
-            throw std::runtime_error("Log file is malformed: " + logFilePath.string());
+            throw PathException("Log file is malformed: ", logFilePath);
         }
     }
 
     std::ofstream logFile(logFilePath, std::ios::app);
     if (!logFile.is_open()) {
-        throw std::runtime_error("Unable to access log file: " + logFilePath.string());
+        throw PathException("Unable to access log file: ", logFilePath);
     }
     logFile << ++counter << " :: " << message << std::endl;
 }
@@ -99,7 +98,8 @@ void BasicLogger::writeLogFile(
 void BasicLogger::stdLogOut(const std::string& text) {
     try {
         writeLogFile(text, stdLogPath, cStd);
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
     }
 }
@@ -107,7 +107,8 @@ void BasicLogger::stdLogOut(const std::string& text) {
 void BasicLogger::errLogOut(const std::string& text) {
     try {
         writeLogFile(text, errLogPath, cErr);
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
     }
 }

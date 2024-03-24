@@ -74,6 +74,7 @@ using namespace std::string_view_literals;
 class VM_Host;
 class VM_Guest;
 
+#include "Assistants/BasicHome.hpp"
 #include "Assistants/BasicLogger.hpp"
 #include "Assistants/BasicRenderer.hpp"
 #include "Assistants/BasicInput.hpp"

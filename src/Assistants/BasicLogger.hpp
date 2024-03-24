@@ -5,6 +5,7 @@
 */
 
 #pragma once
+
 #include <memory>
 #include <string>
 #include <filesystem>
@@ -24,20 +25,20 @@ class BasicLogger final {
 
     void createDirectory(
         const std::string&,
-        std::filesystem::path&,
+        const std::filesystem::path&,
         std::filesystem::path&
     ) const;
     void writeLogFile(
         const std::string&,
-        std::filesystem::path&,
+        const std::filesystem::path&,
         std::size_t&
     ) const;
 
 public:
     static BasicLogger& create();
 
-    bool setStdLogFile(const std::string&, std::filesystem::path&);
-    bool setErrLogFile(const std::string&, std::filesystem::path&);
+    void setStdLogFile(const std::string&, const std::filesystem::path&);
+    void setErrLogFile(const std::string&, const std::filesystem::path&);
 
     void stdLogOut(const std::string&);
     void errLogOut(const std::string&);

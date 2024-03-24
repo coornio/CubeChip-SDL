@@ -13,6 +13,7 @@ bool VM_Guest::setupMachine() {
         return false;
     }
     if (!romTypeCheck()) {
+        Host.programLoaded = false;
         Host.File.reset();
         return false;
     }

@@ -8,36 +8,38 @@
 
 #pragma warning(push)
 #pragma warning(disable : 26819) // C fallthrough warning disabled
-#include <SDL_video.h>
-#include <SDL_render.h>
-#include <SDL_stdinc.h>
+#include <SDL.h>
 #pragma warning(pop)
+
+#include <string>
 
 class BasicRenderer {
 	SDL_Window*   window{};
 	SDL_Renderer* renderer{};
 	SDL_Texture*  texture{};
 
-	const std::string emuName    { "CubeChip"   };
-	const std::string emuVersion { "[22.03.24]" };
-		  std::string windowTitle{};
-
-	void errorMessage(std::string&&);
+	const std::string emuName;
+	const std::string emuVersion;
+		  std::string windowTitle;
 
 public:
-	BasicRenderer();
+	explicit BasicRenderer(const Sint32, const Sint32);
+	~BasicRenderer();
+
+	static bool showErrorBoxSDL(std::string_view);
+	static bool showErrorBox(std::string_view, std::string_view);
 
 	void changeTitle(std::string_view);
-	bool createWindow();
-	bool createRenderer();
-	bool createTexture(const s32, const s32);
+	void createWindow();
+	void createRenderer();
+	void createTexture(const Sint32, const Sint32);
 
-	s32 window_W;
-	s32 window_H;
+	Sint32 window_W;
+	Sint32 window_H;
 
-	float aspect{};
-	s32   ppitch{};
-	u32*  pixels{};
+	float   aspect{};
+	Sint32  ppitch{};
+	Uint32* pixels{};
 
 	void lockTexture();
 	void unlockTexture();
@@ -45,12 +47,11 @@ public:
 
 	void getWindowSize(const bool);
 
-	void setTextureAlpha(usz);
+	void setTextureAlpha(std::size_t);
 	void setTextureBlend(SDL_BlendMode);
 	void setAspectRatio(float);
 
 	void quitWindow();
 	void quitRenderer();
 	void quitTexture();
-	void quitSDL();
 };

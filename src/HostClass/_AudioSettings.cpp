@@ -13,7 +13,12 @@
 VM_Host::AudioSettings::AudioSettings()
     : outFrequency(48000)
 {
+    SDL_Init(SDL_INIT_AUDIO);
     setVolume(255);
+}
+
+VM_Host::AudioSettings::~AudioSettings() {
+    if (device) SDL_CloseAudioDevice(device);
 }
 
 void VM_Host::AudioSettings::setSpec(VM_Host* parent) {

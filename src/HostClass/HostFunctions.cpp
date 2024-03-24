@@ -11,32 +11,22 @@
 /*  class  VM_Host                                                  */
 /*------------------------------------------------------------------*/
 
-VM_Host::VM_Host(const char* path) {
-    SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
-
-    if (!Render.createWindow())   return;
-    if (!Render.createRenderer()) return;
-    if (!File.verifyHome())       return;
-    if (!File.verifyFile(path))   return;
-    
+VM_Host::VM_Host(
+    HomeDirManager& hdm_ptr,
+    BasicRenderer&  br_ptr,
+    const char* path
+)
+    : File{ hdm_ptr }
+    , Render{ br_ptr }
+{
     Render.changeTitle("Waiting");
     Audio.setSpec(this);
 
-    machineLoaded = true;
-    return;
+    machineLoaded = File.verifyFile(path);
 }
 
-VM_Host::~VM_Host() {
-    if (Audio.device)    SDL_CloseAudioDevice(Audio.device);
-    Render.quitSDL();
-}
-
-bool VM_Host::machineValid() const { return machineLoaded; }
-bool VM_Host::programValid() const { return programLoaded; }
-
-void VM_Host::addMessage(const std::string_view msg) {
-    std::cout << "  >>  " << msg << std::endl;
-}
+bool VM_Host::isReady() const { return machineLoaded; }
+bool VM_Host::romLoaded() const { return programLoaded; }
 
 void VM_Host::runMachine(VM_Guest& vm) {
     SDL_Event    event;

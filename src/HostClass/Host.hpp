@@ -8,6 +8,22 @@
 
 #include "../Includes.hpp"
 
+class HomeDirManager final : public BasicHome {
+public:
+    std::filesystem::path permRegs{};
+    std::string path{};
+    std::string name{};
+    std::string type{};
+    std::string sha1{};
+    std::size_t size{};
+
+    HomeDirManager(const char*);
+
+    void reset();
+    void addDirectory();
+    bool verifyFile(const char*);
+};
+
 class VM_Host final {
 public:
     bool machineLoaded{ false };
@@ -15,27 +31,10 @@ public:
     bool benchmarking{ false };
     [[maybe_unused]] u64 cycles{};
 
-    BasicRenderer Render{};
+    BasicRenderer& Render;
+    HomeDirManager& File;
 
-    VM_Host(const char*);
-    ~VM_Host();
-
-    class FileInfo final {
-        VM_Host& Host;
-    public:
-        std::filesystem::path homeDirectory{};
-        std::filesystem::path permRegs{};
-        std::string path{};
-        std::string name{};
-        std::string type{};
-        std::string sha1{};
-        std::size_t size{};
-        
-        explicit FileInfo(VM_Host&);
-        void reset();
-        bool verifyHome();
-        bool verifyFile(const char*);
-    } File{ *this };
+    explicit VM_Host(HomeDirManager&, BasicRenderer&, const char*);
 
     struct AudioSettings final {
         const u32 outFrequency;
@@ -46,14 +45,15 @@ public:
         std::function<void(s16*, u32)> handler{};
 
         AudioSettings();
+        ~AudioSettings();
         void setSpec(VM_Host*);
         void setVolume(s32);
         static void audioCallback(void*, u8*, s32);
     } Audio;
 
     void runMachine(VM_Guest&);
-    void addMessage(std::string_view);
+    //void addMessage(std::string_view);
 
-    [[nodiscard]] bool machineValid() const;
-    [[nodiscard]] bool programValid() const;
+    [[nodiscard]] bool isReady() const;
+    [[nodiscard]] bool romLoaded() const;
 };

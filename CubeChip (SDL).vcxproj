@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\Assistants\BasicHome.cpp" />
     <ClCompile Include="src\Assistants\BasicInput.cpp" />
     <ClCompile Include="src\Assistants\BasicRenderer.cpp" />
     <ClCompile Include="src\Assistants\BasicLogger.cpp" />
@@ -35,7 +36,7 @@
     <ClCompile Include="src\GuestClass\_Registers.cpp" />
     <ClCompile Include="src\HostClass\_AudioSettings.cpp" />
     <ClCompile Include="src\HostClass\HostFunctions.cpp" />
-    <ClCompile Include="src\HostClass\_FileInfo.cpp" />
+    <ClCompile Include="src\HostClass\HomeDirManager.cpp" />
     <ClCompile Include="src\InstructionSets\_Classic8.cpp" />
     <ClCompile Include="src\InstructionSets\_Gigachip.cpp" />
     <ClCompile Include="src\InstructionSets\_LegacySC.cpp" />
@@ -43,11 +44,13 @@
     <ClCompile Include="src\InstructionSets\_ModernXO.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Assistants\BasicHome.hpp" />
     <ClInclude Include="src\Assistants\BasicInput.hpp" />
     <ClInclude Include="src\Assistants\BasicRenderer.hpp" />
     <ClInclude Include="src\Assistants\BasicLogger.hpp" />
     <ClInclude Include="src\Assistants\FrameLimiter.hpp" />
     <ClInclude Include="src\Assistants\HexInput.hpp" />
+    <ClInclude Include="src\Assistants\PathExceptionClass.hpp" />
     <ClInclude Include="src\Assistants\SHA1.hpp" />
     <ClInclude Include="src\Assistants\Well512.hpp" />
     <ClInclude Include="src\GuestClass\Guest.hpp" />
