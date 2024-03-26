@@ -30,7 +30,7 @@ catch (const std::exception& e) {
 }
 
 void HomeDirManager::reset() {
-    path = name = type = {};
+    path = name = type = sha1 = {};
     size = 0;
 }
 
@@ -42,31 +42,33 @@ void HomeDirManager::addDirectory() {
     }
 }
 
-bool HomeDirManager::verifyFile(const char* newPath) {
-    if (!newPath) return false;
+bool HomeDirManager::verifyFile(const char* filepath) {
+    if (!filepath) return false;
     namespace fs = std::filesystem;
 
-    const fs::path fspath{ newPath };
+    const fs::path fspath{ filepath };
     if (!fs::exists(fspath) || !fs::is_regular_file(fspath)) {
         blog.errLogOut("Unable to use locate path: " + fspath.string());
         return false;
     }
 
-    std::error_code ec;
-    const auto ifs_length{ fs::file_size(fspath, ec) };
-    if (ec) {
+    std::error_code error;
+    const auto fslen{ fs::file_size(fspath, error) };
+    if (error) {
         blog.errLogOut("Unable to access file: " + fspath.string());
         return false;
     }
-    if (ifs_length < 1) {
+    if (fslen == 0) {
         blog.errLogOut("File is empty: " + fspath.string());
         return false;
     }
 
-    path = newPath;
+    path = fspath.string();
     name = fspath.stem().string();
     type = fspath.extension().string();
-    sha1 = SHA1::from_file(newPath);
-    size = ifs_length;
+    sha1 = SHA1::from_file(path);
+    size = fslen;
+
+    blog.stdLogOut("New file received: " + path);
     return true;
 }

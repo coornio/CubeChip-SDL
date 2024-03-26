@@ -47,15 +47,15 @@ void FunctionsForMegachip::scrollRT(const usz N) {
 /*------------------------------------------------------------------*/
 
 void FunctionsForMegachip::blendToDisplay(auto& src, auto& dst) {
-	auto*& pixels{ vm.Host.Render.pixels };
-	vm.Host.Render.lockTexture();
+	auto*& pixels{ vm.Host.Video.pixels };
+	vm.Host.Video.lockTexture();
 
 	for (auto H{ 0 }; H < vm.Plane.H; ++H)
 		for (auto W{ 0 }; W < vm.Plane.W; ++W)
 			*pixels++ = blendPixel(src[H][W], dst[H][W]);
 
-	vm.Host.Render.unlockTexture();
-	vm.Host.Render.renderPresent();
+	vm.Host.Video.unlockTexture();
+	vm.Host.Video.renderPresent();
 }
 
 u32 FunctionsForMegachip::blendPixel(const u32 colorSrc, const u32 colorDst) {

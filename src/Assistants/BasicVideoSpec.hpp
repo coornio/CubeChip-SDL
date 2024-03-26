@@ -13,7 +13,7 @@
 
 #include <string>
 
-class BasicRenderer {
+class BasicVideoSpec {
 	SDL_Window*   window{};
 	SDL_Renderer* renderer{};
 	SDL_Texture*  texture{};
@@ -23,19 +23,16 @@ class BasicRenderer {
 		  std::string windowTitle;
 
 public:
-	explicit BasicRenderer(const Sint32, const Sint32);
-	~BasicRenderer();
+	explicit BasicVideoSpec(const Sint32, const Sint32);
+	~BasicVideoSpec();
 
 	static bool showErrorBoxSDL(std::string_view);
 	static bool showErrorBox(std::string_view, std::string_view);
 
 	void changeTitle(std::string_view);
-	void createWindow();
+	void createWindow(const Sint32, const Sint32);
 	void createRenderer();
 	void createTexture(const Sint32, const Sint32);
-
-	Sint32 window_W;
-	Sint32 window_H;
 
 	float   aspect{};
 	Sint32  ppitch{};
@@ -45,7 +42,7 @@ public:
 	void unlockTexture();
 	void renderPresent();
 
-	void getWindowSize(const bool);
+	void resizeWindow(Sint32 = 0, Sint32 = 0);
 
 	void setTextureAlpha(std::size_t);
 	void setTextureBlend(SDL_BlendMode);

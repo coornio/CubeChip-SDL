@@ -13,21 +13,30 @@
 
 VM_Host::VM_Host(
     HomeDirManager& hdm_ptr,
-    BasicRenderer&  br_ptr,
+    BasicVideoSpec& bvs_ptr,
+    BasicAudioSpec& bas_ptr,
     const char* path
 )
     : File{ hdm_ptr }
-    , Render{ br_ptr }
+    , Video{ bvs_ptr }
+    , Audio{ bas_ptr }
 {
-    Render.changeTitle("Waiting");
+    Video.changeTitle("Waiting for file...");
     Audio.setSpec(this);
 
-    machineLoaded = File.verifyFile(path);
+    if (File.verifyFile(path)) {
+        hasFile(true);
+        isReady(false);
+    }
 }
 
-bool VM_Host::isReady() const { return machineLoaded; }
-bool VM_Host::romLoaded() const { return programLoaded; }
+bool VM_Host::isReady() const { return _isReady; }
+bool VM_Host::hasFile() const { return _hasFile; }
 
+void VM_Host::isReady(const bool state) { _isReady = state; }
+void VM_Host::hasFile(const bool state) { _hasFile = state; }
+
+/*
 void VM_Host::runMachine(VM_Guest& vm) {
     SDL_Event    event;
     FrameLimiter Frame(vm.Program.framerate);
@@ -56,8 +65,8 @@ void VM_Host::runMachine(VM_Guest& vm) {
                 case SDL_WINDOWEVENT: {
                     switch (event.window.event) {
                         case SDL_WINDOWEVENT_RESIZED: {
-                            Render.getWindowSize(true);
-                            Render.renderPresent();
+                            Video.resizeWindow(true);
+                            Video.renderPresent();
                         }
                     }
                 } break;
@@ -104,15 +113,4 @@ exit:
     kb.updateCopy();
     SDL_PauseAudioDevice(Audio.device, 1);
 }
-
-/*------------------------------------------------------------------*/
-/*  class  VM_Host::FileInfo                                        */
-/*------------------------------------------------------------------*/
-
-// _FileInfo.cpp
-
-/*------------------------------------------------------------------*/
-/*  class  VM_Host::AudioSettings                                   */
-/*------------------------------------------------------------------*/
-
-// _AudioSettings.cpp
+*/

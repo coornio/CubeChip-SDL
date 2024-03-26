@@ -10,18 +10,19 @@
 /*  class  VM_Host::AudioSettings                                   */
 /*------------------------------------------------------------------*/
 
-VM_Host::AudioSettings::AudioSettings()
+BasicAudioSpec::BasicAudioSpec()
     : outFrequency(48000)
 {
-    SDL_Init(SDL_INIT_AUDIO);
+    SDL_InitSubSystem(SDL_INIT_AUDIO);
     setVolume(255);
 }
 
-VM_Host::AudioSettings::~AudioSettings() {
+BasicAudioSpec::~BasicAudioSpec() {
     if (device) SDL_CloseAudioDevice(device);
+    SDL_QuitSubSystem(SDL_INIT_AUDIO);
 }
 
-void VM_Host::AudioSettings::setSpec(VM_Host* parent) {
+void BasicAudioSpec::setSpec(VM_Host* parent) {
     SDL_zero(spec);
     spec.freq     = outFrequency;
     spec.format   = AUDIO_S16SYS;
@@ -32,12 +33,16 @@ void VM_Host::AudioSettings::setSpec(VM_Host* parent) {
     device = SDL_OpenAudioDevice(nullptr, 0, &spec, nullptr, 0);
 }
 
-void VM_Host::AudioSettings::setVolume(const s32 vol) {
+void BasicAudioSpec::setVolume(const s32 vol) {
     volume = std::clamp(vol, 0, 255);
     amplitude = as<s16>(16 * volume);
 }
 
-void VM_Host::AudioSettings::audioCallback(void* data, u8* buffer, const s32 bytes) {
+void BasicAudioSpec::pauseDevice(const bool state) {
+    SDL_PauseAudioDevice(device, state);
+}
+
+void BasicAudioSpec::audioCallback(void* data, u8* buffer, const s32 bytes) {
     auto* self = to<VM_Host*>(data);
     if (self->Audio.handler)
         self->Audio.handler(to<s16*>(buffer), bytes >> 1);

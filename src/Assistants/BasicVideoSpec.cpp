@@ -6,17 +6,15 @@
 
 #pragma once
 
-#include "BasicRenderer.hpp"
+#include "BasicVideoSpec.hpp"
 
-BasicRenderer::BasicRenderer(const Sint32 w, const Sint32 h)
-	: window_W(w) // placeholder
-	, window_H(h) // placeholder
-	, emuName{ "CubeChip" }
+BasicVideoSpec::BasicVideoSpec(const Sint32 w, const Sint32 h)
+	: emuName{ "CubeChip" }
 	, emuVersion{ "[24.03.24]" }
 {
 	try {
-		SDL_Init(SDL_INIT_VIDEO);
-		createWindow();
+		SDL_InitSubSystem(SDL_INIT_VIDEO);
+		createWindow(w, h);
 		createRenderer();
 	}
 	catch (const std::exception& e) {
@@ -25,16 +23,20 @@ BasicRenderer::BasicRenderer(const Sint32 w, const Sint32 h)
 	}
 }
 
-BasicRenderer::~BasicRenderer() {
+BasicVideoSpec::~BasicVideoSpec() {
 	quitTexture();
 	quitRenderer();
 	quitWindow();
+	SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }
 
-void BasicRenderer::createWindow() {
+void BasicVideoSpec::createWindow(
+	const Sint32 window_W,
+	const Sint32 window_H
+) {
 	quitWindow();
 
-	if (!(window = SDL_CreateWindow(
+	window = SDL_CreateWindow(
 		windowTitle.c_str(),
 		SDL_WINDOWPOS_CENTERED,
 		SDL_WINDOWPOS_CENTERED,
@@ -42,48 +44,54 @@ void BasicRenderer::createWindow() {
 		SDL_WINDOW_RESIZABLE |
 		SDL_WINDOW_INPUT_FOCUS |
 		SDL_WINDOW_ALLOW_HIGHDPI
-	))) {
+	);
+
+	if (!window) {
 		throw std::exception("SDL Error: Window");
 	}
 }
 
-void BasicRenderer::createRenderer() {
+void BasicVideoSpec::createRenderer() {
 	quitRenderer();
 
-	if (!(renderer = SDL_CreateRenderer(
+	renderer = SDL_CreateRenderer(
 		window, -1,
 		SDL_RENDERER_ACCELERATED /*|
 		SDL_RENDERER_PRESENTVSYNC*/
 		// conflicts with the current frameLimiter setup
 		// don't know how to marry the two..
-	))) {
+	);
+
+	if (!renderer) {
 		throw std::exception("SDL Error: Renderer");
 	}
 }
 
-void BasicRenderer::createTexture(const Sint32 width, const Sint32 height) {
+void BasicVideoSpec::createTexture(const Sint32 width, const Sint32 height) {
 	quitTexture();
 
-	if (!(texture = SDL_CreateTexture(
+	texture = SDL_CreateTexture(
 		renderer,
 		SDL_PIXELFORMAT_ARGB8888,
 		SDL_TEXTUREACCESS_STREAMING,
 		width, height
-	))) {
+	);
+
+	if (!texture) {
 		throw std::exception("SDL Error: Texture");
 	} else {
 		ppitch = width * 4;
 	}
 }
 
-void BasicRenderer::changeTitle(const std::string_view name) {
+void BasicVideoSpec::changeTitle(const std::string_view name) {
 	windowTitle  = emuVersion + " :: ";
 	windowTitle += emuName    + " :: ";
 	windowTitle += name;
 	SDL_SetWindowTitle(window, windowTitle.c_str());
 }
 
-bool BasicRenderer::showErrorBoxSDL(
+bool BasicVideoSpec::showErrorBoxSDL(
 	std::string_view title
 ) {
 	return SDL_ShowSimpleMessageBox(
@@ -92,7 +100,7 @@ bool BasicRenderer::showErrorBoxSDL(
 	);
 }
 
-bool BasicRenderer::showErrorBox(
+bool BasicVideoSpec::showErrorBox(
 	std::string_view message,
 	std::string_view title
 ) {
@@ -102,7 +110,7 @@ bool BasicRenderer::showErrorBox(
 	);
 }
 
-void BasicRenderer::lockTexture() {
+void BasicVideoSpec::lockTexture() {
 	void* pixel_ptr{ pixels };
 	SDL_LockTexture(
 		texture, nullptr,
@@ -111,57 +119,45 @@ void BasicRenderer::lockTexture() {
 	);
 	pixels = static_cast<Uint32*>(pixel_ptr);
 }
-void BasicRenderer::unlockTexture() {
+void BasicVideoSpec::unlockTexture() {
 	SDL_UnlockTexture(texture);
 }
 
-void BasicRenderer::setTextureAlpha(const std::size_t alpha) {
+void BasicVideoSpec::setTextureAlpha(const std::size_t alpha) {
 	SDL_SetTextureAlphaMod(texture, static_cast<Uint8>(alpha));
 }
-void BasicRenderer::setTextureBlend(const SDL_BlendMode blend) {
+void BasicVideoSpec::setTextureBlend(const SDL_BlendMode blend) {
 	SDL_SetTextureBlendMode(texture, blend);
 }
-void BasicRenderer::setAspectRatio(const float ratio) {
+void BasicVideoSpec::setAspectRatio(const float ratio) {
 	aspect = ratio;
 	// lackluster ain't it
 }
 
-void BasicRenderer::renderPresent() {
+void BasicVideoSpec::renderPresent() {
 	SDL_RenderClear(renderer);
 	SDL_RenderCopy(renderer, texture, nullptr, nullptr);
 	SDL_RenderPresent(renderer);
 }
 
-void BasicRenderer::quitTexture() {
+void BasicVideoSpec::quitTexture() {
 	if (texture)  SDL_DestroyTexture(texture);
 }
-void BasicRenderer::quitRenderer() {
+void BasicVideoSpec::quitRenderer() {
 	if (renderer) SDL_DestroyRenderer(renderer);
 }
-void BasicRenderer::quitWindow() {
+void BasicVideoSpec::quitWindow() {
 	if (window)   SDL_DestroyWindow(window);
 }
 
-void BasicRenderer::getWindowSize(const bool resize) {
-	// const auto old_W{ window_W }, old_H{ window_H };
-	SDL_GetWindowSize(window, &window_W, &window_H);
+void BasicVideoSpec::resizeWindow(Sint32 W, Sint32 H) {
+	Sint32 old_W{}, old_H{};
+	SDL_GetWindowSize(window, &old_W, &old_H);
 
-	if (resize) {
-		window_W &= 0x0FFFFFFC;
-		window_W = std::max(window_W, 640);
-		window_H = static_cast<Sint32>(window_W / aspect);
-		SDL_SetWindowSize(window, window_W, window_H);
-		/*
-		const float aspect_window =
-			window_W / 1.0f / window_H;
+	if (W <= 0) W = old_W;
+	if (H <= 0) H = old_H;
 
-		if (aspect > aspect_window) {
-			screen.w = window_W;
-			screen.h = as<Sint32>(window_W / aspect);
-		} else {
-			screen.h = window_H;
-			screen.w = as<Sint32>(window_H / aspect);
-		}
-		*/
-	}
+	W = std::max(W & 0xFFFC, 640);
+	H = static_cast<Sint32>(W / aspect);
+	SDL_SetWindowSize(window, W, H);
 }

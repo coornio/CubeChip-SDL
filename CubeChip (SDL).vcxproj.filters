@@ -24,7 +24,7 @@
     <ClCompile Include="src\GuestClass\Init.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\HostClass\_AudioSettings.cpp">
+    <ClCompile Include="src\HostClass\BasicAudioSpec.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\GuestClass\_AudioCores.cpp">
@@ -72,7 +72,7 @@
     <ClCompile Include="src\GuestClass\_Registers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Assistants\BasicRenderer.cpp">
+    <ClCompile Include="src\Assistants\BasicVideoSpec.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Assistants\BasicLogger.cpp">
@@ -119,7 +119,7 @@
     <ClInclude Include="src\_nlohmann\json_fwd.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Assistants\BasicRenderer.hpp">
+    <ClInclude Include="src\Assistants\BasicVideoSpec.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Assistants\BasicLogger.hpp">

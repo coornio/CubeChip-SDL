@@ -8,10 +8,6 @@
 #include "PathExceptionClass.hpp"
 #include <SDL.h>
 
-/*------------------------------------------------------------------*/
-/*  class  VM_Host::FileInfo                                         */
-/*------------------------------------------------------------------*/
-
 bool BasicHome::showErrorBox(
     std::string_view message,
     std::string_view title
@@ -23,8 +19,9 @@ bool BasicHome::showErrorBox(
 }
 
 BasicHome::BasicHome(const char* path) {
-    char* platformHome{};
-    if (!(platformHome = SDL_GetPrefPath(nullptr, path))) {
+    char* platformHome{ SDL_GetPrefPath(nullptr, path) };
+
+    if (!platformHome) {
         throw PathException("Failed to get platform home directory!", "");
     }
 
@@ -36,4 +33,3 @@ BasicHome::BasicHome(const char* path) {
         throw PathException("Cannot create home directory: ", homeDir);
     }
 }
-

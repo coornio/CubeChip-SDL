@@ -13,8 +13,7 @@ bool VM_Guest::setupMachine() {
         return false;
     }
     if (!romTypeCheck()) {
-        Host.programLoaded = false;
-        Host.File.reset();
+        //Host.File.reset();
         return false;
     }
 
@@ -22,8 +21,12 @@ bool VM_Guest::setupMachine() {
     loadFontData();
 
     blog.stdLogOut("Successfully initialized rom/platform.");
-    Host.Render.changeTitle(Host.File.name);
-    Host.programLoaded = true;
+    /*
+    Host.Video.changeTitle(Host.File.name);
+    Host.Audio.handler = [&](s16* buffer, const s32 frames) {
+        Audio.renderAudio(buffer, frames);
+    };
+    */
     return true;
 }
 
@@ -32,7 +35,7 @@ bool VM_Guest::romTypeCheck() {
     * This place requires a database check, only after which would
     * we fall back to deriving the platform specifics via extension
     */
-    switch (cexprHash(Host.File.type.data())) {
+    switch (cexprHash(Host.File.type.c_str())) {
 
         case (cexprHash(".c2x")):
             if (!romSizeCheck(4'096, 0x300))
@@ -231,10 +234,12 @@ void VM_Guest::setupDisplay(const usz mode, const bool forced) {
     Plane.X = Plane.W >> 3; Program.screenMode = mode; Plane.Xb = Plane.X - 1;
 
     if (forced) Mem.modifyViewport(BrushType::CLR);
-    Host.Render.createTexture(Plane.W, Plane.H);
-    Host.Render.setAspectRatio(State.mega_enabled ? 1.25f : 2.00f);
-    Host.Render.setTextureBlend(SDL_BLENDMODE_BLEND);
-    Host.Render.getWindowSize(true);
+
+    Host.Video.createTexture(Plane.W, Plane.H);
+    Host.Video.setTextureBlend(SDL_BLENDMODE_BLEND);
+    Host.Video.setAspectRatio(State.mega_enabled ? 1.25f : 2.00f);
+    Host.Video.resizeWindow();
+
     State.push_display = true;
 
     if (State.chip8X_rom || State.schip_legacy) {
@@ -325,8 +330,8 @@ void VM_Guest::loadFontData() {
 }
 
 void VM_Guest::flushDisplay() {
-    auto*& pixels{ Host.Render.pixels };
-    Host.Render.lockTexture();
+    auto*& pixels{ Host.Video.pixels };
+    Host.Video.lockTexture();
 
     if (State.mega_enabled) {
         for (auto& row : Mem.display) {
@@ -367,5 +372,5 @@ void VM_Guest::flushDisplay() {
             }
         }
     }
-    Host.Render.unlockTexture();
+    Host.Video.unlockTexture();
 }

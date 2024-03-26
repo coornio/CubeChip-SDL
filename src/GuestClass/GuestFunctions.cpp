@@ -26,7 +26,7 @@ void VM_Guest::cycle() {
 	if (!State.push_display) return;
 	flushDisplay();
 
-	Host.Render.renderPresent();
+	Host.Video.renderPresent();
 	State.push_display = false;
 }
 
@@ -131,9 +131,8 @@ void VM_Guest::instructionLoop() {
 									Quirk.jmpRegX      = false;
 									setupDisplay(Resolution::LO);
 									Program.setFncSet(&SetClassic8);
-									Host.Render.setTextureAlpha(0xFF);
+									Host.Video.setTextureAlpha(0xFF);
 									Audio.MC.reset();
-									blog.stdLogOut("MegaChip mode disabled!");
 									break;
 								case 0x11:				// 0011 - enable mega mode *MEGACHIP*
 									State.mega_enabled = true;
@@ -144,7 +143,6 @@ void VM_Guest::instructionLoop() {
 									setupDisplay(Resolution::MC);
 									Program.setFncSet(&SetMegachip);
 									Mem.flushBuffers(CLEAR_ALL);
-									blog.stdLogOut("MegaChip mode enabled!");
 									break;
 								[[unlikely]] default: Program.requestHalt();
 							} break;
@@ -162,7 +160,7 @@ void VM_Guest::instructionLoop() {
 								Trait.H = LO ? LO : 256;
 								break;
 							case 0x5:					// 05NN - set screen brightness to NN *MEGACHIP*
-								Host.Render.setTextureAlpha(LO);
+								Host.Video.setTextureAlpha(LO);
 								break;
 							case 0x6:					// 060N - start digital sound from RAM at I, repeat if N == 0 *MEGACHIP*
 								Audio.MC.enable(
