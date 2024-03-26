@@ -54,6 +54,7 @@
     <ClInclude Include="src\Assistants\SHA1.hpp" />
     <ClInclude Include="src\Assistants\Well512.hpp" />
     <ClInclude Include="src\GuestClass\Guest.hpp" />
+    <ClInclude Include="src\HostClass\BasicAudioSpec.hpp" />
     <ClInclude Include="src\HostClass\Host.hpp" />
     <ClInclude Include="src\Includes.hpp" />
     <ClInclude Include="src\InstructionSets\Interface.hpp" />

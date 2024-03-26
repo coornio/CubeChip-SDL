@@ -36,28 +36,16 @@ struct BasicEventLoop {
     }
 };
 
-// needs to be on its own file
-struct BasicAudioSpec final {
-    const u32 outFrequency;
-    SDL_AudioDeviceID device{};
-    u32 volume{};
-    s16 amplitude{};
-    SDL_AudioSpec spec{};
-    std::function<void(s16*, u32)> handler{};
-
-    BasicAudioSpec();
-    ~BasicAudioSpec();
-    void setSpec(VM_Host*);
-    void setVolume(s32);
-    void pauseDevice(const bool);
-    static void audioCallback(void*, u8*, s32);
-};
+//class BasicAudioSpec;
+#include "BasicAudioSpec.hpp"
 
 class VM_Host final {
     bool _isReady{ false };
     bool _hasFile{ false };
+    bool _doBench{ false };
+    s32  _state{};
+
 public:
-    bool benchmarking{ false };
     [[maybe_unused]] u64 cycles{};
 
     HomeDirManager& File;
@@ -71,10 +59,10 @@ public:
         const char*
     );
 
-    void runMachine(VM_Guest&);
-
     [[nodiscard]] bool isReady() const;
     [[nodiscard]] bool hasFile() const;
+    [[nodiscard]] bool doBench() const;
     void isReady(const bool);
     void hasFile(const bool);
+    void doBench(const bool);
 };

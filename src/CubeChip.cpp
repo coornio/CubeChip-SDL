@@ -14,11 +14,13 @@ s32 SDL_main(s32 argc, char* argv[]) {
     std::unique_ptr<HomeDirManager> HDM;
     std::unique_ptr<BasicVideoSpec> BVS;
     std::unique_ptr<BasicAudioSpec> BAS;
+    std::unique_ptr<BasicEventLoop> BEL;
 
     try {
         HDM = std::make_unique<HomeDirManager>("CubeChip_SDL");
         BVS = std::make_unique<BasicVideoSpec>(800, 400);
-        BAS = std::make_unique<BasicAudioSpec>();
+        BAS = std::make_unique<BasicAudioSpec>(48'000);
+        BEL = std::make_unique<BasicEventLoop>();
     }
     catch (...) { return EXIT_FAILURE; }
 
@@ -38,25 +40,27 @@ s32 SDL_main(s32 argc, char* argv[]) {
 
     {
     reset_all:
-        // do I even need it as a unique_ptr still?
-        Guest = nullptr;
-        Guest = createGuest(Host);
+        //VM_Guest Guest(Host);
 
-        // this segment is ugly, fix it fix it fix it
-        if (Guest->setupMachine()) {
-            Host.isReady(true);
-            // need to update Frame object with program.framerate too
-            BVS->changeTitle(HDM->name);
-            BAS->pauseDevice(false);
-            BAS->handler = [&](s16* buffer, const s32 frames) {
-                Guest->Audio.renderAudio(buffer, frames);
-            };
-        }
-        else {
-            Host.isReady(false);
-            Host.hasFile(false);
-            HDM->reset();
-            BAS->pauseDevice(true);
+        if (Host.hasFile()) {
+            // placeholder to avoid duplication from goto (for now)
+            Guest = nullptr;
+            Guest = createGuest(Host);
+
+            // this segment is ugly, fix it fix it fix it
+            if (Guest->setupMachine()) {
+                Host.isReady(true);
+                // need to update Frame object with program.framerate too
+                BVS->changeTitle(HDM->name);
+                BAS->setHandler(Guest);
+
+            }
+            else {
+                Host.isReady(false);
+                Host.hasFile(false);
+                HDM->reset();
+                BAS->pauseDevice(true);
+            }
         }
 
         while (true) {
@@ -68,7 +72,7 @@ s32 SDL_main(s32 argc, char* argv[]) {
                         return EXIT_SUCCESS;
                     } break;
                     case SDL_DROPFILE: {
-                        // until file validity check becomes valid, this leaks:
+                        // until file validity check becomes static, this leaks:
                         const std::string filedrop{ Event.drop.file };
                         SDL_free(Event.drop.file);
 
@@ -103,16 +107,16 @@ s32 SDL_main(s32 argc, char* argv[]) {
                 return EXIT_SUCCESS;
             }
             if (bic::kb.isPressed(KEY(RSHIFT))) {
-                Host.benchmarking = !Host.benchmarking;
+                Host.doBench(true);
             }
             if (bic::kb.isPressed(KEY(UP))) {
-                BAS->setVolume(BAS->volume + 15);
+                BAS->changeVolume(+15);
             }
             if (bic::kb.isPressed(KEY(DOWN))) {
-                BAS->setVolume(BAS->volume - 15);
+                BAS->changeVolume(-15);
             }
 
-            if (!Frame(Host.benchmarking
+            if (!Frame(Host.doBench()
                 ? FrameLimiter::SPINLOCK
                 : FrameLimiter::SLEEP
             )) continue;
@@ -120,6 +124,7 @@ s32 SDL_main(s32 argc, char* argv[]) {
             if (Host.isReady()) {
                 if (bic::kb.isPressed(KEY(BACKSPACE))) {
                     BAS->pauseDevice(true);
+
                     goto reset_all;
                     // re-launch with current rom by
                     // destroying guest and re-creating
