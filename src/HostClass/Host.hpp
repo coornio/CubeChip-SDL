@@ -16,13 +16,14 @@ public:
     std::string name{};
     std::string type{};
     std::string sha1{};
+    std::size_t hash{};
     std::size_t size{};
 
     HomeDirManager(const char*);
 
     void reset();
     void addDirectory();
-    bool verifyFile(const char*);
+    bool verifyFile(const char* = nullptr);
 };
 
 // still want to manually init/exit the subsystem
@@ -41,7 +42,6 @@ struct BasicEventLoop {
 
 class VM_Host final {
     bool _isReady{ false };
-    bool _hasFile{ false };
     bool _doBench{ false };
     s32  _state{};
 
@@ -60,9 +60,7 @@ public:
     );
 
     [[nodiscard]] bool isReady() const;
-    [[nodiscard]] bool hasFile() const;
     [[nodiscard]] bool doBench() const;
-    void isReady(const bool);
-    void hasFile(const bool);
-    void doBench(const bool);
+    VM_Host& isReady(const bool);
+    VM_Host& doBench(const bool);
 };

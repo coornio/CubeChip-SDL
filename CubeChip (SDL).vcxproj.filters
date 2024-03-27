@@ -84,6 +84,9 @@
     <ClCompile Include="src\HostClass\HomeDirManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\GuestClass\FileTypes.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\InstructionSets\Interface.hpp">
@@ -132,6 +135,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\HostClass\BasicAudioSpec.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\GuestClass\FileTypes.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

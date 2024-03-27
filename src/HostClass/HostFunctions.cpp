@@ -21,23 +21,21 @@ VM_Host::VM_Host(
     , Video{ bvs_ptr }
     , Audio{ bas_ptr }
 {
+    /*
     Video.changeTitle("Waiting for file...");
     Audio.setSpec();
 
     if (File.verifyFile(path)) {
-        hasFile(true);
-        isReady(false);
+        hasFile(true).isReady(false);
     }
+    */
 }
 
 bool VM_Host::isReady() const { return _isReady; }
-bool VM_Host::hasFile() const { return _hasFile; }
 bool VM_Host::doBench() const { return _doBench; }
 
-void VM_Host::isReady(const bool state) { _isReady = state; }
-void VM_Host::hasFile(const bool state) { _hasFile = state; }
-void VM_Host::doBench(const bool state) { _doBench = state; }
-
+VM_Host& VM_Host::isReady(const bool state) { _isReady = state; return *this; }
+VM_Host& VM_Host::doBench(const bool state) { _doBench = state; return *this; }
 
 /*
         if (benchmarking) {

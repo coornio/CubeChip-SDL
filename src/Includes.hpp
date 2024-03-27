@@ -58,10 +58,6 @@ constexpr R to(T&& t) {
     return reinterpret_cast<R>(std::forward<T>(t));
 }
 
-constexpr std::size_t cexprHash(const char* str, std::size_t v = 0) noexcept {
-    return (*str == 0) ? v : 31 * cexprHash(str + 1) + *str;
-}
-
 template <typename T>
 using vec2D = std::vector<std::vector<T>>;
 

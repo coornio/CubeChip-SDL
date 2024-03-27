@@ -5,11 +5,8 @@
 */
 
 #include "Host.hpp"
+#include "../GuestClass/Guest.hpp"
 #include "../Assistants/PathExceptionClass.hpp"
-
-/*------------------------------------------------------------------*/
-/*  class  VM_Host::HomeDirManager                                  */
-/*------------------------------------------------------------------*/
 
 HomeDirManager::HomeDirManager(const char* homeName) try
     : BasicHome(homeName)
@@ -31,7 +28,7 @@ catch (const std::exception& e) {
 
 void HomeDirManager::reset() {
     path = name = type = sha1 = {};
-    size = 0;
+    hash = size = 0;
 }
 
 void HomeDirManager::addDirectory() {
@@ -47,6 +44,8 @@ bool HomeDirManager::verifyFile(const char* filepath) {
     namespace fs = std::filesystem;
 
     const fs::path fspath{ filepath };
+    blog.stdLogOut("New file received: " + fspath.string());
+
     if (!fs::exists(fspath) || !fs::is_regular_file(fspath)) {
         blog.errLogOut("Unable to use locate path: " + fspath.string());
         return false;
@@ -63,12 +62,21 @@ bool HomeDirManager::verifyFile(const char* filepath) {
         return false;
     }
 
-    path = fspath.string();
-    name = fspath.stem().string();
-    type = fspath.extension().string();
-    sha1 = SHA1::from_file(path);
-    size = fslen;
+    auto tempPath{ fspath.string() };
+    auto tempType{ fspath.extension().string() };
+    auto tempHash{ cexprHash(tempType.c_str()) };
+    auto tempSHA1{ SHA1::from_file(tempPath) };
 
-    blog.stdLogOut("New file received: " + path);
-    return true;
+    if (RomFileTypes::validate(tempHash, fslen, tempSHA1)) {
+        path = tempPath;
+        name = fspath.stem().string();
+        type = tempType;
+        sha1 = tempSHA1;
+        hash = tempHash;
+        size = fslen;
+
+        return true;
+    } else {
+        return false;
+    }
 }

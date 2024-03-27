@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "FileTypes.hpp"
 #include "../Includes.hpp"
 #include "../InstructionSets/Interface.hpp"
 
@@ -293,3 +294,4 @@ public:
     u8& VX()         { return Reg.V[(Program.opcode >> 8) & 0xF]; }
     u16 NNNN()       { return mrw(Program.counter) << 8 | mrw(Program.counter + 1); }
 };
+

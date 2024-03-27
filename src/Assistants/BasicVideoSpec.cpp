@@ -21,6 +21,7 @@ BasicVideoSpec::BasicVideoSpec(const Sint32 w, const Sint32 h)
 		showErrorBoxSDL(e.what());
 		throw;
 	}
+	changeTitle();
 }
 
 BasicVideoSpec::~BasicVideoSpec() {
@@ -84,10 +85,10 @@ void BasicVideoSpec::createTexture(const Sint32 width, const Sint32 height) {
 	}
 }
 
-void BasicVideoSpec::changeTitle(const std::string_view name) {
+void BasicVideoSpec::changeTitle(const char* name) {
 	windowTitle  = emuVersion + " :: ";
 	windowTitle += emuName    + " :: ";
-	windowTitle += name;
+	windowTitle += (name ? name : "Waiting for file...");
 	SDL_SetWindowTitle(window, windowTitle.c_str());
 }
 

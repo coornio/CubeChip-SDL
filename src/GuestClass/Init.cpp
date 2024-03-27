@@ -35,9 +35,9 @@ bool VM_Guest::romTypeCheck() {
     * This place requires a database check, only after which would
     * we fall back to deriving the platform specifics via extension
     */
-    switch (cexprHash(Host.File.type.c_str())) {
+    switch (Host.File.hash) {
 
-        case (cexprHash(".c2x")):
+        case (FileTypes::c2x):
             if (!romSizeCheck(4'096, 0x300))
                 return false;
             Program.init(0x300, 15);
@@ -46,7 +46,7 @@ bool VM_Guest::romTypeCheck() {
             State.hires_2paged = true;
             break;
 
-        case (cexprHash(".c4x")):
+        case (FileTypes::c4x):
             if (!romSizeCheck(4'096, 0x300))
                 return false;
             Program.init(0x300, 15);
@@ -56,7 +56,7 @@ bool VM_Guest::romTypeCheck() {
             State.hires_4paged = true;
             break;
 
-        case (cexprHash(".c8x")):
+        case (FileTypes::c8x):
             if (!romSizeCheck(4'096, 0x300))
                 return false;
             Program.init(0x300, 15);
@@ -64,7 +64,7 @@ bool VM_Guest::romTypeCheck() {
             State.chip8X_rom = true;
             break;
 
-        case (cexprHash(".c8e")):
+        case (FileTypes::c8e):
             if (!romSizeCheck(4'096, 0x200))
                 return false;
             Program.init(0x200, 11);
@@ -72,7 +72,7 @@ bool VM_Guest::romTypeCheck() {
             State.chip8E_rom = true;
             break;
 
-        case (cexprHash(".c2h")):
+        case (FileTypes::c2h):
             if (!romSizeCheck(4'096, 0x260))
                 return false;
             Program.init(0x260, 15);
@@ -81,7 +81,7 @@ bool VM_Guest::romTypeCheck() {
             State.hires_2paged = true;
             break;
 
-        case (cexprHash(".c4h")):
+        case (FileTypes::c4h):
             if (!romSizeCheck(4'096, 0x244))
                 return false;
             Program.init(0x244, 15);
@@ -91,7 +91,7 @@ bool VM_Guest::romTypeCheck() {
             State.hires_4paged = true;
             break;
 
-        case (cexprHash(".c8h")):
+        case (FileTypes::c8h):
             if (!romSizeCheck(4'096, 0x200))
                 return false;
             if (mrw(0x200) != 0x12 || mrw(0x201) != 0x60) {
@@ -106,7 +106,7 @@ bool VM_Guest::romTypeCheck() {
             Quirk.shiftVX      = true;
             break;
 
-        case (cexprHash(".ch8")):
+        case (FileTypes::ch8):
             if (!romSizeCheck(4'096, 0x200))
                 return false;
             Program.init(0x200, 11);
@@ -114,7 +114,7 @@ bool VM_Guest::romTypeCheck() {
             State.chip_classic = true;
             break;
 
-        case (cexprHash(".sc8")):
+        case (FileTypes::sc8):
             if (!romSizeCheck(4'096, 0x200))
                 return false;
             Program.init(0x200, 30);
@@ -122,7 +122,7 @@ bool VM_Guest::romTypeCheck() {
             State.chip_classic = true;
             break;
 
-        case (cexprHash(".gc8")):
+        case (FileTypes::gc8):
             if (!romSizeCheck(16'777'216, 0x200))
                 return false;
             Program.init(0x200, 10'000);
@@ -130,7 +130,7 @@ bool VM_Guest::romTypeCheck() {
             State.gigachip_rom = true;
             break;
 
-        case (cexprHash(".mc8")):
+        case (FileTypes::mc8):
             if (!romSizeCheck(16'777'216, 0x200))
                 return false;
             Program.init(0x200, 3'000);
@@ -138,8 +138,8 @@ bool VM_Guest::romTypeCheck() {
             State.megachip_rom = true;
             break;
 
-        case (cexprHash(".xo8")):
-        case (cexprHash(".hw8")):
+        case (FileTypes::xo8):
+        case (FileTypes::hw8):
             if (!romSizeCheck(65'536, 0x200))
                 return false;
             Program.init(0x200, 200'000);
