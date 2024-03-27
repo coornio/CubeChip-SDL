@@ -260,24 +260,24 @@ public:
             0xFF000060, 0xFF000000, 0xFF002000, 0xFF200000,
         };
 
-        VM_Guest& vm;
+    public:
+        std::array<u32, 16> bit{}; // pixel bit color (planes)
+        std::array<u32, 10> hex{}; // hex sprite gradient map
 
+    private:
         u32 bgindex{}; // background color cycle index
         u32 megahex{}; // hex sprite color for megachip
         u32 buzzer{};  // buzzer color (visual beep)
         [[maybe_unused]] u32 _;
 
     public:
-        std::array<u32, 16> bit{}; // pixel bit color (planes)
-        std::array<u32, 10> hex{}; // hex sprite gradient map
-
-        explicit DisplayColors(VM_Guest&);
+        explicit DisplayColors();
         void setMegaHex(u32);
         void setBit332(usz, usz);
         void cycleBackground();
         u32  getFore8X(const usz) const;
-        u32  getBuzzer()   const;
-    } Color{ *this };
+        u32  getBuzzer() const;
+    } Color;
 
     // init functions
     bool setupMachine();

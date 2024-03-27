@@ -6,10 +6,12 @@
 
 #pragma once
 
-#include "../Includes.hpp"
+//#include "../Includes.hpp"
 
 // still want to manually init/exit the subsystem
 // but where the hell will I put it???
+#include <SDL.h>
+
 struct BasicEventLoop {
     explicit BasicEventLoop() {
         SDL_InitSubSystem(SDL_INIT_EVENTS);
@@ -24,12 +26,12 @@ struct BasicEventLoop {
 #include "BasicAudioSpec.hpp"
 
 class VM_Host final {
-    bool _isReady{ false };
-    bool _doBench{ false };
-    s32  _state{};
+    bool _isReady{};
+    bool _doBench{};
 
 public:
-    [[maybe_unused]] u64 cycles{};
+    [[maybe_unused]] \
+    unsigned long long cycles{};
 
     HomeDirManager& File;
     BasicVideoSpec& Video;

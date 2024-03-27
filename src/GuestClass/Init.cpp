@@ -11,9 +11,6 @@
 #include "FileTypes.hpp"
 
 bool VM_Guest::setupMachine() {
-    if (Host.File.path.empty()) {
-        return false;
-    }
     if (!romTypeCheck()) {
         return false;
     }

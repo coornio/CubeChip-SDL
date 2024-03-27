@@ -6,9 +6,8 @@
 
 #include "Guest.hpp"
 
-VM_Guest::DisplayColors::DisplayColors(VM_Guest& parent)
-    : vm(parent)
-    , bit(BitColors)
+VM_Guest::DisplayColors::DisplayColors()
+    : bit(BitColors)
     , buzzer(bit[1])
 {
     setMegaHex(0xFFFFFFFF);
@@ -32,6 +31,7 @@ void VM_Guest::DisplayColors::setMegaHex(const u32 color) {
 void VM_Guest::DisplayColors::setBit332(const usz idx, const usz color) {
     static constexpr std::array<u8, 8> map3b{ 0x00, 0x20, 0x40, 0x60, 0x80, 0xA0, 0xC0, 0xFF };
     static constexpr std::array<u8, 4> map2b{ 0x00,             0x60,       0xA0,       0xFF };
+    
     bit[idx & 0xF] = 0xFF000000
         | map3b[color >> 5 & 7] << 16 // red
         | map3b[color >> 2 & 7] <<  8 // green
