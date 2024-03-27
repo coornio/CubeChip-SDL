@@ -4,9 +4,10 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include "BasicInput.hpp"
-#include "HexInput.hpp"
 #include <bit>
+
+#include "../Assistants/BasicInput.hpp"
+#include "HexInput.hpp"
 
 HexInput::HexInput()
     : currentBinds(32)

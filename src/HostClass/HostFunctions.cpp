@@ -4,7 +4,6 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include "../GuestClass/Guest.hpp"
 #include "Host.hpp"
 
 /*------------------------------------------------------------------*/
@@ -14,8 +13,7 @@
 VM_Host::VM_Host(
     HomeDirManager& hdm_ptr,
     BasicVideoSpec& bvs_ptr,
-    BasicAudioSpec& bas_ptr,
-    const char* path
+    BasicAudioSpec& bas_ptr
 )
     : File{ hdm_ptr }
     , Video{ bvs_ptr }

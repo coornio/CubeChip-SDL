@@ -8,8 +8,6 @@
 #include "HostClass/Host.hpp"
 #include "GuestClass/Guest.hpp"
 
-
-
 s32 SDL_main(s32 argc, char* argv[]) {
     std::unique_ptr<HomeDirManager> HDM;
     std::unique_ptr<BasicVideoSpec> BVS;
@@ -25,8 +23,9 @@ s32 SDL_main(s32 argc, char* argv[]) {
     catch (...) { return EXIT_FAILURE; }
 
     VM_Host Host(
-        *HDM.get(), *BVS.get(), *BAS.get(),
-        argc > 1 ? argv[1] : nullptr
+        *HDM.get(),
+        *BVS.get(),
+        *BAS.get()
     );
 
     BAS->setSpec();

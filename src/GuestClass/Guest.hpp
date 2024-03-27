@@ -6,9 +6,9 @@
 
 #pragma once
 
-#include "FileTypes.hpp"
 #include "../Includes.hpp"
 #include "../InstructionSets/Interface.hpp"
+#include "HexInput.hpp"
 
 class VM_Guest final {
     FunctionsForMegachip SetGigachip{ *this };

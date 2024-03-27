@@ -21,13 +21,12 @@
   <ItemGroup>
     <ClCompile Include="src\Assistants\BasicHome.cpp" />
     <ClCompile Include="src\Assistants\BasicInput.cpp" />
-    <ClCompile Include="src\Assistants\BasicVideoSpec.cpp" />
     <ClCompile Include="src\Assistants\BasicLogger.cpp" />
     <ClCompile Include="src\Assistants\FrameLimiter.cpp" />
-    <ClCompile Include="src\Assistants\HexInput.cpp" />
     <ClCompile Include="src\Assistants\SHA1.cpp" />
     <ClCompile Include="src\CubeChip.cpp" />
     <ClCompile Include="src\GuestClass\FileTypes.cpp" />
+    <ClCompile Include="src\GuestClass\HexInput.cpp" />
     <ClCompile Include="src\GuestClass\_DisplayColors.cpp" />
     <ClCompile Include="src\GuestClass\_MemoryBanks.cpp" />
     <ClCompile Include="src\GuestClass\_ProgramControl.cpp" />
@@ -36,6 +35,7 @@
     <ClCompile Include="src\GuestClass\Init.cpp" />
     <ClCompile Include="src\GuestClass\_Registers.cpp" />
     <ClCompile Include="src\HostClass\BasicAudioSpec.cpp" />
+    <ClCompile Include="src\HostClass\BasicVideoSpec.cpp" />
     <ClCompile Include="src\HostClass\HostFunctions.cpp" />
     <ClCompile Include="src\HostClass\HomeDirManager.cpp" />
     <ClCompile Include="src\InstructionSets\_Classic8.cpp" />
@@ -47,16 +47,17 @@
   <ItemGroup>
     <ClInclude Include="src\Assistants\BasicHome.hpp" />
     <ClInclude Include="src\Assistants\BasicInput.hpp" />
-    <ClInclude Include="src\Assistants\BasicVideoSpec.hpp" />
     <ClInclude Include="src\Assistants\BasicLogger.hpp" />
     <ClInclude Include="src\Assistants\FrameLimiter.hpp" />
-    <ClInclude Include="src\Assistants\HexInput.hpp" />
     <ClInclude Include="src\Assistants\PathExceptionClass.hpp" />
     <ClInclude Include="src\Assistants\SHA1.hpp" />
     <ClInclude Include="src\Assistants\Well512.hpp" />
     <ClInclude Include="src\GuestClass\FileTypes.hpp" />
     <ClInclude Include="src\GuestClass\Guest.hpp" />
+    <ClInclude Include="src\GuestClass\HexInput.hpp" />
     <ClInclude Include="src\HostClass\BasicAudioSpec.hpp" />
+    <ClInclude Include="src\HostClass\BasicVideoSpec.hpp" />
+    <ClInclude Include="src\HostClass\HomeDirManager.hpp" />
     <ClInclude Include="src\HostClass\Host.hpp" />
     <ClInclude Include="src\Includes.hpp" />
     <ClInclude Include="src\InstructionSets\Interface.hpp" />

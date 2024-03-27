@@ -72,13 +72,10 @@ class VM_Guest;
 
 #include "Assistants/BasicHome.hpp"
 #include "Assistants/BasicLogger.hpp"
-#include "Assistants/BasicVideoSpec.hpp"
 #include "Assistants/BasicInput.hpp"
 
 #include "Assistants/FrameLimiter.hpp"
-#include "Assistants/HexInput.hpp"
 #include "Assistants/Well512.hpp"
-#include "Assistants/SHA1.hpp"
 
 #pragma warning(push)
 #pragma warning(disable : 26819) // C fallthrough warning disabled

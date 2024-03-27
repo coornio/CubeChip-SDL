@@ -8,24 +8,6 @@
 
 #include "../Includes.hpp"
 
-// needs to be in its own file
-class HomeDirManager final : public BasicHome {
-public:
-    std::filesystem::path permRegs{};
-    std::string path{};
-    std::string name{};
-    std::string type{};
-    std::string sha1{};
-    std::size_t hash{};
-    std::size_t size{};
-
-    HomeDirManager(const char*);
-
-    void reset();
-    void addDirectory();
-    bool verifyFile(const char* = nullptr);
-};
-
 // still want to manually init/exit the subsystem
 // but where the hell will I put it???
 struct BasicEventLoop {
@@ -37,7 +19,8 @@ struct BasicEventLoop {
     }
 };
 
-//class BasicAudioSpec;
+#include "HomeDirManager.hpp"
+#include "BasicVideoSpec.hpp"
 #include "BasicAudioSpec.hpp"
 
 class VM_Host final {
@@ -55,8 +38,7 @@ public:
     explicit VM_Host(
         HomeDirManager&,
         BasicVideoSpec&,
-        BasicAudioSpec&,
-        const char*
+        BasicAudioSpec&
     );
 
     [[nodiscard]] bool isReady() const;

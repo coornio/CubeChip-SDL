@@ -4,16 +4,17 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include "../Includes.hpp"
 #include "../HostClass/Host.hpp"
 #include "Guest.hpp"
+
+//#include "HexInput.hpp"
+#include "FileTypes.hpp"
 
 bool VM_Guest::setupMachine() {
     if (Host.File.path.empty()) {
         return false;
     }
     if (!romTypeCheck()) {
-        //Host.File.reset();
         return false;
     }
 
@@ -21,12 +22,6 @@ bool VM_Guest::setupMachine() {
     loadFontData();
 
     blog.stdLogOut("Successfully initialized rom/platform.");
-    /*
-    Host.Video.changeTitle(Host.File.name);
-    Host.Audio.handler = [&](s16* buffer, const s32 frames) {
-        Audio.renderAudio(buffer, frames);
-    };
-    */
     return true;
 }
 

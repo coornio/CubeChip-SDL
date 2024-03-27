@@ -4,9 +4,13 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include "Host.hpp"
-#include "../GuestClass/Guest.hpp"
+#include "HomeDirManager.hpp"
+#include "../GuestClass/FileTypes.hpp"
+#include "../Assistants/BasicLogger.hpp"
 #include "../Assistants/PathExceptionClass.hpp"
+#include "../Assistants/SHA1.hpp"
+
+using namespace blogger;
 
 HomeDirManager::HomeDirManager(const char* homeName) try
     : BasicHome(homeName)
