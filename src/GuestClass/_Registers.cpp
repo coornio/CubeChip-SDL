@@ -5,7 +5,6 @@
 */
 
 #include "Guest.hpp"
-#include "../HostClass/Host.hpp"
 
 /*------------------------------------------------------------------*/
 /*  class  VM_Guest::Registers                                      */
@@ -30,7 +29,7 @@ void VM_Guest::Registers::protectPages() {
 
 bool VM_Guest::Registers::readPermRegs(const usz X) {
 	static const std::filesystem::path sha1{
-		vm.Host.File.permRegs / vm.Host.File.sha1
+		vm.File.permRegs / vm.File.sha1
 	};
 
 	if (std::filesystem::exists(sha1)) {
@@ -63,7 +62,7 @@ bool VM_Guest::Registers::readPermRegs(const usz X) {
 
 bool VM_Guest::Registers::writePermRegs(const usz X) {
 	static const std::filesystem::path sha1{
-		vm.Host.File.permRegs / vm.Host.File.sha1
+		vm.File.permRegs / vm.File.sha1
 	};
 
 	if (std::filesystem::exists(sha1)) {

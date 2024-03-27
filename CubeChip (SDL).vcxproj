@@ -30,7 +30,7 @@
     <ClCompile Include="src\GuestClass\_DisplayColors.cpp" />
     <ClCompile Include="src\GuestClass\_MemoryBanks.cpp" />
     <ClCompile Include="src\GuestClass\_ProgramControl.cpp" />
-    <ClCompile Include="src\GuestClass\_AudioCores.cpp" />
+    <ClCompile Include="src\GuestClass\_SoundCores.cpp" />
     <ClCompile Include="src\GuestClass\GuestFunctions.cpp" />
     <ClCompile Include="src\GuestClass\Init.cpp" />
     <ClCompile Include="src\GuestClass\_Registers.cpp" />
@@ -55,6 +55,7 @@
     <ClInclude Include="src\GuestClass\FileTypes.hpp" />
     <ClInclude Include="src\GuestClass\Guest.hpp" />
     <ClInclude Include="src\GuestClass\HexInput.hpp" />
+    <ClInclude Include="src\GuestClass\_SoundCores.hpp" />
     <ClInclude Include="src\HostClass\BasicAudioSpec.hpp" />
     <ClInclude Include="src\HostClass\BasicVideoSpec.hpp" />
     <ClInclude Include="src\HostClass\HomeDirManager.hpp" />

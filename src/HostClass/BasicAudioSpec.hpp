@@ -4,6 +4,8 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#pragma once
+
 #include <SDL.h>
 #include <functional>
 
@@ -30,7 +32,7 @@ public:
     template <class T>
     void setHandler(T& Class) {
         handler = [&Class](Sint16* buffer, const Sint32 frames) {
-            Class->Audio.renderAudio(buffer, frames);
+            Class->Sound.renderAudio(buffer, frames);
         };
         pauseDevice(false);
     }

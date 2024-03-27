@@ -8,18 +8,7 @@
 
 //#include "../Includes.hpp"
 
-// still want to manually init/exit the subsystem
-// but where the hell will I put it???
 #include <SDL.h>
-
-struct BasicEventLoop {
-    explicit BasicEventLoop() {
-        SDL_InitSubSystem(SDL_INIT_EVENTS);
-    }
-    ~BasicEventLoop() {
-        SDL_QuitSubSystem(SDL_INIT_EVENTS);
-    }
-};
 
 #include "HomeDirManager.hpp"
 #include "BasicVideoSpec.hpp"

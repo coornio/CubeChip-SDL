@@ -12,15 +12,16 @@ s32 SDL_main(s32 argc, char* argv[]) {
     std::unique_ptr<HomeDirManager> HDM;
     std::unique_ptr<BasicVideoSpec> BVS;
     std::unique_ptr<BasicAudioSpec> BAS;
-    std::unique_ptr<BasicEventLoop> BEL;
 
     try {
         HDM = std::make_unique<HomeDirManager>("CubeChip_SDL");
         BVS = std::make_unique<BasicVideoSpec>(800, 400);
         BAS = std::make_unique<BasicAudioSpec>(48'000);
-        BEL = std::make_unique<BasicEventLoop>();
     }
-    catch (...) { return EXIT_FAILURE; }
+    catch (...) {
+        SDL_Quit();
+        return EXIT_FAILURE;
+    }
 
     VM_Host Host(
         *HDM.get(),
@@ -36,16 +37,8 @@ s32 SDL_main(s32 argc, char* argv[]) {
 
     std::unique_ptr<VM_Guest> Guest;
 
-    auto createGuest{ [](VM_Host& host) {
-        return std::make_unique<VM_Guest>(host);
-    } };
-
     FrameLimiter Frame;
     SDL_Event    Event;
-
-    // hasFile: the Host has a
-    // isReady: represents that the Host is ready
-
 
     {
     reset_all:
@@ -56,8 +49,12 @@ s32 SDL_main(s32 argc, char* argv[]) {
 
         if (Host.isReady()) {
             // placeholder to avoid duplication from goto (for now)
-            Guest = nullptr;
-            Guest = createGuest(Host);
+            Guest = nullptr; // destroys previous object
+            Guest = std::make_unique<VM_Guest>(
+                *HDM.get(),
+                *BVS.get(),
+                *BAS.get()
+            );
 
             // this segment is ugly, fix it fix it fix it
             if (Guest->setupMachine()) {
@@ -79,6 +76,7 @@ s32 SDL_main(s32 argc, char* argv[]) {
             while (SDL_PollEvent(&Event)) {
                 switch (Event.type) {
                     case SDL_QUIT: {
+                        SDL_Quit();
                         return EXIT_SUCCESS;
                     } break;
                     case SDL_DROPFILE: {
@@ -126,6 +124,7 @@ s32 SDL_main(s32 argc, char* argv[]) {
                     goto reset_all;
                 }
                 else {
+                    SDL_Quit();
                     return EXIT_SUCCESS;
                 }
             }

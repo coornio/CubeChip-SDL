@@ -10,6 +10,12 @@
 #include "../InstructionSets/Interface.hpp"
 #include "HexInput.hpp"
 
+#include "../HostClass/HomeDirManager.hpp"
+#include "../HostClass/BasicVideoSpec.hpp"
+#include "../HostClass/BasicAudioSpec.hpp"
+
+#include "_SoundCores.hpp"
+
 class VM_Guest final {
     FunctionsForMegachip SetGigachip{ *this };
     FunctionsForMegachip SetMegachip{ *this };
@@ -20,10 +26,19 @@ class VM_Guest final {
     FncSetInterface* currFncSet{ &SetClassic8 };
 
 public:
-    explicit VM_Guest(VM_Host&);
+    //explicit VM_Guest(VM_Host&);
+    explicit VM_Guest(
+        HomeDirManager&,
+        BasicVideoSpec&,
+        BasicAudioSpec&
+    );
     ~VM_Guest() = default;
 
-    VM_Host& Host;
+    HomeDirManager& File;
+    BasicVideoSpec& Video;
+    BasicAudioSpec& Audio;
+
+    //VM_Host& Host;
     HexInput Input;
     Well512  Wrand;
 
@@ -117,61 +132,7 @@ public:
         void handleInterrupt();
     } Program{ *this, currFncSet };
 
-    class AudioCores final {
-        VM_Guest& vm;
-    public:
-        const s32& outFreq;
-        const s32& volume;
-        const s16& amplitude;
-        float wavePhase{};
-        bool  beepFx0A{};
-
-        explicit AudioCores(VM_Guest&);
-        void renderAudio(s16*, s32);
-
-        class Classic final {
-            AudioCores& Audio;
-            std::atomic<float> tone{};
-        public:
-            explicit Classic(AudioCores&);
-
-            void setTone(usz, usz);
-            void setTone(usz);
-            void render(s16*, s32);
-        } C8{ *this };
-
-        class XOchip final {
-            AudioCores& Audio;
-            const float rate;
-            std::array<std::atomic<u8>, 16> pattern{};
-            std::atomic<float> tone{};
-            bool enabled{};
-        public:
-            explicit XOchip(AudioCores&);
-            bool isOn() const;
-
-            void setPitch(usz);
-            void loadPattern(usz);
-            void render(s16*, s32);
-        } XO{ *this };
-
-        class MegaChip final {
-            AudioCores& Audio;
-            std::atomic<usz> length{};
-            std::atomic<usz> start{};
-            std::atomic<double> step{};
-            std::atomic<double> pos{};
-            bool enabled{};
-            bool looping{};
-        public:
-            explicit MegaChip(AudioCores&);
-            bool isOn() const;
-
-            void reset();
-            void enable(usz, usz, usz, bool);
-            void render(s16*, s32);
-        } MC{ *this };
-    } Audio{ *this };
+    SoundCores Sound{ *this, Audio };
 
     class Registers final {
         VM_Guest& vm;

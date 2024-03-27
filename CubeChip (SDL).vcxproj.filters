@@ -27,7 +27,7 @@
     <ClCompile Include="src\HostClass\BasicAudioSpec.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\GuestClass\_AudioCores.cpp">
+    <ClCompile Include="src\GuestClass\_SoundCores.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\GuestClass\GuestFunctions.cpp">
@@ -141,6 +141,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\GuestClass\HexInput.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\GuestClass\_SoundCores.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -11,8 +11,14 @@
 /*  class  VM_Guest                                                 */
 /*------------------------------------------------------------------*/
 
-VM_Guest::VM_Guest(VM_Host& hostref)
-	: Host(hostref)
+VM_Guest::VM_Guest(
+	HomeDirManager& hdm_ptr,
+	BasicVideoSpec& bvs_ptr,
+	BasicAudioSpec& bas_ptr
+)
+	: File{ hdm_ptr }
+	, Video{ bvs_ptr }
+	, Audio{ bas_ptr }
 {}
 
 void VM_Guest::cycle() {
@@ -26,7 +32,7 @@ void VM_Guest::cycle() {
 	if (!State.push_display) return;
 	flushDisplay();
 
-	Host.Video.renderPresent();
+	Video.renderPresent();
 	State.push_display = false;
 }
 
@@ -131,8 +137,8 @@ void VM_Guest::instructionLoop() {
 									Quirk.jmpRegX      = false;
 									setupDisplay(Resolution::LO);
 									Program.setFncSet(&SetClassic8);
-									Host.Video.setTextureAlpha(0xFF);
-									Audio.MC.reset();
+									Video.setTextureAlpha(0xFF);
+									Sound.MC.reset();
 									break;
 								case 0x11:				// 0011 - enable mega mode *MEGACHIP*
 									State.mega_enabled = true;
@@ -160,17 +166,17 @@ void VM_Guest::instructionLoop() {
 								Trait.H = LO ? LO : 256;
 								break;
 							case 0x5:					// 05NN - set screen brightness to NN *MEGACHIP*
-								Host.Video.setTextureAlpha(LO);
+								Video.setTextureAlpha(LO);
 								break;
 							case 0x6:					// 060N - start digital sound from RAM at I, repeat if N == 0 *MEGACHIP*
-								Audio.MC.enable(
+								Sound.MC.enable(
 									mrw(Reg.I + 0) <<  8 | mrw(Reg.I + 1),
 									mrw(Reg.I + 2) << 16 | mrw(Reg.I + 3) << 8 | mrw(Reg.I + 4),
 									Reg.I + 6, N == 0
 								);
 								break;
 							case 0x7:					// 0700 - stop digital sound *MEGACHIP*
-								Audio.MC.reset();
+								Sound.MC.reset();
 								break;
 							case 0x8:					// 08YN - set trait flags to VY (Y > 0), blend mode to N *GIGACHIP*
 								if (State.gigachip_rom) {
@@ -400,7 +406,7 @@ void VM_Guest::instructionLoop() {
 					Program.counter += 2;
 					break;
 				case 0x002:								// F002 - load audio pattern 0..15 from RAM at I..I+15 *XOCHIP*
-					Audio.XO.loadPattern(Reg.I);
+					Sound.XO.loadPattern(Reg.I);
 					break;
 				case 0x100:								// F100 - long jump to NEXT NNNN *HWCHIP64*
 					Program.counter = NNNN();
@@ -429,7 +435,7 @@ void VM_Guest::instructionLoop() {
 						Reg.V[X] = Program.Timer.delay;
 						break;
 					case 0x0A:							// FX0A - set VX = key, wait for keypress
-						Audio.C8.setTone(Reg.SP, Program.counter);
+						Sound.C8.setTone(Reg.SP, Program.counter);
 						Program.setInterrupt(Interrupt::FX0A);
 						if (State.mega_enabled) [[unlikely]]
 							Mem.flushBuffers(TO_DISPLAY);
@@ -439,8 +445,8 @@ void VM_Guest::instructionLoop() {
 						break;
 					case 0x18:							// FX18 - set sound timer = VX
 						if (!State.chip8X_rom) [[likely]]
-							Audio.C8.setTone(Reg.SP, Program.counter);
-						Audio.beepFx0A = false;
+							Sound.C8.setTone(Reg.SP, Program.counter);
+						Sound.beepFx0A = false;
 						Program.Timer.sound = Reg.V[X] + (Reg.V[X] == 1);
 						break;
 					case 0x1B:							// FX1B - skip VX amount of bytes *CHIP-8E*
@@ -464,7 +470,7 @@ void VM_Guest::instructionLoop() {
 						mrw(Reg.I + 2) = Reg.V[X] % 10;
 						break;
 					case 0x3A:							// FX3A - set sound pitch = VX *XOCHIP*
-						Audio.XO.setPitch(Reg.V[X]);
+						Sound.XO.setPitch(Reg.V[X]);
 						break;
 					case 0x4F:							// FX4F - set delay timer = VX and wait *CHIP-8E*
 						Program.setInterrupt(Interrupt::WAIT);
@@ -501,7 +507,7 @@ void VM_Guest::instructionLoop() {
 						Program.setInterrupt(Interrupt::ONCE);
 						break;
 					case 0xF8:							// FXF8 - output VX to port (sound freq) *CHIP-8X*
-						Audio.C8.setTone(Reg.V[X]);
+						Sound.C8.setTone(Reg.V[X]);
 						break;
 					case 0xFB:							// FXFB - wait for port input, load to VX *CHIP-8X*
 						Program.setInterrupt(Interrupt::ONCE);

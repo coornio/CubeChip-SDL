@@ -27,7 +27,7 @@ bool VM_Guest::romTypeCheck() {
     * This place requires a database check, only after which would
     * we fall back to deriving the platform specifics via extension
     */
-    switch (Host.File.hash) {
+    switch (File.hash) {
 
         case (FileTypes::c2x):
             if (!romSizeCheck(4'096, 0x300))
@@ -152,7 +152,7 @@ bool VM_Guest::romTypeCheck() {
 }
 
 bool VM_Guest::romSizeCheck(const usz size, const usz offset) {
-    if (Host.File.size + offset > size) {
+    if (File.size + offset > size) {
         blog.stdLogOut("ROM exceeds expected platform-specified size, aborting.");
         return false;
     }
@@ -160,8 +160,8 @@ bool VM_Guest::romSizeCheck(const usz size, const usz offset) {
     Program.limiter = size - 1; // set program memory limit
     Mem.ram.resize(size);       // resize the memory vector
 
-    std::basic_ifstream<char> ifs(Host.File.path, std::ios::binary);
-    return as<bool>(ifs.read(to<char*>(&Mem.ram[offset]), Host.File.size));
+    std::basic_ifstream<char> ifs(File.path, std::ios::binary);
+    return as<bool>(ifs.read(to<char*>(&Mem.ram[offset]), File.size));
 }
 
 void VM_Guest::initPlatform() {
@@ -227,10 +227,10 @@ void VM_Guest::setupDisplay(const usz mode, const bool forced) {
 
     if (forced) Mem.modifyViewport(BrushType::CLR);
 
-    Host.Video.createTexture(Plane.W, Plane.H);
-    Host.Video.setTextureBlend(SDL_BLENDMODE_BLEND);
-    Host.Video.setAspectRatio(State.mega_enabled ? 1.25f : 2.00f);
-    Host.Video.resizeWindow();
+    Video.createTexture(Plane.W, Plane.H);
+    Video.setTextureBlend(SDL_BLENDMODE_BLEND);
+    Video.setAspectRatio(State.mega_enabled ? 1.25f : 2.00f);
+    Video.resizeWindow();
 
     State.push_display = true;
 
@@ -322,8 +322,8 @@ void VM_Guest::loadFontData() {
 }
 
 void VM_Guest::flushDisplay() {
-    auto*& pixels{ Host.Video.pixels };
-    Host.Video.lockTexture();
+    auto*& pixels{ Video.pixels };
+    Video.lockTexture();
 
     if (State.mega_enabled) {
         for (auto& row : Mem.display) {
@@ -364,5 +364,5 @@ void VM_Guest::flushDisplay() {
             }
         }
     }
-    Host.Video.unlockTexture();
+    Video.unlockTexture();
 }
