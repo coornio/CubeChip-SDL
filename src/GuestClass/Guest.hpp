@@ -246,12 +246,6 @@ public:
     } State;
 
     class DisplayColors final {
-        VM_Guest& vm;
-
-        u32 bgindex{}; // background color cycle index
-        u32 megahex{}; // hex sprite color for megachip
-        u32 buzzer{};  // buzzer color (visual beep)
-
         static constexpr std::array<u32, 16> BitColors{ // 0-1 classic8, 0-15 modernXO
             0xFF0C1218, 0xFFE4DCD4, 0xFF403C38, 0xFF8C8884,
             0xFFD82010, 0xFF40D020, 0xFF1040D0, 0xFFE0C818,
@@ -265,6 +259,14 @@ public:
         static constexpr std::array<u32, 4> BackColors{ // 8X background
             0xFF000060, 0xFF000000, 0xFF002000, 0xFF200000,
         };
+
+        VM_Guest& vm;
+
+        u32 bgindex{}; // background color cycle index
+        u32 megahex{}; // hex sprite color for megachip
+        u32 buzzer{};  // buzzer color (visual beep)
+        [[maybe_unused]] u32 _;
+
     public:
         std::array<u32, 16> bit{}; // pixel bit color (planes)
         std::array<u32, 10> hex{}; // hex sprite gradient map

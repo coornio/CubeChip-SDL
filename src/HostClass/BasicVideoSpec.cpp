@@ -4,9 +4,8 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#pragma once
-
 #include "BasicVideoSpec.hpp"
+#include <stdexcept>
 
 BasicVideoSpec::BasicVideoSpec(const Sint32 w, const Sint32 h)
 	: emuName{ "CubeChip" }
@@ -48,7 +47,7 @@ void BasicVideoSpec::createWindow(
 	);
 
 	if (!window) {
-		throw std::exception("SDL Error: Window");
+		throw std::runtime_error("SDL Error: Window");
 	}
 }
 
@@ -64,7 +63,7 @@ void BasicVideoSpec::createRenderer() {
 	);
 
 	if (!renderer) {
-		throw std::exception("SDL Error: Renderer");
+		throw std::runtime_error("SDL Error: Renderer");
 	}
 }
 
@@ -79,7 +78,7 @@ void BasicVideoSpec::createTexture(const Sint32 width, const Sint32 height) {
 	);
 
 	if (!texture) {
-		throw std::exception("SDL Error: Texture");
+		throw std::runtime_error("SDL Error: Texture");
 	} else {
 		ppitch = width * 4;
 	}
