@@ -15,6 +15,7 @@ class HomeDirManager final : public BasicHome {
 public:
     std::filesystem::path permRegs{};
     std::string path{};
+    std::string file{};
     std::string name{};
     std::string type{};
     std::string sha1{};

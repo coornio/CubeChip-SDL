@@ -59,7 +59,7 @@ int32_t SDL_main(int32_t argc, char* argv[]) {
             // this segment is ugly, fix it fix it fix it
             if (Guest->setupMachine()) {
                 // need to update Frame object with program.framerate too
-                BVS->changeTitle(HDM->name.c_str());
+                BVS->changeTitle(HDM->file.c_str());
                 BAS->setHandler(Guest);
             }
             else {

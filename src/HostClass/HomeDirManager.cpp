@@ -73,6 +73,7 @@ bool HomeDirManager::verifyFile(const char* filepath) {
 
     if (RomFileTypes::validate(tempHash, fslen, tempSHA1)) {
         path = tempPath;
+        file = fspath.filename().string();
         name = fspath.stem().string();
         type = tempType;
         sha1 = tempSHA1;
