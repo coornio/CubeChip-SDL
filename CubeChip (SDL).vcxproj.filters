@@ -13,150 +13,177 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\VM Guest">
+      <UniqueIdentifier>{217c32bf-c950-40b7-abef-d917d52dfaf8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\VM Guest\Instruction Sets">
+      <UniqueIdentifier>{d65b9b6f-c28b-4ea0-b415-1b0f257dd8d3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\VM Host">
+      <UniqueIdentifier>{55eec7ad-6111-4e66-9747-5b22c9d19866}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Assistants">
+      <UniqueIdentifier>{89a55c14-1a9b-486e-9b28-16af4d258b1c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\VM Guest">
+      <UniqueIdentifier>{09a9cfb4-654e-4332-ae95-5c22954b4e8a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\VM Host">
+      <UniqueIdentifier>{1c981b47-958b-49a8-86b4-09631b1d8ea9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\VM Guest\Instruction Sets">
+      <UniqueIdentifier>{d9fa6a8e-27b5-438f-9bba-bc915b858b4c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Assistants">
+      <UniqueIdentifier>{64995951-dc58-467d-bf16-43bc435fef07}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\_nlohmann">
+      <UniqueIdentifier>{55d4d668-6f28-4b99-9a19-8f349a95197e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\CubeChip.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\HostClass\HostFunctions.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\GuestClass\Init.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\HostClass\BasicAudioSpec.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\GuestClass\GuestFunctions.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\InstructionSets\_Classic8.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\InstructionSets\_Gigachip.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\InstructionSets\_LegacySC.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\InstructionSets\_Megachip.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\InstructionSets\_ModernXO.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Assistants\BasicInput.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\GuestClass\Registers.cpp">
+      <Filter>Source Files\VM Guest</Filter>
     </ClCompile>
     <ClCompile Include="src\GuestClass\ProgramControl.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\VM Guest</Filter>
     </ClCompile>
     <ClCompile Include="src\GuestClass\MemoryBanks.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Assistants\FrameLimiter.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Assistants\SHA1.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\VM Guest</Filter>
     </ClCompile>
     <ClCompile Include="src\GuestClass\DisplayColors.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\GuestClass\Registers.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Assistants\BasicLogger.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Assistants\BasicHome.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\HostClass\HomeDirManager.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\VM Guest</Filter>
     </ClCompile>
     <ClCompile Include="src\GuestClass\FileTypes.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\VM Guest</Filter>
     </ClCompile>
-    <ClCompile Include="src\HostClass\BasicVideoSpec.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\GuestClass\GuestFunctions.cpp">
+      <Filter>Source Files\VM Guest</Filter>
     </ClCompile>
     <ClCompile Include="src\GuestClass\HexInput.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\VM Guest</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GuestClass\Init.cpp">
+      <Filter>Source Files\VM Guest</Filter>
     </ClCompile>
     <ClCompile Include="src\GuestClass\SoundCores.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\VM Guest</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GuestClass\InstructionSets\_Classic8.cpp">
+      <Filter>Source Files\VM Guest\Instruction Sets</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GuestClass\InstructionSets\_Gigachip.cpp">
+      <Filter>Source Files\VM Guest\Instruction Sets</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GuestClass\InstructionSets\_LegacySC.cpp">
+      <Filter>Source Files\VM Guest\Instruction Sets</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GuestClass\InstructionSets\_Megachip.cpp">
+      <Filter>Source Files\VM Guest\Instruction Sets</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GuestClass\InstructionSets\_ModernXO.cpp">
+      <Filter>Source Files\VM Guest\Instruction Sets</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HostClass\BasicAudioSpec.cpp">
+      <Filter>Source Files\VM Host</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HostClass\BasicVideoSpec.cpp">
+      <Filter>Source Files\VM Host</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HostClass\HomeDirManager.cpp">
+      <Filter>Source Files\VM Host</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HostClass\HostFunctions.cpp">
+      <Filter>Source Files\VM Host</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Assistants\BasicHome.cpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Assistants\BasicInput.cpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Assistants\BasicLogger.cpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Assistants\FrameLimiter.cpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Assistants\SHA1.cpp">
+      <Filter>Source Files\Assistants</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\InstructionSets\Interface.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Assistants\FrameLimiter.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Assistants\BasicInput.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\GuestClass\Guest.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\HostClass\Host.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\Includes.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Assistants\Well512.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Assistants\SHA1.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\_nlohmann\json.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\_nlohmann\json_fwd.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Assistants\BasicLogger.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Assistants\BasicHome.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Assistants\PathExceptionClass.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\HostClass\BasicAudioSpec.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\GuestClass\FileTypes.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\HostClass\HomeDirManager.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\VM Host</Filter>
     </ClInclude>
     <ClInclude Include="src\HostClass\BasicVideoSpec.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\VM Host</Filter>
     </ClInclude>
-    <ClInclude Include="src\GuestClass\HexInput.hpp">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\HostClass\Host.hpp">
+      <Filter>Header Files\VM Host</Filter>
     </ClInclude>
-    <ClInclude Include="src\GuestClass\SoundCores.hpp">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\HostClass\HomeDirManager.hpp">
+      <Filter>Header Files\VM Host</Filter>
     </ClInclude>
-    <ClInclude Include="src\GuestClass\Registers.hpp">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\GuestClass\InstructionSets\Interface.hpp">
+      <Filter>Header Files\VM Guest\Instruction Sets</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\Well512.hpp">
+      <Filter>Header Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\FrameLimiter.hpp">
+      <Filter>Header Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\BasicInput.hpp">
+      <Filter>Header Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\BasicLogger.hpp">
+      <Filter>Header Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\BasicHome.hpp">
+      <Filter>Header Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\GuestClass\FileTypes.hpp">
+      <Filter>Header Files\VM Guest</Filter>
     </ClInclude>
     <ClInclude Include="src\GuestClass\DisplayColors.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\VM Guest</Filter>
+    </ClInclude>
+    <ClInclude Include="src\GuestClass\Guest.hpp">
+      <Filter>Header Files\VM Guest</Filter>
+    </ClInclude>
+    <ClInclude Include="src\GuestClass\HexInput.hpp">
+      <Filter>Header Files\VM Guest</Filter>
     </ClInclude>
     <ClInclude Include="src\GuestClass\MemoryBanks.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\VM Guest</Filter>
     </ClInclude>
     <ClInclude Include="src\GuestClass\ProgramControl.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\VM Guest</Filter>
+    </ClInclude>
+    <ClInclude Include="src\GuestClass\Registers.hpp">
+      <Filter>Header Files\VM Guest</Filter>
+    </ClInclude>
+    <ClInclude Include="src\GuestClass\SoundCores.hpp">
+      <Filter>Header Files\VM Guest</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\SHA1.hpp">
+      <Filter>Header Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\PathExceptionClass.hpp">
+      <Filter>Header Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\_nlohmann\json_fwd.hpp">
+      <Filter>Header Files\_nlohmann</Filter>
+    </ClInclude>
+    <ClInclude Include="src\_nlohmann\json.hpp">
+      <Filter>Header Files\_nlohmann</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

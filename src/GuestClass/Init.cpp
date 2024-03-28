@@ -4,7 +4,10 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include <array>
 #include <fstream>
+#include <cstddef>
+#include <cstdint>
 
 #include "Guest.hpp"
 #include "FileTypes.hpp"

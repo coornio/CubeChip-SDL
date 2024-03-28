@@ -7,9 +7,10 @@
 #include <cmath>
 #include <algorithm>
 
+#include "../HostClass/BasicAudioSpec.hpp"
+
 #include "SoundCores.hpp"
 #include "Guest.hpp"
-#include "../HostClass/BasicAudioSpec.hpp"
 
 
 /*------------------------------------------------------------------*/

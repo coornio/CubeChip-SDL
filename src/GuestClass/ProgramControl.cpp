@@ -7,8 +7,10 @@
 #include <sstream>
 #include <iomanip>
 
-#include "ProgramControl.hpp"
 #include "../Assistants/BasicLogger.hpp"
+
+#include "InstructionSets/Interface.hpp"
+#include "ProgramControl.hpp"
 #include "Guest.hpp"
 
 using namespace blogger;

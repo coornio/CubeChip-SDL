@@ -8,6 +8,7 @@
 
 #include <array>
 #include <cstddef>
+#include <cstdint>
 
 class DisplayColors final {
     static constexpr std::array<uint32_t, 16> BitColors{ // 0-1 classic8, 0-15 modernXO

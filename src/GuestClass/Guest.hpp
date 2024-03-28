@@ -7,14 +7,16 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
+#include <memory>
 
 #include "../HostClass/HomeDirManager.hpp"
 #include "../HostClass/BasicVideoSpec.hpp"
 #include "../HostClass/BasicAudioSpec.hpp"
 
-#include "../InstructionSets/Interface.hpp"
 #include "../Assistants/Well512.hpp"
-//#include "../Includes.hpp"
+
+#include "InstructionSets/Interface.hpp"
 #include "HexInput.hpp"
 #include "ProgramControl.hpp"
 #include "MemoryBanks.hpp"

@@ -28,6 +28,11 @@
     <ClCompile Include="src\GuestClass\FileTypes.cpp" />
     <ClCompile Include="src\GuestClass\HexInput.cpp" />
     <ClCompile Include="src\GuestClass\DisplayColors.cpp" />
+    <ClCompile Include="src\GuestClass\InstructionSets\_Classic8.cpp" />
+    <ClCompile Include="src\GuestClass\InstructionSets\_Gigachip.cpp" />
+    <ClCompile Include="src\GuestClass\InstructionSets\_LegacySC.cpp" />
+    <ClCompile Include="src\GuestClass\InstructionSets\_Megachip.cpp" />
+    <ClCompile Include="src\GuestClass\InstructionSets\_ModernXO.cpp" />
     <ClCompile Include="src\GuestClass\MemoryBanks.cpp" />
     <ClCompile Include="src\GuestClass\ProgramControl.cpp" />
     <ClCompile Include="src\GuestClass\SoundCores.cpp" />
@@ -38,11 +43,6 @@
     <ClCompile Include="src\HostClass\BasicVideoSpec.cpp" />
     <ClCompile Include="src\HostClass\HostFunctions.cpp" />
     <ClCompile Include="src\HostClass\HomeDirManager.cpp" />
-    <ClCompile Include="src\InstructionSets\_Classic8.cpp" />
-    <ClCompile Include="src\InstructionSets\_Gigachip.cpp" />
-    <ClCompile Include="src\InstructionSets\_LegacySC.cpp" />
-    <ClCompile Include="src\InstructionSets\_Megachip.cpp" />
-    <ClCompile Include="src\InstructionSets\_ModernXO.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Assistants\BasicHome.hpp" />
@@ -56,6 +56,7 @@
     <ClInclude Include="src\GuestClass\FileTypes.hpp" />
     <ClInclude Include="src\GuestClass\Guest.hpp" />
     <ClInclude Include="src\GuestClass\HexInput.hpp" />
+    <ClInclude Include="src\GuestClass\InstructionSets\Interface.hpp" />
     <ClInclude Include="src\GuestClass\MemoryBanks.hpp" />
     <ClInclude Include="src\GuestClass\ProgramControl.hpp" />
     <ClInclude Include="src\GuestClass\Registers.hpp" />
@@ -65,7 +66,6 @@
     <ClInclude Include="src\HostClass\HomeDirManager.hpp" />
     <ClInclude Include="src\HostClass\Host.hpp" />
     <ClInclude Include="src\Includes.hpp" />
-    <ClInclude Include="src\InstructionSets\Interface.hpp" />
     <ClInclude Include="src\_nlohmann\json.hpp" />
     <ClInclude Include="src\_nlohmann\json_fwd.hpp" />
   </ItemGroup>

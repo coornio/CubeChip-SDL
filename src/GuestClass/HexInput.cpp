@@ -7,6 +7,7 @@
 #include <bit>
 
 #include "../Assistants/BasicInput.hpp"
+
 #include "HexInput.hpp"
 
 HexInput::HexInput()

@@ -5,7 +5,7 @@
 */
 
 #include "Interface.hpp"
-#include "../GuestClass/Guest.hpp"
+#include "../Guest.hpp"
 
 /*------------------------------------------------------------------*/
 /*  class  FncSetInterface -> FunctionsForClassic8                  */

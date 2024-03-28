@@ -8,6 +8,7 @@
 
 #include <array>
 #include <cstddef>
+#include <cstdint>
 
 class VM_Guest;
 
