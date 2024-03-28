@@ -4,7 +4,10 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#pragma once
+
 #include <chrono>
+#include <array>
 
 class Well512 {
 	std::array<unsigned int, 16> state{};

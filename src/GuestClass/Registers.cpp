@@ -47,7 +47,7 @@ bool Registers::readPermRegs(const std::size_t X) {
 			const auto totalBytes{ static_cast<std::size_t>(in.tellg()) };
 			in.seekg(0, std::ios::beg);
 
-			in.read(to<char*>(V.data()), std::min(totalBytes, X));
+			in.read(reinterpret_cast<char*>(V.data()), std::min(totalBytes, X));
 			in.close();
 
 			if (totalBytes < X) {

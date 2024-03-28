@@ -48,10 +48,10 @@
     <ClCompile Include="src\Assistants\BasicInput.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\GuestClass\_ProgramControl.cpp">
+    <ClCompile Include="src\GuestClass\ProgramControl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\GuestClass\_MemoryBanks.cpp">
+    <ClCompile Include="src\GuestClass\MemoryBanks.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Assistants\FrameLimiter.cpp">
@@ -60,7 +60,7 @@
     <ClCompile Include="src\Assistants\SHA1.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\GuestClass\_DisplayColors.cpp">
+    <ClCompile Include="src\GuestClass\DisplayColors.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\GuestClass\Registers.cpp">
@@ -147,6 +147,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\GuestClass\Registers.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\GuestClass\DisplayColors.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\GuestClass\MemoryBanks.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\GuestClass\ProgramControl.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

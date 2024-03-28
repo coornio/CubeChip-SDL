@@ -4,13 +4,16 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include "Interface.hpp"
 #include "../GuestClass/Guest.hpp"
 
 /*------------------------------------------------------------------*/
 /*  class  FncSetInterface -> FunctionsForLegacySC                  */
 /*------------------------------------------------------------------*/
 
-void FunctionsForLegacySC::scrollUP(const usz N) {
+FunctionsForLegacySC::FunctionsForLegacySC(VM_Guest& ref) : vm(ref) {}
+
+void FunctionsForLegacySC::scrollUP(const std::size_t N) {
 	vm.State.push_display = true;
 	auto& display{ vm.Mem.display };
 	const auto N2{ vm.Plane.H - N };
@@ -19,7 +22,7 @@ void FunctionsForLegacySC::scrollUP(const usz N) {
 	for (auto X{ 0 }; X < vm.Plane.X; ++X)
 		display[H][X] = (H >= N2) ? 0 : display[H + N][X];
 };
-void FunctionsForLegacySC::scrollDN(const usz N) {
+void FunctionsForLegacySC::scrollDN(const std::size_t N) {
 	vm.State.push_display = true;
 	auto& display{ vm.Mem.display };
 
@@ -27,7 +30,7 @@ void FunctionsForLegacySC::scrollDN(const usz N) {
 	for (auto X{ 0 }; X < vm.Plane.X; ++X)
 		display[H][X] = (H < N) ? 0 : display[H - N][X];
 };
-void FunctionsForLegacySC::scrollLT(const usz) {
+void FunctionsForLegacySC::scrollLT(const std::size_t) {
 	vm.State.push_display = true;
 	auto& display{ vm.Mem.display };
 
@@ -36,10 +39,10 @@ void FunctionsForLegacySC::scrollLT(const usz) {
 		auto mask{ display[H][X] << 4 };
 		if (X < vm.Plane.Xb)
 			mask |= display[H][X + 1] >> 4;
-		display[H][X] = as<u8>(mask);
+		display[H][X] = static_cast<uint8_t>(mask);
 	}
 };
-void FunctionsForLegacySC::scrollRT(const usz) {
+void FunctionsForLegacySC::scrollRT(const std::size_t) {
 	vm.State.push_display = true;
 	auto& display{ vm.Mem.display };
 
@@ -48,13 +51,13 @@ void FunctionsForLegacySC::scrollRT(const usz) {
 		auto mask{ display[H][X] >> 4 };
 		if (X > 0)
 			mask |= display[H][X - 1] << 4;
-		display[H][X] = as<u8>(mask);
+		display[H][X] = static_cast<uint8_t>(mask);
 	}
 };
 
 /*------------------------------------------------------------------*/
 
-usz  FunctionsForLegacySC::bitBloat(usz byte) {
+std::size_t  FunctionsForLegacySC::bitBloat(std::size_t byte) {
 	if (!byte) return 0;
 	byte = (byte << 4 | byte) & 0x0F0F;
 	byte = (byte << 2 | byte) & 0x3333;
@@ -63,9 +66,9 @@ usz  FunctionsForLegacySC::bitBloat(usz byte) {
 }
 
 void FunctionsForLegacySC::drawByte(
-	const usz L, const usz SHL,
-	const usz R, const usz SHR,
-	const usz Y, const usz DATA
+	const std::size_t L, const std::size_t SHL,
+	const std::size_t R, const std::size_t SHR,
+	const std::size_t Y, const std::size_t DATA
 ) {
 	if (!DATA || L >= vm.Plane.X) return;
 	const auto DATA_L{ DATA >> SHR & 0xFF };
@@ -81,9 +84,9 @@ void FunctionsForLegacySC::drawByte(
 }
 
 void FunctionsForLegacySC::drawShort(
-	const usz L, const usz SHL,
-	const usz R, const usz SHR,
-	const usz Y, const usz DATA
+	const std::size_t L, const std::size_t SHL,
+	const std::size_t R, const std::size_t SHR,
+	const std::size_t Y, const std::size_t DATA
 ) {
 	if (!DATA || L >= vm.Plane.X) return;
 	const auto DATA_L{ DATA >> SHR & 0xFF };
@@ -100,7 +103,7 @@ void FunctionsForLegacySC::drawShort(
 	vm.Mem.display[Y + 1][R] =  vm.Mem.display[Y][R] ^= DATA_R;
 }
 
-void FunctionsForLegacySC::drawSprite(usz VX, usz VY, usz N, usz I) {
+void FunctionsForLegacySC::drawSprite(std::size_t VX, std::size_t VY, std::size_t N, std::size_t I) {
 	vm.State.push_display = true;
 	const auto mode{ vm.Program.screenMode };
 
@@ -140,7 +143,7 @@ void FunctionsForLegacySC::drawSprite(usz VX, usz VY, usz N, usz I) {
 	}
 };
 
-void FunctionsForLegacySC::drawColors(usz VX, usz VY, usz idx, usz N) {
+void FunctionsForLegacySC::drawColors(std::size_t VX, std::size_t VY, std::size_t idx, std::size_t N) {
 	vm.State.push_display = true;
 	auto mode{ vm.Program.screenMode };
 

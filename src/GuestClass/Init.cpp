@@ -4,8 +4,14 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include <fstream>
+
 #include "Guest.hpp"
 #include "FileTypes.hpp"
+
+#include "../Assistants/BasicLogger.hpp"
+
+using namespace blogger;
 
 bool VM_Guest::setupMachine() {
     if (!romTypeCheck()) {
@@ -148,7 +154,7 @@ bool VM_Guest::romTypeCheck() {
     return true;
 }
 
-bool VM_Guest::romSizeCheck(const usz size, const usz offset) {
+bool VM_Guest::romSizeCheck(const std::size_t size, const std::size_t offset) {
     if (File.size + offset > size) {
         blog.stdLogOut("ROM exceeds expected platform-specified size, aborting.");
         return false;
@@ -158,7 +164,7 @@ bool VM_Guest::romSizeCheck(const usz size, const usz offset) {
     Mem.ram.resize(size);       // resize the memory vector
 
     std::basic_ifstream<char> ifs(File.path, std::ios::binary);
-    return as<bool>(ifs.read(to<char*>(&Mem.ram[offset]), File.size));
+    return static_cast<bool>(ifs.read(reinterpret_cast<char*>(&Mem.ram[offset]), File.size));
 }
 
 void VM_Guest::initPlatform() {
@@ -213,10 +219,10 @@ void VM_Guest::initPlatform() {
     setupDisplay(Resolution::LO + State.hires_2paged + State.hires_4paged, true);
 }
 
-void VM_Guest::setupDisplay(const usz mode, const bool forced) {
+void VM_Guest::setupDisplay(const std::size_t mode, const bool forced) {
     //                            HI   LO   TP   FP   MC
-    static constexpr s32 wArr[]{ 128,  64,  64,  64, 256 };
-    static constexpr s32 hArr[]{  64,  32,  64, 128, 192 };
+    static constexpr int32_t wArr[]{ 128,  64,  64,  64, 256 };
+    static constexpr int32_t hArr[]{  64,  32,  64, 128, 192 };
 
     Plane.W = wArr[State.schip_legacy ? 0 : mode - 1]; Plane.Wb = Plane.W - 1;
     Plane.H = hArr[State.schip_legacy ? 0 : mode - 1]; Plane.Hb = Plane.H - 1;
@@ -245,7 +251,7 @@ void VM_Guest::setupDisplay(const usz mode, const bool forced) {
 };
 
 void VM_Guest::loadFontData() {
-    static constexpr std::array<u8, 80 + 160> FONT_DATA{
+    static constexpr std::array<uint8_t, 80 + 160> FONT_DATA{
         0x60, 0xA0, 0xA0, 0xA0, 0xC0, // 0
         0x40, 0xC0, 0x40, 0x40, 0xE0, // 1
         0xC0, 0x20, 0x40, 0x80, 0xE0, // 2
@@ -282,7 +288,7 @@ void VM_Guest::loadFontData() {
         0xFE, 0x66, 0x62, 0x64, 0x7C, 0x64, 0x60, 0x60, 0xF0, 0x00, // F
     };
 
-    static constexpr std::array<u8, 80 + 160> MEGA_FONT_DATA{
+    static constexpr std::array<uint8_t, 80 + 160> MEGA_FONT_DATA{
         0x3C, 0x7E, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0x7E, 0x3C, // 0
         0x18, 0x38, 0x58, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x3C, // 1
         0x3E, 0x7F, 0xC3, 0x06, 0x0C, 0x18, 0x30, 0x60, 0xFF, 0xFF, // 2

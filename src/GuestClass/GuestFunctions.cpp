@@ -238,7 +238,7 @@ void VM_Guest::instructionLoop() {
 						const auto mask{ Program.screenMode == Resolution::LO ? 0x77 : 0xFF };
 						const auto lenX{ (Reg.V[X] & 0xF0) + (Reg.V[Y] & 0xF0) };
 						const auto lenY{ (Reg.V[X] + Reg.V[Y]) & 0xF };
-						Reg.V[X] = as<u8>((lenX | lenY) & mask);
+						Reg.V[X] = static_cast<uint8_t>((lenX | lenY) & mask);
 					}
 					break;
 				case 0x2: {								// 5XY2 - store range of registers to memory *CHIP-8E*
@@ -302,8 +302,8 @@ void VM_Guest::instructionLoop() {
 					break;
 				case 0x4: {								// 8XY4 - set VX = VX + VY, VF = carry
 					const auto sum{ Reg.V[X] + Reg.V[Y] };
-					Reg.V[X]   = as<u8>(sum);
-					Reg.V[0xF] = as<u8>(sum >> 8);
+					Reg.V[X]   = static_cast<uint8_t>(sum);
+					Reg.V[0xF] = static_cast<uint8_t>(sum >> 8);
 				} break;
 				case 0x5: {								// 8XY5 - set VX = VX - VY, VF = !borrow
 					const bool borrow{ Reg.V[X] < Reg.V[Y] };
@@ -329,8 +329,8 @@ void VM_Guest::instructionLoop() {
 				} break;
 				case 0xC: {								// 8XYC - set VX = VX * VY, VF = overflow *HWCHIP64*
 					const auto mul{ Reg.V[X] * Reg.V[Y] };
-					Reg.V[X]   = as<u8>(mul);
-					Reg.V[0xF] = as<u8>(mul >> 8);
+					Reg.V[X]   = static_cast<uint8_t>(mul);
+					Reg.V[0xF] = static_cast<uint8_t>(mul >> 8);
 				} break;
 				case 0xD: {								// 8XYD - set VX = VX / VY, VF = VX % VY *HWCHIP64*
 					if (!Reg.V[Y]) {
@@ -338,7 +338,7 @@ void VM_Guest::instructionLoop() {
 					} else {
 						const auto remainder{ Reg.V[X] % Reg.V[Y] };
 						Reg.V[X]   = Reg.V[X] / Reg.V[Y];
-						Reg.V[0xF] = as<u8>(remainder);
+						Reg.V[0xF] = static_cast<uint8_t>(remainder);
 					}
 				} break;
 				case 0xF: {								// 8XYF - set VX = VY / VX, VF = VX % VY *HWCHIP64*
@@ -347,7 +347,7 @@ void VM_Guest::instructionLoop() {
 					} else {
 						const auto remainder{ Reg.V[Y] % Reg.V[X] };
 						Reg.V[X]   = Reg.V[Y] / Reg.V[X];
-						Reg.V[0xF] = as<u8>(remainder);
+						Reg.V[0xF] = static_cast<uint8_t>(remainder);
 					}
 				} break;
 				[[unlikely]] default: Program.requestHalt();
@@ -546,7 +546,7 @@ void VM_Guest::instructionLoop() {
 /*  struct  VM_Guest::TextureTraits                                 */
 /*------------------------------------------------------------------*/
 
-void VM_Guest::TextureTraits::setFlags(const usz bits) {
+void VM_Guest::TextureTraits::setFlags(const std::size_t bits) {
     rotate = bits >> 0 & 0x1; // false: as-is | true: 90° clockwise
     flip_X = bits >> 1 & 0x1; // flip on the X axis (rotation agnostic)
     flip_Y = bits >> 2 & 0x1; // flip on the Y axis (rotation agnostic)

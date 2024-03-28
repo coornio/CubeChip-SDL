@@ -27,9 +27,9 @@
     <ClCompile Include="src\CubeChip.cpp" />
     <ClCompile Include="src\GuestClass\FileTypes.cpp" />
     <ClCompile Include="src\GuestClass\HexInput.cpp" />
-    <ClCompile Include="src\GuestClass\_DisplayColors.cpp" />
-    <ClCompile Include="src\GuestClass\_MemoryBanks.cpp" />
-    <ClCompile Include="src\GuestClass\_ProgramControl.cpp" />
+    <ClCompile Include="src\GuestClass\DisplayColors.cpp" />
+    <ClCompile Include="src\GuestClass\MemoryBanks.cpp" />
+    <ClCompile Include="src\GuestClass\ProgramControl.cpp" />
     <ClCompile Include="src\GuestClass\SoundCores.cpp" />
     <ClCompile Include="src\GuestClass\GuestFunctions.cpp" />
     <ClCompile Include="src\GuestClass\Init.cpp" />
@@ -52,9 +52,12 @@
     <ClInclude Include="src\Assistants\PathExceptionClass.hpp" />
     <ClInclude Include="src\Assistants\SHA1.hpp" />
     <ClInclude Include="src\Assistants\Well512.hpp" />
+    <ClInclude Include="src\GuestClass\DisplayColors.hpp" />
     <ClInclude Include="src\GuestClass\FileTypes.hpp" />
     <ClInclude Include="src\GuestClass\Guest.hpp" />
     <ClInclude Include="src\GuestClass\HexInput.hpp" />
+    <ClInclude Include="src\GuestClass\MemoryBanks.hpp" />
+    <ClInclude Include="src\GuestClass\ProgramControl.hpp" />
     <ClInclude Include="src\GuestClass\Registers.hpp" />
     <ClInclude Include="src\GuestClass\SoundCores.hpp" />
     <ClInclude Include="src\HostClass\BasicAudioSpec.hpp" />

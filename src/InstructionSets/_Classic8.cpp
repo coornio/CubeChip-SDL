@@ -4,13 +4,16 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include "Interface.hpp"
 #include "../GuestClass/Guest.hpp"
 
 /*------------------------------------------------------------------*/
 /*  class  FncSetInterface -> FunctionsForClassic8                  */
 /*------------------------------------------------------------------*/
 
-void FunctionsForClassic8::scrollUP(const usz N) {
+FunctionsForClassic8::FunctionsForClassic8(VM_Guest& ref) : vm(ref) {}
+
+void FunctionsForClassic8::scrollUP(const std::size_t N) {
 	vm.State.push_display = true;
 	auto& display{ vm.Mem.display };
 	const auto N2{ vm.Plane.H - N };
@@ -19,7 +22,7 @@ void FunctionsForClassic8::scrollUP(const usz N) {
 	for (auto X{ 0 }; X < vm.Plane.X; ++X)
 		display[H][X] = (H >= N2) ? 0 : display[H + N][X];
 };
-void FunctionsForClassic8::scrollDN(const usz N) {
+void FunctionsForClassic8::scrollDN(const std::size_t N) {
 	vm.State.push_display = true;
 	auto& display{ vm.Mem.display };
 
@@ -27,7 +30,7 @@ void FunctionsForClassic8::scrollDN(const usz N) {
 	for (auto X{ 0 }; X < vm.Plane.X; ++X)
 		display[H][X] = (H < N) ? 0 : display[H - N][X];
 };
-void FunctionsForClassic8::scrollLT(const usz) {
+void FunctionsForClassic8::scrollLT(const std::size_t) {
 	vm.State.push_display = true;
 	auto& display{ vm.Mem.display };
 
@@ -36,10 +39,10 @@ void FunctionsForClassic8::scrollLT(const usz) {
 		auto mask{ display[H][X] << 4 };
 		if (X < vm.Plane.Xb)
 			mask |= display[H][X + 1] >> 4;
-		display[H][X] = as<u8>(mask);
+		display[H][X] = static_cast<uint8_t>(mask);
 	};
 };
-void FunctionsForClassic8::scrollRT(const usz) {
+void FunctionsForClassic8::scrollRT(const std::size_t) {
 	vm.State.push_display = true;
 	auto& display{ vm.Mem.display };
 
@@ -48,16 +51,16 @@ void FunctionsForClassic8::scrollRT(const usz) {
 		auto mask{ display[H][X] >> 4 };
 		if (X > 0)
 			mask |= display[H][X - 1] << 4;
-		display[H][X] = as<u8>(mask);
+		display[H][X] = static_cast<uint8_t>(mask);
 	}
 };
 
 /*------------------------------------------------------------------*/
 
 void FunctionsForClassic8::drawByte(
-	const usz L, const usz SHL,
-	const usz R, const usz SHR,
-	const usz Y, const usz DATA
+	const std::size_t L, const std::size_t SHL,
+	const std::size_t R, const std::size_t SHR,
+	const std::size_t Y, const std::size_t DATA
 ) {
 	if (!DATA || L >= vm.Plane.X) return;
 	const auto DATA_L{ DATA >> SHR & 0xFF };
@@ -74,7 +77,7 @@ void FunctionsForClassic8::drawByte(
 	vm.Mem.display[Y][R] ^= DATA_R;
 }
 
-void FunctionsForClassic8::drawSprite(usz VX, usz VY, usz N, usz I) {
+void FunctionsForClassic8::drawSprite(std::size_t VX, std::size_t VY, std::size_t N, std::size_t I) {
 	vm.State.push_display = true;
 
 	VX &= vm.Plane.Wb;
@@ -108,7 +111,7 @@ void FunctionsForClassic8::drawSprite(usz VX, usz VY, usz N, usz I) {
 	}
 };
 
-void FunctionsForClassic8::drawColors(const usz VX, const usz VY, const usz idx, const usz N) {
+void FunctionsForClassic8::drawColors(const std::size_t VX, const std::size_t VY, const std::size_t idx, const std::size_t N) {
 	vm.State.push_display = true;
 
 	if (N) {

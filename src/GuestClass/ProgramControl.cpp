@@ -5,19 +5,20 @@
 */
 
 #include <sstream>
+#include <iomanip>
 
+#include "ProgramControl.hpp"
+#include "../Assistants/BasicLogger.hpp"
 #include "Guest.hpp"
 
-/*------------------------------------------------------------------*/
-/*  class  VM_Guest::ProgramControl                                 */
-/*------------------------------------------------------------------*/
+using namespace blogger;
 
-VM_Guest::ProgramControl::ProgramControl(VM_Guest& parent, FncSetInterface*& set)
+ProgramControl::ProgramControl(VM_Guest& parent, FncSetInterface*& set)
     : vm(parent)
     , fncSet(set)
 {}
 
-std::string VM_Guest::ProgramControl::hexOpcode() const {
+std::string ProgramControl::hexOpcode() const {
     std::stringstream out;
     out << std::setfill('0') << std::setw(4)
         << std::uppercase    << std::hex
@@ -25,23 +26,23 @@ std::string VM_Guest::ProgramControl::hexOpcode() const {
     return out.str();
 }
 
-void VM_Guest::ProgramControl::init(const u32 _counter, const s32 _ipf) {
+void ProgramControl::init(const uint32_t _counter, const int32_t _ipf) {
     counter   = _counter;
     ipf       = _ipf;
     framerate = 60.0;
     interrupt = Interrupt::NONE;
 }
 
-void VM_Guest::ProgramControl::setSpeed(const s32 _ipf) {
+void ProgramControl::setSpeed(const int32_t _ipf) {
     if (_ipf) ipf = _ipf;
     boost = (ipf < 50) ? (ipf >> 1) : 0;
 }
 
-void VM_Guest::ProgramControl::setFncSet(FncSetInterface* _fncSet) {
+void ProgramControl::setFncSet(FncSetInterface* _fncSet) {
     fncSet = _fncSet;
 }
 
-void VM_Guest::ProgramControl::skipInstruction() {
+void ProgramControl::skipInstruction() {
     switch (vm.mrw(counter)) {
         case 0xF0:
         case 0xF1:
@@ -57,24 +58,24 @@ void VM_Guest::ProgramControl::skipInstruction() {
     counter += 2;
 }
 
-void VM_Guest::ProgramControl::jumpInstruction(const u32 next) {
+void ProgramControl::jumpInstruction(const uint32_t next) {
     if ((counter - 2 & limiter) == next) [[unlikely]]
         setInterrupt(Interrupt::STOP);
     else counter = next;
 }
 
-void VM_Guest::ProgramControl::stepInstruction(const s32 step) {
+void ProgramControl::stepInstruction(const int32_t step) {
     if (!step) [[unlikely]]
         setInterrupt(Interrupt::STOP);
     else counter = counter - 2 + step & limiter;
 }
 
-void VM_Guest::ProgramControl::setInterrupt(const Interrupt type) {
+void ProgramControl::setInterrupt(const Interrupt type) {
     interrupt = type;
     ipf *= -1;
 }
 
-void VM_Guest::ProgramControl::requestHalt() {
+void ProgramControl::requestHalt() {
     setInterrupt(Interrupt::STOP);
     switch (opcode & 0xF000) {
         case 0x0:
@@ -86,13 +87,13 @@ void VM_Guest::ProgramControl::requestHalt() {
     }
 }
 
-void VM_Guest::ProgramControl::handleTimersDec() {
+void ProgramControl::handleTimersDec() {
     if (Timer.delay) --Timer.delay;
     if (Timer.sound) --Timer.sound;
     if (!Timer.sound) vm.Sound.beepFx0A = false;
 }
 
-void VM_Guest::ProgramControl::handleInterrupt() {
+void ProgramControl::handleInterrupt() {
     switch (interrupt) {
 
         case Interrupt::ONCE: // resumes emulation after a single frame pause

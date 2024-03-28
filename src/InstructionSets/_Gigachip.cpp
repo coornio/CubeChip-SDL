@@ -4,31 +4,38 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include "Interface.hpp"
 #include "../GuestClass/Guest.hpp"
 
 /*------------------------------------------------------------------*/
 /*  class  FncSetInterface -> FunctionsForGigachip                  */
 /*------------------------------------------------------------------*/
 
-void FunctionsForGigachip::scrollUP(const usz N) {
+FunctionsForGigachip::FunctionsForGigachip(VM_Guest& ref) : vm(ref) {
+	chooseBlend(Blend::NORMAL);
+};
+
+/*------------------------------------------------------------------*/
+
+void FunctionsForGigachip::scrollUP(const std::size_t N) {
 	auto& display = vm.Mem.display;
 	std::rotate(display.begin(), display.begin() + N, display.end());
 
 	vm.State.push_display = true;
 };
-void FunctionsForGigachip::scrollDN(const usz N) {
+void FunctionsForGigachip::scrollDN(const std::size_t N) {
 	auto& display = vm.Mem.display;
 	std::rotate(display.begin(), display.end() - N, display.end());
 
 	vm.State.push_display = true;
 };
-void FunctionsForGigachip::scrollLT(const usz N) {
+void FunctionsForGigachip::scrollLT(const std::size_t N) {
 	for (auto& display : vm.Mem.display) {
 		std::rotate(display.begin(), display.begin() + N, display.end());
 	}
 	vm.State.push_display = true;
 };
-void FunctionsForGigachip::scrollRT(const usz N) {
+void FunctionsForGigachip::scrollRT(const std::size_t N) {
 	for (auto& display : vm.Mem.display) {
 		std::rotate(display.begin(), display.end() - N, display.end());
 	}
@@ -37,7 +44,7 @@ void FunctionsForGigachip::scrollRT(const usz N) {
 
 /*------------------------------------------------------------------*/
 
-u32 FunctionsForGigachip::blendPixel(u32 colorSrc, u32& colorDst) {
+uint32_t FunctionsForGigachip::blendPixel(uint32_t colorSrc, uint32_t& colorDst) {
 	static constexpr float minA{ 1.0f / 255.0f };
 	src.A = (colorSrc >> 24) / 255.0f * vm.Trait.alpha;
 	if (src.A < minA) [[unlikely]] return colorDst; // pixel is fully transparent
@@ -86,17 +93,17 @@ u32 FunctionsForGigachip::blendPixel(u32 colorSrc, u32& colorDst) {
 	}
 
 	if (!blendType) {
-		return as<u8>(std::round(src.A * 255.0f)) << 24 |
-			   as<u8>(std::round(src.R * 255.0f)) << 16 |
-			   as<u8>(std::round(src.G * 255.0f)) <<  8 |
-			   as<u8>(std::round(src.B * 255.0f));
+		return static_cast<uint8_t>(std::round(src.A * 255.0f)) << 24 |
+			   static_cast<uint8_t>(std::round(src.R * 255.0f)) << 16 |
+			   static_cast<uint8_t>(std::round(src.G * 255.0f)) <<  8 |
+			   static_cast<uint8_t>(std::round(src.B * 255.0f));
 	}
 	else {
 		return applyBlend(blendType);
 	}
 };
 
-u32 FunctionsForGigachip::applyBlend(float (*blend)(const float, const float)) const {
+uint32_t FunctionsForGigachip::applyBlend(float (*blend)(const float, const float)) const {
 	float A{ 1.0f };
 	float R{ blend(src.R, dst.R) };
 	float G{ blend(src.G, dst.G) };
@@ -112,13 +119,13 @@ u32 FunctionsForGigachip::applyBlend(float (*blend)(const float, const float)) c
 		B = dW * dst.B + sW * B;
 	}
 
-	return as<u8>(std::roundf(A * 255.0f)) << 24
-		 | as<u8>(std::roundf(R * 255.0f)) << 16
-		 | as<u8>(std::roundf(G * 255.0f)) <<  8
-		 | as<u8>(std::roundf(B * 255.0f));
+	return static_cast<uint8_t>(std::roundf(A * 255.0f)) << 24
+		 | static_cast<uint8_t>(std::roundf(R * 255.0f)) << 16
+		 | static_cast<uint8_t>(std::roundf(G * 255.0f)) <<  8
+		 | static_cast<uint8_t>(std::roundf(B * 255.0f));
 }
 
-void FunctionsForGigachip::drawSprite(usz VX, usz VY, usz N, usz I) {
+void FunctionsForGigachip::drawSprite(std::size_t VX, std::size_t VY, std::size_t N, std::size_t I) {
 	vm.Reg.V[0xF] = 0;
 	
 	const auto oW{ vm.Trait.W }; auto tW{ oW };
@@ -134,7 +141,7 @@ void FunctionsForGigachip::drawSprite(usz VX, usz VY, usz N, usz I) {
 		std::swap(fX, fY);
 	}
 
-	usz memY{}, memX{}; // position vars for RAM access
+	std::size_t memY{}, memX{}; // position vars for RAM access
 	
 	for (auto H{ 0 }; H < tH; ++H, ++VY %= vm.Plane.H) {
 		for (auto W{ 0 }; W < tW; ++W, ++VX &= 0xFFu) {
@@ -171,7 +178,7 @@ void FunctionsForGigachip::drawSprite(usz VX, usz VY, usz N, usz I) {
 	}
 };
 
-void FunctionsForGigachip::chooseBlend(const usz N) {
+void FunctionsForGigachip::chooseBlend(const std::size_t N) {
 	switch (N) {
 
 		case Blend::NORMAL:

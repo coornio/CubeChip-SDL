@@ -5,37 +5,34 @@
 */
 
 #include "Guest.hpp"
+#include "MemoryBanks.hpp"
 
-/*------------------------------------------------------------------*/
-/*  struct  VM_Guest::MemoryBanks                                   */
-/*------------------------------------------------------------------*/
-
-VM_Guest::MemoryBanks::MemoryBanks(VM_Guest& parent)
+MemoryBanks::MemoryBanks(VM_Guest& parent)
     : vm(parent)
 {}
 
-void VM_Guest::MemoryBanks::changeViewportMask(const BrushType type) {
+void MemoryBanks::changeViewportMask(const BrushType type) {
     switch (type) {
 
         case BrushType::CLR:
-            applyViewportMask = [](u32& pos, const usz) { pos = 0; };
+            applyViewportMask = [](uint32_t& pos, const std::size_t) { pos = 0; };
             return;
 
         case BrushType::XOR:
-            applyViewportMask = [](u32& pos, const usz mask) { pos ^= mask; };
+            applyViewportMask = [](uint32_t& pos, const std::size_t mask) { pos ^= mask; };
             return;
 
         case BrushType::SUB:
-            applyViewportMask = [](u32& pos, const usz mask) { pos &= ~mask; };
+            applyViewportMask = [](uint32_t& pos, const std::size_t mask) { pos &= ~mask; };
             return;
 
         case BrushType::ADD:
-            applyViewportMask = [](u32& pos, const usz mask) { pos |= mask; };
+            applyViewportMask = [](uint32_t& pos, const std::size_t mask) { pos |= mask; };
             return;
     }
 }
 
-void VM_Guest::MemoryBanks::modifyViewport(const BrushType type) {
+void MemoryBanks::modifyViewport(const BrushType type) {
     vm.State.push_display = true;
     changeViewportMask(type);
 
@@ -44,7 +41,7 @@ void VM_Guest::MemoryBanks::modifyViewport(const BrushType type) {
         applyViewportMask(display[H][X], vm.Plane.mask);
 }
 
-void VM_Guest::MemoryBanks::flushBuffers(const bool firstFlush) {
+void MemoryBanks::flushBuffers(const bool firstFlush) {
     vm.State.push_display = true;
 
     if (firstFlush) palette.fill(0);
@@ -54,7 +51,7 @@ void VM_Guest::MemoryBanks::flushBuffers(const bool firstFlush) {
     for (auto& row : bufPalette) row.fill(0);
 }
 
-void VM_Guest::MemoryBanks::loadPalette(usz index, const usz count) {
+void MemoryBanks::loadPalette(std::size_t index, const std::size_t count) {
     for (auto idx{ 0 }; idx < count; index += 4) {
         palette[++idx] =
             vm.mrw(index + 0) << 24 |
@@ -64,7 +61,7 @@ void VM_Guest::MemoryBanks::loadPalette(usz index, const usz count) {
     }
 }
 
-void VM_Guest::MemoryBanks::clearPages(usz H) {
+void MemoryBanks::clearPages(std::size_t H) {
     vm.State.push_display = true;
 
     while (H++ < vm.Plane.H)

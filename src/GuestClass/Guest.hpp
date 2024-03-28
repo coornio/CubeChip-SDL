@@ -6,15 +6,21 @@
 
 #pragma once
 
+#include <cstddef>
+
 #include "../HostClass/HomeDirManager.hpp"
 #include "../HostClass/BasicVideoSpec.hpp"
 #include "../HostClass/BasicAudioSpec.hpp"
 
 #include "../InstructionSets/Interface.hpp"
-
+#include "../Assistants/Well512.hpp"
+//#include "../Includes.hpp"
 #include "HexInput.hpp"
+#include "ProgramControl.hpp"
+#include "MemoryBanks.hpp"
 #include "SoundCores.hpp"
 #include "Registers.hpp"
+#include "DisplayColors.hpp"
 
 class VM_Guest final {
     FunctionsForMegachip SetGigachip{ *this };
@@ -49,118 +55,43 @@ public:
         MC, // 256 x 192
     };
 
-    enum class Interrupt : unsigned {
-        NONE,
-        ONCE,
-        STOP,
-        WAIT,
-        FX0A,
-    };
-
-    enum class BrushType : unsigned {
-        CLR,
-        XOR,
-        SUB,
-        ADD,
-    };
-
-    class MemoryBanks final {
-        VM_Guest& vm;
-        void (*applyViewportMask)(u32&, usz) {};
-
-    public:
-        arr2D<u32, 256, 192> display{};
-        arr2D<u32,  16, 128> bufColor8x{};
-        arr2D<u32, 256, 192> bufColorMC{};
-        arr2D<u8,  256, 192> bufPalette{};
-
-        std::vector<u8> ram{};
-        std::array<u32, 256> palette{};
-
-        explicit MemoryBanks(VM_Guest&);
-        void modifyViewport(BrushType);
-        void changeViewportMask(BrushType);
-
-        void flushBuffers(bool);
-        void loadPalette(usz, usz);
-
-        void clearPages(usz);
-    };
-
 private:
     std::unique_ptr<MemoryBanks> MemoryBanksPtr{
         std::make_unique<MemoryBanks>(*this)
     };
 public:
-    MemoryBanks& Mem{ *MemoryBanksPtr.get() };
-
-    class ProgramControl final {
-        VM_Guest& vm;
-        FncSetInterface*& fncSet;
-
-    public:
-        s32 ipf{}, boost{};
-        double framerate{};
-
-        usz limiter{};
-        usz screenMode{};
-        u32 opcode{};
-        u32 counter{};
-        
-        Interrupt interrupt{};
-
-        struct TimerData {
-            u8 delay{};
-            u8 sound{};
-        } Timer;
-
-        explicit ProgramControl(VM_Guest&, FncSetInterface*&);
-        std::string hexOpcode() const;
-
-        void init(u32, s32);
-        void setSpeed(s32);
-        void setFncSet(FncSetInterface*);
-
-        void skipInstruction();
-        void jumpInstruction(u32);
-        void stepInstruction(s32);
-        
-        void requestHalt();
-        void setInterrupt(Interrupt);
-
-        void handleTimersDec();
-        void handleInterrupt();
-    } Program{ *this, currFncSet };
-
-    SoundCores Sound{ *this, Audio };
-    Registers  Reg{ *this };
+    MemoryBanks&   Mem     { *MemoryBanksPtr.get() };
+    ProgramControl Program { *this, currFncSet };
+    SoundCores     Sound   { *this, Audio };
+    Registers      Reg     { *this };
+    DisplayColors  Color;
 
     struct BitPlaneProperties final {
-        s32 W{},  H{},  X{};
-        s32 Wb{}, Hb{}, Xb{};
+        int32_t W{},  H{},  X{};
+        int32_t Wb{}, Hb{}, Xb{};
 
-        u32 selected{ 1 };
-        u32 mask{ 0x11111111 };
+        uint32_t selected{ 1 };
+        uint32_t mask{ 0x11111111 };
 
         using enum BrushType;
         BrushType brush{ XOR };
     } Plane;
 
     struct TextureTraits final {
-        s32 W{}, H{};
+        int32_t W{}, H{};
         
-        u8   collision{ 0xFF };
-        bool rotate{};
-        bool flip_X{};
-        bool flip_Y{};
-        bool invert{};
-        u8   rgbmod{};
-        bool nodraw{};
-        bool uneven{};
+        uint8_t collision{ 0xFF };
+        bool    rotate{};
+        bool    flip_X{};
+        bool    flip_Y{};
+        bool    invert{};
+        uint8_t rgbmod{};
+        bool    nodraw{};
+        bool    uneven{};
 
-        float alpha{ 1.0f };
+        float   alpha{ 1.0f };
 
-        void setFlags(usz);
+        void setFlags(std::size_t);
     } Trait;
 
     struct EmulationQuirks final {
@@ -192,55 +123,21 @@ public:
         bool push_display{};
     } State;
 
-    class DisplayColors final {
-        static constexpr std::array<u32, 16> BitColors{ // 0-1 classic8, 0-15 modernXO
-            0xFF0C1218, 0xFFE4DCD4, 0xFF403C38, 0xFF8C8884,
-            0xFFD82010, 0xFF40D020, 0xFF1040D0, 0xFFE0C818,
-            0xFF501010, 0xFF105010, 0xFF50B0C0, 0xFFF08010,
-            0xFFE06090, 0xFFE0F090, 0xFFB050F0, 0xFF704020,
-        };
-        static constexpr std::array<u32, 8> ForeColors{ // 8X foreground
-            0xFF000000, 0xFFFF0000, 0xFF0000FF, 0xFFFF00FF,
-            0xFF00FF00, 0xFFFFFF00, 0xFF00FFFF, 0xFFFFFFFF,
-        };
-        static constexpr std::array<u32, 4> BackColors{ // 8X background
-            0xFF000060, 0xFF000000, 0xFF002000, 0xFF200000,
-        };
-
-    public:
-        std::array<u32, 16> bit{}; // pixel bit color (planes)
-        std::array<u32, 10> hex{}; // hex sprite gradient map
-
-    private:
-        u32 bgindex{}; // background color cycle index
-        u32 megahex{}; // hex sprite color for megachip
-        u32 buzzer{};  // buzzer color (visual beep)
-        [[maybe_unused]] u32 _;
-
-    public:
-        explicit DisplayColors();
-        void setMegaHex(u32);
-        void setBit332(usz, usz);
-        void cycleBackground();
-        u32  getFore8X(const usz) const;
-        u32  getBuzzer() const;
-    } Color;
-
     // init functions
     bool setupMachine();
     bool romTypeCheck();
-    bool romSizeCheck(const usz, const usz);
+    bool romSizeCheck(const std::size_t, const std::size_t);
     void initPlatform();
     void loadFontData();
-    void setupDisplay(const usz, const bool = false);
+    void setupDisplay(const std::size_t, const bool = false);
     void flushDisplay();
 
     // core functions
     void cycle();
     void instructionLoop();
 
-    u8& mrw(usz idx) { return Mem.ram[idx & Program.limiter]; }
-    u8& VX()         { return Reg.V[(Program.opcode >> 8) & 0xF]; }
-    u16 NNNN()       { return mrw(Program.counter) << 8 | mrw(Program.counter + 1); }
+    uint8_t& mrw(std::size_t idx) { return Mem.ram[idx & Program.limiter]; }
+    uint8_t& VX()                 { return Reg.V[(Program.opcode >> 8) & 0xF]; }
+    uint16_t NNNN()               { return mrw(Program.counter) << 8 | mrw(Program.counter + 1); }
 };
 

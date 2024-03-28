@@ -4,16 +4,18 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include "Guest.hpp"
+#include <cmath>
 
-VM_Guest::DisplayColors::DisplayColors()
+#include "DisplayColors.hpp"
+
+DisplayColors::DisplayColors()
     : bit(BitColors)
     , buzzer(bit[1])
 {
     setMegaHex(0xFFFFFFFF);
 }
 
-void VM_Guest::DisplayColors::setMegaHex(const u32 color) {
+void DisplayColors::setMegaHex(const uint32_t color) {
     megahex = color;
     for (auto idx{ 0 }; idx < hex.size(); ++idx) {
         const float mult{ 1.0f - 0.045f * idx };
@@ -22,15 +24,15 @@ void VM_Guest::DisplayColors::setMegaHex(const u32 color) {
         const float B{ (color       & 0xFF) * mult * 1.21f };
 
         hex[idx] = 0xFF000000
-            | as<u32>(std::min(std::roundf(R), 255.0f)) << 16
-            | as<u32>(std::min(std::roundf(G), 255.0f)) <<  8
-            | as<u32>(std::min(std::roundf(B), 255.0f));
+            | static_cast<uint32_t>(std::min(std::roundf(R), 255.0f)) << 16
+            | static_cast<uint32_t>(std::min(std::roundf(G), 255.0f)) <<  8
+            | static_cast<uint32_t>(std::min(std::roundf(B), 255.0f));
     }
 }
 
-void VM_Guest::DisplayColors::setBit332(const usz idx, const usz color) {
-    static constexpr std::array<u8, 8> map3b{ 0x00, 0x20, 0x40, 0x60, 0x80, 0xA0, 0xC0, 0xFF };
-    static constexpr std::array<u8, 4> map2b{ 0x00,             0x60,       0xA0,       0xFF };
+void DisplayColors::setBit332(const std::size_t idx, const std::size_t color) {
+    static constexpr std::array<uint8_t, 8> map3b{ 0x00, 0x20, 0x40, 0x60, 0x80, 0xA0, 0xC0, 0xFF };
+    static constexpr std::array<uint8_t, 4> map2b{ 0x00,             0x60,       0xA0,       0xFF };
     
     bit[idx & 0xF] = 0xFF000000
         | map3b[color >> 5 & 7] << 16 // red
@@ -38,15 +40,15 @@ void VM_Guest::DisplayColors::setBit332(const usz idx, const usz color) {
         | map2b[color      & 3];      // blue
 }
 
-void VM_Guest::DisplayColors::cycleBackground() {
+void DisplayColors::cycleBackground() {
     bit[0] = BackColors[bgindex++];
     bgindex &= 0x3;
 }
 
-u32 VM_Guest::DisplayColors::getFore8X(const usz idx) const {
+uint32_t DisplayColors::getFore8X(const std::size_t idx) const {
     return ForeColors[idx & 0x7];
 }
 
-u32 VM_Guest::DisplayColors::getBuzzer() const {
+uint32_t DisplayColors::getBuzzer() const {
     return buzzer;
 }
