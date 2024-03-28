@@ -4,30 +4,33 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include <filesystem>
+#include <fstream>
+
+#include "Registers.hpp"
 #include "Guest.hpp"
+#include "../Assistants/BasicLogger.hpp"
 
-/*------------------------------------------------------------------*/
-/*  class  VM_Guest::Registers                                      */
-/*------------------------------------------------------------------*/
+using namespace blogger;
 
-VM_Guest::Registers::Registers(VM_Guest& parent)
+Registers::Registers(VM_Guest& parent)
 	: vm(parent)
 {}
 
-void VM_Guest::Registers::routineCall(const u32 addr) {
+void Registers::routineCall(const uint32_t addr) {
 	stack[SP++ & 0xF] = vm.Program.counter;
 	vm.Program.counter = addr;
 }
 
-void VM_Guest::Registers::routineReturn() {
+void Registers::routineReturn() {
 	vm.Program.counter = stack[--SP & 0xF];
 }
 
-void VM_Guest::Registers::protectPages() {
+void Registers::protectPages() {
 	pageGuard = (3 - (V[0] - 1 & 0x3)) << 5;
 }
 
-bool VM_Guest::Registers::readPermRegs(const usz X) {
+bool Registers::readPermRegs(const std::size_t X) {
 	static const std::filesystem::path sha1{
 		vm.File.permRegs / vm.File.sha1
 	};
@@ -41,26 +44,26 @@ bool VM_Guest::Registers::readPermRegs(const usz X) {
 		std::ifstream in(sha1, std::ios::binary);
 		if (in.is_open()) {
 			in.seekg(0, std::ios::end);
-			const auto totalBytes{ as<usz>(in.tellg()) };
+			const auto totalBytes{ static_cast<std::size_t>(in.tellg()) };
 			in.seekg(0, std::ios::beg);
 
 			in.read(to<char*>(V.data()), std::min(totalBytes, X));
 			in.close();
 
 			if (totalBytes < X) {
-				std::fill_n(V.begin() + totalBytes, X - totalBytes, u8{ 0 });
+				std::fill_n(V.begin() + totalBytes, X - totalBytes, uint8_t{ 0 });
 			}
 		} else {
 			blog.errLogOut("Could not open SHA1 file to read: " + sha1.string());
 			return false;
 		}
 	} else {
-		std::fill_n(V.begin(), X, u8{ 0 });
+		std::fill_n(V.begin(), X, uint8_t{ 0 });
 	}
 	return true;
 }
 
-bool VM_Guest::Registers::writePermRegs(const usz X) {
+bool Registers::writePermRegs(const std::size_t X) {
 	static const std::filesystem::path sha1{
 		vm.File.permRegs / vm.File.sha1
 	};
@@ -76,7 +79,7 @@ bool VM_Guest::Registers::writePermRegs(const usz X) {
 
 		if (in.is_open()) {
 			in.seekg(0, std::ios::end);
-			const auto totalBytes{ as<usz>(in.tellg()) };
+			const auto totalBytes{ static_cast<std::size_t>(in.tellg()) };
 			in.seekg(0, std::ios::beg);
 			
 			in.read(tempV.data(), std::min(totalBytes, X));
@@ -99,7 +102,7 @@ bool VM_Guest::Registers::writePermRegs(const usz X) {
 	} else {
 		std::ofstream out(sha1, std::ios::binary);
 		if (out.is_open()) {
-			out.write(to<const char*>(V.data()), X);
+			out.write(reinterpret_cast<const char*>(V.data()), X);
 			if (X < 16) {
 				const std::vector<char> padding(16 - X, '\x00');
 				out.write(padding.data(), padding.size());

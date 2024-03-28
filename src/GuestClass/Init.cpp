@@ -4,10 +4,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include "../HostClass/Host.hpp"
 #include "Guest.hpp"
-
-//#include "HexInput.hpp"
 #include "FileTypes.hpp"
 
 bool VM_Guest::setupMachine() {
@@ -175,7 +172,7 @@ void VM_Guest::initPlatform() {
     //Quirk.shiftVX = true;
     //Quirk.idxRegNoInc = true;
     //State.schip_legacy = true;
-    //Host.Audio.setVolume(0.8f);
+    //Audio.setVolume(0.8f);
     Program.setSpeed(0);
     //Quirk.waitScroll = true;
     //Quirk.waitVblank = true;

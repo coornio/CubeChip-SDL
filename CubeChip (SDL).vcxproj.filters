@@ -27,9 +27,6 @@
     <ClCompile Include="src\HostClass\BasicAudioSpec.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\GuestClass\_SoundCores.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\GuestClass\GuestFunctions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -66,7 +63,7 @@
     <ClCompile Include="src\GuestClass\_DisplayColors.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\GuestClass\_Registers.cpp">
+    <ClCompile Include="src\GuestClass\Registers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Assistants\BasicLogger.cpp">
@@ -85,6 +82,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\GuestClass\HexInput.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GuestClass\SoundCores.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -143,7 +143,10 @@
     <ClInclude Include="src\GuestClass\HexInput.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\GuestClass\_SoundCores.hpp">
+    <ClInclude Include="src\GuestClass\SoundCores.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\GuestClass\Registers.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -8,7 +8,7 @@
 #include "HostClass/Host.hpp"
 #include "GuestClass/Guest.hpp"
 
-s32 SDL_main(s32 argc, char* argv[]) {
+int32_t SDL_main(int32_t argc, char* argv[]) {
     std::unique_ptr<HomeDirManager> HDM;
     std::unique_ptr<BasicVideoSpec> BVS;
     std::unique_ptr<BasicAudioSpec> BAS;
@@ -150,5 +150,4 @@ s32 SDL_main(s32 argc, char* argv[]) {
             bic::mb.updateCopy();
         }
     }
-    return 0;
 }

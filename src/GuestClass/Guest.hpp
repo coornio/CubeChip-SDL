@@ -6,15 +6,15 @@
 
 #pragma once
 
-#include "../Includes.hpp"
-#include "../InstructionSets/Interface.hpp"
-#include "HexInput.hpp"
-
 #include "../HostClass/HomeDirManager.hpp"
 #include "../HostClass/BasicVideoSpec.hpp"
 #include "../HostClass/BasicAudioSpec.hpp"
 
-#include "_SoundCores.hpp"
+#include "../InstructionSets/Interface.hpp"
+
+#include "HexInput.hpp"
+#include "SoundCores.hpp"
+#include "Registers.hpp"
 
 class VM_Guest final {
     FunctionsForMegachip SetGigachip{ *this };
@@ -26,7 +26,6 @@ class VM_Guest final {
     FncSetInterface* currFncSet{ &SetClassic8 };
 
 public:
-    //explicit VM_Guest(VM_Host&);
     explicit VM_Guest(
         HomeDirManager&,
         BasicVideoSpec&,
@@ -38,7 +37,6 @@ public:
     BasicVideoSpec& Video;
     BasicAudioSpec& Audio;
 
-    //VM_Host& Host;
     HexInput Input;
     Well512  Wrand;
 
@@ -69,6 +67,7 @@ public:
     class MemoryBanks final {
         VM_Guest& vm;
         void (*applyViewportMask)(u32&, usz) {};
+
     public:
         arr2D<u32, 256, 192> display{};
         arr2D<u32,  16, 128> bufColor8x{};
@@ -98,6 +97,7 @@ public:
     class ProgramControl final {
         VM_Guest& vm;
         FncSetInterface*& fncSet;
+
     public:
         s32 ipf{}, boost{};
         double framerate{};
@@ -133,21 +133,7 @@ public:
     } Program{ *this, currFncSet };
 
     SoundCores Sound{ *this, Audio };
-
-    class Registers final {
-        VM_Guest& vm;
-    public:
-        std::array<u32, 16> stack{};
-        std::array<u8,  16> V{};
-        u32 I{}, SP{}, pageGuard{};
-
-        explicit Registers(VM_Guest&);
-        void routineCall(u32);
-        void routineReturn();
-        void protectPages();
-        bool readPermRegs(usz);
-        bool writePermRegs(usz);
-    } Reg{ *this };
+    Registers  Reg{ *this };
 
     struct BitPlaneProperties final {
         s32 W{},  H{},  X{};

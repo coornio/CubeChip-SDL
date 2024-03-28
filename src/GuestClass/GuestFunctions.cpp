@@ -5,7 +5,6 @@
 */
 
 #include "Guest.hpp"
-#include "../HostClass/Host.hpp"
 
 /*------------------------------------------------------------------*/
 /*  class  VM_Guest                                                 */

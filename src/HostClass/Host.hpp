@@ -6,8 +6,6 @@
 
 #pragma once
 
-//#include "../Includes.hpp"
-
 #include <SDL.h>
 
 #include "HomeDirManager.hpp"
