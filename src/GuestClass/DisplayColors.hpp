@@ -12,7 +12,7 @@
 
 class DisplayColors final {
     static constexpr std::array<uint32_t, 16> BitColors{ // 0-1 classic8, 0-15 modernXO
-        0xFF0C1218, 0xFFE4DCD4, 0xFF403C38, 0xFF8C8884,
+        0xFF0C1218, 0xFFE4DCD4, 0xFF8C8884, 0xFF403C38,
         0xFFD82010, 0xFF40D020, 0xFF1040D0, 0xFFE0C818,
         0xFF501010, 0xFF105010, 0xFF50B0C0, 0xFFF08010,
         0xFFE06090, 0xFFE0F090, 0xFFB050F0, 0xFF704020,
