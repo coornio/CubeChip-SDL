@@ -30,7 +30,8 @@ class FrameLimiter final {
     bool isValidFrame();
 
 public:
-    explicit FrameLimiter(
+    FrameLimiter(const FrameLimiter&) = delete;
+    FrameLimiter(
         const double framerate = 60.0, // 0.5 ... 1000 range
         const bool   firstpass = true, // skipFirstPass flag
         const bool   lostframe = false // skipLostFrame flag
