@@ -30,9 +30,9 @@ public:
     void pauseDevice(const bool);
 
     template <class T>
-    void setHandler(T& Class) {
-        handler = [&Class](Sint16* buffer, const Sint32 frames) {
-            Class->Sound.renderAudio(buffer, frames);
+    void setHandler(T& obj) {
+        handler = [&obj](Sint16* buffer, const Sint32 frames) {
+            obj->renderAudio(buffer, frames);
         };
         pauseDevice(false);
     }

@@ -10,43 +10,59 @@
 #include <cstdint>
 #include <memory>
 
-#include "../HostClass/HomeDirManager.hpp"
-#include "../HostClass/BasicVideoSpec.hpp"
-#include "../HostClass/BasicAudioSpec.hpp"
+#include "InstructionSets/Interface.hpp" // this should be removed eventually
+#include "Enums.hpp" // placeholder
 
-#include "../Assistants/Well512.hpp"
+class HomeDirManager;
+class BasicVideoSpec;
+class BasicAudioSpec;
 
-#include "InstructionSets/Interface.hpp"
-#include "HexInput.hpp"
-#include "ProgramControl.hpp"
-#include "MemoryBanks.hpp"
-#include "SoundCores.hpp"
-#include "Registers.hpp"
-#include "DisplayColors.hpp"
+class Well512;
+class HexInput;
+class ProgramControl;
+class MemoryBanks;
+class SoundCores;
+class Registers;
+class DisplayColors;
 
 class VM_Guest final {
-    FunctionsForMegachip SetGigachip{ *this };
-    FunctionsForMegachip SetMegachip{ *this };
-    FunctionsForModernXO SetModernXO{ *this };
-    FunctionsForLegacySC SetLegacySC{ *this };
-    FunctionsForClassic8 SetClassic8{ *this };
+    FunctionsForMegachip SetGigachip{ this };
+    FunctionsForMegachip SetMegachip{ this };
+    FunctionsForModernXO SetModernXO{ this };
+    FunctionsForLegacySC SetLegacySC{ this };
+    FunctionsForClassic8 SetClassic8{ this };
 
     FncSetInterface* currFncSet{ &SetClassic8 };
 
 public:
     explicit VM_Guest(
-        HomeDirManager&,
-        BasicVideoSpec&,
-        BasicAudioSpec&
+        HomeDirManager*,
+        BasicVideoSpec*,
+        BasicAudioSpec*
     );
-    ~VM_Guest() = default;
+    ~VM_Guest();
 
-    HomeDirManager& File;
-    BasicVideoSpec& Video;
-    BasicAudioSpec& Audio;
+    HomeDirManager* File;
+    BasicVideoSpec* Video;
+    BasicAudioSpec* Audio;
 
-    HexInput Input;
-    Well512  Wrand;
+private:
+    std::unique_ptr<HexInput>       uInput;
+    std::unique_ptr<Well512>        uWrand;
+    std::unique_ptr<MemoryBanks>    uMem;
+    std::unique_ptr<ProgramControl> uProgram;
+    std::unique_ptr<SoundCores>     uSound;
+    std::unique_ptr<Registers>      uReg;
+    std::unique_ptr<DisplayColors>  uColor;
+
+public:
+    HexInput*       Input;
+    Well512*        Wrand;
+    MemoryBanks*    Mem;
+    ProgramControl* Program;
+    SoundCores*     Sound;
+    Registers*      Reg;
+    DisplayColors*  Color;
 
     enum Resolution : unsigned {
         ERROR,
@@ -56,17 +72,6 @@ public:
         FP, //  64 x 128
         MC, // 256 x 192
     };
-
-private:
-    std::unique_ptr<MemoryBanks> MemoryBanksPtr{
-        std::make_unique<MemoryBanks>(*this)
-    };
-public:
-    MemoryBanks&   Mem     { *MemoryBanksPtr.get() };
-    ProgramControl Program { *this, currFncSet };
-    SoundCores     Sound   { *this, Audio };
-    Registers      Reg     { *this };
-    DisplayColors  Color;
 
     struct BitPlaneProperties final {
         int32_t W{},  H{},  X{};
@@ -138,8 +143,8 @@ public:
     void cycle();
     void instructionLoop();
 
-    uint8_t& mrw(std::size_t idx) { return Mem.ram[idx & Program.limiter]; }
-    uint8_t& VX()                 { return Reg.V[(Program.opcode >> 8) & 0xF]; }
-    uint16_t NNNN()               { return mrw(Program.counter) << 8 | mrw(Program.counter + 1); }
+    uint8_t& mrw(std::size_t);
+    uint8_t& VX();
+    uint16_t NNNN();
 };
 

@@ -4,52 +4,56 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include <cmath>
+
 #include "Interface.hpp"
 #include "../Guest.hpp"
+#include "../Registers.hpp"
+#include "../MemoryBanks.hpp"
 
 /*------------------------------------------------------------------*/
 /*  class  FncSetInterface -> FunctionsForGigachip                  */
 /*------------------------------------------------------------------*/
 
-FunctionsForGigachip::FunctionsForGigachip(VM_Guest& ref) : vm(ref) {
+FunctionsForGigachip::FunctionsForGigachip(VM_Guest* ref) : vm(ref) {
 	chooseBlend(Blend::NORMAL);
 };
 
 /*------------------------------------------------------------------*/
 
 void FunctionsForGigachip::scrollUP(const std::size_t N) {
-	auto& display = vm.Mem.display;
+	auto& display = vm->Mem->display;
 	std::rotate(display.begin(), display.begin() + N, display.end());
 
-	vm.State.push_display = true;
+	vm->State.push_display = true;
 };
 void FunctionsForGigachip::scrollDN(const std::size_t N) {
-	auto& display = vm.Mem.display;
+	auto& display = vm->Mem->display;
 	std::rotate(display.begin(), display.end() - N, display.end());
 
-	vm.State.push_display = true;
+	vm->State.push_display = true;
 };
 void FunctionsForGigachip::scrollLT(const std::size_t N) {
-	for (auto& display : vm.Mem.display) {
+	for (auto& display : vm->Mem->display) {
 		std::rotate(display.begin(), display.begin() + N, display.end());
 	}
-	vm.State.push_display = true;
+	vm->State.push_display = true;
 };
 void FunctionsForGigachip::scrollRT(const std::size_t N) {
-	for (auto& display : vm.Mem.display) {
+	for (auto& display : vm->Mem->display) {
 		std::rotate(display.begin(), display.end() - N, display.end());
 	}
-	vm.State.push_display = true;
+	vm->State.push_display = true;
 };
 
 /*------------------------------------------------------------------*/
 
 uint32_t FunctionsForGigachip::blendPixel(uint32_t colorSrc, uint32_t& colorDst) {
 	static constexpr float minA{ 1.0f / 255.0f };
-	src.A = (colorSrc >> 24) / 255.0f * vm.Trait.alpha;
+	src.A = (colorSrc >> 24) / 255.0f * vm->Trait.alpha;
 	if (src.A < minA) [[unlikely]] return colorDst; // pixel is fully transparent
 
-	if (vm.Trait.invert) colorSrc ^= 0x00'FF'FF'FF;
+	if (vm->Trait.invert) colorSrc ^= 0x00'FF'FF'FF;
 
 	src.R = (colorSrc >> 16 & 0xFF) / 255.0f;
 	src.G = (colorSrc >>  8 & 0xFF) / 255.0f;
@@ -60,7 +64,7 @@ uint32_t FunctionsForGigachip::blendPixel(uint32_t colorSrc, uint32_t& colorDst)
 	dst.G = (colorDst >>  8 & 0xFF) / 255.0f;
 	dst.B = (colorDst & 0xFF) / 255.0f;
 
-	switch (vm.Trait.rgbmod) {
+	switch (vm->Trait.rgbmod) {
 		case Trait::BRG:
 			std::swap(src.R, src.G);
 			std::swap(src.R, src.B);
@@ -126,27 +130,27 @@ uint32_t FunctionsForGigachip::applyBlend(float (*blend)(const float, const floa
 }
 
 void FunctionsForGigachip::drawSprite(std::size_t VX, std::size_t VY, std::size_t N, std::size_t I) {
-	vm.Reg.V[0xF] = 0;
+	vm->Reg->V[0xF] = 0;
 	
-	const auto oW{ vm.Trait.W }; auto tW{ oW };
-	const auto oH{ vm.Trait.H }; auto tH{ oH };
+	const auto oW{ vm->Trait.W }; auto tW{ oW };
+	const auto oH{ vm->Trait.H }; auto tH{ oH };
 
-	bool fX{ vm.Trait.flip_X };
-	bool fY{ vm.Trait.flip_Y };
+	bool fX{ vm->Trait.flip_X };
+	bool fY{ vm->Trait.flip_Y };
 
-	vm.Trait.alpha = (N ^ 0xF) / 15.0f;
+	vm->Trait.alpha = (N ^ 0xF) / 15.0f;
 
-	if (vm.Trait.uneven) {
+	if (vm->Trait.uneven) {
 		std::swap(tW, tH);
 		std::swap(fX, fY);
 	}
 
 	std::size_t memY{}, memX{}; // position vars for RAM access
 	
-	for (auto H{ 0 }; H < tH; ++H, ++VY %= vm.Plane.H) {
+	for (auto H{ 0 }; H < tH; ++H, ++VY %= vm->Plane.H) {
 		for (auto W{ 0 }; W < tW; ++W, ++VX &= 0xFFu) {
 
-			if (vm.Trait.rotate) {
+			if (vm->Trait.rotate) {
 				memX = H;
 				memY = tW - W - 1;
 			}				
@@ -158,23 +162,23 @@ void FunctionsForGigachip::drawSprite(std::size_t VX, std::size_t VY, std::size_
 			if (fX) { memX = oW - memX - 1; }
 			if (fY) { memY = oH - memY - 1; }
 
-			const auto srcIndex{ vm.mrw(I + (memY * oW) + memX) }; // palette index from RAM 
+			const auto srcIndex{ vm->mrw(I + (memY * oW) + memX) }; // palette index from RAM 
 			if (!srcIndex) continue;
 
-			auto& colorDst{ vm.Mem.bufColorMC[VY][VX] }; // DESTINATION pixel's destination color
-			auto& colorIdx{ vm.Mem.bufPalette[VY][VX] }; // DESTINATION pixel's color/collision palette index
+			auto& colorDst{ vm->Mem->bufColorMC[VY][VX] }; // DESTINATION pixel's destination color
+			auto& colorIdx{ vm->Mem->bufPalette[VY][VX] }; // DESTINATION pixel's color/collision palette index
 			
-			if (!vm.Reg.V[0xF] && colorIdx == vm.Trait.collision) [[unlikely]] {
-				vm.Reg.V[0xF] = 1;
+			if (!vm->Reg->V[0xF] && colorIdx == vm->Trait.collision) [[unlikely]] {
+				vm->Reg->V[0xF] = 1;
 			}
 				
 			colorIdx = srcIndex;
 
-			if (vm.Trait.nodraw) continue;
+			if (vm->Trait.nodraw) continue;
 
-			colorDst = blendPixel(vm.Mem.palette[srcIndex], colorDst);
+			colorDst = blendPixel(vm->Mem->palette[srcIndex], colorDst);
 		}
-		VX -= vm.Trait.W;
+		VX -= vm->Trait.W;
 	}
 };
 

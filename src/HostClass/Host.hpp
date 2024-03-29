@@ -6,11 +6,9 @@
 
 #pragma once
 
-#include <SDL.h>
-
-#include "HomeDirManager.hpp"
-#include "BasicVideoSpec.hpp"
-#include "BasicAudioSpec.hpp"
+class HomeDirManager;
+class BasicVideoSpec;
+class BasicAudioSpec;
 
 class VM_Host final {
     bool _isReady{};
@@ -20,14 +18,14 @@ public:
     [[maybe_unused]] \
     unsigned long long cycles{};
 
-    HomeDirManager& File;
-    BasicVideoSpec& Video;
-    BasicAudioSpec& Audio;
+    HomeDirManager* File;
+    BasicVideoSpec* Video;
+    BasicAudioSpec* Audio;
 
     explicit VM_Host(
-        HomeDirManager&,
-        BasicVideoSpec&,
-        BasicAudioSpec&
+        HomeDirManager*,
+        BasicVideoSpec*,
+        BasicAudioSpec*
     );
 
     [[nodiscard]] bool isReady() const;

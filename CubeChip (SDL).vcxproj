@@ -53,6 +53,7 @@
     <ClInclude Include="src\Assistants\SHA1.hpp" />
     <ClInclude Include="src\Assistants\Well512.hpp" />
     <ClInclude Include="src\GuestClass\DisplayColors.hpp" />
+    <ClInclude Include="src\GuestClass\Enums.hpp" />
     <ClInclude Include="src\GuestClass\FileTypes.hpp" />
     <ClInclude Include="src\GuestClass\Guest.hpp" />
     <ClInclude Include="src\GuestClass\HexInput.hpp" />

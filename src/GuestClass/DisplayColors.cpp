@@ -41,8 +41,7 @@ void DisplayColors::setBit332(const std::size_t idx, const std::size_t color) {
 }
 
 void DisplayColors::cycleBackground() {
-    bit[0] = BackColors[bgindex++];
-    bgindex &= 0x3;
+    bit[0] = BackColors[bgindex++ & 0x3];
 }
 
 uint32_t DisplayColors::getFore8X(const std::size_t idx) const {

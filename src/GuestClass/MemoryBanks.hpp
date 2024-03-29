@@ -10,6 +10,8 @@
 #include <vector>
 #include <cstddef>
 
+#include "Enums.hpp"
+
 template <typename T>
 using vec2D = std::vector<std::vector<T>>;
 
@@ -18,15 +20,8 @@ using arr2D = std::array<std::array<T, X>, Y>;
 
 class VM_Guest;
 
-enum class BrushType {
-    CLR,
-    XOR,
-    SUB,
-    ADD,
-};
-
 class MemoryBanks final {
-    VM_Guest& vm;
+    VM_Guest* vm;
     void (*applyViewportMask)(uint32_t&, std::size_t) {};
 
 public:
@@ -38,7 +33,7 @@ public:
     std::vector<uint8_t>      ram{};
     std::array<uint32_t, 256> palette{};
 
-    explicit MemoryBanks(VM_Guest&);
+    explicit MemoryBanks(VM_Guest*);
     void modifyViewport(BrushType);
     void changeViewportMask(BrushType);
 

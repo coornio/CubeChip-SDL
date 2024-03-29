@@ -5,8 +5,8 @@
 */
 
 #include "Includes.hpp"
-#include "HostClass/Host.hpp"
-#include "GuestClass/Guest.hpp"
+
+#include "GuestClass/SoundCores.hpp" // this shouldn't be needed, see BAS header
 
 int32_t SDL_main(int32_t argc, char* argv[]) {
     std::unique_ptr<HomeDirManager> HDM;
@@ -23,44 +23,32 @@ int32_t SDL_main(int32_t argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    VM_Host Host(
-        *HDM.get(),
-        *BVS.get(),
-        *BAS.get()
-    );
-
-    BAS->setSpec();
+    VM_Host Host(HDM.get(), BVS.get(), BAS.get());
 
     if (HDM->verifyFile(argc > 1 ? argv[1] : nullptr)) {
         Host.isReady(true);
     }
 
     std::unique_ptr<VM_Guest> Guest;
+    std::string filedrop{};
 
     FrameLimiter Frame;
     SDL_Event    Event;
 
     {
     reset_all:
-        //VM_Guest Guest(Host);
-
         bic::kb.updateCopy();
         bic::mb.updateCopy();
 
         if (Host.isReady()) {
-            // placeholder to avoid duplication from goto (for now)
-            Guest = nullptr; // destroys previous object
-            Guest = std::make_unique<VM_Guest>(
-                *HDM.get(),
-                *BVS.get(),
-                *BAS.get()
-            );
+            // destroy old instance, and create a new one
+            Guest = nullptr;
+            Guest = std::make_unique<VM_Guest>(HDM.get(), BVS.get(), BAS.get());
 
-            // this segment is ugly, fix it fix it fix it
             if (Guest->setupMachine()) {
-                // need to update Frame object with program.framerate too
+                // need to adjust the FrameLimiter object with new framerate
                 BVS->changeTitle(HDM->file.c_str());
-                BAS->setHandler(Guest);
+                BAS->setHandler(Guest->Sound);
             }
             else {
                 Host.isReady(false);
@@ -68,9 +56,6 @@ int32_t SDL_main(int32_t argc, char* argv[]) {
                 BAS->pauseDevice(true);
             }
         }
-        // initialization area above ^
-
-        // loops below
 
         while (true) {
             while (SDL_PollEvent(&Event)) {
@@ -80,11 +65,9 @@ int32_t SDL_main(int32_t argc, char* argv[]) {
                         return EXIT_SUCCESS;
                     } break;
                     case SDL_DROPFILE: {
-                        // until file validity check becomes static, this leaks:
-                        const std::string filedrop{ Event.drop.file };
+                        filedrop = Event.drop.file;
                         SDL_free(Event.drop.file);
 
-                        // currently file verification wipes old data, should fix
                         if (HDM->verifyFile(filedrop.c_str())) {
                             blog.stdLogOut("File drop accepted: " + filedrop);
                             Host.isReady(true);
@@ -119,7 +102,8 @@ int32_t SDL_main(int32_t argc, char* argv[]) {
                 if (Host.isReady()) {
                     Host.isReady(false);
                     BVS->changeTitle();
-                    BVS->renderPresent(); // should black out screen again
+                    BVS->createTexture(1, 1);
+                    BVS->renderPresent();
                     BAS->pauseDevice(true);
                     goto reset_all;
                 }

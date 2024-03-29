@@ -4,6 +4,10 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include "HomeDirManager.hpp"
+#include "BasicVideoSpec.hpp"
+#include "BasicAudioSpec.hpp"
+
 #include "Host.hpp"
 
 /*------------------------------------------------------------------*/
@@ -11,22 +15,15 @@
 /*------------------------------------------------------------------*/
 
 VM_Host::VM_Host(
-    HomeDirManager& hdm_ptr,
-    BasicVideoSpec& bvs_ptr,
-    BasicAudioSpec& bas_ptr
+    HomeDirManager* hdm_ptr,
+    BasicVideoSpec* bvs_ptr,
+    BasicAudioSpec* bas_ptr
 )
     : File{ hdm_ptr }
     , Video{ bvs_ptr }
     , Audio{ bas_ptr }
 {
-    /*
-    Video.changeTitle("Waiting for file...");
-    Audio.setSpec();
-
-    if (File.verifyFile(path)) {
-        hasFile(true).isReady(false);
-    }
-    */
+    Audio->setSpec();
 }
 
 bool VM_Host::isReady() const { return _isReady; }

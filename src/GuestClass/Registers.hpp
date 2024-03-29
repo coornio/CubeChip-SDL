@@ -13,14 +13,14 @@
 class VM_Guest;
 
 class Registers final {
-    VM_Guest& vm;
+    VM_Guest* vm;
 
 public:
     std::array<uint32_t, 16> stack{};
     std::array<uint8_t,  16> V{};
     uint32_t I{}, SP{}, pageGuard{};
 
-    explicit Registers(VM_Guest&);
+    explicit Registers(VM_Guest*);
     void routineCall(uint32_t);
     void routineReturn();
     void protectPages();

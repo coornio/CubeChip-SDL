@@ -10,12 +10,14 @@
 #include "../Assistants/BasicLogger.hpp"
 
 #include "InstructionSets/Interface.hpp"
+#include "HexInput.hpp"
 #include "ProgramControl.hpp"
+#include "SoundCores.hpp"
 #include "Guest.hpp"
 
 using namespace blogger;
 
-ProgramControl::ProgramControl(VM_Guest& parent, FncSetInterface*& set)
+ProgramControl::ProgramControl(VM_Guest* parent, FncSetInterface*& set)
     : vm(parent)
     , fncSet(set)
 {}
@@ -45,12 +47,12 @@ void ProgramControl::setFncSet(FncSetInterface* _fncSet) {
 }
 
 void ProgramControl::skipInstruction() {
-    switch (vm.mrw(counter)) {
+    switch (vm->mrw(counter)) {
         case 0xF0:
         case 0xF1:
         case 0xF2:
         case 0xF3:
-            if (!vm.mrw(counter + 1))
+            if (!vm->mrw(counter + 1))
                 counter += 2;
             break;
         case 0x01:
@@ -92,7 +94,7 @@ void ProgramControl::requestHalt() {
 void ProgramControl::handleTimersDec() {
     if (Timer.delay) --Timer.delay;
     if (Timer.sound) --Timer.sound;
-    if (!Timer.sound) vm.Sound.beepFx0A = false;
+    if (!Timer.sound) vm->Sound->beepFx0A = false;
 }
 
 void ProgramControl::handleInterrupt() {
@@ -114,11 +116,11 @@ void ProgramControl::handleInterrupt() {
             return;
 
         case Interrupt::FX0A: // resumes emulation when key press event for Fx0A
-            if (vm.Input.keyPressed(vm.VX())) {
+            if (vm->Input->keyPressed(vm->VX())) {
                 interrupt   = Interrupt::NONE;
                 ipf         = std::abs(ipf);
                 Timer.sound = 2;
-                vm.Sound.beepFx0A = true;
+                vm->Sound->beepFx0A = true;
             }
             return;
     }

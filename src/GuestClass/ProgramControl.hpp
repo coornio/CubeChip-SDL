@@ -21,7 +21,7 @@ enum class Interrupt {
 };
 
 class ProgramControl final {
-    VM_Guest& vm;
+    VM_Guest* vm;
     FncSetInterface*& fncSet;
 
 public:
@@ -40,7 +40,7 @@ public:
         uint8_t sound{};
     } Timer;
 
-    explicit ProgramControl(VM_Guest&, FncSetInterface*&);
+    explicit ProgramControl(VM_Guest*, FncSetInterface*&);
     std::string hexOpcode() const;
 
     void init(uint32_t, int32_t);

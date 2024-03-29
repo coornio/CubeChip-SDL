@@ -185,5 +185,8 @@
     <ClInclude Include="src\_nlohmann\json.hpp">
       <Filter>Header Files\_nlohmann</Filter>
     </ClInclude>
+    <ClInclude Include="src\GuestClass\Enums.hpp">
+      <Filter>Header Files\VM Guest</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

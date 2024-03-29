@@ -31,7 +31,7 @@ struct FncSetInterface {
 /*------------------------------------------------------------------*/
 
 class FunctionsForGigachip final : public FncSetInterface {
-    VM_Guest& vm;
+    VM_Guest* vm;
 
     struct SrcColor { float A{}, R{}, G{}, B{}; } src;
     struct DstColor { float A{}, R{}, G{}, B{}; } dst;
@@ -65,7 +65,7 @@ class FunctionsForGigachip final : public FncSetInterface {
 
 public:
     void chooseBlend(std::size_t);
-    FunctionsForGigachip(VM_Guest&);
+    FunctionsForGigachip(VM_Guest*);
 };
 
 /*------------------------------------------------------------------*/
@@ -73,7 +73,7 @@ public:
 /*------------------------------------------------------------------*/
 
 class FunctionsForMegachip final : public FncSetInterface {
-    VM_Guest& vm;
+    VM_Guest* vm;
     
     struct SrcColor { float A{}, R{}, G{}, B{}; } src;
     struct DstColor { float A{}, R{}, G{}, B{}; } dst;
@@ -99,7 +99,7 @@ class FunctionsForMegachip final : public FncSetInterface {
 
 public:
     void chooseBlend(std::size_t);
-    FunctionsForMegachip(VM_Guest&);
+    FunctionsForMegachip(VM_Guest*);
 };
 
 /*------------------------------------------------------------------*/
@@ -107,7 +107,7 @@ public:
 /*------------------------------------------------------------------*/
 
 class FunctionsForModernXO final : public FncSetInterface {
-    VM_Guest& vm;
+    VM_Guest* vm;
 
     void drawByte(std::size_t, std::size_t, std::size_t, std::size_t, std::size_t, std::size_t);
     std::size_t  bitBloat(std::size_t);
@@ -121,7 +121,7 @@ class FunctionsForModernXO final : public FncSetInterface {
     void drawColors(std::size_t, std::size_t, std::size_t, std::size_t) override {};
 
 public:
-    FunctionsForModernXO(VM_Guest&);
+    FunctionsForModernXO(VM_Guest*);
 };
 
 /*------------------------------------------------------------------*/
@@ -129,7 +129,7 @@ public:
 /*------------------------------------------------------------------*/
 
 class FunctionsForLegacySC final : public FncSetInterface {
-    VM_Guest& vm;
+    VM_Guest* vm;
 
     void drawByte(std::size_t, std::size_t, std::size_t, std::size_t, std::size_t, std::size_t);
     void drawShort(std::size_t, std::size_t, std::size_t, std::size_t, std::size_t, std::size_t);
@@ -143,7 +143,7 @@ class FunctionsForLegacySC final : public FncSetInterface {
     void drawColors(std::size_t, std::size_t, std::size_t, std::size_t) override;
 
 public:
-    FunctionsForLegacySC(VM_Guest& ref);
+    FunctionsForLegacySC(VM_Guest*);
 };
 
 /*------------------------------------------------------------------*/
@@ -151,7 +151,7 @@ public:
 /*------------------------------------------------------------------*/
 
 class FunctionsForClassic8 final : public FncSetInterface {
-    VM_Guest& vm;
+    VM_Guest* vm;
 
     void drawByte(std::size_t, std::size_t, std::size_t, std::size_t, std::size_t, std::size_t);
 
@@ -163,5 +163,5 @@ class FunctionsForClassic8 final : public FncSetInterface {
     void drawColors(std::size_t, std::size_t, std::size_t, std::size_t) override;
 
 public:
-    FunctionsForClassic8(VM_Guest& ref);
+    FunctionsForClassic8(VM_Guest*);
 };

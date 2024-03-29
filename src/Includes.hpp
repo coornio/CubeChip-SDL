@@ -32,9 +32,14 @@ constexpr R to(T&& t) {
 #include "Assistants/BasicHome.hpp"
 #include "Assistants/BasicLogger.hpp"
 #include "Assistants/BasicInput.hpp"
-
 #include "Assistants/FrameLimiter.hpp"
-#include "Assistants/Well512.hpp"
+
+#include "HostClass/HomeDirManager.hpp"
+#include "HostClass/BasicVideoSpec.hpp"
+#include "HostClass/BasicAudioSpec.hpp"
+
+#include "HostClass/Host.hpp"
+#include "GuestClass/Guest.hpp"
 
 #pragma warning(push)
 #pragma warning(disable : 26819) // C fallthrough warning disabled

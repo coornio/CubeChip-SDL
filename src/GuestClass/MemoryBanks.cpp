@@ -7,7 +7,7 @@
 #include "Guest.hpp"
 #include "MemoryBanks.hpp"
 
-MemoryBanks::MemoryBanks(VM_Guest& parent)
+MemoryBanks::MemoryBanks(VM_Guest* parent)
     : vm(parent)
 {}
 
@@ -33,16 +33,16 @@ void MemoryBanks::changeViewportMask(const BrushType type) {
 }
 
 void MemoryBanks::modifyViewport(const BrushType type) {
-    vm.State.push_display = true;
+    vm->State.push_display = true;
     changeViewportMask(type);
 
-    for (auto H{ 0 }; H < vm.Plane.H; ++H)
-    for (auto X{ 0 }; X < vm.Plane.X; ++X)
-        applyViewportMask(display[H][X], vm.Plane.mask);
+    for (auto H{ 0 }; H < vm->Plane.H; ++H)
+    for (auto X{ 0 }; X < vm->Plane.X; ++X)
+        applyViewportMask(display[H][X], vm->Plane.mask);
 }
 
 void MemoryBanks::flushBuffers(const bool firstFlush) {
-    vm.State.push_display = true;
+    vm->State.push_display = true;
 
     if (firstFlush) palette.fill(0);
     else display = bufColorMC;
@@ -54,17 +54,17 @@ void MemoryBanks::flushBuffers(const bool firstFlush) {
 void MemoryBanks::loadPalette(std::size_t index, const std::size_t count) {
     for (auto idx{ 0 }; idx < count; index += 4) {
         palette[++idx] =
-            vm.mrw(index + 0) << 24 |
-            vm.mrw(index + 1) << 16 |
-            vm.mrw(index + 2) <<  8 |
-            vm.mrw(index + 3);
+            vm->mrw(index + 0) << 24 |
+            vm->mrw(index + 1) << 16 |
+            vm->mrw(index + 2) <<  8 |
+            vm->mrw(index + 3);
     }
 }
 
 void MemoryBanks::clearPages(std::size_t H) {
-    vm.State.push_display = true;
+    vm->State.push_display = true;
 
-    while (H++ < vm.Plane.H)
-        for (auto X{ 0 }; X < vm.Plane.X; ++X)
+    while (H++ < vm->Plane.H)
+        for (auto X{ 0 }; X < vm->Plane.X; ++X)
             display[H][X] = 0;
 }

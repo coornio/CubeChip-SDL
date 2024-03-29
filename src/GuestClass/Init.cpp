@@ -9,12 +9,18 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "../Assistants/BasicLogger.hpp"
+using namespace blogger;
+
+#include "../HostClass/BasicVideoSpec.hpp"
+#include "../HostClass/HomeDirManager.hpp"
+
 #include "Guest.hpp"
 #include "FileTypes.hpp"
-
-#include "../Assistants/BasicLogger.hpp"
-
-using namespace blogger;
+#include "HexInput.hpp"
+#include "ProgramControl.hpp"
+#include "MemoryBanks.hpp"
+#include "DisplayColors.hpp"
 
 bool VM_Guest::setupMachine() {
     if (!romTypeCheck()) {
@@ -33,13 +39,13 @@ bool VM_Guest::romTypeCheck() {
     * This place requires a database check, only after which would
     * we fall back to deriving the platform specifics via extension
     */
-    switch (File.hash) {
+    switch (File->hash) {
 
         case (FileTypes::c2x):
             if (!romSizeCheck(4'096, 0x300))
                 return false;
-            Program.init(0x300, 15);
-            Program.setFncSet(&SetClassic8);
+            Program->init(0x300, 15);
+            Program->setFncSet(&SetClassic8);
             State.chip8X_rom   = true;
             State.hires_2paged = true;
             break;
@@ -47,8 +53,8 @@ bool VM_Guest::romTypeCheck() {
         case (FileTypes::c4x):
             if (!romSizeCheck(4'096, 0x300))
                 return false;
-            Program.init(0x300, 15);
-            Program.setFncSet(&SetClassic8);
+            Program->init(0x300, 15);
+            Program->setFncSet(&SetClassic8);
             State.chip8X_rom   = true;
             State.hires_2paged = true;
             State.hires_4paged = true;
@@ -57,24 +63,24 @@ bool VM_Guest::romTypeCheck() {
         case (FileTypes::c8x):
             if (!romSizeCheck(4'096, 0x300))
                 return false;
-            Program.init(0x300, 15);
-            Program.setFncSet(&SetClassic8);
+            Program->init(0x300, 15);
+            Program->setFncSet(&SetClassic8);
             State.chip8X_rom = true;
             break;
 
         case (FileTypes::c8e):
             if (!romSizeCheck(4'096, 0x200))
                 return false;
-            Program.init(0x200, 11);
-            Program.setFncSet(&SetClassic8);
+            Program->init(0x200, 11);
+            Program->setFncSet(&SetClassic8);
             State.chip8E_rom = true;
             break;
 
         case (FileTypes::c2h):
             if (!romSizeCheck(4'096, 0x260))
                 return false;
-            Program.init(0x260, 15);
-            Program.setFncSet(&SetClassic8);
+            Program->init(0x260, 15);
+            Program->setFncSet(&SetClassic8);
             State.chip_classic = true;
             State.hires_2paged = true;
             break;
@@ -82,8 +88,8 @@ bool VM_Guest::romTypeCheck() {
         case (FileTypes::c4h):
             if (!romSizeCheck(4'096, 0x244))
                 return false;
-            Program.init(0x244, 15);
-            Program.setFncSet(&SetClassic8);
+            Program->init(0x244, 15);
+            Program->setFncSet(&SetClassic8);
             State.chip_classic = true;
             State.hires_2paged = true;
             State.hires_4paged = true;
@@ -96,8 +102,8 @@ bool VM_Guest::romTypeCheck() {
                 blog.stdLogOut("Invalid TPD rom patch, aborting.");
                 return false;
             }
-            Program.init(0x2C0, 15);
-            Program.setFncSet(&SetClassic8);
+            Program->init(0x2C0, 15);
+            Program->setFncSet(&SetClassic8);
             State.chip_classic = true;
             State.hires_2paged = true;
             Quirk.idxRegNoInc  = true;
@@ -107,32 +113,32 @@ bool VM_Guest::romTypeCheck() {
         case (FileTypes::ch8):
             if (!romSizeCheck(4'096, 0x200))
                 return false;
-            Program.init(0x200, 11);
-            Program.setFncSet(&SetClassic8);
+            Program->init(0x200, 11);
+            Program->setFncSet(&SetClassic8);
             State.chip_classic = true;
             break;
 
         case (FileTypes::sc8):
             if (!romSizeCheck(4'096, 0x200))
                 return false;
-            Program.init(0x200, 30);
-            Program.setFncSet(&SetClassic8);
+            Program->init(0x200, 30);
+            Program->setFncSet(&SetClassic8);
             State.chip_classic = true;
             break;
 
         case (FileTypes::gc8):
             if (!romSizeCheck(16'777'216, 0x200))
                 return false;
-            Program.init(0x200, 10'000);
-            Program.setFncSet(&SetGigachip);
+            Program->init(0x200, 10'000);
+            Program->setFncSet(&SetGigachip);
             State.gigachip_rom = true;
             break;
 
         case (FileTypes::mc8):
             if (!romSizeCheck(16'777'216, 0x200))
                 return false;
-            Program.init(0x200, 3'000);
-            Program.setFncSet(&SetMegachip);
+            Program->init(0x200, 3'000);
+            Program->setFncSet(&SetMegachip);
             State.megachip_rom = true;
             break;
 
@@ -140,8 +146,8 @@ bool VM_Guest::romTypeCheck() {
         case (FileTypes::hw8):
             if (!romSizeCheck(65'536, 0x200))
                 return false;
-            Program.init(0x200, 200'000);
-            Program.setFncSet(&SetModernXO);
+            Program->init(0x200, 200'000);
+            Program->setFncSet(&SetModernXO);
             State.xochip_color = true;
             Quirk.wrapSprite   = true;
             break;
@@ -149,8 +155,8 @@ bool VM_Guest::romTypeCheck() {
         default:
             if (!romSizeCheck(4'096, 0x200))
                 return false;
-            Program.init(0x200, 2'800'000);
-            Program.setFncSet(&SetClassic8);
+            Program->init(0x200, 2'800'000);
+            Program->setFncSet(&SetClassic8);
             State.chip_classic = true;
             blog.stdLogOut("Unknown rom type, default parameters apply.");
     }
@@ -158,35 +164,35 @@ bool VM_Guest::romTypeCheck() {
 }
 
 bool VM_Guest::romSizeCheck(const std::size_t size, const std::size_t offset) {
-    if (File.size + offset > size) {
+    if (File->size + offset > size) {
         blog.stdLogOut("ROM exceeds expected platform-specified size, aborting.");
         return false;
     }
 
-    Program.limiter = size - 1; // set program memory limit
-    Mem.ram.resize(size);       // resize the memory vector
+    Program->limiter = size - 1; // set program memory limit
+    Mem->ram.resize(size);       // resize the memory vector
 
-    std::basic_ifstream<char> ifs(File.path, std::ios::binary);
-    return static_cast<bool>(ifs.read(reinterpret_cast<char*>(&Mem.ram[offset]), File.size));
+    std::basic_ifstream<char> ifs(File->path, std::ios::binary);
+    return static_cast<bool>(ifs.read(reinterpret_cast<char*>(&Mem->ram[offset]), File->size));
 }
 
 void VM_Guest::initPlatform() {
 
     // XXX - apply custom rom settings here
     // 
-    //Color.bit[0] = 0xFF000000;
-    //Color.bit[1] = 0xFF333333;
-    //Color.bit[2] = 0xFF555555;
-    //Color.bit[3] = 0xFFFFFFFF;
+    //Color->bit[0] = 0xFF000000;
+    //Color->bit[1] = 0xFF333333;
+    //Color->bit[2] = 0xFF555555;
+    //Color->bit[3] = 0xFFFFFFFF;
     //Quirk.shiftVX = true;
     //Quirk.idxRegNoInc = true;
     //State.schip_legacy = true;
-    //Audio.setVolume(0.8f);
-    Program.setSpeed(0);
+    //Audio->setVolume(0.8f);
+    Program->setSpeed(0);
     //Quirk.waitScroll = true;
     //Quirk.waitVblank = true;
     //Quirk.wrapSprite = true;
-    Input.reset();
+    Input->reset();
 
     if (State.hires_2paged || State.hires_4paged) {
         State.schip_legacy = false; // incompatible together
@@ -200,22 +206,22 @@ void VM_Guest::initPlatform() {
         Quirk.accuCycles = true;
     }
     if (State.schip_legacy) {
-        Program.setFncSet(&SetLegacySC);
-        Program.framerate = 64.0; // match HP48 framerate
+        Program->setFncSet(&SetLegacySC);
+        Program->framerate = 64.0; // match HP48 framerate
         Quirk.shiftVX     = true;
         Quirk.jmpRegX     = true;
         Quirk.idxRegNoInc = true;
     }
     if (State.chip8X_rom) {
-        Color.cycleBackground();
+        Color->cycleBackground();
 
         if (!State.schip_legacy)
-            Mem.bufColor8x[0][0] = Color.getFore8X(2);
+            Mem->bufColor8x[0][0] = Color->getFore8X(2);
         else {
-            Mem.bufColor8x[0][0] = 
-            Mem.bufColor8x[0][1] = 
-            Mem.bufColor8x[4][0] = 
-            Mem.bufColor8x[4][1] = Color.getFore8X(2);
+            Mem->bufColor8x[0][0] = 
+            Mem->bufColor8x[0][1] = 
+            Mem->bufColor8x[4][0] = 
+            Mem->bufColor8x[4][1] = Color->getFore8X(2);
         }
     }
 
@@ -229,26 +235,26 @@ void VM_Guest::setupDisplay(const std::size_t mode, const bool forced) {
 
     Plane.W = wArr[State.schip_legacy ? 0 : mode - 1]; Plane.Wb = Plane.W - 1;
     Plane.H = hArr[State.schip_legacy ? 0 : mode - 1]; Plane.Hb = Plane.H - 1;
-    Plane.X = Plane.W >> 3; Program.screenMode = mode; Plane.Xb = Plane.X - 1;
+    Plane.X = Plane.W >> 3; Program->screenMode = mode; Plane.Xb = Plane.X - 1;
 
-    if (forced) Mem.modifyViewport(BrushType::CLR);
+    if (forced) Mem->modifyViewport(BrushType::CLR);
 
-    Video.createTexture(Plane.W, Plane.H);
-    Video.setTextureBlend(SDL_BLENDMODE_BLEND);
-    Video.setAspectRatio(State.mega_enabled ? 1.25f : 2.00f);
-    Video.resizeWindow();
+    Video->createTexture(Plane.W, Plane.H);
+    Video->setTextureBlend(SDL_BLENDMODE_BLEND);
+    Video->setAspectRatio(State.mega_enabled ? 1.25f : 2.00f);
+    Video->resizeWindow();
 
     State.push_display = true;
 
     if (State.chip8X_rom || State.schip_legacy) {
-        const bool lores{ Program.screenMode == Resolution::LO };
+        const bool lores{ Program->screenMode == Resolution::LO };
         if (forced || Quirk.waitVblank ^ lores) {
-            Program.ipf -= Program.boost *= -1;
+            Program->ipf -= Program->boost *= -1;
             Quirk.waitVblank = lores;
         }
     }
     else if (forced && Quirk.waitVblank) {
-        Program.ipf -= Program.boost *= -1;
+        Program->ipf -= Program->boost *= -1;
     }
         
 };
@@ -314,7 +320,7 @@ void VM_Guest::loadFontData() {
     std::copy(
         FONT_DATA.begin(),
         FONT_DATA.end() - (State.schip_legacy ? 60 : 0),
-        Mem.ram.begin()
+        Mem->ram.begin()
     );
 
     if (!State.megachip_rom) return;
@@ -323,16 +329,16 @@ void VM_Guest::loadFontData() {
     std::copy(
         MEGA_FONT_DATA.begin(),
         MEGA_FONT_DATA.end(),
-        Mem.ram.begin() + 80
+        Mem->ram.begin() + 80
     );
 }
 
 void VM_Guest::flushDisplay() {
-    auto*& pixels{ Video.pixels };
-    Video.lockTexture();
+    auto*& pixels{ Video->pixels };
+    Video->lockTexture();
 
     if (State.mega_enabled) {
-        for (auto& row : Mem.display) {
+        for (auto& row : Mem->display) {
             for (auto& col : row) {
                 *pixels++ = col;
             }
@@ -342,8 +348,8 @@ void VM_Guest::flushDisplay() {
         for (auto H{ 0 }; H < Plane.H; ++H) {
             for (auto X{ 0 }; X < Plane.X; ++X) {
                 for (auto B{ 28 }; B >= 0; B -= 4) {
-                    const auto bit{ Mem.display[H][X] >> B & 0xF };
-                    *pixels++ = Color.bit[bit];
+                    const auto bit{ Mem->display[H][X] >> B & 0xF };
+                    *pixels++ = Color->bit[bit];
                 }
             }
         }
@@ -352,10 +358,10 @@ void VM_Guest::flushDisplay() {
         const auto mask{ State.chip8X_hires ? 0xFF : 0xFC };
         for (auto H{ 0 }; H < Plane.H; ++H) {
             for (auto X{ 0 }; X < Plane.X; ++X) {
-                const auto color{ Mem.bufColor8x[H & mask][X] };
+                const auto color{ Mem->bufColor8x[H & mask][X] };
                 for (auto B{ 7 }; B >= 0; --B) {
-                    const auto bit{ Mem.display[H][X] >> B & 0x1 };
-                    *pixels++ = bit ? color : Color.bit[0];
+                    const auto bit{ Mem->display[H][X] >> B & 0x1 };
+                    *pixels++ = bit ? color : Color->bit[0];
                 }
             }
         }
@@ -364,11 +370,11 @@ void VM_Guest::flushDisplay() {
         for (auto H{ 0 }; H < Plane.H; ++H) {
             for (auto X{ 0 }; X < Plane.X; ++X) {
                 for (auto B{ 7 }; B >= 0; --B) {
-                    const auto bit{ (Mem.display[H][X] >> B) & 0x1 };
-                    *pixels++ = Color.bit[bit];
+                    const auto bit{ (Mem->display[H][X] >> B) & 0x1 };
+                    *pixels++ = Color->bit[bit];
                 }
             }
         }
     }
-    Video.unlockTexture();
+    Video->unlockTexture();
 }

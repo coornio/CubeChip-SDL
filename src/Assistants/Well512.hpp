@@ -24,7 +24,7 @@ public:
 			element = static_cast<unsigned int>(seed >>= 1);
 	}
 
-	result_type operator()() {
+	result_type get() {
 		unsigned int a{}, b{}, c{}, d{};
 
 		a = state[index];
@@ -38,5 +38,9 @@ public:
 		a = state[index];
 		state[index] = a ^ b ^ d ^ (a << 2u) ^ (b << 18u) ^ (c << 28u);
 		return state[index];
+	}
+
+	result_type operator()() {
+		return get();
 	}
 };

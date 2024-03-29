@@ -9,15 +9,15 @@
 
 #include "../HostClass/BasicAudioSpec.hpp"
 
+#include "ProgramControl.hpp"
 #include "SoundCores.hpp"
 #include "Guest.hpp"
-
 
 /*------------------------------------------------------------------*/
 /*  class  SoundCores                                               */
 /*------------------------------------------------------------------*/
 
-SoundCores::SoundCores(VM_Guest& parent, BasicAudioSpec& bas)
+SoundCores::SoundCores(VM_Guest* parent, BasicAudioSpec* bas)
     : vm(parent)
     , BAS(bas)
 {}
@@ -30,7 +30,7 @@ void SoundCores::renderAudio(int16_t* samples, int32_t frames) {
         return;
     }
 
-    if (!vm.Program.Timer.sound) {
+    if (!vm->Program->Timer.sound) {
         wavePhase = 0.0f;
         while (frames--)
             *samples++ = 0;
@@ -51,25 +51,25 @@ void SoundCores::renderAudio(int16_t* samples, int32_t frames) {
 /*  class  SoundCores::Classic                                      */
 /*------------------------------------------------------------------*/
 
-SoundCores::Classic::Classic(SoundCores& parent, BasicAudioSpec& bas)
+SoundCores::Classic::Classic(SoundCores* parent, BasicAudioSpec* bas)
     : Sound(parent)
     , BAS(bas)
 {}
 
 void SoundCores::Classic::setTone(const std::size_t sp, const std::size_t pc) {
     // sets a unique tone for each sound call
-    tone.store((160.0f + 8.0f * ((pc >> 1) + sp + 1 & 0x3E)) / BAS.outFrequency);
+    tone.store((160.0f + 8.0f * ((pc >> 1) + sp + 1 & 0x3E)) / BAS->outFrequency);
 }
 
 void SoundCores::Classic::setTone(const std::size_t vx) {
     // sets the tone for each 8X sound call
-    tone.store((160.0f + (vx >> 3 << 4)) / BAS.outFrequency);
+    tone.store((160.0f + (vx >> 3 << 4)) / BAS->outFrequency);
 }
 
 void SoundCores::Classic::render(int16_t* samples, int32_t frames) {
     while (frames--) {
-        *samples++ = Sound.wavePhase > 0.5f ? BAS.amplitude : -BAS.amplitude;
-        Sound.wavePhase = std::fmod(Sound.wavePhase + tone.load(), 1.0f);
+        *samples++ = Sound->wavePhase > 0.5f ? BAS->amplitude : -BAS->amplitude;
+        Sound->wavePhase = std::fmod(Sound->wavePhase + tone.load(), 1.0f);
     }
 }
 
@@ -77,11 +77,11 @@ void SoundCores::Classic::render(int16_t* samples, int32_t frames) {
 /*  class  SoundCores::XOchip                                       */
 /*------------------------------------------------------------------*/
 
-SoundCores::XOchip::XOchip(SoundCores& parent, BasicAudioSpec& bas, VM_Guest& guest)
+SoundCores::XOchip::XOchip(SoundCores* parent, BasicAudioSpec* bas, VM_Guest* guest)
     : Sound(parent)
     , BAS(bas)
     , vm(guest)
-    , rate(4000.0f / 128.0f / BAS.outFrequency)
+    , rate(4000.0f / 128.0f / BAS->outFrequency)
     , tone(rate)
 {}
 
@@ -96,7 +96,7 @@ void SoundCores::XOchip::setPitch(const std::size_t pitch) {
 
 void SoundCores::XOchip::loadPattern(std::size_t idx) {
     for (auto& byte : pattern) {
-        byte.store(vm.mrw(idx++));
+        byte.store(vm->mrw(idx++));
 
         if (!enabled && byte > 0x0 && byte < 0xFF)
             enabled = true;
@@ -105,10 +105,10 @@ void SoundCores::XOchip::loadPattern(std::size_t idx) {
 
 void SoundCores::XOchip::render(int16_t* samples, int32_t frames) {
     while (frames--) {
-        const auto step{ static_cast<int32_t>(std::clamp(Sound.wavePhase * 128.0f, 0.0f, 127.0f)) };
+        const auto step{ static_cast<int32_t>(std::clamp(Sound->wavePhase * 128.0f, 0.0f, 127.0f)) };
         const auto mask{ 1 << (7 - (step & 7)) };
-        *samples++ = pattern[step >> 3].load() & mask ? BAS.amplitude : -BAS.amplitude;
-        Sound.wavePhase = std::fmod(Sound.wavePhase + tone.load(), 1.0f);
+        *samples++ = pattern[step >> 3].load() & mask ? BAS->amplitude : -BAS->amplitude;
+        Sound->wavePhase = std::fmod(Sound->wavePhase + tone.load(), 1.0f);
     }
 }
 
@@ -116,7 +116,7 @@ void SoundCores::XOchip::render(int16_t* samples, int32_t frames) {
 /*  class  SoundCores::MegaChip                                     */
 /*------------------------------------------------------------------*/
 
-SoundCores::MegaChip::MegaChip(SoundCores& parent, BasicAudioSpec& bas, VM_Guest& guest)
+SoundCores::MegaChip::MegaChip(SoundCores* parent, BasicAudioSpec* bas, VM_Guest* guest)
     : Sound(parent)
     , BAS(bas)
     , vm(guest)
@@ -147,14 +147,14 @@ void SoundCores::MegaChip::enable(
     looping = loop;
 
     start.store(offset);
-    step.store(freq * 1.0 / BAS.outFrequency);
+    step.store(freq * 1.0 / BAS->outFrequency);
     length.store(len);
     pos.store(0.0);
 }
 
 void SoundCores::MegaChip::render(int16_t* samples, int32_t frames) {
     while (frames--) {
-        auto   _curidx{ vm.mrw(start.load() + static_cast<uint32_t>(pos.load()))};
+        auto   _curidx{ vm->mrw(start.load() + static_cast<uint32_t>(pos.load()))};
         double _offset{ pos.load() + step.load()};
 
         if (_offset >= length.load()) {
@@ -168,6 +168,6 @@ void SoundCores::MegaChip::render(int16_t* samples, int32_t frames) {
             }
         }
         pos.store(_offset);
-        *samples++ = static_cast<int16_t>((_curidx - 128) * BAS.volume);
+        *samples++ = static_cast<int16_t>((_curidx - 128) * BAS->volume);
     }
 }

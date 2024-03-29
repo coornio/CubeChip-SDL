@@ -8,23 +8,25 @@
 #include <fstream>
 
 #include "../Assistants/BasicLogger.hpp"
+using namespace blogger;
 
+#include "../HostClass/HomeDirManager.hpp"
+
+#include "ProgramControl.hpp"
 #include "Registers.hpp"
 #include "Guest.hpp"
 
-using namespace blogger;
-
-Registers::Registers(VM_Guest& parent)
+Registers::Registers(VM_Guest* parent)
 	: vm(parent)
 {}
 
 void Registers::routineCall(const uint32_t addr) {
-	stack[SP++ & 0xF] = vm.Program.counter;
-	vm.Program.counter = addr;
+	stack[SP++ & 0xF] = vm->Program->counter;
+	vm->Program->counter = addr;
 }
 
 void Registers::routineReturn() {
-	vm.Program.counter = stack[--SP & 0xF];
+	vm->Program->counter = stack[--SP & 0xF];
 }
 
 void Registers::protectPages() {
@@ -33,7 +35,7 @@ void Registers::protectPages() {
 
 bool Registers::readPermRegs(const std::size_t X) {
 	static const std::filesystem::path sha1{
-		vm.File.permRegs / vm.File.sha1
+		vm->File->permRegs / vm->File->sha1
 	};
 
 	if (std::filesystem::exists(sha1)) {
@@ -66,7 +68,7 @@ bool Registers::readPermRegs(const std::size_t X) {
 
 bool Registers::writePermRegs(const std::size_t X) {
 	static const std::filesystem::path sha1{
-		vm.File.permRegs / vm.File.sha1
+		vm->File->permRegs / vm->File->sha1
 	};
 
 	if (std::filesystem::exists(sha1)) {
