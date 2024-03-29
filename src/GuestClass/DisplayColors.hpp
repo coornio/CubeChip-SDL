@@ -18,11 +18,11 @@ class DisplayColors final {
         0xFFE06090, 0xFFE0F090, 0xFFB050F0, 0xFF704020,
     };
     static constexpr std::array<uint32_t, 8> ForeColors{ // 8X foreground
-        0xFF000000, 0xFFFF0000, 0xFF0000FF, 0xFFFF00FF,
-        0xFF00FF00, 0xFFFFFF00, 0xFF00FFFF, 0xFFFFFFFF,
+        0xFF111111, 0xFFEE1111, 0xFF1111EE, 0xFFEE11EE,
+        0xFF11EE11, 0xFFEEEE11, 0xFF11EEEE, 0xFFEEEEEE,
     };
     static constexpr std::array<uint32_t, 4> BackColors{ // 8X background
-        0xFF000060, 0xFF000000, 0xFF002000, 0xFF200000,
+        0xFF111133, 0xFF111111, 0xFF113311, 0xFF331111,
     };
 
 public:
