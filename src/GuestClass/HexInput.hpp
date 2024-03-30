@@ -7,6 +7,7 @@
 #pragma once
 
 #include <SDL_scancode.h>
+#include <vector>
 
 class HexInput final {
     struct KeyInfo {
@@ -31,7 +32,9 @@ public:
     void refresh();
 
     void setup(const std::vector<KeyInfo>& bindings);
-    bool keyPressed(Uint8& vregister);
+
+    template <typename T>
+    bool keyPressed(T& vregister);
     bool keyPressed(std::size_t index, std::size_t offset) const;
     Uint32 currKeys(std::size_t index) const;
 };

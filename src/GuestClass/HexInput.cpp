@@ -41,12 +41,15 @@ void HexInput::setup(const std::vector<KeyInfo>& bindings) {
     keysPrev = keysCurr = keysLock = 0u;
 }
 
-bool HexInput::keyPressed(Uint8& vregister) {
+template bool HexInput::keyPressed<Uint8>(Uint8&);
+
+template <typename T>
+bool HexInput::keyPressed(T& ret) {
     if (!currentBinds.size()) return false;
 
     const auto mask{ keysCurr & ~keysPrev & ~keysLock };
     if (mask) {
-        vregister = static_cast<Uint8>
+        ret = static_cast<T>
             (std::countr_zero(mask & ~(mask - 1u)));
         keysLock |= mask;
         return true;
