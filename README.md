@@ -32,9 +32,10 @@ Some extension combinations aren't possible, see footnotes for now. Later I will
 
 ## Planned Features
 
-- [ ] Implement SHA1 encoding to compare roms and later hook up with a database for application of settings.
-- [ ] Implement nlohmann's JSON class so that I can handle settings files and databases.
+- [x] Implement SHA1 encoding to hash files for identifying different roms.
+- [ ] Utilize nlohmann's JSON class so that I can handle settings files and databases.
+- [ ] Utilize the SHA1 hash and JSON to hook up with a rom database.
 - [ ] Implement ImGUI to get a rudimentary and reactive interface going instead of the current single render window.
-- [ ] Refactor the main loop logic so the SDL event loop isn't running only when a valid rom is present.
+- [x] Refactor the main loop logic so the SDL event loop isn't running only when a valid rom is present.
 - [ ] Refactor the guest class and separate the instruction tree into different platform variants for cleaner, more streamlined code with less branching.
 - [ ] Far future: refactor the class system to move away from the monolithic class system in favor of a component system as described in [this article](http://gameprogrammingpatterns.com/component.html).
