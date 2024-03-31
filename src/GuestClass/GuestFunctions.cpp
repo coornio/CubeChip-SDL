@@ -25,9 +25,18 @@ VM_Guest::VM_Guest(
 	BasicVideoSpec* bvs_ptr,
 	BasicAudioSpec* bas_ptr
 )
-	: File{ hdm_ptr }
-	, Video{ bvs_ptr }
-	, Audio{ bas_ptr }
+	: File     { hdm_ptr }
+	, Video    { bvs_ptr }
+	, Audio    { bas_ptr }
+	/*
+	, uInput   { std::make_unique<HexInput>() }
+	, uWrand   { std::make_unique<Well512>() }
+	, uMem     { std::make_unique<MemoryBanks>(this) }
+	, uProgram { std::make_unique<ProgramControl>(this, currFncSet) }
+	, uSound   { std::make_unique<SoundCores>(this, Audio) }
+	, uReg     { std::make_unique<Registers>(this) }
+	, uColor   { std::make_unique<DisplayColors>() }
+	*/
 {
 	uInput   = std::make_unique<HexInput>();
 	uWrand   = std::make_unique<Well512>();

@@ -188,5 +188,8 @@
     <ClInclude Include="src\GuestClass\Enums.hpp">
       <Filter>Header Files\VM Guest</Filter>
     </ClInclude>
+    <ClInclude Include="src\Assistants\Vec2D.hpp">
+      <Filter>Header Files\Assistants</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
