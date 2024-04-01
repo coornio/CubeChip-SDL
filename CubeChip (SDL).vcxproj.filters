@@ -40,6 +40,9 @@
     <Filter Include="Header Files\_nlohmann">
       <UniqueIdentifier>{55d4d668-6f28-4b99-9a19-8f349a95197e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\PlatformCores">
+      <UniqueIdentifier>{363dd659-8f39-4b20-b452-3626fdb1bc8b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\CubeChip.cpp">
@@ -113,6 +116,9 @@
     </ClCompile>
     <ClCompile Include="src\Assistants\SHA1.cpp">
       <Filter>Source Files\Assistants</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GuestClass\PlatformCores\Chip8.cpp">
+      <Filter>Source Files\PlatformCores</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -143,6 +143,9 @@ public:
     void cycle();
     void instructionLoop();
 
+    template <std::size_t variant>
+    void instructionDecoder();
+
     uint8_t& mrw(std::size_t);
     uint8_t& VX();
     uint16_t NNNN();

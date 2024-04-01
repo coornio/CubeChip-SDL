@@ -34,6 +34,7 @@
     <ClCompile Include="src\GuestClass\InstructionSets\_Megachip.cpp" />
     <ClCompile Include="src\GuestClass\InstructionSets\_ModernXO.cpp" />
     <ClCompile Include="src\GuestClass\MemoryBanks.cpp" />
+    <ClCompile Include="src\GuestClass\PlatformCores\Chip8.cpp" />
     <ClCompile Include="src\GuestClass\ProgramControl.cpp" />
     <ClCompile Include="src\GuestClass\SoundCores.cpp" />
     <ClCompile Include="src\GuestClass\GuestFunctions.cpp" />
