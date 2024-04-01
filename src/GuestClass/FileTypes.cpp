@@ -6,6 +6,19 @@
 
 #include "FileTypes.hpp"
 
+#pragma warning(push)
+#pragma warning(disable : 26819) // C fallthrough warning disabled
+#include "../_nlohmann/json.hpp"
+#pragma warning(pop)
+
+bool RomFileTypes::checkSize(
+    const std::size_t size,
+    const std::size_t offset,
+    const std::size_t limit
+) {
+    return size + offset <= limit;
+}
+
 bool RomFileTypes::validate(
     const std::size_t hash,
     const std::size_t size,

@@ -42,7 +42,7 @@ bool VM_Guest::romTypeCheck() {
     switch (File->hash) {
 
         case (FileTypes::c2x):
-            if (!romSizeCheck(4'096, 0x300))
+            if (!loadRomToRam(4'096, 0x300))
                 return false;
             Program->init(0x300, 15);
             Program->setFncSet(&SetClassic8);
@@ -51,7 +51,7 @@ bool VM_Guest::romTypeCheck() {
             break;
 
         case (FileTypes::c4x):
-            if (!romSizeCheck(4'096, 0x300))
+            if (!loadRomToRam(4'096, 0x300))
                 return false;
             Program->init(0x300, 15);
             Program->setFncSet(&SetClassic8);
@@ -61,7 +61,7 @@ bool VM_Guest::romTypeCheck() {
             break;
 
         case (FileTypes::c8x):
-            if (!romSizeCheck(4'096, 0x300))
+            if (!loadRomToRam(4'096, 0x300))
                 return false;
             Program->init(0x300, 15);
             Program->setFncSet(&SetClassic8);
@@ -69,7 +69,7 @@ bool VM_Guest::romTypeCheck() {
             break;
 
         case (FileTypes::c8e):
-            if (!romSizeCheck(4'096, 0x200))
+            if (!loadRomToRam(4'096, 0x200))
                 return false;
             Program->init(0x200, 11);
             Program->setFncSet(&SetClassic8);
@@ -77,7 +77,7 @@ bool VM_Guest::romTypeCheck() {
             break;
 
         case (FileTypes::c2h):
-            if (!romSizeCheck(4'096, 0x260))
+            if (!loadRomToRam(4'096, 0x260))
                 return false;
             Program->init(0x260, 15);
             Program->setFncSet(&SetClassic8);
@@ -86,7 +86,7 @@ bool VM_Guest::romTypeCheck() {
             break;
 
         case (FileTypes::c4h):
-            if (!romSizeCheck(4'096, 0x244))
+            if (!loadRomToRam(4'096, 0x244))
                 return false;
             Program->init(0x244, 15);
             Program->setFncSet(&SetClassic8);
@@ -96,7 +96,7 @@ bool VM_Guest::romTypeCheck() {
             break;
 
         case (FileTypes::c8h):
-            if (!romSizeCheck(4'096, 0x200))
+            if (!loadRomToRam(4'096, 0x200))
                 return false;
             if (mrw(0x200) != 0x12 || mrw(0x201) != 0x60) {
                 blog.stdLogOut("Invalid TPD rom patch, aborting.");
@@ -111,7 +111,7 @@ bool VM_Guest::romTypeCheck() {
             break;
 
         case (FileTypes::ch8):
-            if (!romSizeCheck(4'096, 0x200))
+            if (!loadRomToRam(4'096, 0x200))
                 return false;
             Program->init(0x200, 11);
             Program->setFncSet(&SetClassic8);
@@ -119,7 +119,7 @@ bool VM_Guest::romTypeCheck() {
             break;
 
         case (FileTypes::sc8):
-            if (!romSizeCheck(4'096, 0x200))
+            if (!loadRomToRam(4'096, 0x200))
                 return false;
             Program->init(0x200, 30);
             Program->setFncSet(&SetClassic8);
@@ -127,7 +127,7 @@ bool VM_Guest::romTypeCheck() {
             break;
 
         case (FileTypes::gc8):
-            if (!romSizeCheck(16'777'216, 0x200))
+            if (!loadRomToRam(16'777'216, 0x200))
                 return false;
             Program->init(0x200, 10'000);
             Program->setFncSet(&SetGigachip);
@@ -135,7 +135,7 @@ bool VM_Guest::romTypeCheck() {
             break;
 
         case (FileTypes::mc8):
-            if (!romSizeCheck(16'777'216, 0x200))
+            if (!loadRomToRam(16'777'216, 0x200))
                 return false;
             Program->init(0x200, 3'000);
             Program->setFncSet(&SetMegachip);
@@ -144,7 +144,7 @@ bool VM_Guest::romTypeCheck() {
 
         case (FileTypes::xo8):
         case (FileTypes::hw8):
-            if (!romSizeCheck(65'536, 0x200))
+            if (!loadRomToRam(65'536, 0x200))
                 return false;
             Program->init(0x200, 200'000);
             Program->setFncSet(&SetModernXO);
@@ -153,7 +153,7 @@ bool VM_Guest::romTypeCheck() {
             break;
 
         default:
-            if (!romSizeCheck(4'096, 0x200))
+            if (!loadRomToRam(4'096, 0x200))
                 return false;
             Program->init(0x200, 2'800'000);
             Program->setFncSet(&SetClassic8);
@@ -163,12 +163,7 @@ bool VM_Guest::romTypeCheck() {
     return true;
 }
 
-bool VM_Guest::romSizeCheck(const std::size_t size, const std::size_t offset) {
-    if (File->size + offset > size) {
-        blog.stdLogOut("ROM exceeds expected platform-specified size, aborting.");
-        return false;
-    }
-
+bool VM_Guest::loadRomToRam(const std::size_t size, const std::size_t offset) {
     Program->limiter = size - 1; // set program memory limit
     Mem->ram.resize(size);       // resize the memory vector
 

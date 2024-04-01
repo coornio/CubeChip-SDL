@@ -133,7 +133,7 @@ public:
     // init functions
     bool setupMachine();
     bool romTypeCheck();
-    bool romSizeCheck(const std::size_t, const std::size_t);
+    bool loadRomToRam(const std::size_t, const std::size_t);
     void initPlatform();
     void loadFontData();
     void setupDisplay(const std::size_t, const bool = false);

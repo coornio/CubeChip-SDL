@@ -12,6 +12,8 @@ int32_t SDL_main(int32_t argc, char* argv[]) {
     std::unique_ptr<HomeDirManager> HDM;
     std::unique_ptr<BasicVideoSpec> BVS;
     std::unique_ptr<BasicAudioSpec> BAS;
+    std::unique_ptr<VM_Guest>       Guest;
+    std::string                     filedrop;
 
     try {
         HDM = std::make_unique<HomeDirManager>("CubeChip_SDL");
@@ -23,17 +25,13 @@ int32_t SDL_main(int32_t argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    VM_Host Host(HDM.get(), BVS.get(), BAS.get());
+    VM_Host      Host(HDM.get(), BVS.get(), BAS.get());
+    FrameLimiter Frame;
+    SDL_Event    Event;
 
     if (HDM->verifyFile(argc > 1 ? argv[1] : nullptr)) {
         Host.isReady(true);
     }
-
-    std::unique_ptr<VM_Guest> Guest;
-    std::string filedrop{};
-
-    FrameLimiter Frame;
-    SDL_Event    Event;
 
     {
     reset_all:

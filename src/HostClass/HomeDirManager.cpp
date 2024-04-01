@@ -4,6 +4,8 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include <fstream>
+
 #include "HomeDirManager.hpp"
 #include "../GuestClass/FileTypes.hpp"
 #include "../Assistants/BasicLogger.hpp"
@@ -52,6 +54,16 @@ bool HomeDirManager::verifyFile(const char* filepath) {
 
     if (!fs::exists(fspath) || !fs::is_regular_file(fspath)) {
         blog.errLogOut("Unable to use locate path: " + fspath.string());
+        return false;
+    }
+
+    std::ifstream fileStream(fspath);
+    if (!fileStream.is_open()) {
+        blog.errLogOut("Failed to open file: " + fspath.string());
+        return false;
+    }
+    if (!fileStream.good()) {
+        blog.errLogOut("File is not readable: " + fspath.string());
         return false;
     }
 

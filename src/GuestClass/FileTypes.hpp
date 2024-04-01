@@ -37,13 +37,11 @@ class RomFileTypes final {
     RomFileTypes() = delete;
     ~RomFileTypes() = delete;
 
-    static std::size_t checkSize(
+    static bool checkSize(
         const std::size_t size,
         const std::size_t offset,
         const std::size_t limit
-    ) {
-        return size + offset <= limit;
-    }
+    );
 
 public:
     static bool validate(
