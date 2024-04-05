@@ -8,6 +8,7 @@
 
 #include <cstddef>
 #include <vector>
+#include <algorithm>
 #include <stdexcept>
 
 template<typename T>
@@ -23,6 +24,38 @@ public:
         : mBegin(begin)
         , mLength(length)
     {}
+
+    void reset() {
+        std::fill(mBegin, mBegin + mLength, T());
+    }
+
+    void reset(const long long cols) {
+        if (cols == 0) return;
+        if (std::abs(cols) >= mLength) {
+            reset(); return;
+        }
+
+        const auto mEnd{ mBegin + mLength };
+
+        if (cols < 0)
+            std::fill(mEnd - std::abs(cols), mEnd, T());
+        else
+            std::fill(mBegin, mBegin + std::abs(cols), T());
+    }
+
+    void rotate(const long long cols) {
+        const auto offset{ std::abs(cols) % mLength };
+
+        if (!offset) return;
+
+        const auto mEnd{ mBegin + mLength };
+        const auto pos{ cols < 0
+            ? mBegin + offset
+            : mEnd - offset
+        };
+
+        std::rotate(mBegin, pos, mEnd);
+    }
 
     T& at(const std::size_t col) {
         if (col >= mLength) {
@@ -49,7 +82,7 @@ public:
     Vec2D(const std::size_t rows, const std::size_t cols)
         : mRows(rows)
         , mCols(cols)
-        , mData(rows * cols)
+        , mData(rows* cols)
     {
         if (!rows || !cols) {
             throw std::out_of_range("vector dimensions cannot be zero");
@@ -63,6 +96,39 @@ public:
         mRows = rows;
         mCols = cols;
         mData.resize(rows * cols);
+        mData.shrink_to_fit();
+    }
+
+    void reset() {
+        std::fill(mData.begin(), mData.end(), T());
+    }
+
+    void reset(const long long rows) {
+        if (rows == 0) return;
+        if (std::abs(rows) >= mRows) {
+            reset();
+            return;
+        }
+
+        const auto offset{ mRows * std::abs(rows) };
+
+        if (rows < 0)
+            std::fill(mData.end() - offset, mData.end(), T());
+        else
+            std::fill(mData.begin(), mData.begin() + offset, T());
+    }
+
+    void rotate(const long long rows) {
+        const auto offset{ mRows * (std::abs(rows) % mRows) };
+
+        if (!offset) return;
+
+        const auto pos{ rows < 0
+            ? mData.begin() + offset
+            : mData.end() - offset
+        };
+
+        std::rotate(mData.begin(), pos, mData.end());
     }
 
     std::size_t size() const { return mData.size(); }
@@ -115,5 +181,5 @@ public:
     };
 
     ProxyIterator begin() { return ProxyIterator(mData.begin(), mCols); }
-    ProxyIterator end()   { return ProxyIterator(mData.end(),   mCols); }
+    ProxyIterator end()   { return ProxyIterator(mData.end(), mCols); }
 };
