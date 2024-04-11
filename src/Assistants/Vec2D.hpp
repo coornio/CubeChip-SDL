@@ -38,81 +38,48 @@ public:
         std::fill(mBegin, mBegin + mLength, T());
     }
 
-    Vec2D<T>& wipeY(
-        const v2d::int_fast_t rows
-    ) {
-        if (std::abs(rows) >= mRows) {
-            wipeall();
-        }
-        else if (rows != 0) {
-            const auto offset{ mRows * std::abs(rows) };
-
-            if (rows < 0) {
-                std::fill(mData.end() - offset, mData.end(), T());
-            }
-            else {
-                std::fill(mData.begin(), mData.begin() + offset, T());
-            }
-        }
-        return *this;
-    }
-
-    Vec2D<T>& wipeX(
+    VecRowProxy<T>& wipe(
         const v2d::int_fast_t cols
     ) {
-        if (std::abs(cols) >= mCols) {
+        if (std::abs(cols) >= mLength) {
             wipeall();
         }
         else if (cols != 0) {
-            for (auto row : *this) {
-                row.wipe(cols);
+            const auto mEnd{ mBegin + mLength };
+
+            if (cols < 0) {
+                std::fill(mEnd - std::abs(cols), mEnd, T());
+            }
+            else {
+                std::fill(mBegin, mBegin + std::abs(cols), T());
             }
         }
         return *this;
     }
 
-    Vec2D<T>& rotateY(
-        const v2d::int_fast_t rows
+    VecRowProxy<T>& rotate(
+        const v2d::int_fast_t cols
     ) {
-        const auto offset{ mRows * (std::abs(rows) % mRows) };
+        const auto offset{ std::abs(cols) % mLength };
         if (offset) {
-            const auto pos{ rows < 0
-                ? mData.begin() + offset
-                : mData.end()   - offset
+            const auto mEnd{ mBegin + mLength };
+            const auto pos{ cols < 0
+                ? mBegin + offset
+                : mEnd   - offset
             };
-            std::rotate(mData.begin(), pos, mData.end());
+
+            std::rotate(mBegin, pos, mEnd);
         }
         return *this;
     }
 
-    Vec2D<T>& rotateX(
+    VecRowProxy<T>& shift(
         const v2d::int_fast_t cols
     ) {
-        if (std::abs(cols) % mCols) {
-            for (auto row : *this) {
-                row.rotate(cols);
-            }
+        if (std::abs(cols) < mLength) {
+            rotate(cols);
         }
-        return *this;
-    }
-
-    Vec2D<T>& shiftY(
-        const v2d::int_fast_t rows
-    ) {
-        if (std::abs(rows) < mRows) {
-            rotateY(rows);
-        }
-        wipeY(rows);
-        return *this;
-    }
-
-    Vec2D<T>& shiftX(
-        const v2d::int_fast_t cols
-    ) {
-        if (std::abs(cols) < mCols) {
-            rotateX(cols);
-        }
-        wipeX(cols);
+        wipe(cols);
         return *this;
     }
 
@@ -186,7 +153,7 @@ public:
         std::fill(mData.begin(), mData.end(), T());
     }
 
-    Vec2D<T>& wipe(
+    Vec2D<T>& wipeY(
         const v2d::int_fast_t rows
     ) {
         if (std::abs(rows) >= mRows) {
@@ -205,27 +172,62 @@ public:
         return *this;
     }
 
-    Vec2D<T>& rotate(
+    Vec2D<T>& wipeX(
+        const v2d::int_fast_t cols
+    ) {
+        if (std::abs(cols) >= mCols) {
+            wipeall();
+        }
+        else if (cols != 0) {
+            for (auto row : *this) {
+                row.wipe(cols);
+            }
+        }
+        return *this;
+    }
+
+    Vec2D<T>& rotateY(
         const v2d::int_fast_t rows
     ) {
         const auto offset{ mRows * (std::abs(rows) % mRows) };
         if (offset) {
             const auto pos{ rows < 0
                 ? mData.begin() + offset
-                : mData.end()   - offset
+                : mData.end() - offset
             };
             std::rotate(mData.begin(), pos, mData.end());
         }
         return *this;
     }
 
-    Vec2D<T>& shift(
+    Vec2D<T>& rotateX(
+        const v2d::int_fast_t cols
+    ) {
+        if (std::abs(cols) % mCols) {
+            for (auto row : *this) {
+                row.rotate(cols);
+            }
+        }
+        return *this;
+    }
+
+    Vec2D<T>& shiftY(
         const v2d::int_fast_t rows
     ) {
         if (std::abs(rows) < mRows) {
-            rotate(rows);
+            rotateY(rows);
         }
-        wipe(rows);
+        wipeY(rows);
+        return *this;
+    }
+
+    Vec2D<T>& shiftX(
+        const v2d::int_fast_t cols
+    ) {
+        if (std::abs(cols) < mCols) {
+            rotateX(cols);
+        }
+        wipeX(cols);
         return *this;
     }
 
