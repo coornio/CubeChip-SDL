@@ -52,7 +52,7 @@
     <ClInclude Include="src\Assistants\FrameLimiter.hpp" />
     <ClInclude Include="src\Assistants\PathExceptionClass.hpp" />
     <ClInclude Include="src\Assistants\SHA1.hpp" />
-    <ClInclude Include="src\Assistants\Vec2D.hpp" />
+    <ClInclude Include="src\Assistants\Map2D.hpp" />
     <ClInclude Include="src\Assistants\Well512.hpp" />
     <ClInclude Include="src\GuestClass\DisplayColors.hpp" />
     <ClInclude Include="src\GuestClass\Enums.hpp" />
