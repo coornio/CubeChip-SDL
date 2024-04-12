@@ -23,112 +23,6 @@
     #endif
 #endif
 
-template<typename T>
-class MapRowProxy final {
-    T* const       mBegin;
-    const fast_int mLength;
-
-public:
-    explicit MapRowProxy(
-        T* const       begin,
-        const fast_int length
-    ) noexcept
-        : mBegin(begin)
-        , mLength(length)
-    {}
-
-    T* begin()       noexcept { return mBegin; }
-    T* begin() const noexcept { return mBegin; }
-    T* end()         noexcept { return mBegin + mLength; }
-    T* end()   const noexcept { return mBegin + mLength; }
-
-    MapRowProxy<T>& operator=(
-        const MapRowProxy<T>& other
-    ) {
-        if (this != &other && other.mLength == mLength) {
-            std::copy(other.begin(), other.end(), begin());
-        }
-        return *this;
-    }
-
-    MapRowProxy<T>& swap(
-        MapRowProxy<T>&& other
-    ) noexcept {
-        if (this != &other && mLength == other.mLength) {
-            for (auto it1{ begin() }, it2{ other.begin() }; it1 != end(); ++it1, ++it2) {
-                std::iter_swap(it1, it2);
-            }
-        }
-        return *this;
-    }
-
-    MapRowProxy<T>& wipeall() {
-        std::fill(begin(), end(), T());
-        return *this;
-    }
-
-    MapRowProxy<T>& wipe(
-        const fast_int cols
-    ) {
-        if (std::abs(cols) >= mLength) {
-            wipeall();
-        }
-        else if (cols != 0) {
-            if (cols < 0) {
-                std::fill(end() - std::abs(cols), end(), T());
-            }
-            else {
-                std::fill(begin(), begin() + std::abs(cols), T());
-            }
-        }
-        return *this;
-    }
-
-    MapRowProxy<T>& rotate(
-        const fast_int cols
-    ) {
-        const auto offset{ std::abs(cols) % mLength };
-        if (offset) {
-            const auto pos{ cols < 0
-                ? begin() + offset
-                : end()   - offset
-            };
-
-            std::rotate(begin(), pos, end());
-        }
-        return *this;
-    }
-
-    MapRowProxy<T>& shift(
-        const fast_int cols
-    ) {
-        if (std::abs(cols) < mLength) {
-            rotate(cols);
-        }
-        wipe(cols);
-        return *this;
-    }
-
-    MapRowProxy<T>& reverse() {
-        std::reverse(begin(), end());
-        return *this;
-    }
-
-    T& at(
-        const fast_int col
-    ) {
-        if (std::abs(col) >= mLength) {
-            throw std::out_of_range("column index out of range");
-        }
-        return *(begin() + col);
-    }
-
-    T& operator[](
-        const fast_int col
-    ) {
-        return *(begin() + col);
-    }
-};
 
 template<typename T>
 class Map2D {
@@ -149,12 +43,143 @@ class Map2D {
         if (rows <= 0 || cols <= 0) {
             throw std::out_of_range("map dimensions cannot be zero");
         }
-        if (rows * cols > std::numeric_limits<std::size_t>::max()) {
+        if (static_cast<std::size_t>(rows * cols) > std::numeric_limits<std::size_t>::max()) {
             throw std::out_of_range("map area exceeds integer limits");
         }
     }
 
+    class MapRowProxy final {
+        T* const       mBegin;
+        const fast_int mLength;
+
+    public:
+        ~MapRowProxy() = default;
+        explicit MapRowProxy(
+            T* const       begin,
+            const fast_int length
+        ) noexcept
+            : mBegin(begin)
+            , mLength(length)
+        {}
+
+        T* begin()       noexcept { return mBegin; }
+        T* begin() const noexcept { return mBegin; }
+        T* end()         noexcept { return mBegin + mLength; }
+        T* end()   const noexcept { return mBegin + mLength; }
+
+        MapRowProxy& operator=(const MapRowProxy& other) {
+            if (this != &other && other.mLength == mLength) {
+                std::copy(other.begin(), other.end(), begin());
+            }
+            return *this;
+        }
+
+        MapRowProxy& swap(MapRowProxy&& other) noexcept {
+            if (this != &other && mLength == other.mLength) {
+                std::swap_ranges(begin(), end(), other.begin());
+            }
+            return *this;
+        }
+
+        MapRowProxy& wipeAll() {
+            std::fill(begin(), end(), T());
+            return *this;
+        }
+
+        MapRowProxy& wipe(
+            const fast_int cols
+        ) {
+            if (std::abs(cols) >= mLength) {
+                wipeAll();
+            }
+            else if (cols != 0) {
+                if (cols < 0) {
+                    std::fill(end() - std::abs(cols), end(), T());
+                }
+                else {
+                    std::fill(begin(), begin() + std::abs(cols), T());
+                }
+            }
+            return *this;
+        }
+
+        MapRowProxy& rotate(
+            const fast_int cols
+        ) {
+            const auto offset{ std::abs(cols) % mLength };
+            if (offset) {
+                const auto pos{ cols < 0
+                    ? begin() + offset
+                    : end()   - offset
+                };
+
+                std::rotate(begin(), pos, end());
+            }
+            return *this;
+        }
+
+        MapRowProxy& shift(
+            const fast_int cols
+        ) {
+            if (std::abs(cols) < mLength) {
+                rotate(cols);
+            }
+            wipe(cols);
+            return *this;
+        }
+
+        MapRowProxy& reverse() {
+            std::reverse(begin(), end());
+            return *this;
+        }
+
+        T& at(
+            const fast_int col
+        ) {
+            if (std::abs(col) >= mLength) {
+                throw std::out_of_range("column index out of range");
+            }
+            return *(begin() + col);
+        }
+
+        T& operator[](
+            const fast_int col
+        ) {
+            return *(begin() + col);
+        }
+    };
+
+    class MapIterProxy final {
+        const T* mBegin;
+        const fast_int mLength;
+
+    public:
+        MapIterProxy(
+            const T* begin,
+            const fast_int length
+        ) noexcept
+            : mBegin(begin)
+            , mLength(length)
+        {}
+
+        MapRowProxy& operator*() noexcept {
+            return reinterpret_cast<MapRowProxy&>(*this);
+        }
+
+        MapIterProxy& operator++() noexcept {
+            mBegin += mLength;
+            return *this;
+        }
+
+        bool operator!=(
+            const MapIterProxy& other
+        ) const noexcept {
+            return mBegin != other.mBegin;
+        }
+    };
+
 public:
+    ~Map2D() = default;
     Map2D(
         const fast_int rows,
         const fast_int cols
@@ -162,11 +187,7 @@ public:
         : mRows(rows)
         , mCols(cols)
         , mSize(rows* cols)
-      #if (defined(_MSVC_LANG) && _MSVC_LANG >= 201402L) || __cplusplus >= 201402L
         , pData(std::make_unique<T[]>(mSize))
-      #else 
-        , pData(std::unique_ptr<T[]>(new T[mSize]))
-      #endif
     {
         dimensionsCheck(rows, cols);
     }
@@ -186,11 +207,7 @@ public:
 
         mSize = rows * cols;
 
-      #if (defined(_MSVC_LANG) && _MSVC_LANG >= 201402L) || __cplusplus >= 201402L
         auto pCopy{ std::make_unique<T[]>(mSize) };
-      #else
-        auto pCopy{ std::unique_ptr<T[]>(new T[mSize]) };
-      #endif
 
         for (auto row{ 0 }; row < minRows; ++row) {
             const auto srcIdx{ pData.get() + row * mCols };
@@ -216,7 +233,7 @@ public:
         return *this;
     }
 
-    Map2D<T>& wipeall() {
+    Map2D<T>& wipeAll() {
         std::fill(mBegin(), mEnd(), T());
         return *this;
     }
@@ -225,7 +242,7 @@ public:
         const fast_int rows
     ) {
         if (std::abs(rows) >= mRows) {
-            wipeall();
+            wipeAll();
         }
         else if (rows != 0) {
             const auto offset{ mRows * std::abs(rows) };
@@ -244,13 +261,22 @@ public:
         const fast_int cols
     ) {
         if (std::abs(cols) >= mCols) {
-            wipeall();
+            wipeAll();
         }
         else if (cols != 0) {
             for (auto row : *this) {
                 row.wipe(cols);
             }
         }
+        return *this;
+    }
+
+    Map2D<T>& rotateYX(
+        const fast_int rows,
+        const fast_int cols
+    ) {
+        rotateY(rows);
+        rotateX(cols);
         return *this;
     }
 
@@ -279,6 +305,15 @@ public:
         return *this;
     }
 
+    Map2D<T>& shiftYX(
+        const fast_int rows,
+        const fast_int cols
+    ) {
+        shiftY(rows);
+        shiftX(cols);
+        return *this;
+    }
+
     Map2D<T>& shiftY(
         const fast_int rows
     ) {
@@ -299,6 +334,11 @@ public:
         return *this;
     }
 
+    Map2D<T>& reverseYX() {
+        std::reverse(mBegin(), mEnd());
+        return *this;
+    }
+
     Map2D<T>& reverseY() {
         for (auto row{ 0 }; row < mRows / 2; ++row) {
             (*this)[row].swap((*this)[mRows - row - 1]);
@@ -313,11 +353,6 @@ public:
         return *this;
     }
 
-    Map2D<T>& reverse() {
-        std::reverse(mBegin(), mEnd());
-        return *this;
-    }
-
     Map2D<T>& transpose() {
         if (mRows > 1 && mCols > 1) {
             for (std::size_t a{ 1 }, b{ 1 }; a < mSize - 1; b = ++a) {
@@ -326,7 +361,6 @@ public:
                 } while (b < a);
 
                 if (b != a) std::iter_swap(mBegin() + a, mBegin() + b);
-                //else std::cout << "skipped iteration " << a + 1 << std::endl;
             }
         }
         std::swap(mRows, mCols);
@@ -343,13 +377,13 @@ public:
         return pData.get()[row * mCols + col];
     }
 
-    MapRowProxy<T> at(
+    MapRowProxy at(
         const fast_int row
     ) const {
         if (row >= mRows) {
             throw std::out_of_range("row index out of range");
         }
-        return MapRowProxy<T>(mBegin() + row * mCols, mCols);
+        return MapRowProxy(mBegin() + row * mCols, mCols);
     }
 
     T& operator()(
@@ -359,41 +393,14 @@ public:
         return pData.get()[row * mCols + col];
     }
 
-    MapRowProxy<T> operator[](
+    MapRowProxy operator[](
         const fast_int row
     ) const {
-        return MapRowProxy<T>(mBegin() + row * mCols, mCols);
+        return MapRowProxy(mBegin() + row * mCols, mCols);
     }
 
 private:
-    class MapIterProxy {
-        const T*       mBegin;
-        const fast_int mLength;
 
-    public:
-        MapIterProxy(
-            const T*       begin,
-            const fast_int length
-        ) noexcept
-            : mBegin(begin)
-            , mLength(length)
-        {}
-
-        MapRowProxy<T>& operator*() noexcept {
-            return reinterpret_cast<MapRowProxy<T>&>(*this);
-        }
-
-        MapIterProxy& operator++() noexcept {
-            mBegin += mLength;
-            return *this;
-        }
-
-        bool operator!=(
-            const MapIterProxy& other
-            ) const noexcept {
-            return mBegin != other.mBegin;
-        }
-    };
 
 public:
     MapIterProxy begin()       noexcept { return MapIterProxy(mBegin(), mCols); }
