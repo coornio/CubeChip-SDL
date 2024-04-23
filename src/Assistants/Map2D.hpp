@@ -12,22 +12,16 @@
 #include <algorithm>
 #include <stdexcept>
 #include <limits>
-
-#ifndef MAP_NAMESPACE
-    #define MAP_NAMESPACE
-
-    #if defined(_WIN64) || defined(__x86_64__)
-        using fast_int = std::int_fast64_t;
-    #else
-        using fast_int = std::int_fast32_t;
-    #endif
-#endif
-
+#include <type_traits>
 
 template<typename T>
 class Map2D {
-    fast_int             mRows;
-    fast_int             mCols;
+    using rpT = typename std::remove_pointer<T>::type;
+    const bool           mView;
+    std::int_fast32_t    mRows;
+    std::int_fast32_t    mCols;
+    std::int_fast32_t    mPosY;
+    std::int_fast32_t    mPosX;
     std::size_t          mSize;
     std::unique_ptr<T[]> pData;
 
@@ -36,27 +30,15 @@ class Map2D {
     T* mEnd()         noexcept { return pData.get() + mSize; }
     T* mEnd()   const noexcept { return pData.get() + mSize; }
 
-    void dimensionsCheck(
-        const fast_int rows,
-        const fast_int cols
-    ) {
-        if (rows <= 0 || cols <= 0) {
-            throw std::out_of_range("map dimensions cannot be zero");
-        }
-        if (static_cast<std::size_t>(rows * cols) > std::numeric_limits<std::size_t>::max()) {
-            throw std::out_of_range("map area exceeds integer limits");
-        }
-    }
-
     class MapRowProxy final {
-        T* const       mBegin;
-        const fast_int mLength;
+        T* const                mBegin;
+        const std::int_fast32_t mLength;
 
     public:
         ~MapRowProxy() = default;
         explicit MapRowProxy(
-            T* const       begin,
-            const fast_int length
+            T* const                begin,
+            const std::int_fast32_t length
         ) noexcept
             : mBegin(begin)
             , mLength(length)
@@ -66,6 +48,9 @@ class Map2D {
         T* begin() const noexcept { return mBegin; }
         T* end()         noexcept { return mBegin + mLength; }
         T* end()   const noexcept { return mBegin + mLength; }
+
+        const T* cbegin() const noexcept { return begin(); }
+        const T* cend()   const noexcept { return end(); }
 
         MapRowProxy& operator=(const MapRowProxy& other) {
             if (this != &other && other.mLength == mLength) {
@@ -81,13 +66,23 @@ class Map2D {
             return *this;
         }
 
+        //template<typename U, std::enable_if_t<std::is_arithmetic<U>::value, U> = true>
+        template<typename U, typename =
+            decltype(std::declval<T&>() *= std::declval<const U&>())>
+        MapRowProxy& operator*=(const U& value) {
+            for (T& elem : *this) {
+                elem = static_cast<T>(elem * value);
+            }
+            return *this;
+        }
+
         MapRowProxy& wipeAll() {
             std::fill(begin(), end(), T());
             return *this;
         }
 
         MapRowProxy& wipe(
-            const fast_int cols
+            const std::int_fast32_t cols
         ) {
             if (std::abs(cols) >= mLength) {
                 wipeAll();
@@ -95,8 +90,7 @@ class Map2D {
             else if (cols != 0) {
                 if (cols < 0) {
                     std::fill(end() - std::abs(cols), end(), T());
-                }
-                else {
+                } else {
                     std::fill(begin(), begin() + std::abs(cols), T());
                 }
             }
@@ -104,22 +98,20 @@ class Map2D {
         }
 
         MapRowProxy& rotate(
-            const fast_int cols
+            const std::int_fast32_t cols
         ) {
-            const auto offset{ std::abs(cols) % mLength };
-            if (offset) {
-                const auto pos{ cols < 0
-                    ? begin() + offset
-                    : end()   - offset
-                };
-
-                std::rotate(begin(), pos, end());
+            if (cols != 0) {
+                if (cols < 0) {
+                    std::rotate(begin(), begin() + std::abs(cols) % mLength, end());
+                } else {
+                    std::rotate(begin(), end() - std::abs(cols) % mLength, end());
+                }
             }
             return *this;
         }
 
         MapRowProxy& shift(
-            const fast_int cols
+            const std::int_fast32_t cols
         ) {
             if (std::abs(cols) < mLength) {
                 rotate(cols);
@@ -128,13 +120,13 @@ class Map2D {
             return *this;
         }
 
-        MapRowProxy& reverse() {
+        MapRowProxy& rev() {
             std::reverse(begin(), end());
             return *this;
         }
 
         T& at(
-            const fast_int col
+            const std::int_fast32_t col
         ) {
             if (std::abs(col) >= mLength) {
                 throw std::out_of_range("column index out of range");
@@ -142,21 +134,36 @@ class Map2D {
             return *(begin() + col);
         }
 
+        const T& at(
+            const std::int_fast32_t col
+        ) const {
+            if (std::abs(col) >= mLength) {
+                throw std::out_of_range("column index out of range");
+            }
+            return *(begin() + col);
+        }
+
         T& operator[](
-            const fast_int col
+            const std::int_fast32_t col
         ) {
+            return *(begin() + col);
+        }
+
+        const T& operator[](
+            const std::int_fast32_t col
+        ) const {
             return *(begin() + col);
         }
     };
 
     class MapIterProxy final {
-        const T* mBegin;
-        const fast_int mLength;
+        const T*                mBegin;
+        const std::int_fast32_t mLength;
 
     public:
         MapIterProxy(
-            const T* begin,
-            const fast_int length
+            const T*                begin,
+            const std::int_fast32_t length
         ) noexcept
             : mBegin(begin)
             , mLength(length)
@@ -166,41 +173,172 @@ class Map2D {
             return reinterpret_cast<MapRowProxy&>(*this);
         }
 
+        MapRowProxy& operator->() noexcept {
+            return reinterpret_cast<MapRowProxy&>(*this);
+        }
+
         MapIterProxy& operator++() noexcept {
             mBegin += mLength;
             return *this;
         }
 
-        bool operator!=(
-            const MapIterProxy& other
-        ) const noexcept {
+        MapIterProxy operator++(int) {
+            auto tmp{ *this };
+            mBegin += mLength;
+            return tmp;
+        }
+
+        bool operator==(const MapIterProxy& other) const noexcept {
+            return mBegin == other.mBegin;
+        }
+
+        bool operator!=(const MapIterProxy& other) const noexcept {
             return mBegin != other.mBegin;
         }
     };
 
+    explicit Map2D(
+        const bool              view,
+        const std::int_fast32_t rows,
+        const std::int_fast32_t cols,
+        const std::int_fast32_t posY,
+        const std::int_fast32_t posX
+    )
+        : mView(view)
+        , mRows(rows)
+        , mCols(cols)
+        , mPosY(posY)
+        , mPosX(posX)
+        , mSize(rows * cols)
+        , pData(std::make_unique<T[]>(mSize))
+    {}
+
 public:
     ~Map2D() = default;
+    Map2D(Map2D&&) = default;
     Map2D(
-        const fast_int rows,
-        const fast_int cols
+        const std::int_fast32_t rows = 1,
+        const std::int_fast32_t cols = 1
     )
-        : mRows(rows)
-        , mCols(cols)
-        , mSize(rows* cols)
-        , pData(std::make_unique<T[]>(mSize))
+        : Map2D(
+            false,
+            std::max<std::int_fast32_t>(1, rows),
+            std::max<std::int_fast32_t>(1, cols),
+            0, 0
+        )
+    {}
+
+    explicit Map2D( // should be used for first view()
+        const std::int_fast32_t rows,
+        const std::int_fast32_t cols,
+        const std::int_fast32_t posY,
+        const std::int_fast32_t posX,
+        const Map2D<rpT>* const base
+    )
+        : Map2D(true, rows, cols, posY, posX)
     {
-        dimensionsCheck(rows, cols);
+        for (auto y{ 0 }; y < mRows; ++y) {
+            for (auto x{ 0 }; x < mCols; ++x) {
+                at_raw(y, x) = const_cast<T>(&base->at_raw(y + posY, x + posX));
+            }
+        }
     }
 
-    std::size_t size() const { return mSize; }
-    fast_int    lenX() const { return mCols; }
-    fast_int    lenY() const { return mRows; }
+    explicit Map2D( // should be used for nested view()
+        const std::int_fast32_t  rows,
+        const std::int_fast32_t  cols,
+        const std::int_fast32_t  posY,
+        const std::int_fast32_t  posX,
+        const Map2D<rpT*>* const base
+    )
+        : Map2D(true, rows, cols, posY, posX)
+    {
+        for (auto y{ 0 }; y < mRows; ++y) {
+            for (auto x{ 0 }; x < mCols; ++x) {
+                at_raw(y, x) = base->at_raw(y + posY, x + posX);
+            }
+        }
+    }
 
-    Map2D<T>& resize(
-        const fast_int rows,
-        const fast_int cols
+    Map2D& operator=(
+        const Map2D& other
     ) {
-        dimensionsCheck(rows, cols);
+        if (this != &other && mSize == other.mSize) {
+            std::copy(other.begin(), other.end(), begin());
+        }
+        return *this;
+    }
+    Map2D& operator=(Map2D&&) = default;
+
+    std::size_t       size() const { return mSize; }
+    std::int_fast32_t lenX() const { return mCols; }
+    std::int_fast32_t lenY() const { return mRows; }
+
+    T& at_raw(
+        const std::int_fast32_t idx
+    ) {
+        return pData.get()[idx];
+    }
+
+    const T& at_raw(
+        const std::int_fast32_t idx
+    ) const {
+        return pData.get()[idx];
+    }
+
+    T& at_raw(
+        const std::int_fast32_t row,
+        const std::int_fast32_t col
+    ) {
+        return pData.get()[row * mCols + col];
+    }
+
+    const T& at_raw(
+        const std::int_fast32_t row,
+        const std::int_fast32_t col
+    ) const {
+        return pData.get()[row * mCols + col];
+    }
+
+    // view() functions differ only by return type, so I gotta duplicate and enable conditionally?
+    template<typename U = T>
+    typename std::enable_if<!std::is_pointer<U>::value, Map2D<T*>>::type view(
+        std::int_fast32_t rows,
+        std::int_fast32_t cols,
+        std::int_fast32_t posY = 0,
+        std::int_fast32_t posX = 0
+    ) const {
+        return Map2D<T*>( // first view() mode, returns object with pointers to original data
+            std::min(std::max<std::int_fast32_t>(1, rows), mRows),
+            std::min(std::max<std::int_fast32_t>(1, cols), mCols),
+            std::min(std::max<std::int_fast32_t>(0, posY), std::abs(rows - mRows)),
+            std::min(std::max<std::int_fast32_t>(0, posX), std::abs(cols - mCols)),
+            this
+        );
+    }
+
+    template<typename U = T>
+    typename std::enable_if<std::is_pointer<U>::value, Map2D<T>>::type view(
+        std::int_fast32_t rows,
+        std::int_fast32_t cols,
+        std::int_fast32_t posY = 0,
+        std::int_fast32_t posX = 0
+    ) const {
+        return Map2D<T>( // chained view() mode, returns object with copied pointers
+            std::min(std::max<std::int_fast32_t>(1, rows), mRows),
+            std::min(std::max<std::int_fast32_t>(1, cols), mCols),
+            std::min(std::max<std::int_fast32_t>(0, posY), std::abs(rows - mRows)),
+            std::min(std::max<std::int_fast32_t>(0, posX), std::abs(cols - mCols)),
+            this
+        );
+    }
+
+    Map2D& resize(
+        std::int_fast32_t rows = 1,
+        std::int_fast32_t cols = 1
+    ) {
+        rows = std::max(std::int_fast32_t{ 1 }, rows);
+        cols = std::max(std::int_fast32_t{ 1 }, cols);
 
         const auto minRows{ std::min(rows, mRows) };
         const auto minCols{ std::min(cols, mCols) };
@@ -224,79 +362,46 @@ public:
         return *this;
     }
 
-    Map2D<T>& operator=(
-        const Map2D<T>& other
-    ) {
-        if (this != &other && mSize == other.mSize) {
-            std::copy(other.begin(), other.end(), begin());
-        }
-        return *this;
-    }
-
-    Map2D<T>& wipeAll() {
+    Map2D& wipeAll() {
         std::fill(mBegin(), mEnd(), T());
         return *this;
     }
 
-    Map2D<T>& wipeY(
-        const fast_int rows
+    Map2D& wipe(
+        const std::int_fast32_t rows,
+        const std::int_fast32_t cols
     ) {
-        if (std::abs(rows) >= mRows) {
+        if (std::abs(rows) >= mRows || std::abs(cols) >= mCols) {
             wipeAll();
         }
-        else if (rows != 0) {
-            const auto offset{ mRows * std::abs(rows) };
+        else {
+            if (rows != 0) {
+                if (rows < 0) {
+                    std::fill(mEnd() + rows * mCols, mEnd(), T());
+                } else {
+                    std::fill(mBegin(), mBegin() + rows * mCols, T());
+                }
+            }
+            if (cols != 0) {
+                for (auto row : *this) {
+                    row.wipe(cols);
+                }
+            }
+        }
+        return *this;
+    }
 
+    Map2D& rotate(
+        const std::int_fast32_t rows,
+        const std::int_fast32_t cols
+    ) {
+        if (std::abs(rows) % mRows) {
             if (rows < 0) {
-                std::fill(mEnd() - offset, mEnd(), T());
-            }
-            else {
-                std::fill(mBegin(), mBegin() + offset, T());
-            }
-        }
-        return *this;
-    }
-
-    Map2D<T>& wipeX(
-        const fast_int cols
-    ) {
-        if (std::abs(cols) >= mCols) {
-            wipeAll();
-        }
-        else if (cols != 0) {
-            for (auto row : *this) {
-                row.wipe(cols);
+                std::rotate(mBegin(), mBegin() - rows * mCols, mEnd());
+            } else {
+                std::rotate(mBegin(), mEnd() - rows * mCols, mEnd());
             }
         }
-        return *this;
-    }
-
-    Map2D<T>& rotateYX(
-        const fast_int rows,
-        const fast_int cols
-    ) {
-        rotateY(rows);
-        rotateX(cols);
-        return *this;
-    }
-
-    Map2D<T>& rotateY(
-        const fast_int rows
-    ) {
-        const auto offset{ mRows * (std::abs(rows) % mRows) };
-        if (offset) {
-            const auto pos{ rows < 0
-                ? mBegin() + offset
-                : mEnd()   - offset
-            };
-            std::rotate(mBegin(), pos, mEnd());
-        }
-        return *this;
-    }
-
-    Map2D<T>& rotateX(
-        const fast_int cols
-    ) {
         if (std::abs(cols) % mCols) {
             for (auto row : *this) {
                 row.rotate(cols);
@@ -305,55 +410,37 @@ public:
         return *this;
     }
 
-    Map2D<T>& shiftYX(
-        const fast_int rows,
-        const fast_int cols
+    Map2D& shift(
+        const std::int_fast32_t rows,
+        const std::int_fast32_t cols
     ) {
-        shiftY(rows);
-        shiftX(cols);
-        return *this;
-    }
-
-    Map2D<T>& shiftY(
-        const fast_int rows
-    ) {
-        if (std::abs(rows) < mRows) {
-            rotateY(rows);
+        if (std::abs(rows) < mRows && std::abs(cols) < mCols) {
+            rotate(rows, cols);
         }
-        wipeY(rows);
+        wipe(rows, cols);
         return *this;
     }
 
-    Map2D<T>& shiftX(
-        const fast_int cols
-    ) {
-        if (std::abs(cols) < mCols) {
-            rotateX(cols);
-        }
-        wipeX(cols);
-        return *this;
-    }
-
-    Map2D<T>& reverseYX() {
+    Map2D& rev() {
         std::reverse(mBegin(), mEnd());
         return *this;
     }
 
-    Map2D<T>& reverseY() {
+    Map2D& revY() {
         for (auto row{ 0 }; row < mRows / 2; ++row) {
             (*this)[row].swap((*this)[mRows - row - 1]);
         }
         return *this;
     }
 
-    Map2D<T>& reverseX() {
+    Map2D& revX() {
         for (auto row : *this) {
             std::reverse(row.begin(), row.end());
         }
         return *this;
     }
 
-    Map2D<T>& transpose() {
+    Map2D& transpose() {
         if (mRows > 1 && mCols > 1) {
             for (std::size_t a{ 1 }, b{ 1 }; a < mSize - 1; b = ++a) {
                 do {
@@ -368,17 +455,36 @@ public:
     }
 
     T& at(
-        const fast_int row,
-        const fast_int col
+        const std::int_fast32_t row,
+        const std::int_fast32_t col
     ) {
         if (row >= mRows || col >= mCols) {
             throw std::out_of_range("row or column index out of range");
         }
-        return pData.get()[row * mCols + col];
+        return at_raw(row, col);
+    }
+
+    const T& at(
+        const std::int_fast32_t row,
+        const std::int_fast32_t col
+    ) const {
+        if (row >= mRows || col >= mCols) {
+            throw std::out_of_range("row or column index out of range");
+        }
+        return at_raw(row, col);
     }
 
     MapRowProxy at(
-        const fast_int row
+        const std::int_fast32_t row
+    ) {
+        if (row >= mRows) {
+            throw std::out_of_range("row index out of range");
+        }
+        return MapRowProxy(mBegin() + row * mCols, mCols);
+    }
+
+    const MapRowProxy at(
+        const std::int_fast32_t row
     ) const {
         if (row >= mRows) {
             throw std::out_of_range("row index out of range");
@@ -387,20 +493,30 @@ public:
     }
 
     T& operator()(
-        const fast_int row,
-        const fast_int col
+        const std::int_fast32_t row,
+        const std::int_fast32_t col
     ) {
-        return pData.get()[row * mCols + col];
+        return at_raw(row, col);
+    }
+
+    const T& operator()(
+        const std::int_fast32_t row,
+        const std::int_fast32_t col
+    ) const {
+        return at_raw(row, col);
     }
 
     MapRowProxy operator[](
-        const fast_int row
-    ) const {
+        const std::int_fast32_t row
+    ) {
         return MapRowProxy(mBegin() + row * mCols, mCols);
     }
 
-private:
-
+    const MapRowProxy operator[](
+        const std::int_fast32_t row
+    ) const {
+        return MapRowProxy(mBegin() + row * mCols, mCols);
+    }
 
 public:
     MapIterProxy begin()       noexcept { return MapIterProxy(mBegin(), mCols); }
@@ -408,6 +524,6 @@ public:
     MapIterProxy end()         noexcept { return MapIterProxy(mEnd(), mCols); }
     MapIterProxy end()   const noexcept { return MapIterProxy(mEnd(), mCols); }
 
-    MapIterProxy cbegin() const noexcept { return begin(); }
-    MapIterProxy cend()   const noexcept { return end(); }
+    const MapIterProxy cbegin() const noexcept { return begin(); }
+    const MapIterProxy cend()   const noexcept { return end(); }
 };
