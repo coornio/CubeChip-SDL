@@ -125,20 +125,20 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>C:\VSlibs\SDL2-2.30.0\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\VSlibs\SDL2-2.30.0\lib\x64;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\VSlibs\SDL2-2.30.3\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\VSlibs\SDL2-2.30.3\lib\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>C:\VSlibs\SDL2-2.30.0\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\VSlibs\SDL2-2.30.0\lib\x64;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\VSlibs\SDL2-2.30.3\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\VSlibs\SDL2-2.30.3\lib\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LibraryPath>C:\VSlibs\SDL2-2.30.0\lib\x86;$(LibraryPath)</LibraryPath>
-    <IncludePath>C:\VSlibs\SDL2-2.30.0\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\VSlibs\SDL2-2.30.3\lib\x86;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\VSlibs\SDL2-2.30.3\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LibraryPath>C:\VSlibs\SDL2-2.30.0\lib\x86;$(LibraryPath)</LibraryPath>
-    <IncludePath>C:\VSlibs\SDL2-2.30.0\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\VSlibs\SDL2-2.30.3\lib\x86;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\VSlibs\SDL2-2.30.3\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
