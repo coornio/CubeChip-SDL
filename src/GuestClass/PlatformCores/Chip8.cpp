@@ -72,17 +72,19 @@ enum Platforms {
 	SCHIP8X_FPD,
 };
 
+static constexpr auto F{ 0xF };
+
+static constexpr std::size_t variation{};
+
 template <std::size_t variant>
 void VM_Guest::instructionDecoder() {
-	enum { TO_DISPLAY, CLEAR_ALL };
-
 	for (auto inst{ 0 }; inst < Program->ipf; ++inst) {
 		auto HI = mrw(Program->counter++);
 		auto LO = mrw(Program->counter++);
 		Program->opcode = HI << 8 | LO;
 
 		auto   X{ HI & 0xF };
-		auto   Y{ LO >> 4 };
+		auto   Y{ LO >>  4 };
 		auto   N{ LO & 0xF };
 		auto NNN{ Program->opcode & 0xFFF };
 
@@ -124,53 +126,53 @@ void VM_Guest::instructionDecoder() {
 					break;
 				case 0x1:								// 8XY1 - set VX = VX | VY
 					Reg->V[X] |= Reg->V[Y];
-					if constexpr (variation & clearVF) Reg->V[0xF] = 0;
+					if constexpr (variation & clearVF) Reg->V[F] = 0;
 					break;
 				case 0x2:								// 8XY2 - set VX = VX & VY
 					Reg->V[X] &= Reg->V[Y];
-					if constexpr (variation & clearVF) Reg->V[0xF] = 0;
+					if constexpr (variation & clearVF) Reg->V[F] = 0;
 					break;
 				case 0x3:								// 8XY3 - set VX = VX ^ VY
 					Reg->V[X] ^= Reg->V[Y];
-					if constexpr (variation & clearVF) Reg->V[0xF] = 0;
+					if constexpr (variation & clearVF) Reg->V[F] = 0;
 					break;
 				case 0x4: {								// 8XY4 - set VX = VX + VY, VF = carry
 					const auto sum{ Reg->V[X] + Reg->V[Y] };
-					Reg->V[X]   = static_cast<uint8_t>(sum);
-					Reg->V[0xF] = static_cast<uint8_t>(sum >> 8);
+					Reg->V[X] = static_cast<uint8_t>(sum);
+					Reg->V[F] = static_cast<uint8_t>(sum >> 8);
 				} break;
 				case 0x5: {								// 8XY5 - set VX = VX - VY, VF = !borrow
 					const bool borrow{ Reg->V[X] < Reg->V[Y] };
-					Reg->V[X]   = Reg->V[X] - Reg->V[Y];
-					Reg->V[0xF] = !borrow;
+					Reg->V[X] = Reg->V[X] - Reg->V[Y];
+					Reg->V[F] = !borrow;
 				} break;
 				case 0x7: {								// 8XY7 - set VX = VY - VX, VF = !borrow
 					const bool borrow{ Reg->V[Y] < Reg->V[X] };
-					Reg->V[X]   = Reg->V[Y] - Reg->V[X];
-					Reg->V[0xF] = !borrow;
+					Reg->V[X] = Reg->V[Y] - Reg->V[X];
+					Reg->V[F] = !borrow;
 				};  break;
 				case 0x6: {								// 8XY6 - set VX = VY >> 1, VF = carry
 					if constexpr (variant & shiftVX) {
 						const bool lsb{ (Reg->V[X] & 1) == 1 };
-						Reg->V[X]   = Reg->V[X] >> 1;
-						Reg->V[0xF] = lsb;
+						Reg->V[X] = Reg->V[X] >> 1;
+						Reg->V[F] = lsb;
 					}
 					else {
-						const bool lsb{ (Reg->V[X] & 1) == 1 };
-						Reg->V[X]   = Reg->V[Y] >> 1;
-						Reg->V[0xF] = lsb;
+						const bool lsb{ (Reg->V[Y] & 1) == 1 };
+						Reg->V[X] = Reg->V[Y] >> 1;
+						Reg->V[F] = lsb;
 					}
 				} break;
 				case 0xE: {								// 8XYE - set VX = VY << 1, VF = carry
 					if constexpr (variant & shiftVX) {
 						const bool msb{ (Reg->V[X] >> 7) == 1 };
-						Reg->V[X]   = Reg->V[X] << 1;
-						Reg->V[0xF] = msb;
+						Reg->V[X] = Reg->V[X] << 1;
+						Reg->V[F] = msb;
 					}
 					else {
 						const bool msb{ (Reg->V[Y] >> 7) == 1 };
-						Reg->V[X]   = Reg->V[Y] << 1;
-						Reg->V[0xF] = msb;
+						Reg->V[X] = Reg->V[Y] << 1;
+						Reg->V[F] = msb;
 					}
 				} break;
 				[[unlikely]] default: Program->requestHalt();

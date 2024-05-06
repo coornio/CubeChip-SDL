@@ -179,7 +179,9 @@ void VM_Guest::initPlatform() {
     //Color->bit[1] = 0xFF333333;
     //Color->bit[2] = 0xFF555555;
     //Color->bit[3] = 0xFFFFFFFF;
+    //Quirk.clearVF = true;
     //Quirk.shiftVX = true;
+    //Quirk.jmpRegX = true;
     //Quirk.idxRegNoInc = true;
     //State.schip_legacy = true;
     //Audio->setVolume(0.8f);

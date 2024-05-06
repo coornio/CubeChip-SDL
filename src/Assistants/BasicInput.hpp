@@ -42,8 +42,8 @@ public:
 
     void updateCopy();
     bool isPrevHeld(SDL_Scancode) const noexcept;
-    bool isHeld(SDL_Scancode)     const noexcept;
-    bool isPressed(SDL_Scancode)  const noexcept;
+    bool isHeld    (SDL_Scancode) const noexcept;
+    bool isPressed (SDL_Scancode) const noexcept;
     bool isReleased(SDL_Scancode) const noexcept;
 
     template <std::same_as<SDL_Scancode>... S>
@@ -81,8 +81,8 @@ public:
 
     void updateCopy();
     bool isPrevHeld(BIC_Button) const noexcept;
-    bool isHeld(BIC_Button)     const noexcept;
-    bool isPressed(BIC_Button)  const noexcept;
+    bool isHeld    (BIC_Button) const noexcept;
+    bool isPressed (BIC_Button) const noexcept;
     bool isReleased(BIC_Button) const noexcept;
 
     Sint32 getRelX() const noexcept;
