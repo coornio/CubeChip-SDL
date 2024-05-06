@@ -34,7 +34,7 @@ public:
     FrameLimiter(
         const double framerate = 60.0, // 0.5 ... 1000 range
         const bool   firstpass = true, // skipFirstPass flag
-        const bool   lostframe = false // skipLostFrame flag
+        const bool   lostframe = true  // skipLostFrame flag
     );
     void setFreq(
         const double framerate, // 0.5 ... 1000 range
