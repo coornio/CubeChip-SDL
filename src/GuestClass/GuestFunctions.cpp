@@ -96,14 +96,16 @@ void VM_Guest::instructionLoop() {
 				case 0x00B0:							// 00BN - scroll selected color plane N lines up *MEGACHIP*
 				case 0x00D0:							// 00DN - scroll selected color plane N lines up *XOCHIP*
 					if (!N) [[unlikely]] break;
-					if (Quirk.waitScroll) [[unlikely]]
+					if (Quirk.waitScroll) [[unlikely]] {
 						Program->setInterrupt(Interrupt::ONCE);
+					}
 					currFncSet->scrollUP(N);
 					break;
 				case 0x00C0:							// 00CN - scroll selected color plane N lines down *XOCHIP*
 					if (!N) [[unlikely]] break;
-					if (Quirk.waitScroll) [[unlikely]]
+					if (Quirk.waitScroll) [[unlikely]] {
 						Program->setInterrupt(Interrupt::ONCE);
+					}
 					currFncSet->scrollDN(N);
 					break;
 				case 0x00E0: switch (N) {
@@ -142,25 +144,29 @@ void VM_Guest::instructionLoop() {
 						Plane.brush = BrushType::XOR;
 						break;
 					case 0xB:							// 00FB - scroll selected color plane 4 pixels right *XOCHIP*
-						if (Quirk.waitScroll) [[unlikely]]
+						if (Quirk.waitScroll) [[unlikely]] {
 							Program->setInterrupt(Interrupt::ONCE);
+						}
 						currFncSet->scrollRT(4);
 						break;
 					case 0xC:							// 00FC - scroll selected color plane 4 pixels left *XOCHIP*
-						if (Quirk.waitScroll) [[unlikely]]
+						if (Quirk.waitScroll) [[unlikely]] {
 							Program->setInterrupt(Interrupt::ONCE);
+						}
 						currFncSet->scrollLT(4);
 						break;
 					case 0xD:							// 00FD - stop signal *SCHIP*
 						Program->setInterrupt(Interrupt::STOP);
 						break;
 					case 0xE:							// 00FE - display == 64*32, erase the screen *XOCHIP*
-						if (!State.mega_enabled) [[likely]]
+						if (!State.mega_enabled) [[likely]] {
 							setupDisplay(Resolution::LO, !State.schip_legacy);
+						}
 						break;
 					case 0xF:							// 00FF - display == 128*64, erase the screen *XOCHIP*
-						if (!State.mega_enabled) [[likely]]
+						if (!State.mega_enabled) [[likely]] {
 							setupDisplay(Resolution::HI, !State.schip_legacy);
+						}
 						break;
 					[[unlikely]] default: Program->requestHalt();
 				} break;
@@ -411,17 +417,19 @@ void VM_Guest::instructionLoop() {
 						break;
 					[[unlikely]] default: Program->requestHalt();
 				}
-				else if (State.chip8X_rom)				// BXYN - set foreground color *CHIP-8X*
+				else if (State.chip8X_rom) {			// BXYN - set foreground color *CHIP-8X*
 					currFncSet->drawColors(Reg->V[X], Reg->V[X + 1], Reg->V[Y] & 0x7, N);
-				else									// BXNN - jump to NNN + V0 (else VX *SCHIP*)
+				} else {								// BXNN - jump to NNN + V0 (else VX *SCHIP*)
 					Program->jumpInstruction(NNN + (Quirk.jmpRegX ? Reg->V[X] : Reg->V[0]));
+				}
 			} break;
 			case 0xC:									// CXNN - set VX = rnd(256) & NN
 				Reg->V[X] = Wrand->get() & LO;
 				break;
 			case 0xD:									// DXYN - draw N sprite rows at VX and VY
-				if (Quirk.waitVblank) [[unlikely]]
+				if (Quirk.waitVblank) [[unlikely]] {
 					Program->setInterrupt(Interrupt::ONCE);
+				}
 				currFncSet->drawSprite(Reg->V[X], Reg->V[Y], N, Reg->I);
 				break;
 			case 0xE: switch (LO) {
@@ -462,13 +470,14 @@ void VM_Guest::instructionLoop() {
 						Plane.mask = X * 0x11111111;
 						break;
 					case 0x03:							// FX03 - load 24bit color X from RAM at I, I+1, I+2 *HWCHIP64*
-						if (!State.chip8E_rom)
+						if (!State.chip8E_rom) {
 							Color->bit[X] = 0xFF000000
 								| mrw(Reg->I + 0) << 16
-								| mrw(Reg->I + 1) <<  8
+								| mrw(Reg->I + 1) << 8
 								| mrw(Reg->I + 2);
-						else [[unlikely]]				// FX03 - output VX to port 3 *CHIP-8E*
+						} else [[unlikely]] {			// FX03 - output VX to port 3 *CHIP-8E*
 							Program->setInterrupt(Interrupt::ONCE);
+						}
 						break;
 					case 0x07:							// FX07 - set VX = delay timer
 						Reg->V[X] = Program->Timer.delay;
@@ -476,15 +485,17 @@ void VM_Guest::instructionLoop() {
 					case 0x0A:							// FX0A - set VX = key, wait for keypress
 						Sound->C8.setTone(Reg->SP, Program->counter);
 						Program->setInterrupt(Interrupt::FX0A);
-						if (State.mega_enabled) [[unlikely]]
+						if (State.mega_enabled) [[unlikely]] {
 							Mem->flushBuffers(TO_DISPLAY);
+						}
 						break;
 					case 0x15:							// FX15 - set delay timer = VX
 						Program->Timer.delay = Reg->V[X];
 						break;
 					case 0x18:							// FX18 - set sound timer = VX
-						if (!State.chip8X_rom) [[likely]]
+						if (!State.chip8X_rom) [[likely]] {
 							Sound->C8.setTone(Reg->SP, Program->counter);
+						}
 						Sound->beepFx0A = false;
 						Program->Timer.sound = Reg->V[X] + (Reg->V[X] == 1);
 						break;
