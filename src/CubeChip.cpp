@@ -9,6 +9,18 @@
 #include "GuestClass/SoundCores.hpp" // this shouldn't be needed, see BAS header
 
 int32_t SDL_main(int32_t argc, char* argv[]) {
+
+    #ifdef _DEBUG
+        SDL_version compiled{};
+        SDL_version linked{};
+
+        SDL_VERSION(&compiled);
+        SDL_GetVersion(&linked);
+
+        printf("Compiled against SDL version %d.%d.%d\n", compiled.major, compiled.minor, compiled.patch);
+        printf("Linked SDL version %d.%d.%d\n", linked.major, linked.minor, linked.patch);
+    #endif
+
     std::unique_ptr<HomeDirManager> HDM;
     std::unique_ptr<BasicVideoSpec> BVS;
     std::unique_ptr<BasicAudioSpec> BAS;
@@ -78,10 +90,14 @@ int32_t SDL_main(int32_t argc, char* argv[]) {
                     } break;
                     case SDL_WINDOWEVENT: {
                         switch (Event.window.event) {
-                            case SDL_WINDOWEVENT_RESIZED: {
+                            case SDL_WINDOWEVENT_SIZE_CHANGED:
                                 BVS->resizeWindow(Event.window.data1, Event.window.data2);
                                 BVS->renderPresent();
-                            } break;
+                                BAS->pauseDevice(false);
+                                break;
+                            case SDL_WINDOWEVENT_MOVED:
+                                BAS->pauseDevice(false);
+                                break;
                             case SDL_WINDOWEVENT_MINIMIZED:
                                 break;
                             case SDL_WINDOWEVENT_RESTORED:
