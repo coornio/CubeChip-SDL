@@ -9,7 +9,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <array>
-#include <atomic>
+#include <vector>
 
 class VM_Guest;
 class BasicAudioSpec;
@@ -23,7 +23,7 @@ public:
     bool  beepFx0A{};
 
     explicit SoundCores(VM_Guest*, BasicAudioSpec*);
-    void renderAudio(int16_t*, int32_t);
+    void renderAudio();
 
     /*------------------------------------------------------------------*/
 
@@ -31,14 +31,14 @@ public:
         SoundCores* Sound;
         BasicAudioSpec* BAS;
 
-        std::atomic<float> tone{};
+        float tone{};
 
     public:
         explicit Classic(SoundCores*, BasicAudioSpec*);
 
         void setTone(std::size_t, std::size_t);
         void setTone(std::size_t);
-        void render(int16_t*, int32_t);
+        void render(std::vector<int16_t>&);
     } C8{ this, BAS };
 
     /*------------------------------------------------------------------*/
@@ -49,8 +49,8 @@ public:
         VM_Guest* vm;
 
         const float rate;
-        std::array<std::atomic<uint8_t>, 16> pattern{};
-        std::atomic<float> tone{};
+        std::array<uint8_t, 16> pattern{};
+        float tone{};
         bool enabled{};
 
     public:
@@ -59,7 +59,7 @@ public:
 
         void setPitch(std::size_t);
         void loadPattern(std::size_t);
-        void render(int16_t*, int32_t);
+        void render(std::vector<int16_t>&);
     } XO{ this, BAS, vm };
 
     /*------------------------------------------------------------------*/
@@ -69,10 +69,10 @@ public:
         BasicAudioSpec* BAS;
         VM_Guest* vm;
 
-        std::atomic<std::size_t> length{};
-        std::atomic<std::size_t> start{};
-        std::atomic<double> step{};
-        std::atomic<double> pos{};
+        std::size_t length{};
+        std::size_t start{};
+        double step{};
+        double pos{};
         bool enabled{};
         bool looping{};
 
@@ -82,6 +82,6 @@ public:
 
         void reset();
         void enable(std::size_t, std::size_t, std::size_t, bool);
-        void render(int16_t*, int32_t);
+        void render(std::vector<int16_t>&);
     } MC{ this, BAS, vm };
 };

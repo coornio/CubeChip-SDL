@@ -68,6 +68,7 @@ void VM_Guest::cycle() {
 	Program->handleInterrupt();
 	instructionLoop();
 
+	Sound->renderAudio();
 	if (!State.push_display) return;
 	flushDisplay();
 

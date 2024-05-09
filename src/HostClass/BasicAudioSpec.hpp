@@ -6,36 +6,27 @@
 
 #pragma once
 
-#include <SDL.h>
-#include <functional>
+#include <SDL3/SDL.h>
+#include <cstddef>
 
 class BasicAudioSpec final {
-    SDL_AudioDeviceID device{};
-    SDL_AudioSpec     spec{};
-
 public:
-    std::function<void(Sint16*, Uint32)> handler;
     const Sint32 outFrequency;
-
     Sint32 volume{};
+    float  bytesLeft{};
     Sint16 amplitude{};
 
-    // this ideally should offer more options but we'll make do for now
-    explicit BasicAudioSpec(const Sint32 = 44'100);
+private:
+    SDL_AudioSpec     spec{};
+    SDL_AudioStream*  stream{};
+    SDL_AudioDeviceID device{};
+    
+public:
+    explicit BasicAudioSpec(const Sint32);
     ~BasicAudioSpec();
 
-    void setSpec();
+    void pushAudioData(const void* const, const std::size_t);
+
     void setVolume(const Sint32);
     void changeVolume(const Sint32);
-    void pauseDevice(const bool);
-
-    template <class T>
-    void setHandler(T& obj) {
-        handler = [&obj](Sint16* buffer, const Sint32 frames) {
-            obj->renderAudio(buffer, frames);
-        };
-        pauseDevice(false);
-    }
-
-    static void audioCallback(void*, Uint8*, Sint32);
 };

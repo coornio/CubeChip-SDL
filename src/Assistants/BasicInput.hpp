@@ -6,9 +6,9 @@
 
 #pragma once
 
-#include <SDL_keyboard.h>
-#include <SDL_scancode.h>
-#include <SDL_mouse.h>
+#include <SDL3/SDL_keyboard.h>
+#include <SDL3/SDL_scancode.h>
+#include <SDL3/SDL_mouse.h>
 
 #include <vector>
 #include <memory>
@@ -68,8 +68,8 @@ public:
 class BasicMouse final {
     static std::unique_ptr<BasicMouse> _self;
     Uint32 curState{}, oldState{};
-    Sint32 posX{}, posY{};
-    Sint32 relX{}, relY{};
+    float posX{}, posY{};
+    float relX{}, relY{};
 
     BasicMouse() {};
     BasicMouse(const BasicMouse&) = delete;
@@ -85,10 +85,10 @@ public:
     bool isPressed (BIC_Button) const noexcept;
     bool isReleased(BIC_Button) const noexcept;
 
-    Sint32 getRelX() const noexcept;
-    Sint32 getRelY() const noexcept;
-    Sint32 getPosX() const noexcept;
-    Sint32 getPosY() const noexcept;
+    float getRelX() const noexcept;
+    float getRelY() const noexcept;
+    float getPosX() const noexcept;
+    float getPosY() const noexcept;
 
     template <std::same_as<BIC_Button>... S>
         requires (sizeof...(S) >= 1)

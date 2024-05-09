@@ -15,7 +15,7 @@
 using namespace blogger;
 
 HomeDirManager::HomeDirManager(const char* homeName) try
-    : BasicHome(homeName)
+    : BasicHome{ homeName }
 {
     try {
         blog.setStdLogFile("program.log", getHome());

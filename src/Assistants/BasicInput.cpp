@@ -62,10 +62,10 @@ void BasicMouse::updateCopy() {
     relY = posY - oldY;
 }
 
-Sint32 BasicMouse::getRelX() const noexcept { return relX; }
-Sint32 BasicMouse::getRelY() const noexcept { return relY; }
-Sint32 BasicMouse::getPosX() const noexcept { return posX; }
-Sint32 BasicMouse::getPosY() const noexcept { return posY; }
+float BasicMouse::getRelX() const noexcept { return relX; }
+float BasicMouse::getRelY() const noexcept { return relY; }
+float BasicMouse::getPosX() const noexcept { return posX; }
+float BasicMouse::getPosY() const noexcept { return posY; }
 
 bool BasicMouse::isPrevHeld(const BIC_Button key) const noexcept {
     return oldState & key;

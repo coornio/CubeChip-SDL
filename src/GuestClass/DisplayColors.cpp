@@ -9,8 +9,8 @@
 #include "DisplayColors.hpp"
 
 DisplayColors::DisplayColors()
-    : bit(BitColors)
-    , buzzer(bit[1])
+    : bit{ BitColors }
+    , buzzer{ bit[1] }
 {
     setMegaHex(0xFFFFFFFF);
 }

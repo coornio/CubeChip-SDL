@@ -8,7 +8,7 @@
 #include "MemoryBanks.hpp"
 
 MemoryBanks::MemoryBanks(VM_Guest* parent)
-    : vm(parent)
+    : vm{ parent }
 {}
 
 void MemoryBanks::changeViewportMask(const BrushType type) {

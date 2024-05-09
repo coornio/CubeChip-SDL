@@ -226,7 +226,7 @@ void VM_Guest::initPlatform() {
 }
 
 void VM_Guest::setupDisplay(const std::size_t mode, const bool forced) {
-    //                            HI   LO   TP   FP   MC
+    //                                HI   LO   TP   FP   MC
     static constexpr int32_t wArr[]{ 128,  64,  64,  64, 256 };
     static constexpr int32_t hArr[]{  64,  32,  64, 128, 192 };
 
@@ -238,7 +238,7 @@ void VM_Guest::setupDisplay(const std::size_t mode, const bool forced) {
 
     Video->createTexture(Plane.W, Plane.H);
     Video->setTextureBlend(SDL_BLENDMODE_BLEND);
-    Video->setAspectRatio(State.mega_enabled ? 1.25f : 2.00f);
+    Video->setAspectRatio(State.mega_enabled ? std::pair{ 256, 192 } : std::pair{ 128, 64 });
     Video->resizeWindow();
 
     State.push_display = true;

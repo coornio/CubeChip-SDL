@@ -22,9 +22,7 @@ VM_Host::VM_Host(
     : File{ hdm_ptr }
     , Video{ bvs_ptr }
     , Audio{ bas_ptr }
-{
-    Audio->setSpec();
-}
+{}
 
 bool VM_Host::isReady() const { return _isReady; }
 bool VM_Host::doBench() const { return _doBench; }

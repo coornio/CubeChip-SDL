@@ -8,10 +8,11 @@
 
 #pragma warning(push)
 #pragma warning(disable : 26819) // C fallthrough warning disabled
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #pragma warning(pop)
 
 #include <string>
+#include <utility>
 
 class BasicVideoSpec {
 	SDL_Window*   window{};
@@ -37,6 +38,7 @@ public:
 	float   aspect{};
 	Sint32  ppitch{};
 	Uint32* pixels{};
+	double  framerate{ 60.0 };
 
 	void lockTexture();
 	void unlockTexture();
@@ -46,7 +48,7 @@ public:
 
 	void setTextureAlpha(std::size_t);
 	void setTextureBlend(SDL_BlendMode);
-	void setAspectRatio(float);
+	void setAspectRatio(std::pair<Sint32, Sint32>);
 
 	void quitWindow();
 	void quitRenderer();

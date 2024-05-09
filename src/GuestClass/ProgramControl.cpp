@@ -18,8 +18,8 @@
 using namespace blogger;
 
 ProgramControl::ProgramControl(VM_Guest* parent, FncSetInterface*& set)
-    : vm(parent)
-    , fncSet(set)
+    : vm{ parent }
+    , fncSet{ set }
 {}
 
 std::string ProgramControl::hexOpcode() const {

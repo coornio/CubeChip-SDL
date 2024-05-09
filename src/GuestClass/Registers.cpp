@@ -17,7 +17,7 @@ using namespace blogger;
 #include "Guest.hpp"
 
 Registers::Registers(VM_Guest* parent)
-	: vm(parent)
+	: vm{ parent }
 {}
 
 void Registers::routineCall(const uint32_t addr) {

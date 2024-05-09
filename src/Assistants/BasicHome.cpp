@@ -6,7 +6,7 @@
 
 #include "BasicHome.hpp"
 #include "PathExceptionClass.hpp"
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 bool BasicHome::showErrorBox(
     std::string_view message,

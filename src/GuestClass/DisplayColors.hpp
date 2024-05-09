@@ -36,9 +36,10 @@ private:
     [[maybe_unused]] uint32_t _;
 
 public:
-    explicit DisplayColors();
-    void setMegaHex(uint32_t);
-    void setBit332(std::size_t, std::size_t);
+    DisplayColors();
+
+    void setMegaHex(const uint32_t);
+    void setBit332(const std::size_t, const std::size_t);
     void cycleBackground();
     uint32_t getFore8X(const std::size_t) const;
     uint32_t getBuzzer() const;
