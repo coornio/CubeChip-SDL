@@ -270,6 +270,14 @@ public:
     }
     Map2D& operator=(Map2D&&) = default;
 
+    Map2D& linearCopy(
+        const Map2D& other
+    ) {
+        const auto len{ std::min(mSize, other.mSize) };
+        std::copy_n(other.mBegin(), len, mBegin());
+        return *this;
+    }
+
     std::size_t       size() const { return mSize; }
     std::int_fast32_t lenX() const { return mCols; }
     std::int_fast32_t lenY() const { return mRows; }
