@@ -136,7 +136,7 @@ public:
     bool loadRomToRam(const std::size_t, const std::size_t);
     void initPlatform();
     void loadFontData();
-    void setupDisplay(const std::size_t, const bool = false);
+    void setupDisplay(const std::int32_t, const bool = false);
     void flushDisplay();
 
     // core functions

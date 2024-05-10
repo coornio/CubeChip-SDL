@@ -16,7 +16,7 @@
 
 FunctionsForClassic8::FunctionsForClassic8(VM_Guest* ref) : vm(ref) {}
 
-void FunctionsForClassic8::scrollUP(const std::size_t N) {
+void FunctionsForClassic8::scrollUP(const std::int32_t N) {
 	vm->State.push_display = true;
 	auto& display{ vm->Mem->display };
 	const auto N2{ vm->Plane.H - N };
@@ -25,7 +25,7 @@ void FunctionsForClassic8::scrollUP(const std::size_t N) {
 	for (auto X{ 0 }; X < vm->Plane.X; ++X)
 		display[H][X] = (H >= N2) ? 0 : display[H + N][X];
 };
-void FunctionsForClassic8::scrollDN(const std::size_t N) {
+void FunctionsForClassic8::scrollDN(const std::int32_t N) {
 	vm->State.push_display = true;
 	auto& display{ vm->Mem->display };
 
@@ -33,7 +33,7 @@ void FunctionsForClassic8::scrollDN(const std::size_t N) {
 	for (auto X{ 0 }; X < vm->Plane.X; ++X)
 		display[H][X] = (H < N) ? 0 : display[H - N][X];
 };
-void FunctionsForClassic8::scrollLT(const std::size_t) {
+void FunctionsForClassic8::scrollLT(const std::int32_t) {
 	vm->State.push_display = true;
 	auto& display{ vm->Mem->display };
 
@@ -45,7 +45,7 @@ void FunctionsForClassic8::scrollLT(const std::size_t) {
 		display[H][X] = static_cast<uint8_t>(mask);
 	};
 };
-void FunctionsForClassic8::scrollRT(const std::size_t) {
+void FunctionsForClassic8::scrollRT(const std::int32_t) {
 	vm->State.push_display = true;
 	auto& display{ vm->Mem->display };
 
@@ -80,7 +80,12 @@ void FunctionsForClassic8::drawByte(
 	vm->Mem->display[Y][R] ^= DATA_R;
 }
 
-void FunctionsForClassic8::drawSprite(std::size_t VX, std::size_t VY, std::size_t N, std::size_t I) {
+void FunctionsForClassic8::drawSprite(
+	std::int32_t VX,
+	std::int32_t VY,
+	std::int32_t  N,
+	std::uint32_t I
+) {
 	vm->State.push_display = true;
 
 	VX &= vm->Plane.Wb;
@@ -114,7 +119,12 @@ void FunctionsForClassic8::drawSprite(std::size_t VX, std::size_t VY, std::size_
 	}
 };
 
-void FunctionsForClassic8::drawColors(const std::size_t VX, const std::size_t VY, const std::size_t idx, const std::size_t N) {
+void FunctionsForClassic8::drawColors(
+	const std::int32_t VX,
+	const std::int32_t VY,
+	const std::int32_t idx,
+	const std::int32_t N
+) {
 	vm->State.push_display = true;
 
 	if (N) {
@@ -126,8 +136,8 @@ void FunctionsForClassic8::drawColors(const std::size_t VX, const std::size_t VY
 		vm->State.chip8X_hires = true;
 	}
 	else {
-		const auto H{ (VY >> 4u) + 1u };
-		const auto W{ (VX >> 4u) + 1u };
+		const auto H{ (VY >> 4) + 1 };
+		const auto W{ (VX >> 4) + 1 };
 
 		for (auto _Y{ 0 }; _Y < H; ++_Y) {
 			const auto Y{ ((VY + _Y) << 2) & vm->Plane.Hb };

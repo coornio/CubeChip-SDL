@@ -15,9 +15,11 @@
 /*  class  FncSetInterface -> FunctionsForLegacySC                  */
 /*------------------------------------------------------------------*/
 
-FunctionsForLegacySC::FunctionsForLegacySC(VM_Guest* ref) : vm(ref) {}
+FunctionsForLegacySC::FunctionsForLegacySC(VM_Guest* parent)
+	: vm{ parent }
+{}
 
-void FunctionsForLegacySC::scrollUP(const std::size_t N) {
+void FunctionsForLegacySC::scrollUP(const std::int32_t N) {
 	vm->State.push_display = true;
 	auto& display{ vm->Mem->display };
 	const auto N2{ vm->Plane.H - N };
@@ -26,7 +28,7 @@ void FunctionsForLegacySC::scrollUP(const std::size_t N) {
 	for (auto X{ 0 }; X < vm->Plane.X; ++X)
 		display[H][X] = (H >= N2) ? 0 : display[H + N][X];
 };
-void FunctionsForLegacySC::scrollDN(const std::size_t N) {
+void FunctionsForLegacySC::scrollDN(const std::int32_t N) {
 	vm->State.push_display = true;
 	auto& display{ vm->Mem->display };
 
@@ -34,7 +36,7 @@ void FunctionsForLegacySC::scrollDN(const std::size_t N) {
 	for (auto X{ 0 }; X < vm->Plane.X; ++X)
 		display[H][X] = (H < N) ? 0 : display[H - N][X];
 };
-void FunctionsForLegacySC::scrollLT(const std::size_t) {
+void FunctionsForLegacySC::scrollLT(const std::int32_t) {
 	vm->State.push_display = true;
 	auto& display{ vm->Mem->display };
 
@@ -46,7 +48,7 @@ void FunctionsForLegacySC::scrollLT(const std::size_t) {
 		display[H][X] = static_cast<uint8_t>(mask);
 	}
 };
-void FunctionsForLegacySC::scrollRT(const std::size_t) {
+void FunctionsForLegacySC::scrollRT(const std::int32_t) {
 	vm->State.push_display = true;
 	auto& display{ vm->Mem->display };
 
@@ -107,7 +109,12 @@ void FunctionsForLegacySC::drawShort(
 	vm->Mem->display[Y + 1][R] =  vm->Mem->display[Y][R] ^= DATA_R;
 }
 
-void FunctionsForLegacySC::drawSprite(std::size_t VX, std::size_t VY, std::size_t N, std::size_t I) {
+void FunctionsForLegacySC::drawSprite(
+	std::int32_t VX,
+	std::int32_t VY,
+	std::int32_t  N,
+	std::uint32_t I
+) {
 	vm->State.push_display = true;
 	const auto mode{ vm->Program->screenMode };
 
@@ -147,7 +154,12 @@ void FunctionsForLegacySC::drawSprite(std::size_t VX, std::size_t VY, std::size_
 	}
 };
 
-void FunctionsForLegacySC::drawColors(std::size_t VX, std::size_t VY, std::size_t idx, std::size_t N) {
+void FunctionsForLegacySC::drawColors(
+	std::int32_t VX,
+	std::int32_t VY,
+	std::int32_t idx,
+	std::int32_t N
+) {
 	vm->State.push_display = true;
 	auto mode{ vm->Program->screenMode };
 

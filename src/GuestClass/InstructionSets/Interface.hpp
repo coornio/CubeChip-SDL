@@ -16,12 +16,12 @@ class VM_Guest;
 /*------------------------------------------------------------------*/
 
 struct FncSetInterface {
-    virtual void scrollUP(std::size_t) = 0;
-    virtual void scrollDN(std::size_t) = 0;
-    virtual void scrollLT(std::size_t) = 0;
-    virtual void scrollRT(std::size_t) = 0;
-    virtual void drawSprite(std::size_t, std::size_t, std::size_t, std::size_t) = 0;
-    virtual void drawColors(std::size_t, std::size_t, std::size_t, std::size_t) = 0;
+    virtual void scrollUP(std::int32_t) = 0;
+    virtual void scrollDN(std::int32_t) = 0;
+    virtual void scrollLT(std::int32_t) = 0;
+    virtual void scrollRT(std::int32_t) = 0;
+    virtual void drawSprite(std::int32_t, std::int32_t, std::int32_t, std::uint32_t) = 0;
+    virtual void drawColors(std::int32_t, std::int32_t, std::int32_t, std::int32_t)  = 0;
 
     virtual ~FncSetInterface() {};
 };
@@ -38,8 +38,8 @@ class FunctionsForGigachip final : public FncSetInterface {
 
     float (*blendType)(float, float) {};
 
-    uint32_t  blendPixel(uint32_t, uint32_t&);
-    uint32_t  applyBlend(float (*)(float, float)) const;
+    std::uint32_t blendPixel(std::uint32_t, std::uint32_t&);
+    std::uint32_t applyBlend(float (*)(float, float)) const;
 
     enum Trait {
         RGB, BRG, GBR,
@@ -56,12 +56,12 @@ class FunctionsForGigachip final : public FncSetInterface {
         OVERWRITE,
     };
 
-    void scrollUP(std::size_t) override;
-    void scrollDN(std::size_t) override;
-    void scrollLT(std::size_t) override;
-    void scrollRT(std::size_t) override;
-    void drawSprite(std::size_t, std::size_t, std::size_t, std::size_t) override;
-    void drawColors(std::size_t, std::size_t, std::size_t, std::size_t) override {};
+    void scrollUP(std::int32_t) override;
+    void scrollDN(std::int32_t) override;
+    void scrollLT(std::int32_t) override;
+    void scrollRT(std::int32_t) override;
+    void drawSprite(std::int32_t, std::int32_t, std::int32_t, std::uint32_t) override;
+    void drawColors(std::int32_t, std::int32_t, std::int32_t, std::int32_t)  override {};
 
 public:
     void chooseBlend(std::size_t);
@@ -80,8 +80,8 @@ class FunctionsForMegachip final : public FncSetInterface {
 
     float (*blendType)(float, float) {};
 
-    uint32_t  blendPixel(uint32_t, uint32_t);
-    uint32_t  applyBlend(float (*)(float, float)) const;
+    std::uint32_t blendPixel(std::uint32_t, std::uint32_t);
+    std::uint32_t applyBlend(float (*)(float, float)) const;
     void blendToDisplay(auto&, auto&);
 
     enum Blend {
@@ -90,12 +90,12 @@ class FunctionsForMegachip final : public FncSetInterface {
         MULTIPLY     = 5,
     };
 
-    void scrollUP(std::size_t) override;
-    void scrollDN(std::size_t) override;
-    void scrollLT(std::size_t) override;
-    void scrollRT(std::size_t) override;
-    void drawSprite(std::size_t, std::size_t, std::size_t, std::size_t) override;
-    void drawColors(std::size_t, std::size_t, std::size_t, std::size_t) override {};
+    void scrollUP(std::int32_t) override;
+    void scrollDN(std::int32_t) override;
+    void scrollLT(std::int32_t) override;
+    void scrollRT(std::int32_t) override;
+    void drawSprite(std::int32_t, std::int32_t, std::int32_t, std::uint32_t) override;
+    void drawColors(std::int32_t, std::int32_t, std::int32_t, std::int32_t)  override {};
 
 public:
     void chooseBlend(std::size_t);
@@ -111,14 +111,14 @@ class FunctionsForModernXO final : public FncSetInterface {
 
     void drawByte(std::size_t, std::size_t, std::size_t, std::size_t, std::size_t, std::size_t);
     std::size_t  bitBloat(std::size_t);
-    void applyBrush(uint32_t&, std::size_t);
+    void applyBrush(std::uint32_t&, std::size_t);
 
-    void scrollUP(std::size_t) override;
-    void scrollDN(std::size_t) override;
-    void scrollLT(std::size_t) override;
-    void scrollRT(std::size_t) override;
-    void drawSprite(std::size_t, std::size_t, std::size_t, std::size_t) override;
-    void drawColors(std::size_t, std::size_t, std::size_t, std::size_t) override {};
+    void scrollUP(std::int32_t) override;
+    void scrollDN(std::int32_t) override;
+    void scrollLT(std::int32_t) override;
+    void scrollRT(std::int32_t) override;
+    void drawSprite(std::int32_t, std::int32_t, std::int32_t, std::uint32_t) override;
+    void drawColors(std::int32_t, std::int32_t, std::int32_t, std::int32_t)  override {};
 
 public:
     FunctionsForModernXO(VM_Guest*);
@@ -135,12 +135,12 @@ class FunctionsForLegacySC final : public FncSetInterface {
     void drawShort(std::size_t, std::size_t, std::size_t, std::size_t, std::size_t, std::size_t);
     std::size_t  bitBloat(std::size_t);
 
-    void scrollUP(std::size_t) override;
-    void scrollDN(std::size_t) override;
-    void scrollLT(std::size_t) override;
-    void scrollRT(std::size_t) override;
-    void drawSprite(std::size_t, std::size_t, std::size_t, std::size_t) override;
-    void drawColors(std::size_t, std::size_t, std::size_t, std::size_t) override;
+    void scrollUP(std::int32_t) override;
+    void scrollDN(std::int32_t) override;
+    void scrollLT(std::int32_t) override;
+    void scrollRT(std::int32_t) override;
+    void drawSprite(std::int32_t, std::int32_t, std::int32_t, std::uint32_t) override;
+    void drawColors(std::int32_t, std::int32_t, std::int32_t, std::int32_t)  override;
 
 public:
     FunctionsForLegacySC(VM_Guest*);
@@ -155,12 +155,12 @@ class FunctionsForClassic8 final : public FncSetInterface {
 
     void drawByte(std::size_t, std::size_t, std::size_t, std::size_t, std::size_t, std::size_t);
 
-    void scrollUP(std::size_t) override;
-    void scrollDN(std::size_t) override;
-    void scrollLT(std::size_t) override;
-    void scrollRT(std::size_t) override;
-    void drawSprite(std::size_t, std::size_t, std::size_t, std::size_t) override;
-    void drawColors(std::size_t, std::size_t, std::size_t, std::size_t) override;
+    void scrollUP(std::int32_t) override;
+    void scrollDN(std::int32_t) override;
+    void scrollLT(std::int32_t) override;
+    void scrollRT(std::int32_t) override;
+    void drawSprite(std::int32_t, std::int32_t, std::int32_t, std::uint32_t) override;
+    void drawColors(std::int32_t, std::int32_t, std::int32_t, std::int32_t)  override;
 
 public:
     FunctionsForClassic8(VM_Guest*);

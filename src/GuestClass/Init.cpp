@@ -225,7 +225,7 @@ void VM_Guest::initPlatform() {
     setupDisplay(Resolution::LO + State.hires_2paged + State.hires_4paged, true);
 }
 
-void VM_Guest::setupDisplay(const std::size_t mode, const bool forced) {
+void VM_Guest::setupDisplay(const std::int32_t mode, const bool forced) {
     //                                HI   LO   TP   FP   MC
     static constexpr int32_t wArr[]{ 128,  64,  64,  64, 256 };
     static constexpr int32_t hArr[]{  64,  32,  64, 128, 192 };

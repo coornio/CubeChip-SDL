@@ -30,14 +30,19 @@ std::string ProgramControl::hexOpcode() const {
     return out.str();
 }
 
-void ProgramControl::init(const uint32_t _counter, const int32_t _ipf) {
+void ProgramControl::init(
+    const std::uint32_t _counter,
+    const std::int32_t _ipf
+) {
     counter   = _counter;
     ipf       = _ipf;
     framerate = 60.0;
     interrupt = Interrupt::NONE;
 }
 
-void ProgramControl::setSpeed(const int32_t _ipf) {
+void ProgramControl::setSpeed(
+    const std::int32_t _ipf
+) {
     if (_ipf) ipf = _ipf;
     boost = (ipf < 50) ? (ipf >> 1) : 0;
 }
@@ -62,13 +67,17 @@ void ProgramControl::skipInstruction() {
     counter += 2;
 }
 
-void ProgramControl::jumpInstruction(const uint32_t next) {
+void ProgramControl::jumpInstruction(
+    const std::uint32_t next
+) {
     if ((counter - 2 & limiter) == next) [[unlikely]]
         setInterrupt(Interrupt::STOP);
     else counter = next;
 }
 
-void ProgramControl::stepInstruction(const int32_t step) {
+void ProgramControl::stepInstruction(
+    const std::int32_t step
+) {
     if (!step) [[unlikely]]
         setInterrupt(Interrupt::STOP);
     else counter = counter - 2 + step & limiter;

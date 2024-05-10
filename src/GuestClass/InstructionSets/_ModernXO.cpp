@@ -15,7 +15,7 @@
 
 FunctionsForModernXO::FunctionsForModernXO(VM_Guest* ref) : vm(ref) {}
 
-void FunctionsForModernXO::scrollUP(const std::size_t N) {
+void FunctionsForModernXO::scrollUP(const std::int32_t N) {
 	if (!vm->Plane.selected) return;
 	vm->State.push_display = true;
 	auto& display{ vm->Mem->display };
@@ -28,7 +28,7 @@ void FunctionsForModernXO::scrollUP(const std::size_t N) {
 		display[H][X] |= vm->Plane.mask & display[H + N][X];
 	}
 };
-void FunctionsForModernXO::scrollDN(const std::size_t N) {
+void FunctionsForModernXO::scrollDN(const std::int32_t N) {
 	if (!vm->Plane.selected) return;
 	vm->State.push_display = true;
 	auto& display{ vm->Mem->display };
@@ -40,7 +40,7 @@ void FunctionsForModernXO::scrollDN(const std::size_t N) {
 		display[H][X] |= vm->Plane.mask & display[H - N][X];
 	}
 };
-void FunctionsForModernXO::scrollLT(const std::size_t) {
+void FunctionsForModernXO::scrollLT(const std::int32_t) {
 	if (!vm->Plane.selected) return;
 	vm->State.push_display = true;
 	auto& display{ vm->Mem->display };
@@ -54,7 +54,7 @@ void FunctionsForModernXO::scrollLT(const std::size_t) {
 		display[H][X] |=  vm->Plane.mask & mask;
 	}
 };
-void FunctionsForModernXO::scrollRT(const std::size_t) {
+void FunctionsForModernXO::scrollRT(const std::int32_t) {
 	if (!vm->Plane.selected) return;
 	vm->State.push_display = true;
 	auto& display{ vm->Mem->display };
@@ -106,7 +106,12 @@ void FunctionsForModernXO::drawByte(
 	applyBrush(vm->Mem->display[Y][R], DATA_R);
 }
 
-void FunctionsForModernXO::drawSprite(std::size_t VX, std::size_t VY, std::size_t N, std::size_t I) {
+void FunctionsForModernXO::drawSprite(
+	std::int32_t VX,
+	std::int32_t VY,
+	std::int32_t  N,
+	std::uint32_t I
+) {
 	if (!vm->Plane.selected) {
 		vm->Reg->V[0xF] = 0;
 		return;

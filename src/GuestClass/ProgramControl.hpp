@@ -25,31 +25,31 @@ class ProgramControl final {
     FncSetInterface*& fncSet;
 
 public:
-    int32_t ipf{}, boost{};
+    std::int32_t ipf{}, boost{};
     double framerate{};
 
-    std::size_t limiter{};
-    std::size_t screenMode{};
-    uint32_t opcode{};
-    uint32_t counter{};
+    std::size_t   limiter{};
+    std::int32_t  screenMode{};
+    std::uint32_t opcode{};
+    std::uint32_t counter{};
 
     Interrupt interrupt{};
 
     struct TimerData {
-        uint8_t delay{};
-        uint8_t sound{};
+        std::uint8_t delay{};
+        std::uint8_t sound{};
     } Timer;
 
     explicit ProgramControl(VM_Guest*, FncSetInterface*&);
     std::string hexOpcode() const;
 
-    void init(uint32_t, int32_t);
-    void setSpeed(int32_t);
+    void init(std::uint32_t, std::int32_t);
+    void setSpeed(std::int32_t);
     void setFncSet(FncSetInterface*);
 
     void skipInstruction();
-    void jumpInstruction(uint32_t);
-    void stepInstruction(int32_t);
+    void jumpInstruction(std::uint32_t);
+    void stepInstruction(std::int32_t);
 
     void requestHalt();
     void setInterrupt(Interrupt);
