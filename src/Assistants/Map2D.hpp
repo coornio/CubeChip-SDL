@@ -170,13 +170,13 @@ class Map2D {
 
         T& operator[](
             const std::int_fast32_t col
-            ) {
+        ) {
             return *(begin() + col);
         }
 
         const T& operator[](
             const std::int_fast32_t col
-            ) const {
+        ) const {
             return *(begin() + col);
         }
     };
@@ -261,7 +261,7 @@ public:
 
     Map2D& operator=(
         const Map2D& other
-        ) {
+    ) {
         if (this != &other && mSize == other.mSize) {
             std::copy(other.begin(), other.end(), begin());
         }
@@ -504,26 +504,26 @@ public:
     T& operator()(
         const std::int_fast32_t row,
         const std::int_fast32_t col
-        ) {
+    ) {
         return at_raw(row, col);
     }
 
     const T& operator()(
         const std::int_fast32_t row,
         const std::int_fast32_t col
-        ) const {
+    ) const {
         return at_raw(row, col);
     }
 
     MapRowProxy operator[](
         const std::int_fast32_t row
-        ) {
+    ) {
         return MapRowProxy(mBegin() + row * mCols, mCols);
     }
 
     const MapRowProxy operator[](
         const std::int_fast32_t row
-        ) const {
+    ) const {
         return MapRowProxy(mBegin() + row * mCols, mCols);
     }
 
