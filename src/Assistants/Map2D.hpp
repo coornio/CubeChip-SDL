@@ -25,9 +25,7 @@ class Map2D {
     std::size_t          mSize;
     std::unique_ptr<T[]> pData;
 
-    T* mBegin()       noexcept { return pData.get(); }
     T* mBegin() const noexcept { return pData.get(); }
-    T* mEnd()         noexcept { return pData.get() + mSize; }
     T* mEnd()   const noexcept { return pData.get() + mSize; }
 
     class MapRowProxy final {
@@ -43,6 +41,33 @@ class Map2D {
             : mBegin(begin)
             , mLength(length)
         {}
+
+        MapRowProxy& operator*() noexcept {
+            return *this;
+        }
+
+        MapRowProxy& operator->() noexcept {
+            return *this;
+        }
+
+        MapRowProxy& operator++() noexcept {
+            mBegin += mLength;
+            return *this;
+        }
+
+        MapRowProxy operator++(int) {
+            auto tmp{ *this };
+            mBegin += mLength;
+            return tmp;
+        }
+
+        bool operator==(const MapRowProxy& other) const noexcept {
+            return mBegin == other.mBegin;
+        }
+
+        bool operator!=(const MapRowProxy& other) const noexcept {
+            return mBegin != other.mBegin;
+        }
 
         T* begin()       noexcept { return mBegin; }
         T* begin() const noexcept { return mBegin; }
@@ -156,47 +181,6 @@ class Map2D {
         }
     };
 
-    class MapIterProxy final {
-        const T*                mBegin;
-        const std::int_fast32_t mLength;
-
-    public:
-        MapIterProxy(
-            const T*                begin,
-            const std::int_fast32_t length
-        ) noexcept
-            : mBegin(begin)
-            , mLength(length)
-        {}
-
-        MapRowProxy& operator*() noexcept {
-            return reinterpret_cast<MapRowProxy&>(*this);
-        }
-
-        MapRowProxy& operator->() noexcept {
-            return reinterpret_cast<MapRowProxy&>(*this);
-        }
-
-        MapIterProxy& operator++() noexcept {
-            mBegin += mLength;
-            return *this;
-        }
-
-        MapIterProxy operator++(int) {
-            auto tmp{ *this };
-            mBegin += mLength;
-            return tmp;
-        }
-
-        bool operator==(const MapIterProxy& other) const noexcept {
-            return mBegin == other.mBegin;
-        }
-
-        bool operator!=(const MapIterProxy& other) const noexcept {
-            return mBegin != other.mBegin;
-        }
-    };
-
     explicit Map2D(
         const bool              view,
         const std::int_fast32_t rows,
@@ -216,6 +200,21 @@ class Map2D {
 public:
     ~Map2D() = default;
     Map2D(Map2D&&) = default;
+
+    Map2D(
+        const Map2D& other
+    )
+        : Map2D(
+            false,
+            other.mRows,
+            other.mCols,
+            other.mPosY,
+            other.mPosX
+        )
+    {
+        std::copy(other.mBegin(), other.mEnd(), mBegin());
+    }
+
     Map2D(
         const std::int_fast32_t rows = 1,
         const std::int_fast32_t cols = 1
@@ -269,14 +268,6 @@ public:
         return *this;
     }
     Map2D& operator=(Map2D&&) = default;
-
-    Map2D& linearCopy(
-        const Map2D& other
-    ) {
-        const auto len{ std::min(mSize, other.mSize) };
-        std::copy_n(other.mBegin(), len, mBegin());
-        return *this;
-    }
 
     std::size_t       size() const { return mSize; }
     std::int_fast32_t lenX() const { return mCols; }
@@ -339,6 +330,14 @@ public:
             std::min(std::max<std::int_fast32_t>(0, posX), std::abs(cols - mCols)),
             this
         );
+    }
+
+    Map2D& linearCopy(
+        const Map2D& other
+    ) {
+        const auto len{ std::min(mSize, other.mSize) };
+        std::copy_n(other.mBegin(), len, mBegin());
+        return *this;
     }
 
     Map2D& resize(
@@ -529,11 +528,9 @@ public:
     }
 
 public:
-    MapIterProxy begin()       noexcept { return MapIterProxy(mBegin(), mCols); }
-    MapIterProxy begin() const noexcept { return MapIterProxy(mBegin(), mCols); }
-    MapIterProxy end()         noexcept { return MapIterProxy(mEnd(), mCols); }
-    MapIterProxy end()   const noexcept { return MapIterProxy(mEnd(), mCols); }
+    MapRowProxy begin() const noexcept { return MapRowProxy(mBegin(), mCols); }
+    MapRowProxy end()   const noexcept { return MapRowProxy(mEnd(), mCols); }
 
-    const MapIterProxy cbegin() const noexcept { return begin(); }
-    const MapIterProxy cend()   const noexcept { return end(); }
+    const MapRowProxy cbegin() const noexcept { return begin(); }
+    const MapRowProxy cend()   const noexcept { return end(); }
 };
