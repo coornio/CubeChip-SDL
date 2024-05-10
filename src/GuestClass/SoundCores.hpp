@@ -38,7 +38,7 @@ public:
 
         void setTone(std::size_t, std::size_t);
         void setTone(std::size_t);
-        void render(std::vector<int16_t>&);
+        void render(std::vector<std::int16_t>&);
     } C8{ this, BAS };
 
     /*------------------------------------------------------------------*/
@@ -49,7 +49,7 @@ public:
         VM_Guest* vm;
 
         const float rate;
-        std::array<uint8_t, 16> pattern{};
+        std::array<std::uint8_t, 16> pattern{};
         float tone{};
         bool enabled{};
 
@@ -59,7 +59,7 @@ public:
 
         void setPitch(std::size_t);
         void loadPattern(std::size_t);
-        void render(std::vector<int16_t>&);
+        void render(std::vector<std::int16_t>&);
     } XO{ this, BAS, vm };
 
     /*------------------------------------------------------------------*/
@@ -82,6 +82,6 @@ public:
 
         void reset();
         void enable(std::size_t, std::size_t, std::size_t, bool);
-        void render(std::vector<int16_t>&);
+        void render(std::vector<std::int16_t>&);
     } MC{ this, BAS, vm };
 };

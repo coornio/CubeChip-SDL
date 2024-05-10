@@ -24,7 +24,7 @@ SoundCores::SoundCores(VM_Guest* parent, BasicAudioSpec* bas)
 
 void SoundCores::renderAudio() {
     const auto samplesPerFrame{ std::ceil(BAS->outFrequency / vm->Program->framerate) };
-    std::vector<int16_t> audioBuffer(static_cast<int32_t>(samplesPerFrame));
+    std::vector<std::int16_t> audioBuffer(static_cast<std::int32_t>(samplesPerFrame));
 
     if (beepFx0A) {
         C8.render(audioBuffer);
@@ -64,7 +64,7 @@ void SoundCores::Classic::setTone(const std::size_t vx) {
     tone = (160.0f + (vx >> 3 << 4)) / BAS->outFrequency;
 }
 
-void SoundCores::Classic::render(std::vector<int16_t>& buffer) {
+void SoundCores::Classic::render(std::vector<std::int16_t>& buffer) {
     for (auto& sample : buffer) {
         sample = Sound->wavePhase > 0.5f ? BAS->amplitude : -BAS->amplitude;
         Sound->wavePhase = std::fmod(Sound->wavePhase + tone, 1.0f);
@@ -101,9 +101,9 @@ void SoundCores::XOchip::loadPattern(std::size_t idx) {
     }
 }
 
-void SoundCores::XOchip::render(std::vector<int16_t>& buffer) {
+void SoundCores::XOchip::render(std::vector<std::int16_t>& buffer) {
     for (auto& sample : buffer) {
-        const auto step{ static_cast<int32_t>(std::clamp(Sound->wavePhase * 128.0f, 0.0f, 127.0f)) };
+        const auto step{ static_cast<std::int32_t>(std::clamp(Sound->wavePhase * 128.0f, 0.0f, 127.0f)) };
         const auto mask{ 1 << (7 - (step & 7)) };
         sample = pattern[step >> 3] & mask ? BAS->amplitude : -BAS->amplitude;
         Sound->wavePhase = std::fmod(Sound->wavePhase + tone, 1.0f);
@@ -149,9 +149,9 @@ void SoundCores::MegaChip::enable(
     pos    = 0.0;
 }
 
-void SoundCores::MegaChip::render(std::vector<int16_t>& buffer) {
+void SoundCores::MegaChip::render(std::vector<std::int16_t>& buffer) {
     for (auto& sample : buffer) {
-        auto   _curidx{ vm->mrw(start + static_cast<uint32_t>(pos))};
+        auto   _curidx{ vm->mrw(start + static_cast<std::uint32_t>(pos))};
         double _offset{ pos  + step };
 
         if (_offset >= length ) {
@@ -165,7 +165,7 @@ void SoundCores::MegaChip::render(std::vector<int16_t>& buffer) {
             }
         }
         pos    = _offset;
-        sample = static_cast<int16_t>(
+        sample = static_cast<std::int16_t>(
             (_curidx - 128) * BAS->volume
         );
     }
