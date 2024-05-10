@@ -29,7 +29,7 @@ class Map2D {
     T* mEnd()   const noexcept { return pData.get() + mSize; }
 
     class MapRowProxy final {
-        T* const                mBegin;
+        T*                      mBegin;
         const std::int_fast32_t mLength;
 
     public:
@@ -46,8 +46,8 @@ class Map2D {
             return *this;
         }
 
-        MapRowProxy& operator->() noexcept {
-            return *this;
+        MapRowProxy* operator->() noexcept {
+            return this;
         }
 
         MapRowProxy& operator++() noexcept {
