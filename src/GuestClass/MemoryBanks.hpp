@@ -10,35 +10,40 @@
 #include <vector>
 #include <cstddef>
 
+#include "../Assistants/Map2D.hpp"
 #include "Enums.hpp"
 
-template <typename T>
-using vec2D = std::vector<std::vector<T>>;
+//template <typename T>
+//using vec2D = std::vector<std::vector<T>>;
 
-template <typename T, auto X, auto Y = X>
-using arr2D = std::array<std::array<T, X>, Y>;
+//template <typename T, auto X, auto Y = X>
+//using arr2D = std::array<std::array<T, X>, Y>;
 
 class VM_Guest;
 
 class MemoryBanks final {
     VM_Guest* vm;
-    void (*applyViewportMask)(uint32_t&, std::size_t) {};
+    void (*applyViewportMask)(std::uint32_t&, std::uint32_t) {};
 
 public:
-    arr2D<uint32_t, 256, 192> display{};
-    arr2D<uint32_t,  16, 128> bufColor8x{};
-    arr2D<uint32_t, 256, 192> bufColorMC{};
-    arr2D<uint8_t,  256, 192> bufPalette{};
+    Map2D<std::uint32_t> display;
+    Map2D<std::uint32_t> bufColor8x;
+    Map2D<std::uint32_t> bufColorMC;
+    Map2D<std::uint8_t>  bufPalette;
+    //arr2D<uint32_t, 256, 192> display{};
+    //arr2D<uint32_t,  16, 128> bufColor8x{};
+    //arr2D<uint32_t, 256, 192> bufColorMC{};
+    //arr2D<uint8_t,  256, 192> bufPalette{};
 
-    std::vector<uint8_t>      ram{};
-    std::array<uint32_t, 256> palette{};
+    std::vector<std::uint8_t>      ram{};
+    std::array<std::uint32_t, 256> palette{};
 
     explicit MemoryBanks(VM_Guest*);
     void modifyViewport(BrushType);
     void changeViewportMask(BrushType);
 
     void flushBuffers(bool);
-    void loadPalette(std::size_t, std::size_t);
+    void loadPalette(std::int32_t, std::int32_t);
 
-    void clearPages(std::size_t);
+    void clearPages(std::int32_t);
 };

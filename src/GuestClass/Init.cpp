@@ -234,7 +234,20 @@ void VM_Guest::setupDisplay(const std::int32_t mode, const bool forced) {
     Plane.H = hArr[State.schip_legacy ? 0 : mode - 1]; Plane.Hb = Plane.H - 1;
     Plane.X = Plane.W >> 3; Program->screenMode = mode; Plane.Xb = Plane.X - 1;
 
-    if (forced) Mem->modifyViewport(BrushType::CLR);
+    if (State.mega_enabled) {
+        Mem->display.resize(!forced, Plane.H, Plane.W);
+        Mem->bufColorMC.resize(true, Plane.H, Plane.W);
+        Mem->bufPalette.resize(true, Plane.H, Plane.W);
+    }
+    else {
+        Mem->display.resize(!forced, Plane.H, Plane.X);
+        Mem->bufColorMC.resize(true, 1, 1);
+        Mem->bufPalette.resize(true, 1, 1);
+    }
+    if (State.chip8X_rom) {
+        Mem->bufColor8x.resize(false, Plane.H, Plane.X);
+    }
+    if (forced) State.push_display = true;
 
     Video->createTexture(Plane.W, Plane.H);
     Video->setTextureBlend(SDL_BLENDMODE_BLEND);
@@ -335,40 +348,37 @@ void VM_Guest::flushDisplay() {
     Video->lockTexture();
 
     if (State.mega_enabled) {
-        for (auto& row : Mem->display) {
-            for (auto& col : row) {
-                *pixels++ = col;
+        for (const auto& row : Mem->display) {
+            for (const auto& elem : row) {
+                *pixels++ = elem;
             }
         }
     }
     else if (State.xochip_color) {
-        for (auto H{ 0 }; H < Plane.H; ++H) {
-            for (auto X{ 0 }; X < Plane.X; ++X) {
+        for (const auto& row : Mem->display) {
+            for (const auto& elem : row) {
                 for (auto B{ 28 }; B >= 0; B -= 4) {
-                    const auto bit{ Mem->display[H][X] >> B & 0xF };
-                    *pixels++ = Color->bit[bit];
+                    *pixels++ = Color->bit[elem >> B & 0xF];
                 }
             }
         }
     }
     else if (State.chip8X_rom) {
         const auto mask{ State.chip8X_hires ? 0xFF : 0xFC };
-        for (auto H{ 0 }; H < Plane.H; ++H) {
-            for (auto X{ 0 }; X < Plane.X; ++X) {
-                const auto color{ Mem->bufColor8x[H & mask][X] };
+        for (auto Y{ 0 }; const auto& row : Mem->display) {
+            for (auto X{ 0 }; const auto& elem : row) {
+                const auto color{ Mem->bufColor8x[Y & mask][X++] };
                 for (auto B{ 7 }; B >= 0; --B) {
-                    const auto bit{ Mem->display[H][X] >> B & 0x1 };
-                    *pixels++ = bit ? color : Color->bit[0];
+                    *pixels++ = (elem >> B & 0x1) ? color : Color->bit[0];
                 }
-            }
+            }; ++Y;
         }
     }
     else {
-        for (auto H{ 0 }; H < Plane.H; ++H) {
-            for (auto X{ 0 }; X < Plane.X; ++X) {
+        for (const auto& row : Mem->display) {
+            for (const auto& elem : row) {
                 for (auto B{ 7 }; B >= 0; --B) {
-                    const auto bit{ (Mem->display[H][X] >> B) & 0x1 };
-                    *pixels++ = Color->bit[bit];
+                    *pixels++ = Color->bit[elem >> B & 1];
                 }
             }
         }

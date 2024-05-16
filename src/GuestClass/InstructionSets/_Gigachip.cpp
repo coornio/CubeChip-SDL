@@ -19,34 +19,26 @@ FunctionsForGigachip::FunctionsForGigachip(VM_Guest* parent)
 	: vm{ parent }
 {
 	chooseBlend(Blend::NORMAL);
-};
+}
 
 /*------------------------------------------------------------------*/
 
 void FunctionsForGigachip::scrollUP(const std::int32_t N) {
-	auto& display = vm->Mem->display;
-	std::rotate(display.begin(), display.begin() + N, display.end());
-
 	vm->State.push_display = true;
-};
+	vm->Mem->display.rotate(-N, 0);
+}
 void FunctionsForGigachip::scrollDN(const std::int32_t N) {
-	auto& display = vm->Mem->display;
-	std::rotate(display.begin(), display.end() - N, display.end());
-
 	vm->State.push_display = true;
-};
+	vm->Mem->display.rotate(+N, 0);
+}
 void FunctionsForGigachip::scrollLT(const std::int32_t N) {
-	for (auto& display : vm->Mem->display) {
-		std::rotate(display.begin(), display.begin() + N, display.end());
-	}
 	vm->State.push_display = true;
-};
+	vm->Mem->display.rotate(0, -N);
+}
 void FunctionsForGigachip::scrollRT(const std::int32_t N) {
-	for (auto& display : vm->Mem->display) {
-		std::rotate(display.begin(), display.end() - N, display.end());
-	}
 	vm->State.push_display = true;
-};
+	vm->Mem->display.rotate(0, +N);
+}
 
 /*------------------------------------------------------------------*/
 
@@ -110,7 +102,7 @@ uint32_t FunctionsForGigachip::blendPixel(
 	else {
 		return applyBlend(blendType);
 	}
-};
+}
 
 uint32_t FunctionsForGigachip::applyBlend(float (*blend)(const float, const float)) const {
 	float A{ 1.0f };
@@ -190,7 +182,7 @@ void FunctionsForGigachip::drawSprite(
 		}
 		VX -= vm->Trait.W;
 	}
-};
+}
 
 void FunctionsForGigachip::chooseBlend(
 	const std::size_t N

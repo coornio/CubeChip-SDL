@@ -22,40 +22,24 @@ FunctionsForMegachip::FunctionsForMegachip(VM_Guest* parent)
 	: vm{ parent }
 {
 	chooseBlend(Blend::NORMAL);
-};
+}
 
 void FunctionsForMegachip::scrollUP(const std::int32_t N) {
-	auto& display = vm->Mem->display;
-
-	std::rotate(display.begin(), display.begin() + N, display.end());
-	for (auto Z{ vm->Plane.H - N }; Z < vm->Plane.H; ++Z) {
-		display[Z].fill(0);
-	}
-	blendToDisplay(display, vm->Mem->bufColorMC);
-};
+	vm->Mem->display.shift(-N, 0);
+	blendToDisplay(vm->Mem->display, vm->Mem->bufColorMC);
+}
 void FunctionsForMegachip::scrollDN(const std::int32_t N) {
-	auto& display = vm->Mem->display;
-
-	std::rotate(display.begin(), display.end() - N, display.end());
-	for (auto Z{ 0 }; Z < N; ++Z) {
-		display[Z].fill(0);
-	}
-	blendToDisplay(display, vm->Mem->bufColorMC);
-};
+	vm->Mem->display.shift(+N, 0);
+	blendToDisplay(vm->Mem->display, vm->Mem->bufColorMC);
+}
 void FunctionsForMegachip::scrollLT(const std::int32_t N) {
-	for (auto& row : vm->Mem->display) {
-		std::rotate(row.begin(), row.begin() + N, row.end());
-		std::fill_n(row.end() - N, N, 0);
-	}
+	vm->Mem->display.shift(0, -N);
 	blendToDisplay(vm->Mem->display, vm->Mem->bufColorMC);
-};
+}
 void FunctionsForMegachip::scrollRT(const std::int32_t N) {
-	for (auto& row : vm->Mem->display) {
-		std::rotate(row.begin(), row.end() - N, row.end());
-		std::fill_n(row.begin(), N, 0);
-	}
+	vm->Mem->display.shift(0, +N);
 	blendToDisplay(vm->Mem->display, vm->Mem->bufColorMC);
-};
+}
 
 /*------------------------------------------------------------------*/
 
@@ -89,7 +73,7 @@ uint32_t FunctionsForMegachip::blendPixel(
 	dst.B = ( colorDst        & 0xFF) / 255.0f;
 
 	return applyBlend(blendType);
-};
+}
 
 uint32_t FunctionsForMegachip::applyBlend(
 	float (*blend)(const float, const float)
@@ -167,7 +151,7 @@ void FunctionsForMegachip::drawSprite(
 			colorDst = blendPixel(vm->Mem->palette[srcIndex], colorDst);
 		}
 	}
-};
+}
 
 void FunctionsForMegachip::chooseBlend(const std::size_t N) {
 	switch (N) {

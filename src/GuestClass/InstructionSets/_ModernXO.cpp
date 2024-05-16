@@ -13,7 +13,9 @@
 /*  class  FncSetInterface -> FunctionsForModernXO                  */
 /*------------------------------------------------------------------*/
 
-FunctionsForModernXO::FunctionsForModernXO(VM_Guest* ref) : vm(ref) {}
+FunctionsForModernXO::FunctionsForModernXO(VM_Guest* parent)
+	: vm{ parent }
+{}
 
 void FunctionsForModernXO::scrollUP(const std::int32_t N) {
 	if (!vm->Plane.selected) return;
@@ -27,7 +29,7 @@ void FunctionsForModernXO::scrollUP(const std::int32_t N) {
 		if (H >= N2) continue;
 		display[H][X] |= vm->Plane.mask & display[H + N][X];
 	}
-};
+}
 void FunctionsForModernXO::scrollDN(const std::int32_t N) {
 	if (!vm->Plane.selected) return;
 	vm->State.push_display = true;
@@ -39,7 +41,7 @@ void FunctionsForModernXO::scrollDN(const std::int32_t N) {
 		if (H < N) continue;
 		display[H][X] |= vm->Plane.mask & display[H - N][X];
 	}
-};
+}
 void FunctionsForModernXO::scrollLT(const std::int32_t) {
 	if (!vm->Plane.selected) return;
 	vm->State.push_display = true;
@@ -53,7 +55,7 @@ void FunctionsForModernXO::scrollLT(const std::int32_t) {
 		display[H][X] &= ~vm->Plane.mask;
 		display[H][X] |=  vm->Plane.mask & mask;
 	}
-};
+}
 void FunctionsForModernXO::scrollRT(const std::int32_t) {
 	if (!vm->Plane.selected) return;
 	vm->State.push_display = true;
@@ -67,7 +69,7 @@ void FunctionsForModernXO::scrollRT(const std::int32_t) {
 		display[H][X] &= ~vm->Plane.mask;
 		display[H][X] |=  vm->Plane.mask & mask;
 	}
-};
+}
 
 /*------------------------------------------------------------------*/
 
@@ -152,4 +154,4 @@ void FunctionsForModernXO::drawSprite(
 			drawByte(X1, SHL, X2, SHR, Y, bitBloat(vm->mrw(I++)) * mask);
 		}
 	}
-};
+}

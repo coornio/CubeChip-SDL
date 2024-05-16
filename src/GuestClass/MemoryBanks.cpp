@@ -15,19 +15,19 @@ void MemoryBanks::changeViewportMask(const BrushType type) {
     switch (type) {
 
         case BrushType::CLR:
-            applyViewportMask = [](uint32_t& pos, const std::size_t) { pos = 0; };
+            applyViewportMask = [](std::uint32_t& pos, const std::uint32_t) { pos = 0; };
             return;
 
         case BrushType::XOR:
-            applyViewportMask = [](uint32_t& pos, const std::size_t mask) { pos ^= mask; };
+            applyViewportMask = [](std::uint32_t& pos, const std::uint32_t mask) { pos ^= mask; };
             return;
 
         case BrushType::SUB:
-            applyViewportMask = [](uint32_t& pos, const std::size_t mask) { pos &= ~mask; };
+            applyViewportMask = [](std::uint32_t& pos, const std::uint32_t mask) { pos &= ~mask; };
             return;
 
         case BrushType::ADD:
-            applyViewportMask = [](uint32_t& pos, const std::size_t mask) { pos |= mask; };
+            applyViewportMask = [](std::uint32_t& pos, const std::uint32_t mask) { pos |= mask; };
             return;
     }
 }
@@ -36,22 +36,25 @@ void MemoryBanks::modifyViewport(const BrushType type) {
     vm->State.push_display = true;
     changeViewportMask(type);
 
-    for (auto H{ 0 }; H < vm->Plane.H; ++H)
-    for (auto X{ 0 }; X < vm->Plane.X; ++X)
-        applyViewportMask(display[H][X], vm->Plane.mask);
+    for (auto& row : display)
+        for (auto& elem : row)
+            applyViewportMask(elem, vm->Plane.mask);
 }
 
 void MemoryBanks::flushBuffers(const bool firstFlush) {
     vm->State.push_display = true;
 
     if (firstFlush) palette.fill(0);
-    else display = bufColorMC;
+    else display.copyLinear(bufColorMC);
 
-    for (auto& row : bufColorMC) row.fill(0);
-    for (auto& row : bufPalette) row.fill(0);
+    bufColorMC.wipeAll();
+    bufPalette.wipeAll();
+
+    //for (auto& row : bufColorMC) row.fill(0);
+    //for (auto& row : bufPalette) row.fill(0);
 }
 
-void MemoryBanks::loadPalette(std::size_t index, const std::size_t count) {
+void MemoryBanks::loadPalette(std::int32_t index, const std::int32_t count) {
     for (auto idx{ 0 }; idx < count; index += 4) {
         palette[++idx] =
             vm->mrw(index + 0) << 24 |
@@ -61,10 +64,9 @@ void MemoryBanks::loadPalette(std::size_t index, const std::size_t count) {
     }
 }
 
-void MemoryBanks::clearPages(std::size_t H) {
+void MemoryBanks::clearPages(std::int32_t H) {
     vm->State.push_display = true;
 
     while (H++ < vm->Plane.H)
-        for (auto X{ 0 }; X < vm->Plane.X; ++X)
-            display[H][X] = 0;
+        display[H].wipeAll();
 }

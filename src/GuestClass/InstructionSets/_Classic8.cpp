@@ -14,49 +14,40 @@
 /*  class  FncSetInterface -> FunctionsForClassic8                  */
 /*------------------------------------------------------------------*/
 
-FunctionsForClassic8::FunctionsForClassic8(VM_Guest* ref) : vm(ref) {}
+FunctionsForClassic8::FunctionsForClassic8(VM_Guest* parent)
+	: vm{ parent }
+{}
 
 void FunctionsForClassic8::scrollUP(const std::int32_t N) {
 	vm->State.push_display = true;
-	auto& display{ vm->Mem->display };
-	const auto N2{ vm->Plane.H - N };
-
-	for (auto H{ 0 }; H < vm->Plane.H; ++H) 
-	for (auto X{ 0 }; X < vm->Plane.X; ++X)
-		display[H][X] = (H >= N2) ? 0 : display[H + N][X];
-};
+	vm->Mem->display.shift(-N, 0);
+}
 void FunctionsForClassic8::scrollDN(const std::int32_t N) {
 	vm->State.push_display = true;
-	auto& display{ vm->Mem->display };
-
-	for (auto H{ vm->Plane.Hb }; H >= 0; --H)
-	for (auto X{ 0 }; X < vm->Plane.X; ++X)
-		display[H][X] = (H < N) ? 0 : display[H - N][X];
-};
+	vm->Mem->display.shift(+N, 0);
+}
 void FunctionsForClassic8::scrollLT(const std::int32_t) {
 	vm->State.push_display = true;
-	auto& display{ vm->Mem->display };
 
-	for (auto H{ 0 }; H < vm->Plane.H; ++H)
+	for (auto& row : vm->Mem->display)
 	for (auto X{ 0 }; X < vm->Plane.X; ++X) {
-		auto mask{ display[H][X] << 4 };
+		auto mask{ row[X] << 4 };
 		if (X < vm->Plane.Xb)
-			mask |= display[H][X + 1] >> 4;
-		display[H][X] = static_cast<uint8_t>(mask);
-	};
-};
+			mask |= row[X + 1] >> 4;
+		row[X] = static_cast<uint8_t>(mask);
+	}
+}
 void FunctionsForClassic8::scrollRT(const std::int32_t) {
 	vm->State.push_display = true;
-	auto& display{ vm->Mem->display };
 
-	for (auto H{ 0 }; H < vm->Plane.H; ++H)
+	for (auto& row : vm->Mem->display)
 	for (auto X{ vm->Plane.Xb }; X >= 0; --X) {
-		auto mask{ display[H][X] >> 4 };
+		auto mask{ row[X] >> 4 };
 		if (X > 0)
-			mask |= display[H][X - 1] << 4;
-		display[H][X] = static_cast<uint8_t>(mask);
+			mask |= row[X - 1] << 4;
+		row[X] = static_cast<uint8_t>(mask);
 	}
-};
+}
 
 /*------------------------------------------------------------------*/
 
@@ -117,7 +108,7 @@ void FunctionsForClassic8::drawSprite(
 		if (!wide) continue;
 		drawByte(X1, SHL, X2, SHR, Y, vm->mrw(I++));
 	}
-};
+}
 
 void FunctionsForClassic8::drawColors(
 	const std::int32_t VX,
@@ -148,4 +139,4 @@ void FunctionsForClassic8::drawColors(
 		}
 		vm->State.chip8X_hires = false;
 	}
-};
+}

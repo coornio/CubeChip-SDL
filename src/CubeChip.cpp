@@ -57,6 +57,7 @@ int32_t SDL_main(int32_t argc, char* argv[]) {
 
         if (Guest->setupMachine()) {
             // need to adjust the FrameLimiter object with new framerate
+            // here if the Guest needs to change it, aka legacy superchip
             BVS->changeTitle(HDM->file.c_str());
         }
         else {
