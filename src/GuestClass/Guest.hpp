@@ -46,23 +46,13 @@ public:
     BasicVideoSpec* Video;
     BasicAudioSpec* Audio;
 
-private:
-    std::unique_ptr<HexInput>       uInput;
-    std::unique_ptr<Well512>        uWrand;
-    std::unique_ptr<MemoryBanks>    uMem;
-    std::unique_ptr<ProgramControl> uProgram;
-    std::unique_ptr<SoundCores>     uSound;
-    std::unique_ptr<Registers>      uReg;
-    std::unique_ptr<DisplayColors>  uColor;
-
-public:
-    HexInput*       Input;
-    Well512*        Wrand;
-    MemoryBanks*    Mem;
-    ProgramControl* Program;
-    SoundCores*     Sound;
-    Registers*      Reg;
-    DisplayColors*  Color;
+    std::unique_ptr<HexInput>       Input;
+    std::unique_ptr<Well512>        Wrand;
+    std::unique_ptr<MemoryBanks>    Mem;
+    std::unique_ptr<ProgramControl> Program;
+    std::unique_ptr<SoundCores>     Sound;
+    std::unique_ptr<Registers>      Reg;
+    std::unique_ptr<DisplayColors>  Color;
 
     enum Resolution : unsigned {
         ERROR,

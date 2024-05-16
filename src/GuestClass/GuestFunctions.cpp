@@ -25,35 +25,17 @@ VM_Guest::VM_Guest(
 	BasicVideoSpec* bvs_ptr,
 	BasicAudioSpec* bas_ptr
 )
-	: File     { hdm_ptr }
-	, Video    { bvs_ptr }
-	, Audio    { bas_ptr }
-	/*
-	, uInput   { std::make_unique<HexInput>() }
-	, uWrand   { std::make_unique<Well512>() }
-	, uMem     { std::make_unique<MemoryBanks>(this) }
-	, uProgram { std::make_unique<ProgramControl>(this, currFncSet) }
-	, uSound   { std::make_unique<SoundCores>(this, Audio) }
-	, uReg     { std::make_unique<Registers>(this) }
-	, uColor   { std::make_unique<DisplayColors>() }
-	*/
-{
-	uInput   = std::make_unique<HexInput>();
-	uWrand   = std::make_unique<Well512>();
-	uMem     = std::make_unique<MemoryBanks>(this);
-	uProgram = std::make_unique<ProgramControl>(this, currFncSet);
-	uSound   = std::make_unique<SoundCores>(this, Audio);
-	uReg     = std::make_unique<Registers>(this);
-	uColor   = std::make_unique<DisplayColors>();
-
-	Input   = uInput.get();
-	Wrand   = uWrand.get();
-	Mem     = uMem.get();
-	Program = uProgram.get();
-	Sound   = uSound.get();
-	Reg     = uReg.get();
-	Color   = uColor.get();
-}
+	: File    { hdm_ptr }
+	, Video   { bvs_ptr }
+	, Audio   { bas_ptr }
+	, Input   { std::make_unique<HexInput>() }
+	, Wrand   { std::make_unique<Well512>() }
+	, Mem     { std::make_unique<MemoryBanks>(this) }
+	, Program { std::make_unique<ProgramControl>(this, currFncSet) }
+	, Sound   { std::make_unique<SoundCores>(this, Audio) }
+	, Reg     { std::make_unique<Registers>(this) }
+	, Color   { std::make_unique<DisplayColors>() }
+{}
 VM_Guest::~VM_Guest() = default;
 
 uint8_t& VM_Guest::mrw(std::size_t idx) { return Mem->ram[idx & Program->limiter]; }
