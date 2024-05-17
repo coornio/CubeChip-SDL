@@ -1,0 +1,19 @@
+THIS ROM FILE IS PUBLIC DOMAIN, I CARE NOT WHAT HAPPENS TO IT.
+--------------------------------------------------------------
+
+This rom is crudely designed to test how hardened an emulator is to unconventional instruction calls and out-of bounds accesses. It comprises of 4 main tests:
+
+1) Input: Tests how values 16+ are handled by the Ex9E and ExA1 instructions. The V[x] value should be wrapped around at the 4 low bits. If they're ignored (or you crash), you fail the test.
+
+2) Draw: Tests whether you overwrite V[15] first before you copy the coordinates of V[x] and V[y]. If you do, you fail the test, because either x or y could be the 15th register. It also tests whether you wrap the initial coordinates stored in those registers. If you do not, you fail the test.
+
+3) HEX: Tests whether you can draw hex sprites to the screen with the Fx29 instruction when the V[x] value is 16+. If you don't draw anything, or draw gibberish, you fail the test.
+
+4) Memory: This test is complicated, and not fully fledged. IT EXPECTS A 4KB MEMORY LIMIT. If you run with more memory than that by default, it will fail no matter what, but it's not an incorrect setup.
+
+The memory test will test the following:
+	a) If you modify the V[15] register on Fx1E. If you did, it's an immediate fail, and shame on you for buying into rumors :P
+	b) If it can cause crashes via the Fx33/Fx55/Fx65 instructions by overflowing the I register and attempting to read/write.
+	c) in the case of a VIP emulator, it also attempts additional reads/writes to ensure it's using 4KB of memory. It does not currently work in other configurations of less or more system memory.
+
+In addition, the test checks both whether your emulator wraps reads/writes around in memory, or block them. Both behaviors are valid, for it is undefined behavior what should happen when you attempt access beyond bounds. The former is easy to test, but the latter cannot be too accurate, as there's no standard method of handling it. The only "block" method it is able to test is when out-of-bounds memory accesses return a 0 (such as Cadmium, for now anyway).
