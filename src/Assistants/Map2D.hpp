@@ -31,8 +31,10 @@ public:
 	using std::vector<T>::vector;
 
 	#pragma region MapRow+
-	constexpr MapRow& operator+(const MapRow& other) {
-		printf("ROW& + ROW& (A)\n");
+	constexpr MapRow& operator+(
+		const MapRow& other
+	) requires arithmetic<T> {
+		//printf("ROW& + ROW& (A)\n");
 		const auto mSize{ std::min(this->size(), other.size()) };
 		for (auto i{ 0 }; std::cmp_less(i, mSize); ++i) {
 			(*this)[i] += other[i];
@@ -40,8 +42,10 @@ public:
 		return *this;
 	}
 
-	constexpr MapRow& operator+(MapRow&& other) {
-		printf("ROW& + ROW&& (B)\n");
+	constexpr MapRow& operator+(
+		MapRow&& other
+	) requires arithmetic<T> {
+		//printf("ROW& + ROW&& (B)\n");
 		const auto mSize{ std::min(this->size(), other.size()) };
 		for (auto i{ 0 }; std::cmp_less(i, mSize); ++i) {
 			(*this)[i] += std::move(other[i]);
@@ -49,16 +53,10 @@ public:
 		return *this;
 	}
 
-	constexpr MapRow& operator+(const arithmetic auto& value) & {
-		printf("ROW& + V& (C)\n");
-		for (T& elem : *this) {
-			elem += value;
-		}
-		return *this;
-	}
-
-	constexpr MapRow& operator+(const arithmetic auto& value) && {
-		printf("ROW&& + VAL& (D)\n");
+	constexpr MapRow& operator+(
+		const arithmetic auto& value
+	) requires arithmetic<T> {
+		//printf("ROW& + V& (C)\n");
 		for (T& elem : *this) {
 			elem += value;
 		}
@@ -75,7 +73,7 @@ template<typename T> requires arithmetic<T> || ar_pointer<T>
 class Map2D {
 	using paramS = std::int_fast32_t;
 	using paramU = std::size_t;
-	using underT = std::remove_pointer_t<T>;
+	using underT = std::remove_const_t<std::remove_pointer_t<T>>;
 
 	paramS     mRows;
 	paramS     mCols;
@@ -90,6 +88,26 @@ class Map2D {
 	T* mBeginR() const noexcept { return mEnd() - 1; }
 	T* mEndR()   const noexcept { return mBegin() - 1; }
 
+public:
+	auto size() const { return mSize; }
+	auto lenX() const { return mCols; }
+	auto lenY() const { return mRows; }
+	auto posX() const { return mPosX; }
+	auto posY() const { return mPosY; }
+
+	auto at_raw(const integral auto idx)
+	-> T& { return pData.get()[idx]; }
+
+	auto at_raw(const integral auto idx) const
+	-> const T& { return pData.get()[idx]; }
+
+	auto at_raw(const integral auto row, const integral auto col)
+	-> T& { return pData.get()[row * mCols + col]; }
+
+	auto at_raw(const integral auto row, const integral auto col) const
+	-> const T& { return pData.get()[row * mCols + col]; }
+
+private:
 	class RowProxy final {
 		T*           mBegin;
 		const paramS mLength;
@@ -253,24 +271,32 @@ class Map2D {
 
 
 		#pragma region ROW =
-		RowProxy & operator=(const arithmetic auto& value) {
+		RowProxy & operator=(
+			const arithmetic auto& value
+		) requires arithmetic<T> {
 			std::fill(begin(), end(), static_cast<T>(value));
 			return *this;
 		}
-		RowProxy& operator=(const RowProxy& other) {
+		RowProxy& operator=(
+			const RowProxy& other
+		) requires arithmetic<T> {
 			printf("!!! RowProxy copy assignment of RowProxy\n");
 			if (this == &other) [[unlikely]] return *this;
 			const auto mSize{ std::min<paramU>(other.size(), mLength) };
 			std::copy(other.begin(), other.begin() + mSize, mBegin);
 			return *this;
 		}
-		RowProxy& operator=(MapRow<T>&& other) {
+		RowProxy& operator=(
+			MapRow<T>&& other
+		) requires arithmetic<T> {
 			printf("!!! RowProxy move assignment of MapRow\n");
 			const auto mSize{ std::min<paramU>(other.size(), mLength) };
 			std::move(other.begin(), other.begin() + mSize, mBegin);
 			return *this;
 		}
-		RowProxy& operator=(const MapRow<T>& other) {
+		RowProxy& operator=(
+			const MapRow<T>& other
+		) requires arithmetic<T> {
 			printf("!!! RowProxy copy assignment of MapRow\n");
 			if (this == &other) [[unlikely]] return *this;
 			const auto mSize{ std::min<paramU>(other.size(), mLength) };
@@ -280,31 +306,39 @@ class Map2D {
 		#pragma endregion
 
 		#pragma region ROW +=
-		RowProxy & operator+=(const arithmetic auto& value) {
-			printf("RowProxy& += c_value& (1)\n");
+		RowProxy & operator+=(
+			const arithmetic auto& value
+		) requires arithmetic<T> {
+			//printf("RowProxy& += c_value& (1)\n");
 			for (T& elem : *this) {
 				elem += static_cast<T>(value);
 			}
 			return *this;
 		}
-		RowProxy& operator+=(const RowProxy& other) {
-			printf("RowProxy& += RowProxy& (2)\n");
+		RowProxy& operator+=(
+			const RowProxy& other
+		) requires arithmetic<T> {
+			//printf("RowProxy& += RowProxy& (2)\n");
 			const auto mSize{ std::min(other.mLength, mLength) };
 			for (auto i{ 0 }; std::cmp_less(i, mSize); ++i) {
 				(*this)[i] += other[i];
 			}
 			return *this;
 		}
-		RowProxy& operator+=(MapRow<T>&& other) {
-			printf("RowProxy& += MapRow&& (3)\n");
+		RowProxy& operator+=(
+			MapRow<T>&& other
+		) requires arithmetic<T> {
+			//printf("RowProxy& += MapRow&& (3)\n");
 			const auto mSize{ std::min<paramU>(other.size(), mLength) };
 			for (auto i{ 0 }; std::cmp_less(i, mSize); ++i) {
 				(*this)[i] += std::move(other[i]);
 			}
 			return *this;
 		}
-		RowProxy& operator+=(const MapRow<T>& other) {
-			printf("RowProxy& += c_MapRow& (4)\n");
+		RowProxy& operator+=(
+			const MapRow<T>& other
+		) requires arithmetic<T> {
+			//printf("RowProxy& += c_MapRow& (4)\n");
 			const auto mSize{ std::min<paramU>(other.size(), mLength) };
 			for (auto i{ 0 }; std::cmp_less(i, mSize); ++i) {
 				(*this)[i] += other[i];
@@ -326,8 +360,7 @@ class Map2D {
 		, mPosY(posY)
 		, mPosX(posX)
 		, mSize(rows * cols)
-		, pData(std::make_unique<T[]>(mSize))
-	{}
+		, pData(std::make_unique<T[]>(mSize)) {}
 
 public:
 	~Map2D()       = default; // default destructor
@@ -344,9 +377,16 @@ public:
 		std::copy(other.mBegin(), other.mEnd(), mBegin());
 	}
 
+	Map2D& operator=(Map2D&&) = default;   // move assignment
+	Map2D& operator=(const Map2D& other) { // copy assignment
+		if (this != &other && mSize == other.mSize) {
+			std::copy(other.begin(), other.end(), begin());
+		}
+		return *this;
+	}
+
 	Map2D() requires arithmetic<T>
-		: Map2D(1, 1)
-	{}
+		: Map2D(1, 1) {}
 
 	Map2D(
 		const integral auto rows,
@@ -360,6 +400,37 @@ public:
 		)
 	{}
 
+
+	auto makeView( // initial view()
+		const integral auto rows = 0,
+		const integral auto cols = 0,
+		const integral auto posY = 0,
+		const integral auto posX = 0
+	) const requires arithmetic<T> {
+		return Map2D<const T*>(
+			std::cmp_equal(rows, 0) ? mRows : static_cast<paramS>(rows),
+			std::cmp_equal(cols, 0) ? mRows : static_cast<paramS>(cols),
+			static_cast<paramS>(std::abs(posY)),
+			static_cast<paramS>(std::abs(posX)),
+			this
+		);
+	}
+
+	void setView( // reseat view() with an original map
+		const Map2D<underT>* const base,
+		const integral auto rows = 0,
+		const integral auto cols = 0,
+		const integral auto posY = 0,
+		const integral auto posX = 0
+	) requires ar_pointer<T> {
+		mRows = std::cmp_equal(rows, 0) ? mRows : static_cast<paramS>(rows);
+		mCols = std::cmp_equal(cols, 0) ? mRows : static_cast<paramS>(cols);
+		mPosY = static_cast<paramS>(std::abs(posY));
+		mPosX = static_cast<paramS>(std::abs(posX));
+
+		// add stuff to recreate our pointer array
+	}
+
 	explicit Map2D( // initial view() -> constructor :: type is T (T*), expects pointer to T (T)
 		const paramS rows,
 		const paramS cols,
@@ -371,9 +442,39 @@ public:
 	{
 		for (auto y{ 0 }; std::cmp_less(y, mRows); ++y) {
 			for (auto x{ 0 }; std::cmp_less(x, mCols); ++x) {
-				at_raw(y, x) = const_cast<T>(&base->at_raw(y + posY, x + posX));
+				at_raw(y, x) = &base->at_raw((y + posY) % mRows, (x + posX) % mCols);
 			}
 		}
+	}
+
+	auto makeView( // chained view()
+		const integral auto rows = 0,
+		const integral auto cols = 0,
+		const integral auto posY = 0,
+		const integral auto posX = 0
+	) const requires ar_pointer<T> {
+		return Map2D(
+			std::cmp_equal(rows, 0) ? mRows : static_cast<paramS>(rows),
+			std::cmp_equal(cols, 0) ? mRows : static_cast<paramS>(cols),
+			static_cast<paramS>(std::abs(posY)),
+			static_cast<paramS>(std::abs(posX)),
+			this, nullptr
+		);
+	}
+
+	void setView( // reseat view() with another view map
+		const Map2D<underT*>* const base,
+		const integral auto rows = 0,
+		const integral auto cols = 0,
+		const integral auto posY = 0,
+		const integral auto posX = 0
+	) requires ar_pointer<T> {
+		mRows = std::cmp_equal(rows, 0) ? mRows : static_cast<paramS>(rows);
+		mCols = std::cmp_equal(cols, 0) ? mRows : static_cast<paramS>(cols);
+		mPosY = static_cast<paramS>(std::abs(posY));
+		mPosX = static_cast<paramS>(std::abs(posX));
+
+		// add stuff to recreate our pointer array
 	}
 
 	explicit Map2D( // chained view() -> constructor :: type is T (T*), expects pointer to T* (T)
@@ -388,72 +489,10 @@ public:
 	{
 		for (auto y{ 0 }; std::cmp_less(y, mRows); ++y) {
 			for (auto x{ 0 }; std::cmp_less(x, mCols); ++x) {
-				at_raw(y, x) = base->at_raw(y + posY, x + posX);
+				at_raw(y, x) = base->at_raw((y + posY) % base->lenY(), (x + posX) % base->lenX());
 			}
 		}
 	}
-
-	Map2D& operator=(Map2D&&) = default;   // move assignment
-	Map2D& operator=(const Map2D& other) { // copy assignment
-		if (this != &other && mSize == other.mSize) {
-			std::copy(other.begin(), other.end(), begin());
-		}
-		return *this;
-	}
-
-	auto size() const { return mSize; }
-	auto lenX() const { return mCols; }
-	auto lenY() const { return mRows; }
-
-	auto at_raw(const integral auto idx)
-	-> T&
-	{ return pData.get()[idx]; }
-
-	auto at_raw(const integral auto idx) const
-	-> const T&
-	{ return pData.get()[idx]; }
-
-	auto at_raw(const integral auto row, const integral auto col)
-	-> T&
-	{ return pData.get()[row * mCols + col]; }
-
-	auto at_raw(const integral auto row, const integral auto col) const
-	-> const T&
-	{ return pData.get()[row * mCols + col]; }
-
-
-	// initial view() requires T (T), returns as T*
-	auto view(
-		const paramS rows,
-		const paramS cols,
-		const paramS posY = 0,
-		const paramS posX = 0
-	) const requires arithmetic<T> {
-		return Map2D<T*>(
-			std::min(std::max<paramS>(1, rows), mRows),
-			std::min(std::max<paramS>(1, cols), mCols),
-			std::min(std::max<paramS>(0, posY), std::abs(rows - mRows)),
-			std::min(std::max<paramS>(0, posX), std::abs(cols - mCols)),
-			this
-		);
-	}
-
-	// chained view() requires T (T*), returns as T*
-	auto view(
-		const paramS rows,
-		const paramS cols,
-		const paramS posY = 0,
-		const paramS posX = 0
-	) const requires ar_pointer<T> {
-		return Map2D(
-			std::min(std::max<paramS>(1, rows), mRows),
-			std::min(std::max<paramS>(1, cols), mCols),
-			std::min(std::max<paramS>(0, posY), std::abs(rows - mRows)),
-			std::min(std::max<paramS>(0, posX), std::abs(cols - mCols)),
-			this, nullptr
-		);
-	}
-
 
 	Map2D& copyLinear(
 		const Map2D& other
@@ -592,19 +631,19 @@ public:
 		return *this;
 	}
 
-	Map2D& rev() {
+	Map2D& reverse() {
 		std::reverse(mBegin(), mEnd());
 		return *this;
 	}
 
-	Map2D& revY() {
+	Map2D& reverseY() {
 		for (auto row{ 0 }; std::cmp_less(row, mRows / 2); ++row) {
 			(*this)[row].swap((*this)[mRows - row - 1]);
 		}
 		return *this;
 	}
 
-	Map2D& revX() {
+	Map2D& reverseX() {
 		for (auto row : *this) {
 			std::reverse(row.begin(), row.end());
 		}
