@@ -52,11 +52,11 @@ void VM_Guest::cycle() {
 	instructionLoop();
 
 	Sound->renderAudio();
-	if (!State.push_display) return;
-	flushDisplay();
 
-	Video->renderPresent();
-	State.push_display = false;
+	if (State.push_display) {
+		flushDisplay();
+		State.push_display = false;
+	}
 }
 
 void VM_Guest::instructionLoop() {
