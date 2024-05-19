@@ -81,13 +81,15 @@ reset_all:
 					}
 
 				case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
-					BVS->renderPresent();
 					break;
 
 				case SDL_EVENT_WINDOW_MOVED:
 					break;
 
 				case SDL_EVENT_WINDOW_MINIMIZED:
+					break;
+
+				case SDL_EVENT_WINDOW_MAXIMIZED:
 					break;
 
 				case SDL_EVENT_WINDOW_RESTORED:
@@ -98,7 +100,7 @@ reset_all:
 		if (!Frame.check(Host.doBench()
 			? FrameLimiter::SPINLOCK
 			: FrameLimiter::SLEEP
-			)) continue;
+		)) continue;
 
 		if (kb.isPressed(KEY(ESCAPE))) {
 			if (Host.isReady()) {
@@ -129,6 +131,7 @@ reset_all:
 			Guest->cycle();
 		}
 
+		BVS->renderPresent();
 		kb.updateCopy();
 		mb.updateCopy();
 	}
