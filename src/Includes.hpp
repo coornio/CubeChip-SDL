@@ -1,7 +1,7 @@
 /*
-    This Source Code Form is subject to the terms of the Mozilla Public
-    License, v. 2.0. If a copy of the MPL was not distributed with this
-    file, You can obtain one at http://mozilla.org/MPL/2.0/.
+	This Source Code Form is subject to the terms of the Mozilla Public
+	License, v. 2.0. If a copy of the MPL was not distributed with this
+	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
 #pragma once
@@ -16,7 +16,7 @@ template <typename R, typename T>
 [[gnu::always_inline]]
 #endif
 constexpr R as(T&& t) {
-    return static_cast<R>(std::forward<T>(t));
+	return static_cast<R>(std::forward<T>(t));
 }
 template <typename R, typename T>
 #ifdef _MSC_VER
@@ -25,7 +25,7 @@ template <typename R, typename T>
 [[gnu::always_inline]]
 #endif
 constexpr R to(T&& t) {
-    return reinterpret_cast<R>(std::forward<T>(t));
+	return reinterpret_cast<R>(std::forward<T>(t));
 }
 */
 

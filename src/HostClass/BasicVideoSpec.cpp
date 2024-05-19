@@ -8,8 +8,8 @@
 #include <stdexcept>
 
 BasicVideoSpec::BasicVideoSpec(const Sint32 w, const Sint32 h)
-	: emuName{ "CubeChip" }
-	, emuVersion{ "[09.05.24]" }
+	: emuName   { "CubeChip" }
+	, emuVersion{ "[20.05.24]" }
 {
 	try {
 		SDL_InitSubSystem(SDL_INIT_VIDEO);
@@ -54,7 +54,7 @@ void BasicVideoSpec::createRenderer() {
 		window, nullptr, 0
 		/*SDL_RENDERER_PRESENTVSYNC*/
 		// conflicts with the current frameLimiter setup
-		// don't know how to marry the two..
+		// will need to thread things out, etc.
 	);
 
 	if (!renderer) {

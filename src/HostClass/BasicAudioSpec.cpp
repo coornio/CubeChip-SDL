@@ -1,7 +1,7 @@
 /*
-    This Source Code Form is subject to the terms of the Mozilla Public
-    License, v. 2.0. If a copy of the MPL was not distributed with this
-    file, You can obtain one at http://mozilla.org/MPL/2.0/.
+	This Source Code Form is subject to the terms of the Mozilla Public
+	License, v. 2.0. If a copy of the MPL was not distributed with this
+	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
 #include "BasicAudioSpec.hpp"
@@ -11,35 +11,35 @@ static constexpr Sint32 VOL_MAX{ 255 };
 static constexpr Sint32 VOL_MIN{ 0 };
 
 BasicAudioSpec::BasicAudioSpec(const Sint32 freq)
-    : outFrequency{ freq }
-    , spec{ SDL_AUDIO_S16, 1, freq }
+	: outFrequency{ freq }
+	, audiospec   { SDL_AUDIO_S16, 1, freq }
 {
-    SDL_InitSubSystem(SDL_INIT_AUDIO);
-    setVolume(VOL_MAX);
+	SDL_InitSubSystem(SDL_INIT_AUDIO);
+	setVolume(VOL_MAX);
 
-    stream = SDL_OpenAudioDeviceStream(
-        SDL_AUDIO_DEVICE_DEFAULT_OUTPUT,
-        &spec, nullptr, nullptr
-    );
-    device = SDL_GetAudioStreamDevice(stream);
-    SDL_ResumeAudioDevice(device);
+	stream = SDL_OpenAudioDeviceStream(
+		SDL_AUDIO_DEVICE_DEFAULT_OUTPUT,
+		&audiospec, nullptr, nullptr
+	);
+	device = SDL_GetAudioStreamDevice(stream);
+	SDL_ResumeAudioDevice(device);
 }
 
 BasicAudioSpec::~BasicAudioSpec() {
-    if (stream) SDL_DestroyAudioStream(stream);
-    SDL_QuitSubSystem(SDL_INIT_AUDIO);
+	if (stream) SDL_DestroyAudioStream(stream);
+	SDL_QuitSubSystem(SDL_INIT_AUDIO);
 }
 
 void BasicAudioSpec::pushAudioData(const void* const data, const std::size_t len) {
-    SDL_PutAudioStreamData(stream, data, static_cast<Sint32>(len * 2));
+	SDL_PutAudioStreamData(stream, data, static_cast<Sint32>(len * 2));
 }
 
 void BasicAudioSpec::setVolume(const Sint32 vol) {
-    volume = std::clamp(vol, VOL_MIN, VOL_MAX);
-    amplitude = static_cast<Sint16>(16 * volume);
+	volume = std::clamp(vol, VOL_MIN, VOL_MAX);
+	amplitude = static_cast<Sint16>(16 * volume);
 }
 
 void BasicAudioSpec::changeVolume(const Sint32 delta) {
-    volume = std::clamp(volume + delta, VOL_MIN, VOL_MAX);
-    amplitude = static_cast<Sint16>(16 * volume);
+	volume = std::clamp(volume + delta, VOL_MIN, VOL_MAX);
+	amplitude = static_cast<Sint16>(16 * volume);
 }

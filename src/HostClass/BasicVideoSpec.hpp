@@ -24,16 +24,16 @@ class BasicVideoSpec {
 		  std::string windowTitle;
 
 public:
-	explicit BasicVideoSpec(const Sint32, const Sint32);
+	explicit BasicVideoSpec(Sint32, Sint32);
 	~BasicVideoSpec();
 
 	static bool showErrorBoxSDL(std::string_view);
 	static bool showErrorBox(std::string_view, std::string_view);
 
 	void changeTitle(const char* = nullptr);
-	void createWindow(const Sint32, const Sint32);
+	void createWindow(Sint32, Sint32);
 	void createRenderer();
-	void createTexture(const Sint32, const Sint32);
+	void createTexture(Sint32, Sint32);
 
 	float   aspect{};
 	Sint32  ppitch{};

@@ -38,9 +38,10 @@ VM_Guest::VM_Guest(
 {}
 VM_Guest::~VM_Guest() = default;
 
-uint8_t& VM_Guest::mrw(std::size_t idx) { return Mem->ram[idx & Program->limiter]; }
-uint8_t& VM_Guest::VX()                 { return Reg->V[(Program->opcode >> 8) & 0xF]; }
-uint16_t VM_Guest::NNNN()               { return mrw(Program->counter) << 8 | mrw(Program->counter + 1); }
+double   VM_Guest::fetchFramerate()           { return Program->framerate; }
+uint8_t& VM_Guest::mrw(const std::size_t idx) { return Mem->ram[idx & Program->limiter]; }
+uint8_t& VM_Guest::VX()                       { return Reg->V[(Program->opcode >> 8) & 0xF]; }
+uint16_t VM_Guest::NNNN()                     { return mrw(Program->counter) << 8 | mrw(Program->counter + 1); }
 
 void VM_Guest::cycle() {
 	if (!Program->ipf) return;

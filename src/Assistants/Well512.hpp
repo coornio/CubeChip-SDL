@@ -7,25 +7,28 @@
 #pragma once
 
 #include <chrono>
+#include <cstdint>
 #include <array>
 
 class Well512 {
-	std::array<unsigned int, 16> state{};
-	unsigned int index{};
+	std::array<std::uint32_t, 16> state{};
+	std::uint32_t index{};
+
 public:
-	using result_type = unsigned int;
+	using result_type = std::uint32_t;
 	static constexpr result_type min() { return 0x00000000u; }
 	static constexpr result_type max() { return 0xFFFFFFFFu; }
 
 	Well512() {
 		using chrono = std::chrono::high_resolution_clock;
 		auto seed = chrono::now().time_since_epoch().count();
-		for (auto& element : state)
-			element = static_cast<unsigned int>(seed >>= 1);
+		for (auto& element : state) {
+			element = static_cast<std::uint32_t>(seed >>= 1);
+		}
 	}
 
 	result_type get() {
-		unsigned int a{}, b{}, c{}, d{};
+		std::uint32_t a{}, b{}, c{}, d{};
 
 		a = state[index];
 		c = state[(index + 13u) & 15u];
