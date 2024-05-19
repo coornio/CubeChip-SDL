@@ -48,6 +48,7 @@ constexpr R to(T&& t) {
 
 // for convenience
 using json = nlohmann::json;
+using std::string_literals::operator""s;
 
 using namespace blogger;
 using namespace bic;
