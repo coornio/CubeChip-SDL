@@ -35,10 +35,8 @@ public:
 
 	Interrupt interrupt{};
 
-	struct TimerData {
-		std::uint8_t delay{};
-		std::uint8_t sound{};
-	} Timer;
+	std::uint8_t timerDelay{};
+	std::uint8_t timerSound{};
 
 	explicit ProgramControl(VM_Guest*, FncSetInterface*&);
 	std::string hexOpcode() const;

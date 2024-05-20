@@ -38,7 +38,7 @@ VM_Guest::VM_Guest(
 {}
 VM_Guest::~VM_Guest() = default;
 
-bool VM_Guest::isSystemPaused() const { return _isSystemPaused; }
+bool VM_Guest::isSystemPaused() const { return _isSystemPaused && Program->ipf; }
 bool VM_Guest::isDisplayReady() const { return _isDisplayReady; }
 
 VM_Guest& VM_Guest::isSystemPaused(const bool state) { _isSystemPaused = state; return *this; }
@@ -50,13 +50,22 @@ uint8_t& VM_Guest::VX()                       { return Reg->V[(Program->opcode >
 uint16_t VM_Guest::NNNN()                     { return mrw(Program->counter) << 8 | mrw(Program->counter + 1); }
 
 void VM_Guest::cycle() {
-	if (!Program->ipf) return;
-
 	Input->refresh();
 	Program->handleTimersDec();
 	Program->handleInterrupt();
-	instructionLoop();
 
+	instructionLoop();
+	readyAudioVideo();
+}
+
+void VM_Guest::readyAudioVideo() {
+	const auto color{
+		Sound->MC.isOn() ? 0xFF000000u :
+		Sound->XO.isOn() ? 0xFF000000u :
+		Color->bit[Program->timerSound != 0]
+	};
+	
+	Video->visualBeep(color);
 	Sound->renderAudio();
 
 	if (isDisplayReady()) {
@@ -470,7 +479,7 @@ void VM_Guest::instructionLoop() {
 						}
 						break;
 					case 0x07:							// FX07 - set VX = delay timer
-						Reg->V[X] = Program->Timer.delay;
+						Reg->V[X] = Program->timerDelay;
 						break;
 					case 0x0A:							// FX0A - set VX = key, wait for keypress
 						Sound->C8.setTone(Reg->SP, Program->counter);
@@ -480,14 +489,14 @@ void VM_Guest::instructionLoop() {
 						}
 						break;
 					case 0x15:							// FX15 - set delay timer = VX
-						Program->Timer.delay = Reg->V[X];
+						Program->timerDelay = Reg->V[X];
 						break;
 					case 0x18:							// FX18 - set sound timer = VX
 						if (!State.chip8X_rom) [[likely]] {
 							Sound->C8.setTone(Reg->SP, Program->counter);
 						}
 						Sound->beepFx0A = false;
-						Program->Timer.sound = Reg->V[X] + (Reg->V[X] == 1);
+						Program->timerSound = Reg->V[X] + (Reg->V[X] == 1);
 						break;
 					case 0x1B:							// FX1B - skip VX amount of bytes *CHIP-8E*
 						Program->counter += Reg->V[X];
@@ -514,7 +523,7 @@ void VM_Guest::instructionLoop() {
 						break;
 					case 0x4F:							// FX4F - set delay timer = VX and wait *CHIP-8E*
 						Program->setInterrupt(Interrupt::WAIT);
-						Program->Timer.delay = Reg->V[X];
+						Program->timerDelay = Reg->V[X];
 						break;
 					case 0x55:							// FX55 - store V0..VX to RAM at I..I+X
 						for (auto idx{ 0 }; idx <= X; ++idx)

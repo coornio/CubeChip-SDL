@@ -9,8 +9,7 @@
 #include "DisplayColors.hpp"
 
 DisplayColors::DisplayColors()
-	: bit   { BitColors }
-	, buzzer{ bit[1] }
+	: bit{ BitColors }
 {
 	setMegaHex(0xFFFFFFFF);
 }
@@ -47,8 +46,4 @@ void DisplayColors::cycleBackground() {
 
 uint32_t DisplayColors::getFore8X(const std::size_t idx) const {
 	return ForeColors[idx & 0x7];
-}
-
-uint32_t DisplayColors::getBuzzer() const {
-	return buzzer;
 }

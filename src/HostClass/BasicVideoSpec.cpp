@@ -114,11 +114,15 @@ bool BasicVideoSpec::showErrorBox(
 	);
 }
 
+void BasicVideoSpec::visualBeep(Uint32) {
+	// stub
+}
+
 void BasicVideoSpec::lockTexture() {
 	void* pixel_ptr{ pixels };
 	SDL_LockTexture(
 		texture, nullptr,
-		static_cast<void**>(&pixel_ptr),
+		&pixel_ptr,
 		&ppitch
 	);
 	pixels = static_cast<Uint32*>(pixel_ptr);
@@ -147,8 +151,11 @@ void BasicVideoSpec::resizeWindow(Sint32 W, Sint32 H) {
 	SDL_SetWindowSize(window, W, H);
 }
 
-void BasicVideoSpec::renderPresent() {
+void BasicVideoSpec::renderPresent(const bool running) {
 	SDL_RenderClear(renderer);
+
+
+
 	SDL_RenderTexture(renderer, texture, nullptr, nullptr);
 	SDL_RenderPresent(renderer);
 }

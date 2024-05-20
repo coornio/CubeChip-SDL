@@ -18,18 +18,19 @@
 /*------------------------------------------------------------------*/
 
 SoundCores::SoundCores(VM_Guest* parent, BasicAudioSpec* bas)
-	: vm{ parent }
-	, BAS{ bas } {}
+	: vm { parent }
+	, BAS{ bas }
+{}
 
 void SoundCores::renderAudio() {
 	const auto samplesPerFrame{ std::ceil(BAS->outFrequency / vm->Program->framerate) };
-	std::vector<std::int16_t> audioBuffer(static_cast<std::int32_t>(samplesPerFrame));
+	std::vector<std::int16_t> audioBuffer(static_cast<std::uint32_t>(samplesPerFrame));
 
 	if (beepFx0A) {
 		C8.render(audioBuffer);
 	} else if (MC.isOn()) {
 		MC.render(audioBuffer);
-	} else if (!vm->Program->Timer.sound) {
+	} else if (!vm->Program->timerSound) {
 		wavePhase = 0.0f;
 	} else if (XO.isOn()) {
 		XO.render(audioBuffer);

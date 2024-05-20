@@ -42,9 +42,9 @@ public:
 	);
 	~VM_Guest();
 
-	HomeDirManager* File;
-	BasicVideoSpec* Video;
-	BasicAudioSpec* Audio;
+	HomeDirManager* const File;
+	BasicVideoSpec* const Video;
+	BasicAudioSpec* const Audio;
 
 	std::unique_ptr<HexInput>       Input;
 	std::unique_ptr<Well512>        Wrand;
@@ -128,21 +128,22 @@ public:
 	// init functions
 	bool setupMachine();
 	bool romTypeCheck();
-	bool loadRomToRam(const std::size_t, const std::size_t);
+	bool loadRomToRam(std::size_t, std::size_t);
 	void initPlatform();
 	void loadFontData();
-	void setupDisplay(const std::int32_t, const bool = false);
+	void setupDisplay(std::int32_t, bool = false);
 	void flushDisplay();
 
 	// core functions
 	void cycle();
 	void instructionLoop();
+	void readyAudioVideo();
 
 	template <std::size_t variant>
 	void instructionDecoder();
 
 	double   fetchFramerate();
-	uint8_t& mrw(const std::size_t);
+	uint8_t& mrw(std::size_t);
 	uint8_t& VX();
 	uint16_t NNNN();
 };

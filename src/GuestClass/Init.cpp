@@ -203,9 +203,9 @@ void VM_Guest::initPlatform() {
 	if (State.schip_legacy) {
 		Program->setFncSet(&SetLegacySC);
 		Program->framerate = 64.0; // match HP48 framerate
-		Quirk.shiftVX     = true;
-		Quirk.jmpRegX     = true;
-		Quirk.idxRegNoInc = true;
+		Quirk.shiftVX      = true;
+		Quirk.jmpRegX      = true;
+		Quirk.idxRegNoInc  = true;
 	}
 	if (State.chip8X_rom) {
 		Color->cycleBackground();
@@ -214,9 +214,9 @@ void VM_Guest::initPlatform() {
 			Mem->bufColor8x[0][0] = Color->getFore8X(2);
 		else {
 			Mem->bufColor8x[0][0] =
-				Mem->bufColor8x[0][1] =
-				Mem->bufColor8x[4][0] =
-				Mem->bufColor8x[4][1] = Color->getFore8X(2);
+			Mem->bufColor8x[0][1] =
+			Mem->bufColor8x[4][0] =
+			Mem->bufColor8x[4][1] = Color->getFore8X(2);
 		}
 	}
 
@@ -226,7 +226,7 @@ void VM_Guest::initPlatform() {
 void VM_Guest::setupDisplay(const std::int32_t mode, const bool forced) {
 	//                                HI   LO   TP   FP   MC
 	static constexpr int32_t wArr[]{ 128,  64,  64,  64, 256 };
-	static constexpr int32_t hArr[]{ 64,  32,  64, 128, 192 };
+	static constexpr int32_t hArr[]{  64,  32,  64, 128, 192 };
 
 	Plane.W = wArr[State.schip_legacy ? 0 : mode - 1]; Plane.Wb = Plane.W - 1;
 	Plane.H = hArr[State.schip_legacy ? 0 : mode - 1]; Plane.Hb = Plane.H - 1;

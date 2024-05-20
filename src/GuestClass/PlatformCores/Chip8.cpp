@@ -206,19 +206,19 @@ void VM_Guest::instructionDecoder() {
 			} break;
 			case 0xF: switch (LO) {
 				case 0x07:								// FX07 - set VX = delay timer
-					Reg->V[X] = Program->Timer.delay;
+					Reg->V[X] = Program->timerDelay;
 					break;
 				case 0x0A:								// FX0A - set VX = key, wait for keypress
 					Sound->C8.setTone(Reg->SP, Program->counter);
 					Program->setInterrupt(Interrupt::FX0A);
 					break;
 				case 0x15:								// FX15 - set delay timer = VX
-					Program->Timer.delay = Reg->V[X];
+					Program->timerDelay = Reg->V[X];
 					break;
 				case 0x18:								// FX18 - set sound timer = VX
 					Sound->C8.setTone(Reg->SP, Program->counter);
 					Sound->beepFx0A = false;
-					Program->Timer.sound = Reg->V[X] + (Reg->V[X] == 1);
+					Program->timerSound = Reg->V[X] + (Reg->V[X] == 1);
 					break;
 				case 0x1E:								// FX1E - set I = I + VX
 					Reg->I += Reg->V[X];

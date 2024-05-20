@@ -40,9 +40,10 @@ public:
 	Uint32* pixels{};
 	double  framerate{ 60.0 };
 
+	void visualBeep(Uint32);
 	void lockTexture();
 	void unlockTexture();
-	void renderPresent();
+	void renderPresent(bool = false);
 
 	void resizeWindow(Sint32 = 0, Sint32 = 0);
 
