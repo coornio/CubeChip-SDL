@@ -33,7 +33,7 @@ public:
 	void changeTitle(const char* = nullptr);
 	void createWindow(Sint32, Sint32);
 	void createRenderer();
-	void createTexture(Sint32, Sint32);
+	void createTexture(Sint32 = 0, Sint32 = 0);
 
 	float   aspect{};
 	Sint32  ppitch{};

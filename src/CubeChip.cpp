@@ -103,7 +103,7 @@ reset_all:
 			if (Host.isReady()) {
 				Host.isReady(false);
 				BVS->changeTitle();
-				BVS->createTexture(1, 1);
+				BVS->createTexture();
 				BVS->renderPresent();
 				goto reset_all;
 			} else {

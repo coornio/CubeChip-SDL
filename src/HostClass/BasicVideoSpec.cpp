@@ -62,8 +62,16 @@ void BasicVideoSpec::createRenderer() {
 	}
 }
 
-void BasicVideoSpec::createTexture(const Sint32 width, const Sint32 height) {
+void BasicVideoSpec::createTexture(Sint32 width, Sint32 height) {
 	quitTexture();
+
+	if (!width && !height) {
+		texture = nullptr;
+		return;
+	} else {
+		width  = std::max<Sint32>(std::abs(width),  1);
+		height = std::max<Sint32>(std::abs(height), 1);
+	}
 
 	texture = SDL_CreateTexture(
 		renderer,
