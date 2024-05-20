@@ -34,7 +34,7 @@ int32_t SDL_main(int32_t argc, char* argv[]) {
 
 	try {
 		HDM = std::make_unique<HomeDirManager>("CubeChip_SDL");
-		BVS = std::make_unique<BasicVideoSpec>(1000, 500);
+		BVS = std::make_unique<BasicVideoSpec>(1040, 528);
 		BAS = std::make_unique<BasicAudioSpec>(48'000);
 	} catch (...) { return EXIT_FAILURE; }
 

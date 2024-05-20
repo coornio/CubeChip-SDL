@@ -21,7 +21,19 @@ class BasicVideoSpec {
 
 	const std::string emuName;
 	const std::string emuVersion;
-		  std::string windowTitle;
+	      std::string windowTitle;
+
+	SDL_FRect outlineRect{};
+	SDL_Color outlineColor{};
+	Sint32    outlineSize{};
+	SDL_FRect textureRect{};
+	Sint32    ppitch{};
+
+	bool      visualBeep{};
+	bool      scanLineOn{};
+
+public:
+	Uint32*   pixels{};
 
 public:
 	explicit BasicVideoSpec(Sint32, Sint32);
@@ -35,21 +47,16 @@ public:
 	void createRenderer();
 	void createTexture(Sint32 = 0, Sint32 = 0);
 
-	float   aspect{};
-	Sint32  ppitch{};
-	Uint32* pixels{};
-	double  framerate{ 60.0 };
-
-	void visualBeep(Uint32);
+	void AudioOutline(Uint32);
 	void lockTexture();
 	void unlockTexture();
-	void renderPresent(bool = false);
+	void renderPresent();
 
 	void resizeWindow(Sint32 = 0, Sint32 = 0);
 
 	void setTextureAlpha(std::size_t);
 	void setTextureBlend(SDL_BlendMode);
-	void setAspectRatio(std::pair<Sint32, Sint32>);
+	void setAspectRatio(Sint32, Sint32, Sint32);
 
 	void quitWindow();
 	void quitRenderer();

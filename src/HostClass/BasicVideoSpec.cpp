@@ -56,7 +56,7 @@ void BasicVideoSpec::createRenderer() {
 		// conflicts with the current frameLimiter setup
 		// will need to thread things out, etc.
 	);
-
+	
 	if (!renderer) {
 		throw std::runtime_error("SDL Error: Renderer");
 	}
@@ -114,8 +114,16 @@ bool BasicVideoSpec::showErrorBox(
 	);
 }
 
-void BasicVideoSpec::visualBeep(Uint32) {
-	// stub
+void BasicVideoSpec::AudioOutline(Uint32 color) {
+	outlineColor = {
+		static_cast<Uint8>((color >> 16) & 0xFF),
+		static_cast<Uint8>((color >>  8) & 0xFF),
+		static_cast<Uint8>( color        & 0xFF),
+		SDL_ALPHA_OPAQUE
+	};
+
+	outlineRect.w = textureRect.w + 2.0f * outlineSize;
+	outlineRect.h = textureRect.h + 2.0f * outlineSize;
 }
 
 void BasicVideoSpec::lockTexture() {
@@ -138,25 +146,66 @@ void BasicVideoSpec::setTextureBlend(const SDL_BlendMode blend) {
 	SDL_SetTextureBlendMode(texture, blend);
 }
 
-void BasicVideoSpec::setAspectRatio(const std::pair<Sint32, Sint32> res) {
+void BasicVideoSpec::setAspectRatio(
+	const Sint32 width,
+	const Sint32 height,
+	const Sint32 size
+) {
+	const auto oSize{ std::abs(size) };
+
+	outlineSize = oSize;
+	scanLineOn  = oSize == size;
+
+	textureRect = {
+		oSize  * 1.0f,
+		oSize  * 1.0f,
+		width  * 1.0f,
+		height * 1.0f
+	};
+
 	SDL_SetRenderLogicalPresentation(
-		renderer, 
-		res.first, 
-		res.second, 
-		SDL_LOGICAL_PRESENTATION_LETTERBOX, 
+		renderer,
+		width  + outlineSize * 2,
+		height + outlineSize * 2,
+		SDL_LOGICAL_PRESENTATION_LETTERBOX,
 		SDL_SCALEMODE_NEAREST
 	);
 }
+
 void BasicVideoSpec::resizeWindow(Sint32 W, Sint32 H) {
 	SDL_SetWindowSize(window, W, H);
 }
 
-void BasicVideoSpec::renderPresent(const bool running) {
+void BasicVideoSpec::renderPresent() {
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 	SDL_RenderClear(renderer);
 
+	if (texture) {
+		SDL_SetRenderDrawColor(
+			renderer,
+			outlineColor.r, outlineColor.g,
+			outlineColor.b, outlineColor.a
+		);
 
+		SDL_RenderFillRect(renderer, &outlineRect);
+		SDL_RenderTexture(renderer, texture, nullptr, &textureRect);
 
-	SDL_RenderTexture(renderer, texture, nullptr, nullptr);
+		if (scanLineOn) {
+			SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+			SDL_SetRenderDrawColor(renderer, 0, 0, 0, 32);
+
+			for (auto y{ 4 }; y < outlineRect.h; y += outlineSize) {
+				SDL_RenderLine(
+					renderer,
+					outlineRect.x, y,
+					outlineRect.w, y
+				);
+			}
+		}
+	} else {
+		SDL_RenderTexture(renderer, texture, nullptr, nullptr);
+	}
+
 	SDL_RenderPresent(renderer);
 }
 

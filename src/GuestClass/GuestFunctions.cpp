@@ -60,12 +60,12 @@ void VM_Guest::cycle() {
 
 void VM_Guest::readyAudioVideo() {
 	const auto color{
-		Sound->MC.isOn() ? 0xFF000000u :
-		Sound->XO.isOn() ? 0xFF000000u :
+		State.mega_enabled ? 0xFF000000u :
+		Sound->XO.isOn() ? Color->bit[0] :
 		Color->bit[Program->timerSound != 0]
 	};
 	
-	Video->visualBeep(color);
+	Video->AudioOutline(color);
 	Sound->renderAudio();
 
 	if (isDisplayReady()) {

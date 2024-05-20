@@ -224,13 +224,17 @@ void VM_Guest::initPlatform() {
 }
 
 void VM_Guest::setupDisplay(const std::int32_t mode, const bool forced) {
-	//                                HI   LO   TP   FP   MC
-	static constexpr int32_t wArr[]{ 128,  64,  64,  64, 256 };
-	static constexpr int32_t hArr[]{  64,  32,  64, 128, 192 };
+	//                                 HI   LO   TP   FP   MC
+	static constexpr int32_t wSize[]{ 128,  64,  64,  64, 256 };
+	static constexpr int32_t hSize[]{  64,  32,  64, 128, 192 };
 
-	Plane.W = wArr[State.schip_legacy ? 0 : mode - 1]; Plane.Wb = Plane.W - 1;
-	Plane.H = hArr[State.schip_legacy ? 0 : mode - 1]; Plane.Hb = Plane.H - 1;
-	Plane.X = Plane.W >> 3; Program->screenMode = mode; Plane.Xb = Plane.X - 1;
+	const auto modeSelect{ State.schip_legacy ? 0 : mode - 1 };
+
+	Plane.W = wSize[modeSelect]; Plane.Wb = Plane.W - 1;
+	Plane.H = hSize[modeSelect]; Plane.Hb = Plane.H - 1;
+	Plane.X = Plane.W >> 3;      Plane.Xb = Plane.X - 1;
+
+	Program->screenMode = mode;
 
 	if (State.mega_enabled) {
 		Mem->display.resize(!forced, Plane.H, Plane.W);
@@ -247,8 +251,11 @@ void VM_Guest::setupDisplay(const std::int32_t mode, const bool forced) {
 
 	Video->createTexture(Plane.W, Plane.H);
 	Video->setTextureBlend(SDL_BLENDMODE_BLEND);
-	Video->setAspectRatio(State.mega_enabled ? std::pair{ 256, 192 } : std::pair{ 128, 64 });
-	Video->resizeWindow();
+	Video->setAspectRatio(
+		State.mega_enabled ? 256 : 512,
+		State.mega_enabled ? 192 : 256,
+		State.mega_enabled ?  -2 :   4
+	);
 
 	isDisplayReady(true);
 
@@ -261,7 +268,6 @@ void VM_Guest::setupDisplay(const std::int32_t mode, const bool forced) {
 	} else if (forced && Quirk.waitVblank) {
 		Program->ipf -= Program->boost *= -1;
 	}
-
 };
 
 void VM_Guest::loadFontData() {
