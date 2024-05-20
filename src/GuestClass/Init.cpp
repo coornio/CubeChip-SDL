@@ -199,7 +199,6 @@ void VM_Guest::initPlatform() {
 	if (State.chip8_legacy) {
 		Quirk.clearVF    = true;
 		Quirk.waitVblank = true;
-		Quirk.accuCycles = true;
 	}
 	if (State.schip_legacy) {
 		Program->setFncSet(&SetLegacySC);

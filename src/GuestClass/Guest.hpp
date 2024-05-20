@@ -99,18 +99,6 @@ public:
 		void setFlags(std::size_t);
 	} Trait;
 
-	struct EmulationQuirks final {
-		bool clearVF{};
-		bool jmpRegX{};
-		bool shiftVX{};
-		bool idxRegNoInc{};
-		bool idxRegMinus{};
-		bool waitVblank{};
-		bool waitScroll{};
-		bool wrapSprite{};
-		bool accuCycles{};
-	} Quirk;
-
 	struct BehaviorStates final {
 		bool chip8E_rom{};
 		bool chip8X_rom{};
@@ -125,6 +113,17 @@ public:
 		bool gigachip_rom{};
 		bool mega_enabled{};
 	} State;
+
+	struct EmulationQuirks final {
+		bool clearVF{};
+		bool jmpRegX{};
+		bool shiftVX{};
+		bool idxRegNoInc{};
+		bool idxRegMinus{};
+		bool waitVblank{};
+		bool waitScroll{};
+		bool wrapSprite{};
+	} Quirk;
 
 	// init functions
 	bool setupMachine();
