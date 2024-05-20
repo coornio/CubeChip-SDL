@@ -19,15 +19,15 @@ FunctionsForClassic8::FunctionsForClassic8(VM_Guest* parent)
 {}
 
 void FunctionsForClassic8::scrollUP(const std::int32_t N) {
-	vm->State.push_display = true;
+	vm->isDisplayReady(true);
 	vm->Mem->display.shift(-N, 0);
 }
 void FunctionsForClassic8::scrollDN(const std::int32_t N) {
-	vm->State.push_display = true;
+	vm->isDisplayReady(true);
 	vm->Mem->display.shift(+N, 0);
 }
 void FunctionsForClassic8::scrollLT(const std::int32_t) {
-	vm->State.push_display = true;
+	vm->isDisplayReady(true);
 
 	for (auto& row : vm->Mem->display)
 	for (auto X{ 0 }; X < vm->Plane.X; ++X) {
@@ -38,7 +38,7 @@ void FunctionsForClassic8::scrollLT(const std::int32_t) {
 	}
 }
 void FunctionsForClassic8::scrollRT(const std::int32_t) {
-	vm->State.push_display = true;
+	vm->isDisplayReady(true);
 
 	for (auto& row : vm->Mem->display)
 	for (auto X{ vm->Plane.Xb }; X >= 0; --X) {
@@ -77,7 +77,7 @@ void FunctionsForClassic8::drawSprite(
 	std::int32_t  N,
 	std::uint32_t I
 ) {
-	vm->State.push_display = true;
+	vm->isDisplayReady(true);
 
 	VX &= vm->Plane.Wb;
 	VY &= vm->Plane.Hb;
@@ -116,7 +116,7 @@ void FunctionsForClassic8::drawColors(
 	const std::int32_t idx,
 	const std::int32_t N
 ) {
-	vm->State.push_display = true;
+	vm->isDisplayReady(true);
 
 	if (N) {
 		const auto X{ VX >> 3 };

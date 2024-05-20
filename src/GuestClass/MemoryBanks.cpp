@@ -33,7 +33,7 @@ void MemoryBanks::changeViewportMask(const BrushType type) {
 }
 
 void MemoryBanks::modifyViewport(const BrushType type) {
-	vm->State.push_display = true;
+	vm->isDisplayReady(true);
 	changeViewportMask(type);
 
 	for (auto& row : display)
@@ -42,7 +42,7 @@ void MemoryBanks::modifyViewport(const BrushType type) {
 }
 
 void MemoryBanks::flushBuffers(const bool firstFlush) {
-	vm->State.push_display = true;
+	vm->isDisplayReady(true);
 
 	if (firstFlush) palette.fill(0);
 	else display.copyLinear(bufColorMC);
@@ -62,7 +62,7 @@ void MemoryBanks::loadPalette(std::int32_t index, const std::int32_t count) {
 }
 
 void MemoryBanks::clearPages(std::int32_t H) {
-	vm->State.push_display = true;
+	vm->isDisplayReady(true);
 
 	while (H++ < vm->Plane.H)
 		display[H].wipeAll();

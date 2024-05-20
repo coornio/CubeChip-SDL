@@ -38,6 +38,12 @@ VM_Guest::VM_Guest(
 {}
 VM_Guest::~VM_Guest() = default;
 
+bool VM_Guest::isSystemPaused() const { return _isSystemPaused; }
+bool VM_Guest::isDisplayReady() const { return _isDisplayReady; }
+
+VM_Guest& VM_Guest::isSystemPaused(const bool state) { _isSystemPaused = state; return *this; }
+VM_Guest& VM_Guest::isDisplayReady(const bool state) { _isDisplayReady = state; return *this; }
+
 double   VM_Guest::fetchFramerate()           { return Program->framerate; }
 uint8_t& VM_Guest::mrw(const std::size_t idx) { return Mem->ram[idx & Program->limiter]; }
 uint8_t& VM_Guest::VX()                       { return Reg->V[(Program->opcode >> 8) & 0xF]; }
@@ -53,9 +59,9 @@ void VM_Guest::cycle() {
 
 	Sound->renderAudio();
 
-	if (State.push_display) {
+	if (isDisplayReady()) {
 		flushDisplay();
-		State.push_display = false;
+		isDisplayReady(false);
 	}
 }
 

@@ -24,19 +24,19 @@ FunctionsForGigachip::FunctionsForGigachip(VM_Guest* parent)
 /*------------------------------------------------------------------*/
 
 void FunctionsForGigachip::scrollUP(const std::int32_t N) {
-	vm->State.push_display = true;
+	vm->isDisplayReady(true);
 	vm->Mem->display.rotate(-N, 0);
 }
 void FunctionsForGigachip::scrollDN(const std::int32_t N) {
-	vm->State.push_display = true;
+	vm->isDisplayReady(true);
 	vm->Mem->display.rotate(+N, 0);
 }
 void FunctionsForGigachip::scrollLT(const std::int32_t N) {
-	vm->State.push_display = true;
+	vm->isDisplayReady(true);
 	vm->Mem->display.rotate(0, -N);
 }
 void FunctionsForGigachip::scrollRT(const std::int32_t N) {
-	vm->State.push_display = true;
+	vm->isDisplayReady(true);
 	vm->Mem->display.rotate(0, +N);
 }
 

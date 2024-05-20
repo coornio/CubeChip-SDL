@@ -54,6 +54,14 @@ public:
 	std::unique_ptr<Registers>      Reg;
 	std::unique_ptr<DisplayColors>  Color;
 
+	bool _isSystemPaused{};
+	bool _isDisplayReady{};
+
+	[[nodiscard]] bool isSystemPaused() const;
+	[[nodiscard]] bool isDisplayReady() const;
+	VM_Guest& isSystemPaused(bool);
+	VM_Guest& isDisplayReady(bool);
+
 	enum Resolution : unsigned {
 		ERROR,
 		HI, // 128 x  64
@@ -116,8 +124,6 @@ public:
 		bool megachip_rom{};
 		bool gigachip_rom{};
 		bool mega_enabled{};
-
-		bool push_display{};
 	} State;
 
 	// init functions

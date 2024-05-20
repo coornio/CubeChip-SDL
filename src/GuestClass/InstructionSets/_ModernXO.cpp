@@ -19,7 +19,7 @@ FunctionsForModernXO::FunctionsForModernXO(VM_Guest* parent)
 
 void FunctionsForModernXO::scrollUP(const std::int32_t N) {
 	if (!vm->Plane.selected) return;
-	vm->State.push_display = true;
+	vm->isDisplayReady(true);
 	auto& display{ vm->Mem->display };
 	const auto N2{ vm->Plane.H - N };
 
@@ -32,7 +32,7 @@ void FunctionsForModernXO::scrollUP(const std::int32_t N) {
 }
 void FunctionsForModernXO::scrollDN(const std::int32_t N) {
 	if (!vm->Plane.selected) return;
-	vm->State.push_display = true;
+	vm->isDisplayReady(true);
 	auto& display{ vm->Mem->display };
 
 	for (auto H{ vm->Plane.Hb }; H >= 0; --H)
@@ -44,7 +44,7 @@ void FunctionsForModernXO::scrollDN(const std::int32_t N) {
 }
 void FunctionsForModernXO::scrollLT(const std::int32_t) {
 	if (!vm->Plane.selected) return;
-	vm->State.push_display = true;
+	vm->isDisplayReady(true);
 	auto& display{ vm->Mem->display };
 
 	for (auto H{ 0 }; H < vm->Plane.H; ++H)
@@ -58,7 +58,7 @@ void FunctionsForModernXO::scrollLT(const std::int32_t) {
 }
 void FunctionsForModernXO::scrollRT(const std::int32_t) {
 	if (!vm->Plane.selected) return;
-	vm->State.push_display = true;
+	vm->isDisplayReady(true);
 	auto& display{ vm->Mem->display };
 
 	for (auto H{ 0 }; H < vm->Plane.H; ++H)
@@ -119,7 +119,7 @@ void FunctionsForModernXO::drawSprite(
 		return;
 	}
 
-	vm->State.push_display = true;
+	vm->isDisplayReady(true);
 
 	VX &= vm->Plane.Wb;
 	VY &= vm->Plane.Hb;

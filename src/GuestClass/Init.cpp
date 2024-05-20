@@ -245,14 +245,13 @@ void VM_Guest::setupDisplay(const std::int32_t mode, const bool forced) {
 	if (State.chip8X_rom) {
 		Mem->bufColor8x.resize(false, Plane.H, Plane.X);
 	}
-	if (forced) State.push_display = true;
 
 	Video->createTexture(Plane.W, Plane.H);
 	Video->setTextureBlend(SDL_BLENDMODE_BLEND);
 	Video->setAspectRatio(State.mega_enabled ? std::pair{ 256, 192 } : std::pair{ 128, 64 });
 	Video->resizeWindow();
 
-	State.push_display = true;
+	isDisplayReady(true);
 
 	if (State.chip8X_rom || State.schip_legacy) {
 		const bool lores{ Program->screenMode == Resolution::LO };

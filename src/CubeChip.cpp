@@ -81,18 +81,15 @@ reset_all:
 					}
 
 				case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
-					break;
-
-				case SDL_EVENT_WINDOW_MOVED:
+					// do some maths later for ensuring saner scaling
 					break;
 
 				case SDL_EVENT_WINDOW_MINIMIZED:
-					break;
-
-				case SDL_EVENT_WINDOW_MAXIMIZED:
+					Guest->isSystemPaused(true);
 					break;
 
 				case SDL_EVENT_WINDOW_RESTORED:
+					Guest->isSystemPaused(false);
 					break;
 			}
 		}
@@ -128,7 +125,9 @@ reset_all:
 				goto reset_all;
 			}
 
-			Guest->cycle();
+			if (!Guest->isSystemPaused()) {
+				Guest->cycle();
+			}
 		}
 
 		BVS->renderPresent();

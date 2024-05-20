@@ -30,6 +30,6 @@ public:
 
 	[[nodiscard]] bool isReady() const;
 	[[nodiscard]] bool doBench() const;
-	VM_Host& isReady(const bool);
-	VM_Host& doBench(const bool);
+	VM_Host& isReady(bool);
+	VM_Host& doBench(bool);
 };

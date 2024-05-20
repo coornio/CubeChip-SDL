@@ -20,15 +20,15 @@ FunctionsForLegacySC::FunctionsForLegacySC(VM_Guest* parent)
 {}
 
 void FunctionsForLegacySC::scrollUP(const std::int32_t N) {
-	vm->State.push_display = true;
+	vm->isDisplayReady(true);
 	vm->Mem->display.shift(-N, 0);
 }
 void FunctionsForLegacySC::scrollDN(const std::int32_t N) {
-	vm->State.push_display = true;
+	vm->isDisplayReady(true);
 	vm->Mem->display.shift(+N, 0);
 }
 void FunctionsForLegacySC::scrollLT(const std::int32_t) {
-	vm->State.push_display = true;
+	vm->isDisplayReady(true);
 
 	for (auto& row : vm->Mem->display)
 	for (auto X{ 0 }; X < vm->Plane.X; ++X) {
@@ -39,7 +39,7 @@ void FunctionsForLegacySC::scrollLT(const std::int32_t) {
 	}
 }
 void FunctionsForLegacySC::scrollRT(const std::int32_t) {
-	vm->State.push_display = true;
+	vm->isDisplayReady(true);
 
 	for (auto& row : vm->Mem->display)
 	for (auto X{ vm->Plane.Xb }; X >= 0; --X) {
@@ -104,7 +104,7 @@ void FunctionsForLegacySC::drawSprite(
 	std::int32_t  N,
 	std::uint32_t I
 ) {
-	vm->State.push_display = true;
+	vm->isDisplayReady(true);
 	const auto mode{ vm->Program->screenMode };
 
 	VX *= mode; VX &= vm->Plane.Wb;
@@ -149,7 +149,7 @@ void FunctionsForLegacySC::drawColors(
 	std::int32_t idx,
 	std::int32_t N
 ) {
-	vm->State.push_display = true;
+	vm->isDisplayReady(true);
 	auto mode{ vm->Program->screenMode };
 
 	if (N) {
