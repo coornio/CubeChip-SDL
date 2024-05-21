@@ -44,7 +44,7 @@ bool VM_Guest::romTypeCheck() {
 		case (FileTypes::c2x):
 			if (!loadRomToRam(4'096, 0x300))
 				return false;
-			Program->init(0x300, 15);
+			Program->init(0x300, 30);
 			Program->setFncSet(&SetClassic8);
 			State.chip8X_rom   = true;
 			State.hires_2paged = true;
@@ -53,7 +53,7 @@ bool VM_Guest::romTypeCheck() {
 		case (FileTypes::c4x):
 			if (!loadRomToRam(4'096, 0x300))
 				return false;
-			Program->init(0x300, 15);
+			Program->init(0x300, 30);
 			Program->setFncSet(&SetClassic8);
 			State.chip8X_rom   = true;
 			State.hires_2paged = true;
@@ -63,7 +63,7 @@ bool VM_Guest::romTypeCheck() {
 		case (FileTypes::c8x):
 			if (!loadRomToRam(4'096, 0x300))
 				return false;
-			Program->init(0x300, 15);
+			Program->init(0x300, 30);
 			Program->setFncSet(&SetClassic8);
 			State.chip8X_rom = true;
 			break;
@@ -79,7 +79,7 @@ bool VM_Guest::romTypeCheck() {
 		case (FileTypes::c2h):
 			if (!loadRomToRam(4'096, 0x260))
 				return false;
-			Program->init(0x260, 15);
+			Program->init(0x260, 30);
 			Program->setFncSet(&SetClassic8);
 			State.chip_classic = true;
 			State.hires_2paged = true;
@@ -88,7 +88,7 @@ bool VM_Guest::romTypeCheck() {
 		case (FileTypes::c4h):
 			if (!loadRomToRam(4'096, 0x244))
 				return false;
-			Program->init(0x244, 15);
+			Program->init(0x244, 30);
 			Program->setFncSet(&SetClassic8);
 			State.chip_classic = true;
 			State.hires_2paged = true;
@@ -102,7 +102,7 @@ bool VM_Guest::romTypeCheck() {
 				blog.stdLogOut("Invalid TPD rom patch, aborting.");
 				return false;
 			}
-			Program->init(0x2C0, 15);
+			Program->init(0x2C0, 30);
 			Program->setFncSet(&SetClassic8);
 			State.chip_classic = true;
 			State.hires_2paged = true;
