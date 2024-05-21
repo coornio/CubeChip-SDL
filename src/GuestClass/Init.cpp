@@ -259,14 +259,12 @@ void VM_Guest::setupDisplay(const std::int32_t mode, const bool forced) {
 
 	isDisplayReady(true);
 
-	if (State.chip8X_rom || State.schip_legacy) {
-		const bool lores{ Program->screenMode == Resolution::LO };
-		if (forced || Quirk.waitVblank ^ lores) {
-			Program->ipf -= Program->boost *= -1;
-			Quirk.waitVblank = lores;
-		}
-	} else if (forced && Quirk.waitVblank) {
-		Program->ipf -= Program->boost *= -1;
+	const bool legacy{ State.chip8X_rom || State.schip_legacy || State.chip8_legacy };
+	const bool lores{ Program->screenMode == Resolution::LO };
+
+	if (legacy && (forced || Quirk.waitVblank ^ lores)) {
+		Program->ipf += Program->boost *= -1;
+		Quirk.waitVblank = lores;
 	}
 };
 
