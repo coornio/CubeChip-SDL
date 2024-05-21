@@ -80,10 +80,6 @@ reset_all:
 						break;
 					}
 
-				case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
-					// do some maths later for ensuring saner scaling
-					break;
-
 				case SDL_EVENT_WINDOW_MINIMIZED:
 					Guest->isSystemPaused(true);
 					break;

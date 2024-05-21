@@ -115,15 +115,12 @@ bool BasicVideoSpec::showErrorBox(
 }
 
 void BasicVideoSpec::AudioOutline(Uint32 color) {
-	outlineColor = {
-		static_cast<Uint8>((color >> 16) & 0xFF),
-		static_cast<Uint8>((color >>  8) & 0xFF),
-		static_cast<Uint8>( color        & 0xFF),
+	frameColor = {
+		static_cast<Uint8>((color >> 16)),
+		static_cast<Uint8>((color >>  8)),
+		static_cast<Uint8>( color       ),
 		SDL_ALPHA_OPAQUE
 	};
-
-	outlineRect.w = textureRect.w + 2.0f * outlineSize;
-	outlineRect.h = textureRect.h + 2.0f * outlineSize;
 }
 
 void BasicVideoSpec::lockTexture() {
@@ -142,9 +139,6 @@ void BasicVideoSpec::unlockTexture() {
 void BasicVideoSpec::setTextureAlpha(const std::size_t alpha) {
 	SDL_SetTextureAlphaMod(texture, static_cast<Uint8>(alpha));
 }
-void BasicVideoSpec::setTextureBlend(const SDL_BlendMode blend) {
-	SDL_SetTextureBlendMode(texture, blend);
-}
 
 void BasicVideoSpec::setAspectRatio(
 	const Sint32 width,
@@ -153,21 +147,30 @@ void BasicVideoSpec::setAspectRatio(
 ) {
 	const auto oSize{ std::abs(size) };
 
-	outlineSize = oSize;
-	scanLineOn  = oSize == size;
+	frameWidth = oSize;
+	scanLineOn = oSize == size;
 
-	textureRect = {
-		oSize  * 1.0f,
-		oSize  * 1.0f,
-		width  * 1.0f,
-		height * 1.0f
+	frameGame = {
+		static_cast<float>(oSize),
+		static_cast<float>(oSize),
+		static_cast<float>(width),
+		static_cast<float>(height)
 	};
+
+	frameFull.w = width  + 2.0f * frameWidth;
+	frameFull.h = height + 2.0f * frameWidth;
+
+	SDL_SetWindowMinimumSize(
+		window,
+		static_cast<Sint32>(frameFull.w),
+		static_cast<Sint32>(frameFull.h)
+	);
 
 	SDL_SetRenderLogicalPresentation(
 		renderer,
-		width  + outlineSize * 2,
-		height + outlineSize * 2,
-		SDL_LOGICAL_PRESENTATION_LETTERBOX,
+		width  + frameWidth * 2,
+		height + frameWidth * 2,
+		SDL_LOGICAL_PRESENTATION_INTEGER_SCALE,
 		SDL_SCALEMODE_NEAREST
 	);
 }
@@ -183,27 +186,28 @@ void BasicVideoSpec::renderPresent() {
 	if (texture) {
 		SDL_SetRenderDrawColor(
 			renderer,
-			outlineColor.r, outlineColor.g,
-			outlineColor.b, outlineColor.a
+			frameColor.r, frameColor.g,
+			frameColor.b, frameColor.a
 		);
+		SDL_RenderFillRect(renderer, &frameFull);
 
-		SDL_RenderFillRect(renderer, &outlineRect);
-		SDL_RenderTexture(renderer, texture, nullptr, &textureRect);
+		SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_NONE);
+		SDL_RenderTexture(renderer, texture, nullptr, &frameGame);
 
 		if (scanLineOn) {
 			SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 			SDL_SetRenderDrawColor(renderer, 0, 0, 0, 32);
 
-			for (auto y{ 4 }; y < outlineRect.h; y += outlineSize) {
+			for (auto y{ 4 }; y < frameFull.h; y += frameWidth) {
 				SDL_RenderLine(
 					renderer,
-					outlineRect.x, y,
-					outlineRect.w, y
+					frameFull.x, y * 1.0f,
+					frameFull.w, y * 1.0f
 				);
 			}
 		}
 	} else {
-		SDL_RenderTexture(renderer, texture, nullptr, nullptr);
+		SDL_RenderTexture(renderer, nullptr, nullptr, nullptr);
 	}
 
 	SDL_RenderPresent(renderer);

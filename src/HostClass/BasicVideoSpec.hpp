@@ -23,10 +23,10 @@ class BasicVideoSpec {
 	const std::string emuVersion;
 	      std::string windowTitle;
 
-	SDL_FRect outlineRect{};
-	SDL_Color outlineColor{};
-	Sint32    outlineSize{};
-	SDL_FRect textureRect{};
+	SDL_FRect frameGame{};
+	SDL_FRect frameFull{};
+	SDL_Color frameColor{};
+	Sint32    frameWidth{};
 	Sint32    ppitch{};
 
 	bool      visualBeep{};
@@ -55,7 +55,6 @@ public:
 	void resizeWindow(Sint32 = 0, Sint32 = 0);
 
 	void setTextureAlpha(std::size_t);
-	void setTextureBlend(SDL_BlendMode);
 	void setAspectRatio(Sint32, Sint32, Sint32);
 
 	void quitWindow();
