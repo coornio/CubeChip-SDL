@@ -71,7 +71,7 @@ bool VM_Guest::romTypeCheck() {
 		case (FileTypes::c8e):
 			if (!loadRomToRam(4'096, 0x200))
 				return false;
-			Program->init(0x200, 11);
+			Program->init(0x200, 30);
 			Program->setFncSet(&SetClassic8);
 			State.chip8E_rom = true;
 			break;
@@ -258,7 +258,12 @@ void VM_Guest::setupDisplay(const std::int32_t mode, const bool forced) {
 
 	isDisplayReady(true);
 
-	const bool legacy{ State.chip8X_rom || State.schip_legacy || State.chip8_legacy };
+	const bool legacy{
+		State.chip8E_rom   ||
+		State.chip8X_rom   ||
+		State.schip_legacy ||
+		State.chip8_legacy
+	};
 	const bool lores{ Program->screenMode == Resolution::LO };
 
 	if (legacy && (forced || Quirk.waitVblank ^ lores)) {
