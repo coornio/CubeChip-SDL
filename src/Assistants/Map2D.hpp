@@ -34,7 +34,6 @@ public:
 	constexpr MapRow& operator+(
 		const MapRow& other
 	) requires arithmetic<T> {
-		//printf("ROW& + ROW& (A)\n");
 		const auto mSize{ std::min(this->size(), other.size()) };
 		for (auto i{ 0 }; std::cmp_less(i, mSize); ++i) {
 			(*this)[i] += other[i];
@@ -45,7 +44,6 @@ public:
 	constexpr MapRow& operator+(
 		MapRow&& other
 	) requires arithmetic<T> {
-		//printf("ROW& + ROW&& (B)\n");
 		const auto mSize{ std::min(this->size(), other.size()) };
 		for (auto i{ 0 }; std::cmp_less(i, mSize); ++i) {
 			(*this)[i] += std::move(other[i]);
@@ -56,7 +54,6 @@ public:
 	constexpr MapRow& operator+(
 		const arithmetic auto& value
 	) requires arithmetic<T> {
-		//printf("ROW& + V& (C)\n");
 		for (T& elem : *this) {
 			elem += value;
 		}
@@ -173,11 +170,19 @@ private:
 		const T* crbegin() const noexcept { return rbegin(); }
 		const T* crend()   const noexcept { return rend(); }
 
+		/**
+		 * @brief Clones the row's data and returns a vector of it.
+		 * @return Vector of the same type.
+		 */
 		MapRow<T> clone() const requires arithmetic<T> {
 			MapRow<T> rowCopy(mBegin, mBegin + mLength);
 			return rowCopy;
 		}
 
+		/**
+		 * @brief Swaps the row's data with the data from another row.
+		 * @return Self reference for method chaining.
+		 */
 		RowProxy& swap(
 			RowProxy&& other
 		) noexcept {
@@ -187,11 +192,25 @@ private:
 			return *this;
 		}
 
+		/**
+		 * @brief Wipes the row's data by default initializing it.
+		 *
+		 * @return Self reference for method chaining.
+		 */
 		RowProxy& wipeAll() requires arithmetic<T> {
 			std::fill(begin(), end(), T());
 			return *this;
 		}
 
+		/**
+		 * @brief Wipes the row's data in a given direction.
+		 * @return Self reference for method chaining.
+		 * 
+		 * @param[in] cols :: Total items to wipe. Directional.
+		 *
+		 * @warning The sign of the param controls the application direction.
+		 * @warning If the param exceeds row length, all row data is wiped.
+		 */
 		RowProxy& wipe(
 			const integral auto cols
 		) requires arithmetic<T> {
@@ -207,6 +226,14 @@ private:
 			return *this;
 		}
 
+		/**
+		 * @brief Rotates the row's data in a given direction.
+		 * @return Self reference for method chaining.
+		 * 
+		 * @param[in] cols :: Total positions to rotate. Directional.
+		 *
+		 * @warning The sign of the param controls the application direction.
+		 */
 		RowProxy& rotate(
 			const integral auto cols
 		) {
@@ -220,6 +247,16 @@ private:
 			return *this;
 		}
 
+		/**
+		 * @brief Rotates the row's data in a given direction. Combines the
+		 * functionality of rotating and wiping.
+		 * @return Self reference for method chaining.
+		 * 
+		 * @param[in] cols :: Total positions to shift. Directional.
+		 *
+		 * @warning The sign of the param controls the application direction.
+		 * @warning If the param exceeds row length, all row data is wiped.
+		 */
 		RowProxy& shift(
 			const integral auto cols
 		) requires arithmetic<T> {
@@ -230,7 +267,11 @@ private:
 			return *this;
 		}
 
-		RowProxy& rev() {
+		/**
+		 * @brief Reverses the row's data.
+		 * @return Self reference for method chaining.
+		 */
+		RowProxy& reverse() {
 			std::reverse(begin(), end());
 			return *this;
 		}
@@ -280,7 +321,6 @@ private:
 		RowProxy& operator=(
 			const RowProxy& other
 		) requires arithmetic<T> {
-			printf("!!! RowProxy copy assignment of RowProxy\n");
 			if (this == &other) [[unlikely]] return *this;
 			const auto mSize{ std::min<paramU>(other.size(), mLength) };
 			std::copy(other.begin(), other.begin() + mSize, mBegin);
@@ -289,7 +329,6 @@ private:
 		RowProxy& operator=(
 			MapRow<T>&& other
 		) requires arithmetic<T> {
-			printf("!!! RowProxy move assignment of MapRow\n");
 			const auto mSize{ std::min<paramU>(other.size(), mLength) };
 			std::move(other.begin(), other.begin() + mSize, mBegin);
 			return *this;
@@ -297,7 +336,6 @@ private:
 		RowProxy& operator=(
 			const MapRow<T>& other
 		) requires arithmetic<T> {
-			printf("!!! RowProxy copy assignment of MapRow\n");
 			if (this == &other) [[unlikely]] return *this;
 			const auto mSize{ std::min<paramU>(other.size(), mLength) };
 			std::copy(other.begin(), other.begin() + mSize, mBegin);
@@ -309,7 +347,6 @@ private:
 		RowProxy & operator+=(
 			const arithmetic auto& value
 		) requires arithmetic<T> {
-			//printf("RowProxy& += c_value& (1)\n");
 			for (T& elem : *this) {
 				elem += static_cast<T>(value);
 			}
@@ -318,7 +355,6 @@ private:
 		RowProxy& operator+=(
 			const RowProxy& other
 		) requires arithmetic<T> {
-			//printf("RowProxy& += RowProxy& (2)\n");
 			const auto mSize{ std::min(other.mLength, mLength) };
 			for (auto i{ 0 }; std::cmp_less(i, mSize); ++i) {
 				(*this)[i] += other[i];
@@ -328,7 +364,6 @@ private:
 		RowProxy& operator+=(
 			MapRow<T>&& other
 		) requires arithmetic<T> {
-			//printf("RowProxy& += MapRow&& (3)\n");
 			const auto mSize{ std::min<paramU>(other.size(), mLength) };
 			for (auto i{ 0 }; std::cmp_less(i, mSize); ++i) {
 				(*this)[i] += std::move(other[i]);
@@ -338,7 +373,6 @@ private:
 		RowProxy& operator+=(
 			const MapRow<T>& other
 		) requires arithmetic<T> {
-			//printf("RowProxy& += c_MapRow& (4)\n");
 			const auto mSize{ std::min<paramU>(other.size(), mLength) };
 			for (auto i{ 0 }; std::cmp_less(i, mSize); ++i) {
 				(*this)[i] += other[i];
@@ -400,7 +434,41 @@ public:
 		)
 	{}
 
+private:
+	explicit Map2D( // initial view() -> constructor :: type is T (T*), expects pointer to T (T)
+		const paramS rows,
+		const paramS cols,
+		const paramS posY,
+		const paramS posX,
+		const Map2D<underT>* const base
+	) requires ar_pointer<T>
+		: Map2D(rows, cols, posY, posX)
+	{
+		for (auto y{ 0 }; std::cmp_less(y, mRows); ++y) {
+			for (auto x{ 0 }; std::cmp_less(x, mCols); ++x) {
+				at_raw(y, x) = &base->at_raw((y + posY) % mRows, (x + posX) % mCols);
+			}
+		}
+	}
 
+	explicit Map2D( // chained view() -> constructor :: type is T (T*), expects pointer to T* (T)
+		const paramS  rows,
+		const paramS  cols,
+		const paramS  posY,
+		const paramS  posX,
+		const Map2D* const base,
+		const void* const
+	) requires ar_pointer<T>
+		: Map2D(rows, cols, posY, posX)
+	{
+		for (auto y{ 0 }; std::cmp_less(y, mRows); ++y) {
+			for (auto x{ 0 }; std::cmp_less(x, mCols); ++x) {
+				at_raw(y, x) = base->at_raw((y + posY) % base->lenY(), (x + posX) % base->lenX());
+			}
+		}
+	}
+
+public:
 	auto makeView( // initial view()
 		const integral auto rows = 0,
 		const integral auto cols = 0,
@@ -429,22 +497,6 @@ public:
 		mPosX = static_cast<paramS>(std::abs(posX));
 
 		// add stuff to recreate our pointer array
-	}
-
-	explicit Map2D( // initial view() -> constructor :: type is T (T*), expects pointer to T (T)
-		const paramS rows,
-		const paramS cols,
-		const paramS posY,
-		const paramS posX,
-		const Map2D<underT>* const base
-	) requires ar_pointer<T>
-		: Map2D(rows, cols, posY, posX)
-	{
-		for (auto y{ 0 }; std::cmp_less(y, mRows); ++y) {
-			for (auto x{ 0 }; std::cmp_less(x, mCols); ++x) {
-				at_raw(y, x) = &base->at_raw((y + posY) % mRows, (x + posX) % mCols);
-			}
-		}
 	}
 
 	auto makeView( // chained view()
@@ -477,23 +529,13 @@ public:
 		// add stuff to recreate our pointer array
 	}
 
-	explicit Map2D( // chained view() -> constructor :: type is T (T*), expects pointer to T* (T)
-		const paramS  rows,
-		const paramS  cols,
-		const paramS  posY,
-		const paramS  posX,
-		const Map2D* const base,
-		const void* const
-	) requires ar_pointer<T>
-		: Map2D(rows, cols, posY, posX)
-	{
-		for (auto y{ 0 }; std::cmp_less(y, mRows); ++y) {
-			for (auto x{ 0 }; std::cmp_less(x, mCols); ++x) {
-				at_raw(y, x) = base->at_raw((y + posY) % base->lenY(), (x + posX) % base->lenX());
-			}
-		}
-	}
-
+	/**
+	 * @brief Copies data from another matrix of the same type. As much
+	 *        as it can fit or pull.
+	 * @returns Self reference for method chaining.
+	 * 
+	 * @param[in] other :: Matrix object to copy from.
+	 */
 	Map2D& copyLinear(
 		const Map2D& other
 	) requires arithmetic<T> {
@@ -502,6 +544,16 @@ public:
 		return *this;
 	}
 
+	/**
+	 * @brief Copies data from array pointer of the same type. As much
+	 *        as it can fit or pull.
+	 * @returns Self reference for method chaining.
+	 *
+	 * @param[in] other :: Pointer to array of data.
+	 * @param[in] size  :: Amount of elements to copy.
+	 * 
+	 * @warning Cannot check if target array has sufficient data.
+	 */
 	Map2D& copyLinear(
 		const T* const other,
 		const integral auto size
@@ -511,6 +563,15 @@ public:
 		return *this;
 	}
 
+	/**
+	 * @brief Resizes the matrix to new dimensions. Can either copy
+	 *        existing data or wipe it.
+	 * @return Self reference for method chaining.
+	 * 
+	 * @param[in] choice :: FALSE to clear data, TRUE to copy it instead.
+	 * @param[in] rows   :: Total rows of the new matrix.    (min: 1)
+	 * @param[in] cols   :: Total columns of the new matrix. (min: 1)
+	 */
 	Map2D& resize(
 		const bool choice,
 		const integral auto rows,
@@ -573,11 +634,25 @@ private:
 	}
 
 public:
+	/**
+	 * @brief Wipes all of the matrix's data.
+	 * @return Self reference for method chaining.
+	 */
 	Map2D& wipeAll() requires arithmetic<T> {
 		std::fill(mBegin(), mEnd(), T());
 		return *this;
 	}
 
+	/**
+	 * @brief Wipes the matrix's data in a given direction.
+	 * @return Self reference for method chaining.
+	 *
+	 * @param[in] rows :: Total rows to wipe. Directional.
+	 * @param[in] cols :: Total columns to wipe. Directional.
+	 *
+	 * @warning The sign of the params control the application direction.
+	 * @warning If the params exceed row/column length, all row data is wiped.
+	 */
 	Map2D& wipe(
 		const integral auto rows,
 		const integral auto cols
@@ -601,6 +676,15 @@ public:
 		return *this;
 	}
 
+	/**
+	 * @brief Rotates the matrix's data in a given direction.
+	 * @return Self reference for method chaining.
+	 *
+	 * @param[in] rows :: Total rows to rotate. Directional.
+	 * @param[in] cols :: Total columns to rotate. Directional.
+	 *
+	 * @warning The sign of the params control the application direction.
+	 */
 	Map2D& rotate(
 		const integral auto rows,
 		const integral auto cols
@@ -620,6 +704,17 @@ public:
 		return *this;
 	}
 
+	/**
+	 * @brief Shifts the matrix's data in a given direction. Combines the
+	 *        functionality of rotating and wiping.
+	 * @return Self reference for method chaining.
+	 *
+	 * @param[in] rows :: Total rows to shift. Directional.
+	 * @param[in] cols :: Total columns to shift. Directional.
+	 *
+	 * @warning The sign of the params control the application direction.
+	 * @warning If the params exceed row/column length, all row data is wiped.
+	 */
 	Map2D& shift(
 		const integral auto rows,
 		const integral auto cols
@@ -631,11 +726,19 @@ public:
 		return *this;
 	}
 
+	/**
+	 * @brief Reverses the matrix's data.
+	 * @return Self reference for method chaining.
+	 */
 	Map2D& reverse() {
 		std::reverse(mBegin(), mEnd());
 		return *this;
 	}
 
+	/**
+	 * @brief Reverses the matrix's data in row order.
+	 * @return Self reference for method chaining.
+	 */
 	Map2D& reverseY() {
 		for (auto row{ 0 }; std::cmp_less(row, mRows / 2); ++row) {
 			(*this)[row].swap((*this)[mRows - row - 1]);
@@ -643,6 +746,10 @@ public:
 		return *this;
 	}
 
+	/**
+	 * @brief Reverses the matrix's data in column order.
+	 * @return Self reference for method chaining.
+	 */
 	Map2D& reverseX() {
 		for (auto row : *this) {
 			std::reverse(row.begin(), row.end());
@@ -650,6 +757,10 @@ public:
 		return *this;
 	}
 
+	/**
+	 * @brief Transposes the matrix's data. Works with rectangular dimensions.
+	 * @return Self reference for method chaining.
+	 */
 	Map2D& transpose() {
 		if (std::cmp_greater(mRows, 1) || std::cmp_greater(mCols, 1)) {
 			for (paramU a{ 1 }, b{ 1 }; std::cmp_less(a, mSize - 1); b = ++a) {
