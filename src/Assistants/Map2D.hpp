@@ -112,7 +112,8 @@ private:
 			const paramS length
 		) noexcept
 			: mBegin(begin)
-			, mLength(length) {}
+			, mLength(length)
+		{}
 
 		auto size() const { return mLength; }
 
@@ -310,13 +311,13 @@ private:
 		#pragma region ROW =
 		RowProxy & operator=(
 			const arithmetic auto& value
-			) requires arithmetic<T> {
+		) requires arithmetic<T> {
 			std::fill(begin(), end(), static_cast<T>(value));
 			return *this;
 		}
 		RowProxy& operator=(
 			const RowProxy& other
-			) requires arithmetic<T> {
+		) requires arithmetic<T> {
 			if (this == &other) [[unlikely]] return *this;
 			const auto mSize{ std::min<paramU>(other.size(), mLength) };
 			std::copy(other.begin(), other.begin() + mSize, mBegin);
@@ -324,14 +325,14 @@ private:
 		}
 		RowProxy& operator=(
 			MapRow<T>&& other
-			) requires arithmetic<T> {
+		) requires arithmetic<T> {
 			const auto mSize{ std::min<paramU>(other.size(), mLength) };
 			std::move(other.begin(), other.begin() + mSize, mBegin);
 			return *this;
 		}
 		RowProxy& operator=(
 			const MapRow<T>& other
-			) requires arithmetic<T> {
+		) requires arithmetic<T> {
 			if (this == &other) [[unlikely]] return *this;
 			const auto mSize{ std::min<paramU>(other.size(), mLength) };
 			std::copy(other.begin(), other.begin() + mSize, mBegin);
@@ -342,7 +343,7 @@ private:
 		#pragma region ROW +=
 		RowProxy & operator+=(
 			const arithmetic auto& value
-			) requires arithmetic<T> {
+		) requires arithmetic<T> {
 			for (T& elem : *this) {
 				elem += static_cast<T>(value);
 			}
@@ -350,7 +351,7 @@ private:
 		}
 		RowProxy& operator+=(
 			const RowProxy& other
-			) requires arithmetic<T> {
+		) requires arithmetic<T> {
 			const auto mSize{ std::min(other.mLength, mLength) };
 			for (auto i{ 0 }; std::cmp_less(i, mSize); ++i) {
 				(*this)[i] += other[i];
@@ -359,7 +360,7 @@ private:
 		}
 		RowProxy& operator+=(
 			MapRow<T>&& other
-			) requires arithmetic<T> {
+		) requires arithmetic<T> {
 			const auto mSize{ std::min<paramU>(other.size(), mLength) };
 			for (auto i{ 0 }; std::cmp_less(i, mSize); ++i) {
 				(*this)[i] += std::move(other[i]);
@@ -368,7 +369,7 @@ private:
 		}
 		RowProxy& operator+=(
 			const MapRow<T>& other
-			) requires arithmetic<T> {
+		) requires arithmetic<T> {
 			const auto mSize{ std::min<paramU>(other.size(), mLength) };
 			for (auto i{ 0 }; std::cmp_less(i, mSize); ++i) {
 				(*this)[i] += other[i];
@@ -386,7 +387,8 @@ private:
 		: mRows(rows)
 		, mCols(cols)
 		, mSize(rows * cols)
-		, pData(std::make_unique<T[]>(mSize)) {}
+		, pData(std::make_unique<T[]>(mSize))
+	{}
 
 public:
 	~Map2D()       = default; // default destructor
@@ -395,9 +397,7 @@ public:
 	Map2D(const Map2D& other) // copy constructor
 		: Map2D(
 			other.mRows,
-			other.mCols,
-			other.mPosY,
-			other.mPosX
+			other.mCols
 		)
 	{
 		std::copy(other.mBegin(), other.mEnd(), mBegin());
