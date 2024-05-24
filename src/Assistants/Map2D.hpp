@@ -299,7 +299,8 @@ private:
 		-> const T&
 		{ return *(begin() + checkColBounds(col)); }
 
-/* unsafe accessors */
+		/* unsafe accessors */
+
 		auto operator[](const integral auto col)
 		-> T&
 		{ return *(begin() + col); }
@@ -796,10 +797,10 @@ public:
 	-> const RowProxy
 	{ return RowProxy(mBegin() + checkRowBounds(row) * mCols, mCols); }
 
-/* unsafe accessors */
+	/* unsafe accessors */
 
 	auto operator() (const integral auto row, const integral auto col)
-		-> T&
+	-> T&
 	{ return at_raw(row, col); }
 
 	auto operator() (const integral auto row, const integral auto col) const
