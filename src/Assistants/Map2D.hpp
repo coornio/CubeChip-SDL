@@ -33,7 +33,7 @@ public:
 	#pragma region MapRow+
 	constexpr MapRow& operator+(
 		const MapRow& other
-		) requires arithmetic<T> {
+	) requires arithmetic<T> {
 		const auto mSize{ std::min(this->size(), other.size()) };
 		for (auto i{ 0 }; std::cmp_less(i, mSize); ++i) {
 			(*this)[i] += other[i];
@@ -43,7 +43,7 @@ public:
 
 	constexpr MapRow& operator+(
 		MapRow&& other
-		) requires arithmetic<T> {
+	) requires arithmetic<T> {
 		const auto mSize{ std::min(this->size(), other.size()) };
 		for (auto i{ 0 }; std::cmp_less(i, mSize); ++i) {
 			(*this)[i] += std::move(other[i]);
@@ -53,7 +53,7 @@ public:
 
 	constexpr MapRow& operator+(
 		const arithmetic auto& value
-		) requires arithmetic<T> {
+	) requires arithmetic<T> {
 		for (T& elem : *this) {
 			elem += value;
 		}
@@ -89,16 +89,20 @@ public:
 	auto lenY() const { return mRows; }
 
 	auto at_raw(const integral auto idx)
-	-> T& { return pData.get()[idx]; }
+	-> T&
+	{ return pData.get()[idx]; }
 
 	auto at_raw(const integral auto idx) const
-	-> const T& { return pData.get()[idx]; }
+	-> const T&
+	{ return pData.get()[idx]; }
 
 	auto at_raw(const integral auto row, const integral auto col)
-	-> T& { return pData.get()[row * mCols + col]; }
+	-> T&
+	{ return pData.get()[row * mCols + col]; }
 
 	auto at_raw(const integral auto row, const integral auto col) const
-	-> const T& { return pData.get()[row * mCols + col]; }
+	-> const T&
+	{ return pData.get()[row * mCols + col]; }
 
 private:
 	class RowProxy final {
