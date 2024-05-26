@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -30,28 +31,17 @@ class MapRow : public std::vector<T> {
 public:
 	using std::vector<T>::vector;
 
-	#pragma region MapRow+
-	constexpr MapRow& operator+(
+	#pragma region MapRow +=
+	constexpr MapRow& operator+=(
 		const MapRow& other
 	) requires arithmetic<T> {
-		const auto mSize{ std::min(this->size(), other.size()) };
-		for (auto i{ 0 }; std::cmp_less(i, mSize); ++i) {
+		const auto len{ std::min(this->size(), other.size()) };
+		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
 			(*this)[i] += other[i];
 		}
 		return *this;
 	}
-
-	constexpr MapRow& operator+(
-		MapRow&& other
-	) requires arithmetic<T> {
-		const auto mSize{ std::min(this->size(), other.size()) };
-		for (auto i{ 0 }; std::cmp_less(i, mSize); ++i) {
-			(*this)[i] += std::move(other[i]);
-		}
-		return *this;
-	}
-
-	constexpr MapRow& operator+(
+	constexpr MapRow operator+=(
 		const arithmetic auto& value
 	) requires arithmetic<T> {
 		for (T& elem : *this) {
@@ -59,12 +49,410 @@ public:
 		}
 		return *this;
 	}
-
 	#pragma endregion
-	#pragma region Others
+	#pragma region MapRow -=
+	constexpr MapRow& operator-=(
+		const MapRow& other
+	) requires arithmetic<T> {
+		const auto len{ std::min(this->size(), other.size()) };
+		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			(*this)[i] += other[i];
+		}
+		return *this;
+	}
+	constexpr MapRow operator-=(
+		const arithmetic auto& value
+	) requires arithmetic<T> {
+		for (T& elem : *this) {
+			elem -= value;
+		}
+		return *this;
+	}
+	#pragma endregion
+	#pragma region MapRow *=
+	constexpr MapRow& operator*=(
+		const MapRow& other
+	) requires arithmetic<T> {
+		const auto len{ std::min(this->size(), other.size()) };
+		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			(*this)[i] *= other[i];
+		}
+		return *this;
+	}
+	constexpr MapRow operator*=(
+		const arithmetic auto& value
+	) requires arithmetic<T> {
+		for (T& elem : *this) {
+			elem *= value;
+		}
+		return *this;
+	}
+	#pragma endregion
+	#pragma region MapRow /=
+	constexpr MapRow& operator/=(
+		const MapRow& other
+	) requires arithmetic<T> {
+		const auto len{ std::min(this->size(), other.size()) };
+		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			if (std::cmp_equal(other[i], 0)) {
+				(*this)[i] = 0;
+			} else {
+				(*this)[i] /= other[i];
+			}
+		}
+		return *this;
+	}
+	constexpr MapRow operator/=(
+		const arithmetic auto& value
+	) requires arithmetic<T> {
+		for (T& elem : *this) {
+			if (std::cmp_equal(value, 0)) {
+				elem = 0;
+			} else {
+				elem /= value;
+			}
+		}
+		return *this;
+	}
+	#pragma endregion
+	#pragma region MapRow %=
+	constexpr MapRow& operator%=(
+		const MapRow& other
+	) requires arithmetic<T> {
+		const auto len{ std::min(this->size(), other.size()) };
+		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			if (std::cmp_equal(other[i], 0)) {
+				(*this)[i] = 0;
+			} else {
+				(*this)[i] = std::fmod((*this)[i], other[i]);
+			}
+		}
+		return *this;
+	}
+	constexpr MapRow operator%=(
+		const arithmetic auto& value
+		) requires arithmetic<T> {
+		for (T& elem : *this) {
+			if (std::cmp_equal(value, 0)) {
+				elem = 0;
+			} else {
+				elem = std::fmod(elem, value);
+			}
+		}
+		return *this;
+	}
+	#pragma endregion
+
+	#pragma region MapRow &=
+	constexpr MapRow& operator&=(
+		const MapRow& other
+	) requires integral<T> {
+		const auto len{ std::min(this->size(), other.size()) };
+		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			(*this)[i] &= other[i];
+		}
+		return *this;
+	}
+	constexpr MapRow operator&=(
+		const integral auto& value
+	) requires integral<T> {
+		for (T& elem : *this) {
+			elem &= value;
+		}
+		return *this;
+	}
+	#pragma endregion
+	#pragma region MapRow |=
+	constexpr MapRow& operator|=(
+		const MapRow& other
+	) requires integral<T> {
+		const auto len{ std::min(this->size(), other.size()) };
+		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			(*this)[i] |= other[i];
+		}
+		return *this;
+	}
+	constexpr MapRow operator|=(
+		const integral auto& value
+	) requires integral<T> {
+		for (T& elem : *this) {
+			elem |= value;
+		}
+		return *this;
+	}
+	#pragma endregion
+	#pragma region MapRow ^=
+	constexpr MapRow& operator^=(
+		const MapRow& other
+	) requires integral<T> {
+		const auto len{ std::min(this->size(), other.size()) };
+		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			(*this)[i] ^= other[i];
+		}
+		return *this;
+	}
+	constexpr MapRow operator^=(
+		const integral auto& value
+	) requires integral<T> {
+		for (T& elem : *this) {
+			elem ^= value;
+		}
+		return *this;
+	}
+	#pragma endregion
+	#pragma region MapRow <<=
+	constexpr MapRow& operator<<=(
+		const MapRow& other
+	) requires integral<T> {
+		const auto len{ std::min(this->size(), other.size()) };
+		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			(*this)[i] <<= other[i];
+		}
+		return *this;
+	}
+	constexpr MapRow operator<<=(
+		const integral auto& value
+	) requires integral<T> {
+		for (T& elem : *this) {
+			elem <<= value;
+		}
+		return *this;
+	}
+	#pragma endregion
+	#pragma region MapRow >>=
+	constexpr MapRow& operator>>=(
+		const MapRow& other
+	) requires integral<T> {
+		const auto len{ std::min(this->size(), other.size()) };
+		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			(*this)[i] >>= other[i];
+		}
+		return *this;
+	}
+	constexpr MapRow operator>>=(
+		const integral auto& value
+	) requires integral<T> {
+		for (T& elem : *this) {
+			elem >>= value;
+		}
+		return *this;
+	}
+	#pragma endregion
+	
+	#pragma region MapRow +
+	constexpr MapRow& operator+(
+		const MapRow& other
+	) const requires arithmetic<T> {
+		auto temp{ *this };
+		const auto len{ std::min(temp.size(), other.size()) };
+		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			temp[i] += other[i];
+		}
+		return temp;
+	}
+	constexpr MapRow operator+(
+		const arithmetic auto& value
+	) const requires arithmetic<T> {
+		auto temp{ *this };
+		for (T& elem : temp) {
+			elem += value;
+		}
+		return temp;
+	}
+	#pragma endregion
+	#pragma region MapRow -
+	constexpr MapRow& operator-(
+		const MapRow& other
+	) const requires arithmetic<T> {
+		auto temp{ *this };
+		const auto len{ std::min(temp.size(), other.size()) };
+		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			temp[i] -= other[i];
+		}
+		return temp;
+	}
+	constexpr MapRow operator-(
+		const arithmetic auto& value
+	) const requires arithmetic<T> {
+		auto temp{ *this };
+		for (T& elem : temp) {
+			elem -= value;
+		}
+		return temp;
+	}
+	#pragma endregion
+	#pragma region MapRow *
+	constexpr MapRow& operator*(
+		const MapRow& other
+	) const requires arithmetic<T> {
+		auto temp{ *this };
+		const auto len{ std::min(temp.size(), other.size()) };
+		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			temp[i] *= other[i];
+		}
+		return temp;
+	}
+	constexpr MapRow operator*(
+		const arithmetic auto& value
+	) const requires arithmetic<T> {
+		auto temp{ *this };
+		for (T& elem : temp) {
+			elem *= value;
+		}
+		return temp;
+	}
+	#pragma endregion
+	#pragma region MapRow /
+	constexpr MapRow& operator/(
+		const MapRow& other
+	) const requires arithmetic<T> {
+		auto temp{ *this };
+		const auto len{ std::min(temp.size(), other.size()) };
+		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			if (std::cmp_equal(other[i], 0)) {
+				temp[i] = 0;
+			} else {
+				temp[i] /= other[i];
+			}
+		}
+		return temp;
+	}
+	constexpr MapRow operator/(
+		const arithmetic auto& value
+	) const requires arithmetic<T> {
+		auto temp{ *this };
+		for (T& elem : temp) {
+			if (std::cmp_equal(value, 0)) {
+				elem = 0;
+			} else {
+				elem /= value;
+			}
+		}
+		return temp;
+	}
+	#pragma endregion
+	#pragma region MapRow %
+	constexpr MapRow& operator%(
+		const MapRow& other
+	) const requires arithmetic<T> {
+		auto temp{ *this };
+		const auto len{ std::min(temp.size(), other.size()) };
+		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			if (std::cmp_equal(other[i], 0)) {
+				temp[i] = 0;
+			} else {
+				temp[i] /= std::fmod(temp[i], other[i]);
+			}
+		}
+		return temp;
+	}
+	constexpr MapRow operator%(
+		const arithmetic auto& value
+	) const requires arithmetic<T> {
+		auto temp{ *this };
+		for (T& elem : temp) {
+			if (std::cmp_equal(value, 0)) {
+				elem = 0;
+			} else {
+				elem = std::fmod(elem, value);;
+			}
+		}
+		return temp;
+	}
+	#pragma endregion
+	
+	#pragma region MapRow &
+	constexpr MapRow operator&(
+		const MapRow& other
+	) const requires integral<T> {
+		auto temp{ *this };
+		const auto len{ std::min(temp.size(), other.size()) };
+		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			temp[i] &= other[i];
+		}
+		return temp;
+	}
+	constexpr MapRow operator&(
+		const integral auto& value
+	) const requires integral<T> {
+		auto temp{ *this };
+		for (T& elem : temp) {
+			elem &= value;
+		}
+		return temp;
+	}
+	#pragma endregion
+	#pragma region MapRow |
+	constexpr MapRow operator|(
+		const MapRow& other
+	) const requires integral<T> {
+		auto temp{ *this };
+		const auto len{ std::min(temp.size(), other.size()) };
+		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			temp[i] |= other[i];
+		}
+		return temp;
+	}
+	constexpr MapRow operator|(
+		const integral auto& value
+	) const requires integral<T> {
+		auto temp{ *this };
+		for (T& elem : temp) {
+			elem |= value;
+		}
+		return temp;
+	}
+	#pragma endregion
+	#pragma region MapRow ^
+	constexpr MapRow operator^(
+		const MapRow& other
+	) const requires integral<T> {
+		auto temp{ *this };
+		const auto len{ std::min(temp.size(), other.size()) };
+		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			temp[i] ^= other[i];
+		}
+		return temp;
+	}
+	constexpr MapRow operator^(
+		const integral auto& value
+	) const requires integral<T> {
+		auto temp{ *this };
+		for (T& elem : temp) {
+			elem ^= value;
+		}
+		return temp;
+	}
+	#pragma endregion
+	#pragma region MapRow ~ !
+	constexpr MapRow operator~() const & requires integral<T> {
+		auto temp{ *this };
+		for (T& elem : temp) {
+			elem = ~elem;
+		}
+		return temp;
+	}
+	constexpr MapRow&& operator~() && requires integral<T> {
+		for (T& elem : *this) {
+			elem = ~elem;
+		}
+		return std::move(*this);
+	}
+	constexpr MapRow operator!() const & requires integral<T> {
+		auto temp{ *this };
+		for (T& elem : temp) {
+			elem = !elem;
+		}
+		return temp;
+	}
+	constexpr MapRow&& operator!() && requires integral<T> {
+		for (T& elem : *this) {
+			elem = !elem;
+		}
+		return std::move(*this);
+	}
 	#pragma endregion
 };
-
 
 template<typename T> requires arithmetic<T> || ar_pointer<T>
 class Map2D {
@@ -72,9 +460,9 @@ class Map2D {
 	using paramU = std::size_t;
 	using underT = std::remove_const_t<std::remove_pointer_t<T>>;
 
-	paramS     mRows;
-	paramS     mCols;
-	paramU     mSize;
+	paramS mRows;
+	paramS mCols;
+	paramU mSize;
 	std::unique_ptr<T[]> pData;
 
 	T* mBegin()  const noexcept { return pData.get(); }
@@ -262,9 +650,90 @@ private:
 			const integral auto cols
 		) requires arithmetic<T> {
 			if (std::cmp_less(std::abs(cols), mLength)) {
-				rotate(std::forward<decltype(cols)>(cols));
+				rotate(cols);
 			}
-			wipe(std::forward<decltype(cols)>(cols));
+			return wipe(cols);
+		}
+
+		/**
+		 * @brief Shifts the row's data in a bitwise manner in a given direction.
+		 * @return Self reference for method chaining.
+		 *
+		 * @param[in] cols  :: Total column bit positions to shift. Directional.
+		 * @param[in] limit :: Apply a bit limiter. Defaults to T size, optional.
+		 *
+		 * @warning The sign of the param controls the application direction.
+		 * @warning If the param exceeds row length, all row data is wiped.
+		 * @warning Row bit shifting is limited in distance to matrix T type.
+		 */
+		RowProxy& shiftBit(
+			const integral auto cols,
+			const paramU limit = sizeof(T) * 8
+		) requires integral<T> {
+			if (std::cmp_not_equal(cols, 0)) {
+				const auto limiter{ (1 << limit) - 1 };
+
+				if (std::cmp_less(cols, 0)) {
+					for (auto X{ 0 }; X < mLength; ++X) {
+						auto temp{ (*this)[X] << -cols };
+						if (X < mLength - 1) {
+							temp |= (*this)[X + 1] >> (limit + cols);
+						}
+						(*this)[X] = temp & limiter;
+					}
+				} else {
+					for (auto X{ mLength - 1 }; X >= 0; --X) {
+						auto temp{ (*this)[X] >> cols };
+						if (X > 0) {
+							temp |= (*this)[X - 1] << (limit - cols);
+						}
+						(*this)[X] = temp & limiter;
+					}
+				}
+			}
+			return *this;
+		}
+
+		/**
+		 * @brief Shifts the row's data in a marked bitwise manner in a given direction.
+		 * @return Self reference for method chaining.
+		 *
+		 * @param[in] cols  :: Total column bit positions to shift. Directional.
+		 * @param[in] mask  :: Bit mask to control the shift pattern.
+		 * @param[in] limit :: Apply a bit limiter. Defaults to T size, optional.
+		 *
+		 * @warning The sign of the param controls the application direction.
+		 * @warning If the param exceeds row length, all row data is wiped.
+		 * @warning Row bit shifting is limited in distance to matrix T type.
+		 */
+		RowProxy& shiftBitMask(
+			const integral auto cols,
+			const integral auto mask,
+			const paramU limit = sizeof(T) * 8
+		) requires integral<T> {
+			if (std::cmp_not_equal(cols, 0)) {
+				const auto limiter{ (1 << limit) - 1 };
+
+				if (std::cmp_less(cols, 0)) {
+					for (auto X{ 0 }; X < mLength; ++X) {
+						auto temp{ (*this)[X] << -cols };
+						if (X < mLength - 1) {
+							temp |= (*this)[X + 1] >> (limit + cols);
+						}
+						(*this)[X] &= ~mask;
+						(*this)[X] |= temp & (mask & limiter);
+					}
+				} else {
+					for (auto X{ mLength - 1 }; X >= 0; --X) {
+						auto temp{ (*this)[X] >> cols };
+						if (X > 0) {
+							temp |= (*this)[X - 1] << (limit - cols);
+						}
+						(*this)[X] &= ~mask;
+						(*this)[X] |= temp & (mask & limiter);
+					}
+				}
+			}
 			return *this;
 		}
 
@@ -309,12 +778,8 @@ private:
 		-> const T&
 		{ return *(begin() + col); }
 
-
-
-
-
-		#pragma region ROW =
-		RowProxy & operator=(
+		#pragma region RowProxy =
+		RowProxy& operator=(
 			const arithmetic auto& value
 		) requires arithmetic<T> {
 			std::fill(begin(), end(), static_cast<T>(value));
@@ -344,9 +809,8 @@ private:
 			return *this;
 		}
 		#pragma endregion
-
-		#pragma region ROW +=
-		RowProxy & operator+=(
+		#pragma region RowProxy +=
+		RowProxy& operator+=(
 			const arithmetic auto& value
 		) requires arithmetic<T> {
 			for (T& elem : *this) {
@@ -357,32 +821,246 @@ private:
 		RowProxy& operator+=(
 			const RowProxy& other
 		) requires arithmetic<T> {
-			const auto mSize{ std::min(other.mLength, mLength) };
-			for (auto i{ 0 }; std::cmp_less(i, mSize); ++i) {
+			const auto len{ std::min(other.mLength, mLength) };
+			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
 				(*this)[i] += other[i];
-			}
-			return *this;
-		}
-		RowProxy& operator+=(
-			MapRow<T>&& other
-		) requires arithmetic<T> {
-			const auto mSize{ std::min<paramU>(other.size(), mLength) };
-			for (auto i{ 0 }; std::cmp_less(i, mSize); ++i) {
-				(*this)[i] += std::move(other[i]);
 			}
 			return *this;
 		}
 		RowProxy& operator+=(
 			const MapRow<T>& other
 		) requires arithmetic<T> {
-			const auto mSize{ std::min<paramU>(other.size(), mLength) };
-			for (auto i{ 0 }; std::cmp_less(i, mSize); ++i) {
+			const auto len{ std::min<paramU>(other.size(), mLength) };
+			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
 				(*this)[i] += other[i];
 			}
 			return *this;
 		}
 		#pragma endregion
-
+		#pragma region RowProxy -=
+		RowProxy& operator-=(
+			const arithmetic auto& value
+		) requires arithmetic<T> {
+			for (T& elem : *this) {
+				elem -= static_cast<T>(value);
+			}
+			return *this;
+		}
+		RowProxy& operator-=(
+			const RowProxy& other
+		) requires arithmetic<T> {
+			const auto len{ std::min(other.mLength, mLength) };
+			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+				(*this)[i] -= other[i];
+			}
+			return *this;
+		}
+		RowProxy& operator-=(
+			const MapRow<T>& other
+		) requires arithmetic<T> {
+			const auto len{ std::min<paramU>(other.size(), mLength) };
+			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+				(*this)[i] -= other[i];
+			}
+			return *this;
+		}
+		#pragma endregion
+		#pragma region RowProxy *=
+		RowProxy& operator*=(
+			const arithmetic auto& value
+		) requires arithmetic<T> {
+			for (T& elem : *this) {
+				elem *= static_cast<T>(value);
+			}
+			return *this;
+		}
+		RowProxy& operator*=(
+			const RowProxy& other
+		) requires arithmetic<T> {
+			const auto len{ std::min(other.mLength, mLength) };
+			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+				(*this)[i] *= other[i];
+			}
+			return *this;
+		}
+		RowProxy& operator*=(
+			const MapRow<T>& other
+		) requires arithmetic<T> {
+			const auto len{ std::min<paramU>(other.size(), mLength) };
+			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+				(*this)[i] *= other[i];
+			}
+			return *this;
+		}
+		#pragma endregion
+		#pragma region RowProxy /=
+		RowProxy & operator/=(
+			const arithmetic auto& value
+		) requires arithmetic<T> {
+			for (T& elem : *this) {
+				elem /= static_cast<T>(value);
+			}
+			return *this;
+		}
+		RowProxy& operator/=(
+			const RowProxy& other
+		) requires arithmetic<T> {
+			const auto len{ std::min(other.mLength, mLength) };
+			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+				(*this)[i] /= other[i];
+			}
+			return *this;
+		}
+		RowProxy& operator/=(
+			const MapRow<T>& other
+		) requires arithmetic<T> {
+			const auto len{ std::min<paramU>(other.size(), mLength) };
+			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+				(*this)[i] /= other[i];
+			}
+			return *this;
+		}
+		#pragma endregion
+		#pragma region RowProxy &=
+		RowProxy& operator&=(
+			const integral auto& value
+		) requires integral<T> {
+			for (T& elem : *this) {
+				elem &= static_cast<T>(value);
+			}
+			return *this;
+		}
+		RowProxy& operator&=(
+			const RowProxy& other
+		) requires integral<T> {
+			const auto len{ std::min(other.mLength, mLength) };
+			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+				(*this)[i] &= other[i];
+			}
+			return *this;
+		}
+		RowProxy& operator&=(
+			const MapRow<T>& other
+		) requires integral<T> {
+			const auto len{ std::min<paramU>(other.size(), mLength) };
+			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+				(*this)[i] &= other[i];
+			}
+			return *this;
+		}
+		#pragma endregion
+		#pragma region RowProxy |=
+		RowProxy& operator|=(
+			const integral auto& value
+		) requires integral<T> {
+			for (T& elem : *this) {
+				elem |= static_cast<T>(value);
+			}
+			return *this;
+		}
+		RowProxy& operator|=(
+			const RowProxy& other
+		) requires integral<T> {
+			const auto len{ std::min(other.mLength, mLength) };
+			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+				(*this)[i] |= other[i];
+			}
+			return *this;
+		}
+		RowProxy& operator|=(
+			const MapRow<T>& other
+		) requires integral<T> {
+			const auto len{ std::min<paramU>(other.size(), mLength) };
+			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+				(*this)[i] |= other[i];
+			}
+			return *this;
+		}
+		#pragma endregion
+		#pragma region RowProxy ^=
+		RowProxy& operator^=(
+			const integral auto& value
+		) requires integral<T> {
+			for (T& elem : *this) {
+				elem ^= static_cast<T>(value);
+			}
+			return *this;
+		}
+		RowProxy& operator^=(
+			const RowProxy& other
+		) requires integral<T> {
+			const auto len{ std::min(other.mLength, mLength) };
+			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+				(*this)[i] ^= other[i];
+			}
+			return *this;
+		}
+		RowProxy& operator^=(
+			const MapRow<T>& other
+		) requires integral<T> {
+			const auto len{ std::min<paramU>(other.size(), mLength) };
+			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+				(*this)[i] ^= other[i];
+			}
+			return *this;
+		}
+		#pragma endregion
+		#pragma region RowProxy <<=
+		RowProxy& operator<<=(
+			const integral auto& value
+		) requires integral<T> {
+			for (T& elem : *this) {
+				elem <<= static_cast<T>(value);
+			}
+			return *this;
+		}
+		RowProxy& operator<<=(
+			const RowProxy& other
+		) requires integral<T> {
+			const auto len{ std::min(other.mLength, mLength) };
+			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+				(*this)[i] <<= other[i];
+			}
+			return *this;
+		}
+		RowProxy& operator<<=(
+			const MapRow<T>& other
+		) requires integral<T> {
+			const auto len{ std::min<paramU>(other.size(), mLength) };
+			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+				(*this)[i] <<= other[i];
+			}
+			return *this;
+		}
+		#pragma endregion
+		#pragma region RowProxy >>=
+		RowProxy& operator>>=(
+			const integral auto& value
+		) requires integral<T> {
+			for (T& elem : *this) {
+				elem >>= static_cast<T>(value);
+			}
+			return *this;
+		}
+		RowProxy& operator>>=(
+			const RowProxy& other
+		) requires integral<T> {
+			const auto len{ std::min(other.mLength, mLength) };
+			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+				(*this)[i] >>= other[i];
+			}
+			return *this;
+		}
+		RowProxy& operator>>=(
+			const MapRow<T>& other
+		) requires integral<T> {
+			const auto len{ std::min<paramU>(other.size(), mLength) };
+			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+				(*this)[i] >>= other[i];
+			}
+			return *this;
+		}
+		#pragma endregion
 	};
 
 	explicit Map2D(
@@ -444,7 +1122,19 @@ private:
 	}
 
 public:
-	auto makeView( // initial view()
+	/**
+	 * @brief Creates a View of the original matrix data as a matrix of const T*.
+	 *        Only the arrangement of the pointers can be modified.
+	 * @returns Const matrix of pointers to data.
+	 *
+	 * @param[in] rows,cols :: Dimensions of the new View matrix.
+	 *                         If 0, default dimensions of matrix are used.
+	 * @param[in] posY,posX :: Dimension offset to apply on original matrix.
+	 *
+	 * @warning There are no limiters in place. You can repeat a pattern if you wish.
+	 * @warning Elements in the View matrix must be dereferenced to be used.
+	 */
+	auto makeView(
 		const integral auto rows = 0,
 		const integral auto cols = 0,
 		const integral auto posY = 0,
@@ -457,7 +1147,19 @@ public:
 		return obj.setView(this, nRows, nCols, posY, posX);
 	}
 
-	auto makeView( // chained view()
+	/**
+	 * @brief Creates a View from the pointers of another View matrix.
+	 *        Only the arrangement of the pointers can be modified.
+	 * @returns Const matrix of pointers to data.
+	 *
+	 * @param[in] rows,cols :: Dimensions of the new View matrix.
+	 *                         If 0, default dimensions of matrix are used.
+	 * @param[in] posY,posX :: Dimension offset to apply on original matrix.
+	 *
+	 * @warning There are no limiters in place. You can repeat a pattern if you wish.
+	 * @warning Elements in the View matrix must be dereferenced to be used.
+	 */
+	auto makeView(
 		const integral auto rows = 0,
 		const integral auto cols = 0,
 		const integral auto posY = 0,
@@ -470,7 +1172,19 @@ public:
 		return obj.setView(this, nRows, nCols, posY, posX);
 	}
 
-	Map2D& setView( // reseat view() with an original map
+	/**
+	 * @brief Reseat a View using a matrix of original data.
+	 * @returns Self reference for method chaining.
+	 *
+	 * @param[in] base*     :: Pointer to an object of matrix data.
+	 * @param[in] rows,cols :: Dimensions of the new View matrix.
+	 *                         If 0, default dimensions of matrix are used.
+	 * @param[in] posY,posX :: Dimension offset to apply on original matrix.
+	 *
+	 * @warning There are no limiters in place. You can repeat a pattern if you wish.
+	 * @warning Elements in the View matrix must be dereferenced to be used.
+	 */
+	Map2D& setView(
 		const Map2D<underT>* const base,
 		const integral auto rows = 0,
 		const integral auto cols = 0,
@@ -491,7 +1205,19 @@ public:
 		return *this;
 	}
 
-	Map2D& setView( // reseat view() with another view map
+	/**
+	 * @brief Reseat a View from the pointers of another View matrix.
+	 * @returns Self reference for method chaining.
+	 *
+	 * @param[in] base*     :: Pointer to an object of matrix data.
+	 * @param[in] rows,cols :: Dimensions of the new View matrix.
+	 *                         If 0, default dimensions of matrix are used.
+	 * @param[in] posY,posX :: Dimension offset to apply on original matrix.
+	 *
+	 * @warning There are no limiters in place. You can repeat a pattern if you wish.
+	 * @warning Elements in the View matrix must be dereferenced to be used.
+	 */
+	Map2D& setView(
 		const Map2D<const underT*>* const base,
 		const integral auto rows = 0,
 		const integral auto cols = 0,
@@ -680,7 +1406,7 @@ public:
 			}
 		}
 		if (std::abs(cols) % mCols) {
-			for (auto row : *this) {
+			for (auto& row : *this) {
 				row.rotate(cols);
 			}
 		}
@@ -705,7 +1431,74 @@ public:
 		if (std::cmp_less(std::abs(rows), mRows) && std::cmp_less(std::abs(cols), mCols)) {
 			rotate(rows, cols);
 		}
-		wipe(rows, cols);
+		return wipe(rows, cols);
+	}
+
+	/**
+	 * @brief Shifts the matrix's data in a bitwise manner in a given direction.
+	 * @return Self reference for method chaining.
+	 *
+	 * @param[in] rows  :: Total row positions to shift. Directional.
+	 * @param[in] cols  :: Total column bit positions to shift. Directional.
+	 * @param[in] limit :: Apply a bit limiter. Defaults to T size, optional.
+	 *
+	 * @warning The sign of the params control the application direction.
+	 * @warning If the params exceed row/column length, all row data is wiped.
+	 * @warning Row bit shifting is limited in distance to matrix T type.
+	 */
+	Map2D& shiftBit(
+		const integral auto rows,
+		const integral auto cols,
+		const paramU limit = sizeof(T) * 8
+	) requires integral<T> {
+		if (std::cmp_less(std::abs(rows), mRows)) {
+			shift(rows, 0);
+		}
+		for (auto& row : *this) {
+			row.shiftBit(cols, limit);
+		}
+		return *this;
+	}
+
+	/**
+	 * @brief Shifts the matrix's data in a marked bitwise manner in a given direction.
+	 * @return Self reference for method chaining.
+	 *
+	 * @param[in] rows  :: Total row positions to shift. Directional.
+	 * @param[in] cols  :: Total column bit positions to shift. Directional.
+	 * @param[in] mask  :: Bit mask to control the shift pattern.
+	 * @param[in] limit :: Apply a bit limiter. Defaults to T size, optional.
+	 *
+	 * @warning The sign of the params control the application direction.
+	 * @warning If the params exceed row/column length, all row data is wiped.
+	 * @warning Row bit shifting is limited in distance to matrix T type.
+	 */
+	Map2D& shiftBitMask(
+		const integral auto rows,
+		const integral auto cols,
+		const integral auto mask,
+		const paramU limit = sizeof(T) * 8
+	) requires integral<T> {
+		if (std::cmp_not_equal(rows, 0)) {
+			const auto limiter{ (1 << limit) - 1 };
+
+			if (std::cmp_less(rows, 0)) {
+				for (auto Y{ 0 }; Y < mRows; ++Y) {
+					(*this)[Y] &= ~mask;
+					if (Y >= mRows + rows) continue;
+					(*this)[Y] |= (*this)[Y - rows].clone() & (mask & limiter);
+				}
+			} else {
+				for (auto Y{ mRows - 1 }; Y >= 0; --Y) {
+					(*this)[Y] &= ~mask;
+					if (Y < rows) continue;
+					(*this)[Y] |= (*this)[Y - rows].clone() & (mask & limiter);
+				}
+			}
+		}
+		for (auto& row : *this) {
+			row.shiftBitMask(cols, mask, limit);
+		}
 		return *this;
 	}
 
