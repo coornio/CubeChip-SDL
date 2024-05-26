@@ -20,55 +20,22 @@ FunctionsForModernXO::FunctionsForModernXO(VM_Guest* parent)
 void FunctionsForModernXO::scrollUP(const std::int32_t N) {
 	if (!vm->Plane.selected) return;
 	vm->isDisplayReady(true);
-	auto& display{ vm->Mem->display };
-	const auto N2{ vm->Plane.H - N };
-
-	for (auto H{ 0 }; H < vm->Plane.H; ++H)
-	for (auto X{ 0 }; X < vm->Plane.X; ++X) {
-		display[H][X] &= ~vm->Plane.mask;
-		if (H >= N2) continue;
-		display[H][X] |= vm->Plane.mask & display[H + N][X];
-	}
+	vm->Mem->display.shiftBitMask(-N, 0, vm->Plane.mask);
 }
 void FunctionsForModernXO::scrollDN(const std::int32_t N) {
 	if (!vm->Plane.selected) return;
 	vm->isDisplayReady(true);
-	auto& display{ vm->Mem->display };
-
-	for (auto H{ vm->Plane.Hb }; H >= 0; --H)
-	for (auto X{ 0 }; X < vm->Plane.X; ++X) {
-		display[H][X] &= ~vm->Plane.mask;
-		if (H < N) continue;
-		display[H][X] |= vm->Plane.mask & display[H - N][X];
-	}
+	vm->Mem->display.shiftBitMask(+N, 0, vm->Plane.mask);
 }
 void FunctionsForModernXO::scrollLT(const std::int32_t) {
 	if (!vm->Plane.selected) return;
 	vm->isDisplayReady(true);
-	auto& display{ vm->Mem->display };
-
-	for (auto H{ 0 }; H < vm->Plane.H; ++H)
-	for (auto X{ 0 }; X < vm->Plane.X; ++X) {
-		auto mask{ display[H][X] << 16 };
-		if (X < vm->Plane.Xb)
-			mask |= display[H][X + 1] >> 16;
-		display[H][X] &= ~vm->Plane.mask;
-		display[H][X] |=  vm->Plane.mask & mask;
-	}
+	vm->Mem->display.shiftBitMask(0, -16, vm->Plane.mask);
 }
 void FunctionsForModernXO::scrollRT(const std::int32_t) {
 	if (!vm->Plane.selected) return;
 	vm->isDisplayReady(true);
-	auto& display{ vm->Mem->display };
-
-	for (auto H{ 0 }; H < vm->Plane.H; ++H)
-	for (auto X{ vm->Plane.Xb }; X >= 0; --X) {
-		auto mask{ display[H][X] >> 16 };
-		if (X > 0)
-			mask |= display[H][X - 1] << 16;
-		display[H][X] &= ~vm->Plane.mask;
-		display[H][X] |=  vm->Plane.mask & mask;
-	}
+	vm->Mem->display.shiftBitMask(0, +16, vm->Plane.mask);
 }
 
 /*------------------------------------------------------------------*/

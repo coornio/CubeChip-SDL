@@ -29,25 +29,11 @@ void FunctionsForLegacySC::scrollDN(const std::int32_t N) {
 }
 void FunctionsForLegacySC::scrollLT(const std::int32_t) {
 	vm->isDisplayReady(true);
-
-	for (auto& row : vm->Mem->display)
-	for (auto X{ 0 }; X < vm->Plane.X; ++X) {
-		auto mask{ row[X] << 4 };
-		if (X < vm->Plane.Xb)
-			mask |= row[X + 1] >> 4;
-		row[X] = static_cast<uint8_t>(mask);
-	}
+	vm->Mem->display.shiftBit(0, -4, 8);
 }
 void FunctionsForLegacySC::scrollRT(const std::int32_t) {
 	vm->isDisplayReady(true);
-
-	for (auto& row : vm->Mem->display)
-	for (auto X{ vm->Plane.Xb }; X >= 0; --X) {
-		auto mask{ row[X] >> 4 };
-		if (X > 0)
-			mask |= row[X - 1] << 4;
-		row[X] = static_cast<uint8_t>(mask);
-	}
+	vm->Mem->display.shiftBit(0, +4, 8);
 }
 
 /*------------------------------------------------------------------*/
