@@ -17,6 +17,7 @@
 #include <limits>
 #include <type_traits>
 
+#pragma region Concepts
 template<class T>
 concept arithmetic = std::is_arithmetic_v<T>;
 
@@ -25,13 +26,15 @@ concept integral = std::is_integral_v<T>;
 
 template<class T>
 concept ar_pointer = std::is_pointer_v<T> && std::is_arithmetic_v<std::remove_pointer_t<T>>;
+#pragma endregion
 
+#pragma region MapRow Class
 template<typename T> requires arithmetic<T> || ar_pointer<T>
 class MapRow : public std::vector<T> {
-public:
 	using std::vector<T>::vector;
 
-	#pragma region MapRow +=
+public:
+	#pragma region operator +=
 	constexpr MapRow& operator+=(
 		const MapRow& other
 	) requires arithmetic<T> {
@@ -50,7 +53,7 @@ public:
 		return *this;
 	}
 	#pragma endregion
-	#pragma region MapRow -=
+	#pragma region operator -=
 	constexpr MapRow& operator-=(
 		const MapRow& other
 	) requires arithmetic<T> {
@@ -69,7 +72,7 @@ public:
 		return *this;
 	}
 	#pragma endregion
-	#pragma region MapRow *=
+	#pragma region operator *=
 	constexpr MapRow& operator*=(
 		const MapRow& other
 	) requires arithmetic<T> {
@@ -88,7 +91,7 @@ public:
 		return *this;
 	}
 	#pragma endregion
-	#pragma region MapRow /=
+	#pragma region operator /=
 	constexpr MapRow& operator/=(
 		const MapRow& other
 	) requires arithmetic<T> {
@@ -115,7 +118,7 @@ public:
 		return *this;
 	}
 	#pragma endregion
-	#pragma region MapRow %=
+	#pragma region operator %=
 	constexpr MapRow& operator%=(
 		const MapRow& other
 	) requires arithmetic<T> {
@@ -143,7 +146,7 @@ public:
 	}
 	#pragma endregion
 
-	#pragma region MapRow &=
+	#pragma region operator &=
 	constexpr MapRow& operator&=(
 		const MapRow& other
 	) requires integral<T> {
@@ -162,7 +165,7 @@ public:
 		return *this;
 	}
 	#pragma endregion
-	#pragma region MapRow |=
+	#pragma region operator |=
 	constexpr MapRow& operator|=(
 		const MapRow& other
 	) requires integral<T> {
@@ -181,7 +184,7 @@ public:
 		return *this;
 	}
 	#pragma endregion
-	#pragma region MapRow ^=
+	#pragma region operator ^=
 	constexpr MapRow& operator^=(
 		const MapRow& other
 	) requires integral<T> {
@@ -200,7 +203,7 @@ public:
 		return *this;
 	}
 	#pragma endregion
-	#pragma region MapRow <<=
+	#pragma region operator <<=
 	constexpr MapRow& operator<<=(
 		const MapRow& other
 	) requires integral<T> {
@@ -219,7 +222,7 @@ public:
 		return *this;
 	}
 	#pragma endregion
-	#pragma region MapRow >>=
+	#pragma region operator >>=
 	constexpr MapRow& operator>>=(
 		const MapRow& other
 	) requires integral<T> {
@@ -239,7 +242,7 @@ public:
 	}
 	#pragma endregion
 	
-	#pragma region MapRow +
+	#pragma region operator +
 	constexpr MapRow& operator+(
 		const MapRow& other
 	) const requires arithmetic<T> {
@@ -260,7 +263,7 @@ public:
 		return temp;
 	}
 	#pragma endregion
-	#pragma region MapRow -
+	#pragma region operator -
 	constexpr MapRow& operator-(
 		const MapRow& other
 	) const requires arithmetic<T> {
@@ -281,7 +284,7 @@ public:
 		return temp;
 	}
 	#pragma endregion
-	#pragma region MapRow *
+	#pragma region operator *
 	constexpr MapRow& operator*(
 		const MapRow& other
 	) const requires arithmetic<T> {
@@ -302,7 +305,7 @@ public:
 		return temp;
 	}
 	#pragma endregion
-	#pragma region MapRow /
+	#pragma region operator /
 	constexpr MapRow& operator/(
 		const MapRow& other
 	) const requires arithmetic<T> {
@@ -331,7 +334,7 @@ public:
 		return temp;
 	}
 	#pragma endregion
-	#pragma region MapRow %
+	#pragma region operator %
 	constexpr MapRow& operator%(
 		const MapRow& other
 	) const requires arithmetic<T> {
@@ -361,7 +364,7 @@ public:
 	}
 	#pragma endregion
 	
-	#pragma region MapRow &
+	#pragma region operator &
 	constexpr MapRow operator&(
 		const MapRow& other
 	) const requires integral<T> {
@@ -382,7 +385,7 @@ public:
 		return temp;
 	}
 	#pragma endregion
-	#pragma region MapRow |
+	#pragma region operator |
 	constexpr MapRow operator|(
 		const MapRow& other
 	) const requires integral<T> {
@@ -403,7 +406,7 @@ public:
 		return temp;
 	}
 	#pragma endregion
-	#pragma region MapRow ^
+	#pragma region operator ^
 	constexpr MapRow operator^(
 		const MapRow& other
 	) const requires integral<T> {
@@ -424,7 +427,7 @@ public:
 		return temp;
 	}
 	#pragma endregion
-	#pragma region MapRow ~ !
+	#pragma region operator ~
 	constexpr MapRow operator~() const & requires integral<T> {
 		auto temp{ *this };
 		for (T& elem : temp) {
@@ -438,6 +441,8 @@ public:
 		}
 		return std::move(*this);
 	}
+	#pragma endregion
+	#pragma region operator !
 	constexpr MapRow operator!() const & requires integral<T> {
 		auto temp{ *this };
 		for (T& elem : temp) {
@@ -453,7 +458,9 @@ public:
 	}
 	#pragma endregion
 };
+#pragma endregion
 
+#pragma region Map2D Class
 template<typename T> requires arithmetic<T> || ar_pointer<T>
 class Map2D {
 	using paramS = std::int_fast32_t;
@@ -465,17 +472,22 @@ class Map2D {
 	paramU mSize;
 	std::unique_ptr<T[]> pData;
 
+private:
+	#pragma region Raw Iterator begin/end
 	T* mBegin()  const noexcept { return pData.get(); }
 	T* mEnd()    const noexcept { return pData.get() + mSize; }
 
 	T* mBeginR() const noexcept { return mEnd() - 1; }
 	T* mEndR()   const noexcept { return mBegin() - 1; }
+	#pragma endregion
 
 public:
 	auto size() const { return mSize; }
 	auto lenX() const { return mCols; }
 	auto lenY() const { return mRows; }
 
+public:
+	#pragma region Raw Accessors
 	auto at_raw(const integral auto idx)
 	-> T&
 	{ return pData.get()[idx]; }
@@ -491,13 +503,19 @@ public:
 	auto at_raw(const integral auto row, const integral auto col) const
 	-> const T&
 	{ return pData.get()[row * mCols + col]; }
+	#pragma endregion
 
 private:
+	#pragma region RowProxy Class
 	class RowProxy final {
 		T*           mBegin;
 		const paramS mLength;
 
 	public:
+		auto size() const { return mLength; }
+
+	public:
+		#pragma region Ctors/Dtors
 		~RowProxy() = default;
 		explicit RowProxy(
 			T* const     begin,
@@ -506,47 +524,43 @@ private:
 			: mBegin(begin)
 			, mLength(length)
 		{}
+		#pragma endregion
 
-		auto size() const { return mLength; }
-
+	public:
+		#pragma region Iterator Overloads
 		RowProxy& operator*() noexcept {
 			return *this;
 		}
-
 		RowProxy* operator->() noexcept {
 			return this;
 		}
-
 		RowProxy& operator++() noexcept {
 			mBegin += mLength;
 			return *this;
 		}
-
 		RowProxy& operator--() noexcept {
 			mBegin -= mLength;
 			return *this;
 		}
-
 		RowProxy operator++(int) noexcept {
 			auto tmp{ *this };
 			mBegin += mLength;
 			return tmp;
 		}
-
 		RowProxy operator--(int) noexcept {
 			auto tmp{ *this };
 			mBegin -= mLength;
 			return tmp;
 		}
-
 		bool operator==(const RowProxy& other) const noexcept {
 			return mBegin == other.mBegin;
 		}
-
 		bool operator!=(const RowProxy& other) const noexcept {
 			return mBegin != other.mBegin;
 		}
-
+		#pragma endregion
+		
+		#pragma region Iterator begin/end
 		T* begin() const noexcept { return mBegin; }
 		T* end()   const noexcept { return mBegin + mLength; }
 
@@ -558,7 +572,10 @@ private:
 
 		const T* crbegin() const noexcept { return rbegin(); }
 		const T* crend()   const noexcept { return rend(); }
+		#pragma endregion
 
+	public:
+		#pragma region clone() :: Matrix[R]
 		/**
 		 * @brief Clones the row's data and returns a vector of it.
 		 * @return Vector of the same type.
@@ -567,7 +584,9 @@ private:
 			MapRow<T> rowCopy(mBegin, mBegin + mLength);
 			return rowCopy;
 		}
-
+		#pragma endregion
+		
+		#pragma region swap() :: Matrix[R] + View[R]
 		/**
 		 * @brief Swaps the row's data with the data from another row.
 		 * @return Self reference for method chaining.
@@ -580,7 +599,9 @@ private:
 			}
 			return *this;
 		}
-
+		#pragma endregion
+		
+		#pragma region wipeAll() :: Matrix[R]
 		/**
 		 * @brief Wipes the row's data by default initializing it.
 		 *
@@ -590,7 +611,9 @@ private:
 			std::fill(begin(), end(), T());
 			return *this;
 		}
-
+		#pragma endregion
+		
+		#pragma region wipe() :: Matrix[R]
 		/**
 		 * @brief Wipes the row's data in a given direction.
 		 * @return Self reference for method chaining.
@@ -614,7 +637,9 @@ private:
 			}
 			return *this;
 		}
-
+		#pragma endregion
+		
+		#pragma region rotate() :: Matrix[R] + View[R]
 		/**
 		 * @brief Rotates the row's data in a given direction.
 		 * @return Self reference for method chaining.
@@ -635,7 +660,9 @@ private:
 			}
 			return *this;
 		}
-
+		#pragma endregion
+		
+		#pragma region shift() :: Matrix[R]
 		/**
 		 * @brief Rotates the row's data in a given direction. Combines the
 		 * functionality of rotating and wiping.
@@ -654,7 +681,9 @@ private:
 			}
 			return wipe(cols);
 		}
-
+		#pragma endregion
+		
+		#pragma region shiftBit() :: Matrix[R]
 		/**
 		 * @brief Shifts the row's data in a bitwise manner in a given direction.
 		 * @return Self reference for method chaining.
@@ -693,7 +722,9 @@ private:
 			}
 			return *this;
 		}
-
+		#pragma endregion
+		
+		#pragma region shiftBitMask() :: Matrix[R]
 		/**
 		 * @brief Shifts the row's data in a marked bitwise manner in a given direction.
 		 * @return Self reference for method chaining.
@@ -736,7 +767,9 @@ private:
 			}
 			return *this;
 		}
-
+		#pragma endregion
+		
+		#pragma region reverse() :: Matrix[R] + View[R]
 		/**
 		 * @brief Reverses the row's data.
 		 * @return Self reference for method chaining.
@@ -745,8 +778,10 @@ private:
 			std::reverse(begin(), end());
 			return *this;
 		}
+		#pragma endregion
 
 	private:
+		#pragma region Accessor Bounds Checker
 		const paramS checkColBounds(
 			const integral auto col
 		) const {
@@ -756,8 +791,10 @@ private:
 			if (std::cmp_less(col, 0)) return col + mLength;
 			else return col;
 		}
+		#pragma endregion
 
 	public:
+		#pragma region Accessors
 		/* bounds-checked accessors, reverse indexing allowed */
 
 		auto at(const integral auto col)
@@ -777,8 +814,10 @@ private:
 		auto operator[](const integral auto col) const
 		-> const T&
 		{ return *(begin() + col); }
+		#pragma endregion
 
-		#pragma region RowProxy =
+	public:
+		#pragma region operator =
 		RowProxy& operator=(
 			const arithmetic auto& value
 		) requires arithmetic<T> {
@@ -789,32 +828,32 @@ private:
 			const RowProxy& other
 		) requires arithmetic<T> {
 			if (this == &other) [[unlikely]] return *this;
-			const auto mSize{ std::min<paramU>(other.size(), mLength) };
-			std::copy(other.begin(), other.begin() + mSize, mBegin);
+			const auto len{ std::min<paramU>(other.size(), mLength) };
+			std::copy(other.begin(), other.begin() + len, mBegin);
 			return *this;
 		}
 		RowProxy& operator=(
 			MapRow<T>&& other
 		) requires arithmetic<T> {
-			const auto mSize{ std::min<paramU>(other.size(), mLength) };
-			std::move(other.begin(), other.begin() + mSize, mBegin);
+			const auto len{ std::min<paramU>(other.size(), mLength) };
+			std::move(other.begin(), other.begin() + len, mBegin);
 			return *this;
 		}
 		RowProxy& operator=(
 			const MapRow<T>& other
 		) requires arithmetic<T> {
-			if (this == &other) [[unlikely]] return *this;
-			const auto mSize{ std::min<paramU>(other.size(), mLength) };
-			std::copy(other.begin(), other.begin() + mSize, mBegin);
+			const auto len{ std::min<paramU>(other.size(), mLength) };
+			std::copy(other.begin(), other.begin() + len, mBegin);
 			return *this;
 		}
 		#pragma endregion
-		#pragma region RowProxy +=
+		
+		#pragma region operator +=
 		RowProxy& operator+=(
 			const arithmetic auto& value
 		) requires arithmetic<T> {
 			for (T& elem : *this) {
-				elem += static_cast<T>(value);
+				elem += value;
 			}
 			return *this;
 		}
@@ -837,12 +876,12 @@ private:
 			return *this;
 		}
 		#pragma endregion
-		#pragma region RowProxy -=
+		#pragma region operator -=
 		RowProxy& operator-=(
 			const arithmetic auto& value
 		) requires arithmetic<T> {
 			for (T& elem : *this) {
-				elem -= static_cast<T>(value);
+				elem -= value;
 			}
 			return *this;
 		}
@@ -865,12 +904,12 @@ private:
 			return *this;
 		}
 		#pragma endregion
-		#pragma region RowProxy *=
+		#pragma region operator *=
 		RowProxy& operator*=(
 			const arithmetic auto& value
 		) requires arithmetic<T> {
 			for (T& elem : *this) {
-				elem *= static_cast<T>(value);
+				elem *= value;
 			}
 			return *this;
 		}
@@ -893,12 +932,16 @@ private:
 			return *this;
 		}
 		#pragma endregion
-		#pragma region RowProxy /=
+		#pragma region operator /=
 		RowProxy & operator/=(
 			const arithmetic auto& value
 		) requires arithmetic<T> {
 			for (T& elem : *this) {
-				elem /= static_cast<T>(value);
+				if (std::cmp_equal(value, 0)) {
+					elem = 0;
+				} else {
+					elem /= value;
+				}
 			}
 			return *this;
 		}
@@ -907,7 +950,11 @@ private:
 		) requires arithmetic<T> {
 			const auto len{ std::min(other.mLength, mLength) };
 			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
-				(*this)[i] /= other[i];
+				if (std::cmp_equal(other[i], 0)) {
+					(*this)[i] = 0;
+				} else {
+					(*this)[i] /= other[i];
+				}
 			}
 			return *this;
 		}
@@ -916,17 +963,62 @@ private:
 		) requires arithmetic<T> {
 			const auto len{ std::min<paramU>(other.size(), mLength) };
 			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
-				(*this)[i] /= other[i];
+				if (std::cmp_equal(other[i], 0)) {
+					(*this)[i] = 0;
+				} else {
+					(*this)[i] /= other[i];
+				}
 			}
 			return *this;
 		}
 		#pragma endregion
-		#pragma region RowProxy &=
+		#pragma region operator %=
+		RowProxy & operator%=(
+			const arithmetic auto& value
+		) requires arithmetic<T> {
+			for (T& elem : *this) {
+				if (std::cmp_equal(value, 0)) {
+					elem = 0;
+				} else {
+					elem = std::fmod(elem, value);
+				}
+			}
+			return *this;
+		}
+		RowProxy& operator%=(
+			const RowProxy& other
+		) requires arithmetic<T> {
+			const auto len{ std::min(other.mLength, mLength) };
+			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+				if (std::cmp_equal(other[i], 0)) {
+					(*this)[i] = 0;
+				} else {
+					(*this)[i] = std::fmod((*this)[i], other[i]);
+				}
+			}
+			return *this;
+		}
+		RowProxy& operator%=(
+			const MapRow<T>& other
+		) requires arithmetic<T> {
+			const auto len{ std::min<paramU>(other.size(), mLength) };
+			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+				if (std::cmp_equal(other[i], 0)) {
+					(*this)[i] = 0;
+				} else {
+					(*this)[i] = std::fmod((*this)[i], other[i]);
+				}
+			}
+			return *this;
+		}
+		#pragma endregion
+		
+		#pragma region operator &=
 		RowProxy& operator&=(
 			const integral auto& value
 		) requires integral<T> {
 			for (T& elem : *this) {
-				elem &= static_cast<T>(value);
+				elem &= value;
 			}
 			return *this;
 		}
@@ -949,12 +1041,12 @@ private:
 			return *this;
 		}
 		#pragma endregion
-		#pragma region RowProxy |=
+		#pragma region operator |=
 		RowProxy& operator|=(
 			const integral auto& value
 		) requires integral<T> {
 			for (T& elem : *this) {
-				elem |= static_cast<T>(value);
+				elem |= value;
 			}
 			return *this;
 		}
@@ -977,12 +1069,12 @@ private:
 			return *this;
 		}
 		#pragma endregion
-		#pragma region RowProxy ^=
+		#pragma region operator ^=
 		RowProxy& operator^=(
 			const integral auto& value
 		) requires integral<T> {
 			for (T& elem : *this) {
-				elem ^= static_cast<T>(value);
+				elem ^= value;
 			}
 			return *this;
 		}
@@ -1005,12 +1097,12 @@ private:
 			return *this;
 		}
 		#pragma endregion
-		#pragma region RowProxy <<=
+		#pragma region operator <<=
 		RowProxy& operator<<=(
 			const integral auto& value
 		) requires integral<T> {
 			for (T& elem : *this) {
-				elem <<= static_cast<T>(value);
+				elem <<= value;
 			}
 			return *this;
 		}
@@ -1033,12 +1125,12 @@ private:
 			return *this;
 		}
 		#pragma endregion
-		#pragma region RowProxy >>=
+		#pragma region operator >>=
 		RowProxy& operator>>=(
 			const integral auto& value
 		) requires integral<T> {
 			for (T& elem : *this) {
-				elem >>= static_cast<T>(value);
+				elem >>= value;
 			}
 			return *this;
 		}
@@ -1062,7 +1154,10 @@ private:
 		}
 		#pragma endregion
 	};
+	#pragma endregion
 
+private:
+	#pragma region Main Ctor
 	explicit Map2D(
 		const paramS rows,
 		const paramS cols
@@ -1072,28 +1167,10 @@ private:
 		, mSize(rows * cols)
 		, pData(std::make_unique<T[]>(mSize))
 	{}
+	#pragma endregion
 
 public:
-	~Map2D()       = default; // default destructor
-	Map2D(Map2D&&) = default; // move constructor
-
-	Map2D(const Map2D& other) // copy constructor
-		: Map2D(
-			other.mRows,
-			other.mCols
-		)
-	{
-		std::copy(other.mBegin(), other.mEnd(), mBegin());
-	}
-
-	Map2D& operator=(Map2D&&) = default;   // move assignment
-	Map2D& operator=(const Map2D& other) { // copy assignment
-		if (this != &other && mSize == other.mSize) {
-			std::copy(other.begin(), other.end(), begin());
-		}
-		return *this;
-	}
-
+	#pragma region Trivial Ctor
 	Map2D() : Map2D(1, 1) {}
 
 	Map2D(
@@ -1103,10 +1180,31 @@ public:
 		: Map2D(
 			std::max<paramS>(1, std::abs(rows)),
 			std::max<paramS>(1, std::abs(cols))
-		)
-	{}
+		) {}
+	#pragma endregion
+	
+	#pragma region Copy/Move Ctor
+	Map2D(const Map2D& other) // copy constructor
+		: Map2D(other.mRows, other.mCols)
+	{
+		std::copy(other.mBegin(), other.mEnd(), mBegin());
+	}
+	Map2D(Map2D&&) = default; // move constructor
+	#pragma endregion
+
+	#pragma region Move/Copy Assignment
+	Map2D& operator=(Map2D&&) = default;   // move assignment
+	Map2D& operator=(const Map2D& other) { // copy assignment
+		if (this != &other && mSize == other.mSize) {
+			std::copy(other.begin(), other.end(), begin());
+			mRows = other.mRows; mCols = other.mCols;
+		}
+		return *this;
+	}
+	#pragma endregion
 
 private:
+	#pragma region negmod()
 	auto negmod(
 		const integral auto _lt,
 		const integral auto _rt
@@ -1120,8 +1218,10 @@ private:
 		else
 			return modulo;
 	}
+	#pragma endregion
 
 public:
+	#pragma region makeView() :: Matrix
 	/**
 	 * @brief Creates a View of the original matrix data as a matrix of const T*.
 	 *        Only the arrangement of the pointers can be modified.
@@ -1146,7 +1246,9 @@ public:
 		Map2D<const T*> obj;
 		return obj.setView(this, nRows, nCols, posY, posX);
 	}
-
+	#pragma endregion
+	
+	#pragma region makeView() :: View
 	/**
 	 * @brief Creates a View from the pointers of another View matrix.
 	 *        Only the arrangement of the pointers can be modified.
@@ -1171,7 +1273,9 @@ public:
 		Map2D obj;
 		return obj.setView(this, nRows, nCols, posY, posX);
 	}
-
+	#pragma endregion
+	
+	#pragma region setView() :: Matrix
 	/**
 	 * @brief Reseat a View using a matrix of original data.
 	 * @returns Self reference for method chaining.
@@ -1204,7 +1308,9 @@ public:
 		}
 		return *this;
 	}
-
+	#pragma endregion
+	
+	#pragma region setView() :: View
 	/**
 	 * @brief Reseat a View from the pointers of another View matrix.
 	 * @returns Self reference for method chaining.
@@ -1237,7 +1343,9 @@ public:
 		}
 		return *this;
 	}
-
+	#pragma endregion
+	
+	#pragma region copyLinear() :: Matrix
 	/**
 	 * @brief Copies data from another matrix of the same type. As much
 	 *        as it can fit or pull.
@@ -1252,7 +1360,9 @@ public:
 		std::copy_n(other.mBegin(), nSize, mBegin());
 		return *this;
 	}
-
+	#pragma endregion
+	
+	#pragma region copyLinear() :: C-style Array
 	/**
 	 * @brief Copies data from array pointer of the same type. As much
 	 *        as it can fit or pull.
@@ -1271,7 +1381,9 @@ public:
 		std::copy_n(other, std::min(nSize, mSize), mBegin());
 		return *this;
 	}
-
+	#pragma endregion
+	
+	#pragma region resize() :: Matrix (Arithmetic)
 	/**
 	 * @brief Resizes the matrix to new dimensions. Can either copy
 	 *        existing data or wipe it.
@@ -1301,8 +1413,10 @@ public:
 		}
 		return *this;
 	}
+	#pragma endregion
 
 private:
+	#pragma region resizeCopy()
 	Map2D& resizeCopy(
 		const paramS rows,
 		const paramS cols
@@ -1328,7 +1442,9 @@ private:
 
 		return *this;
 	}
-
+	#pragma endregion
+	
+	#pragma region resizeWipe()
 	Map2D& resizeWipe(
 		const paramS rows,
 		const paramS cols
@@ -1341,8 +1457,10 @@ private:
 		pData = std::make_unique<T[]>(mSize);
 		return *this;
 	}
+	#pragma endregion
 
 public:
+	#pragma region wipeAll() :: Matrix (Arithmetic)
 	/**
 	 * @brief Wipes all of the matrix's data.
 	 * @return Self reference for method chaining.
@@ -1351,7 +1469,9 @@ public:
 		std::fill(mBegin(), mEnd(), T());
 		return *this;
 	}
-
+	#pragma endregion
+	
+	#pragma region wipe() :: Matrix (Arithmetic)
 	/**
 	 * @brief Wipes the matrix's data in a given direction.
 	 * @return Self reference for method chaining.
@@ -1384,7 +1504,9 @@ public:
 		}
 		return *this;
 	}
-
+	#pragma endregion
+	
+	#pragma region rotate() :: Matrix + View
 	/**
 	 * @brief Rotates the matrix's data in a given direction.
 	 * @return Self reference for method chaining.
@@ -1412,7 +1534,9 @@ public:
 		}
 		return *this;
 	}
-
+	#pragma endregion
+	
+	#pragma region shift() :: Matrix (Arithmetic)
 	/**
 	 * @brief Shifts the matrix's data in a given direction. Combines the
 	 *        functionality of rotating and wiping.
@@ -1433,7 +1557,9 @@ public:
 		}
 		return wipe(rows, cols);
 	}
-
+	#pragma endregion
+	
+	#pragma region shiftBit() :: Matrix (Integral)
 	/**
 	 * @brief Shifts the matrix's data in a bitwise manner in a given direction.
 	 * @return Self reference for method chaining.
@@ -1459,7 +1585,9 @@ public:
 		}
 		return *this;
 	}
-
+	#pragma endregion
+	
+	#pragma region shiftBitMask() :: Matrix (Integral)
 	/**
 	 * @brief Shifts the matrix's data in a marked bitwise manner in a given direction.
 	 * @return Self reference for method chaining.
@@ -1501,7 +1629,9 @@ public:
 		}
 		return *this;
 	}
-
+	#pragma endregion
+	
+	#pragma region reverse() :: Matrix + View
 	/**
 	 * @brief Reverses the matrix's data.
 	 * @return Self reference for method chaining.
@@ -1510,7 +1640,9 @@ public:
 		std::reverse(mBegin(), mEnd());
 		return *this;
 	}
-
+	#pragma endregion
+	
+	#pragma region reverseY() :: Matrix + View
 	/**
 	 * @brief Reverses the matrix's data in row order.
 	 * @return Self reference for method chaining.
@@ -1521,7 +1653,9 @@ public:
 		}
 		return *this;
 	}
-
+	#pragma endregion
+	
+	#pragma region reverseX() :: Matrix + View
 	/**
 	 * @brief Reverses the matrix's data in column order.
 	 * @return Self reference for method chaining.
@@ -1532,7 +1666,9 @@ public:
 		}
 		return *this;
 	}
-
+	#pragma endregion
+	
+	#pragma region transpose() :: Matrix + View
 	/**
 	 * @brief Transposes the matrix's data. Works with rectangular dimensions.
 	 * @return Self reference for method chaining.
@@ -1550,28 +1686,28 @@ public:
 		std::swap(mRows, mCols);
 		return *this;
 	}
+	#pragma endregion
 
 private:
-	const paramS checkRowBounds(
-		const integral auto row
-	) const {
+	#pragma region Accessor Bounds Checkers
+	const paramS checkRowBounds(const integral auto row) const {
 		if (std::cmp_less(row, -mRows) || std::cmp_greater_equal(row, mRows)) {
 			throw std::out_of_range("row index out of range");
 		}
 		if (std::cmp_less(row, 0)) return row + mRows;
 		else return row;
 	}
-	const paramS checkColBounds(
-		const integral auto col
-	) const {
+	const paramS checkColBounds(const integral auto col) const {
 		if (std::cmp_less(col, -mCols) || std::cmp_greater_equal(col, mCols)) {
 			throw std::out_of_range("column index out of range");
 		}
 		if (std::cmp_less(col, 0)) return col + mCols;
 		else return col;
 	}
+	#pragma endregion
 
 public:
+	#pragma region Accessors
 	/* bounds-checked accessors, reverse indexing allowed */
 
 	auto at(const integral auto row, const integral auto col)
@@ -1607,8 +1743,10 @@ public:
 	auto operator[] (const integral auto row) const
 	-> const RowProxy
 	{ return RowProxy(mBegin() + row * mCols, mCols); }
+	#pragma endregion
 
 public:
+	#pragma region Iterator begin/end
 	RowProxy begin() const noexcept { return RowProxy(mBegin(), mCols); }
 	RowProxy end()   const noexcept { return RowProxy(mEnd(), mCols); }
 
@@ -1620,4 +1758,6 @@ public:
 
 	const RowProxy crbegin() const noexcept { return rbegin(); }
 	const RowProxy crend()   const noexcept { return rend(); }
+	#pragma endregion
 };
+#pragma endregion
