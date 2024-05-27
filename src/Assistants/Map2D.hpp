@@ -44,7 +44,7 @@ public:
 		}
 		return *this;
 	}
-	constexpr MapRow operator+=(
+	constexpr MapRow& operator+=(
 		const arithmetic auto& value
 	) requires arithmetic<T> {
 		for (T& elem : *this) {
@@ -63,7 +63,7 @@ public:
 		}
 		return *this;
 	}
-	constexpr MapRow operator-=(
+	constexpr MapRow& operator-=(
 		const arithmetic auto& value
 	) requires arithmetic<T> {
 		for (T& elem : *this) {
@@ -82,7 +82,7 @@ public:
 		}
 		return *this;
 	}
-	constexpr MapRow operator*=(
+	constexpr MapRow& operator*=(
 		const arithmetic auto& value
 	) requires arithmetic<T> {
 		for (T& elem : *this) {
@@ -105,7 +105,7 @@ public:
 		}
 		return *this;
 	}
-	constexpr MapRow operator/=(
+	constexpr MapRow& operator/=(
 		const arithmetic auto& value
 	) requires arithmetic<T> {
 		for (T& elem : *this) {
@@ -132,7 +132,7 @@ public:
 		}
 		return *this;
 	}
-	constexpr MapRow operator%=(
+	constexpr MapRow& operator%=(
 		const arithmetic auto& value
 		) requires arithmetic<T> {
 		for (T& elem : *this) {
@@ -175,7 +175,7 @@ public:
 		}
 		return *this;
 	}
-	constexpr MapRow operator|=(
+	constexpr MapRow& operator|=(
 		const integral auto& value
 	) requires integral<T> {
 		for (T& elem : *this) {
@@ -194,7 +194,7 @@ public:
 		}
 		return *this;
 	}
-	constexpr MapRow operator^=(
+	constexpr MapRow& operator^=(
 		const integral auto& value
 	) requires integral<T> {
 		for (T& elem : *this) {
@@ -213,7 +213,7 @@ public:
 		}
 		return *this;
 	}
-	constexpr MapRow operator<<=(
+	constexpr MapRow& operator<<=(
 		const integral auto& value
 	) requires integral<T> {
 		for (T& elem : *this) {
@@ -232,7 +232,7 @@ public:
 		}
 		return *this;
 	}
-	constexpr MapRow operator>>=(
+	constexpr MapRow& operator>>=(
 		const integral auto& value
 	) requires integral<T> {
 		for (T& elem : *this) {
@@ -243,7 +243,7 @@ public:
 	#pragma endregion
 	
 	#pragma region operator +
-	constexpr MapRow& operator+(
+	constexpr MapRow operator+(
 		const MapRow& other
 	) const requires arithmetic<T> {
 		auto temp{ *this };
@@ -264,7 +264,7 @@ public:
 	}
 	#pragma endregion
 	#pragma region operator -
-	constexpr MapRow& operator-(
+	constexpr MapRow operator-(
 		const MapRow& other
 	) const requires arithmetic<T> {
 		auto temp{ *this };
@@ -285,7 +285,7 @@ public:
 	}
 	#pragma endregion
 	#pragma region operator *
-	constexpr MapRow& operator*(
+	constexpr MapRow operator*(
 		const MapRow& other
 	) const requires arithmetic<T> {
 		auto temp{ *this };
@@ -306,7 +306,7 @@ public:
 	}
 	#pragma endregion
 	#pragma region operator /
-	constexpr MapRow& operator/(
+	constexpr MapRow operator/(
 		const MapRow& other
 	) const requires arithmetic<T> {
 		auto temp{ *this };
@@ -335,7 +335,7 @@ public:
 	}
 	#pragma endregion
 	#pragma region operator %
-	constexpr MapRow& operator%(
+	constexpr MapRow operator%(
 		const MapRow& other
 	) const requires arithmetic<T> {
 		auto temp{ *this };
