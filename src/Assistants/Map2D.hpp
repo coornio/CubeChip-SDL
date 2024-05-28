@@ -19,10 +19,10 @@
 
 #pragma region Concepts
 template<class T>
-concept arithmetic = std::is_arithmetic_v<T>;
+concept integral = std::is_integral_v<T>;
 
 template<class T>
-concept integral = std::is_integral_v<T>;
+concept arithmetic = std::is_arithmetic_v<T>;
 
 template<class T>
 concept ar_pointer = std::is_pointer_v<T> && std::is_arithmetic_v<std::remove_pointer_t<T>>;
@@ -462,7 +462,7 @@ public:
 
 #pragma region Map2D Class
 template<typename T> requires arithmetic<T> || ar_pointer<T>
-class Map2D {
+class Map2D final {
 	using paramS = std::int_fast32_t;
 	using paramU = std::size_t;
 	using underT = std::remove_const_t<std::remove_pointer_t<T>>;
@@ -471,15 +471,6 @@ class Map2D {
 	paramS mCols;
 	paramU mSize;
 	std::unique_ptr<T[]> pData;
-
-private:
-	#pragma region Raw Iterator begin/end
-	T* mBegin()  const noexcept { return pData.get(); }
-	T* mEnd()    const noexcept { return pData.get() + mSize; }
-
-	T* mBeginR() const noexcept { return mEnd() - 1; }
-	T* mEndR()   const noexcept { return mBegin() - 1; }
-	#pragma endregion
 
 public:
 	auto size() const { return mSize; }
@@ -507,7 +498,8 @@ public:
 
 private:
 	#pragma region RowProxy Class
-	class RowProxy final {
+	class RowProxy {
+	protected:
 		T*           mBegin;
 		const paramS mLength;
 
@@ -515,63 +507,14 @@ private:
 		auto size() const { return mLength; }
 
 	public:
-		#pragma region Ctors/Dtors
-		~RowProxy() = default;
+		#pragma region Ctor
 		explicit RowProxy(
 			T* const     begin,
 			const paramS length
 		) noexcept
-			: mBegin(begin)
-			, mLength(length)
+			: mBegin { begin  }
+			, mLength{ length }
 		{}
-		#pragma endregion
-
-	public:
-		#pragma region Iterator Overloads
-		RowProxy& operator*() noexcept {
-			return *this;
-		}
-		RowProxy* operator->() noexcept {
-			return this;
-		}
-		RowProxy& operator++() noexcept {
-			mBegin += mLength;
-			return *this;
-		}
-		RowProxy& operator--() noexcept {
-			mBegin -= mLength;
-			return *this;
-		}
-		RowProxy operator++(int) noexcept {
-			auto tmp{ *this };
-			mBegin += mLength;
-			return tmp;
-		}
-		RowProxy operator--(int) noexcept {
-			auto tmp{ *this };
-			mBegin -= mLength;
-			return tmp;
-		}
-		bool operator==(const RowProxy& other) const noexcept {
-			return mBegin == other.mBegin;
-		}
-		bool operator!=(const RowProxy& other) const noexcept {
-			return mBegin != other.mBegin;
-		}
-		#pragma endregion
-		
-		#pragma region Iterator begin/end
-		T* begin() const noexcept { return mBegin; }
-		T* end()   const noexcept { return mBegin + mLength; }
-
-		T* rbegin() const noexcept { return end() - 1; }
-		T* rend()   const noexcept { return begin() - 1; }
-
-		const T* cbegin() const noexcept { return begin(); }
-		const T* cend()   const noexcept { return end(); }
-
-		const T* crbegin() const noexcept { return rbegin(); }
-		const T* crend()   const noexcept { return rend(); }
 		#pragma endregion
 
 	public:
@@ -782,7 +725,7 @@ private:
 
 	private:
 		#pragma region Accessor Bounds Checker
-		const paramS checkColBounds(
+		paramS checkColBounds(
 			const integral auto col
 		) const {
 			if (std::cmp_less(col, -mLength) || std::cmp_greater_equal(col, mLength)) {
@@ -1153,43 +1096,109 @@ private:
 			return *this;
 		}
 		#pragma endregion
+
+	public:
+		#pragma region Iterator begin/end
+		T* begin() const noexcept { return mBegin; }
+		T* end()   const noexcept { return mBegin + mLength; }
+
+		T* rbegin() const noexcept { return end() - 1; }
+		T* rend()   const noexcept { return begin() - 1; }
+
+		const T* cbegin() const noexcept { return begin(); }
+		const T* cend()   const noexcept { return end(); }
+
+		const T* crbegin() const noexcept { return rbegin(); }
+		const T* crend()   const noexcept { return rend(); }
+		#pragma endregion
+	};
+	#pragma endregion
+
+	#pragma region RowIterator Class
+	class RowIterator final : private RowProxy {
+		using diff_t = std::ptrdiff_t;
+		
+		T*&           _ptr;
+		const paramS& _len;
+
+	public:
+		#pragma region Ctor
+		explicit RowIterator(
+			T* const     begin,
+			const paramS length
+		) noexcept
+			: RowProxy{ begin, length }
+			, _ptr    { this->mBegin  }
+			, _len    { this->mLength }
+		{}
+		#pragma endregion
+
+	public:
+		#pragma region Iterator Overloads
+		RowProxy& operator* () noexcept { return *this; }
+		RowProxy* operator->() noexcept { return  this; }
+
+		RowIterator& operator++() noexcept { _ptr += _len; return *this; }
+		RowIterator& operator--() noexcept { _ptr -= _len; return *this; }
+
+		RowIterator operator++(int) noexcept { auto tmp{ *this }; _ptr += _len; return tmp; }
+		RowIterator operator--(int) noexcept { auto tmp{ *this }; _ptr -= _len; return tmp; }
+		
+		RowIterator  operator+ (const diff_t rhs) const { return RowIterator(_ptr + rhs * _len, _len); }
+		RowIterator  operator- (const diff_t rhs) const { return RowIterator(_ptr - rhs * _len, _len); }
+		
+		RowIterator& operator+=(const diff_t rhs) { _ptr += rhs * _len; return *this; }
+		RowIterator& operator-=(const diff_t rhs) { _ptr -= rhs * _len; return *this; }
+
+		friend RowIterator operator+(const diff_t lhs, const RowIterator& rhs) { return rhs + lhs; }
+		friend RowIterator operator-(const diff_t lhs, const RowIterator& rhs) { return rhs - lhs; }
+
+		diff_t operator-(const RowIterator& other) const { return _ptr - other._ptr; }
+
+		bool operator==(const RowIterator& other) const noexcept { return _ptr == other._ptr; }
+		bool operator!=(const RowIterator& other) const noexcept { return _ptr != other._ptr; }
+		bool operator< (const RowIterator& other) const noexcept { return _ptr <  other._ptr; }
+		bool operator> (const RowIterator& other) const noexcept { return _ptr >  other._ptr; }
+		bool operator<=(const RowIterator& other) const noexcept { return _ptr <= other._ptr; }
+		bool operator>=(const RowIterator& other) const noexcept { return _ptr >= other._ptr; }
+
+		RowProxy& operator[](const diff_t rhs) const { return *(_ptr + rhs * _len); }
+		#pragma endregion
 	};
 	#pragma endregion
 
 private:
 	#pragma region Main Ctor
-	explicit Map2D(
-		const paramS rows,
-		const paramS cols
-	)
-		: mRows(rows)
-		, mCols(cols)
-		, mSize(rows * cols)
-		, pData(std::make_unique<T[]>(mSize))
+	explicit Map2D(const paramS rows, const paramS cols)
+		: mRows{ rows }
+		, mCols{ cols }
+		, mSize{ static_cast<paramU>(rows * cols) }
+		, pData{ std::make_unique<T[]>(mSize) }
 	{}
 	#pragma endregion
 
 public:
 	#pragma region Trivial Ctor
-	Map2D() : Map2D(1, 1) {}
+	Map2D() : Map2D{ 1, 1 } {}
 
-	Map2D(
-		const integral auto rows,
-		const integral auto cols
-	)
-		: Map2D(
+	Map2D(const integral auto rows, const integral auto cols)
+		: Map2D{
 			std::max<paramS>(1, std::abs(rows)),
 			std::max<paramS>(1, std::abs(cols))
-		) {}
+		}
+	{}
 	#pragma endregion
 	
 	#pragma region Copy/Move Ctor
+	Map2D(Map2D&&) = default; // move constructor
 	Map2D(const Map2D& other) // copy constructor
-		: Map2D(other.mRows, other.mCols)
+		: Map2D{
+			other.mRows,
+			other.mCols
+		}
 	{
 		std::copy(other.mBegin(), other.mEnd(), mBegin());
 	}
-	Map2D(Map2D&&) = default; // move constructor
 	#pragma endregion
 
 	#pragma region Move/Copy Assignment
@@ -1205,18 +1214,16 @@ public:
 
 private:
 	#pragma region negmod()
-	auto negmod(
-		const integral auto _lt,
-		const integral auto _rt
-	) {
-		const auto lt{ static_cast<std::ptrdiff_t>(_lt) };
-		const auto rt{ static_cast<std::ptrdiff_t>(_rt) };
-		const auto modulo{ lt % rt };
-
-		if (std::cmp_less(modulo, 0))
-			return modulo + rt;
-		else
-			return modulo;
+	auto negmod(const integral auto lhs, const integral auto rhs) const {
+		const auto _mod{
+			static_cast<std::ptrdiff_t>(lhs) %
+			static_cast<std::ptrdiff_t>(rhs)
+		};
+		if (std::cmp_less(_mod, 0)) {
+			return _mod + rhs;
+		} else {
+			return _mod;
+		}
 	}
 	#pragma endregion
 
@@ -1241,7 +1248,7 @@ public:
 		const integral auto posX = 0
 	) const requires arithmetic<T> {
 		const auto nRows{ std::cmp_equal(rows, 0) ? mRows : static_cast<paramS>(std::abs(rows)) };
-		const auto nCols{ std::cmp_equal(cols, 0) ? mRows : static_cast<paramS>(std::abs(cols)) };
+		const auto nCols{ std::cmp_equal(cols, 0) ? mCols : static_cast<paramS>(std::abs(cols)) };
 
 		Map2D<const T*> obj;
 		return obj.setView(this, nRows, nCols, posY, posX);
@@ -1268,7 +1275,7 @@ public:
 		const integral auto posX = 0
 	) const requires ar_pointer<T> {
 		const auto nRows{ std::cmp_equal(rows, 0) ? mRows : static_cast<paramS>(std::abs(rows)) };
-		const auto nCols{ std::cmp_equal(cols, 0) ? mRows : static_cast<paramS>(std::abs(cols)) };
+		const auto nCols{ std::cmp_equal(cols, 0) ? mCols : static_cast<paramS>(std::abs(cols)) };
 
 		Map2D obj;
 		return obj.setView(this, nRows, nCols, posY, posX);
@@ -1661,7 +1668,7 @@ public:
 	 * @return Self reference for method chaining.
 	 */
 	Map2D& reverseX() {
-		for (auto row : *this) {
+		for (auto& row : *this) {
 			std::reverse(row.begin(), row.end());
 		}
 		return *this;
@@ -1690,14 +1697,14 @@ public:
 
 private:
 	#pragma region Accessor Bounds Checkers
-	const paramS checkRowBounds(const integral auto row) const {
+	paramS checkRowBounds(const integral auto row) const {
 		if (std::cmp_less(row, -mRows) || std::cmp_greater_equal(row, mRows)) {
 			throw std::out_of_range("row index out of range");
 		}
 		if (std::cmp_less(row, 0)) return row + mRows;
 		else return row;
 	}
-	const paramS checkColBounds(const integral auto col) const {
+	paramS checkColBounds(const integral auto col) const {
 		if (std::cmp_less(col, -mCols) || std::cmp_greater_equal(col, mCols)) {
 			throw std::out_of_range("column index out of range");
 		}
@@ -1745,19 +1752,28 @@ public:
 	{ return RowProxy(mBegin() + row * mCols, mCols); }
 	#pragma endregion
 
+private:
+	#pragma region Raw Iterator begin/end
+	T* mBegin()  const noexcept { return pData.get(); }
+	T* mEnd()    const noexcept { return pData.get() + mSize; }
+
+	T* mBeginR() const noexcept { return mEnd() - 1; }
+	T* mEndR()   const noexcept { return mBegin() - 1; }
+	#pragma endregion
+
 public:
 	#pragma region Iterator begin/end
-	RowProxy begin() const noexcept { return RowProxy(mBegin(), mCols); }
-	RowProxy end()   const noexcept { return RowProxy(mEnd(), mCols); }
+	RowIterator begin() const noexcept { return RowIterator(mBegin(), mCols); }
+	RowIterator end()   const noexcept { return RowIterator(mEnd(), mCols); }
 
-	RowProxy rbegin() const noexcept { return RowProxy(mBeginR(), mCols); }
-	RowProxy rend()   const noexcept { return RowProxy(mEndR(), mCols); }
+	RowIterator rbegin() const noexcept { return RowIterator(mBeginR(), mCols); }
+	RowIterator rend()   const noexcept { return RowIterator(mEndR(), mCols); }
 
-	const RowProxy cbegin() const noexcept { return begin(); }
-	const RowProxy cend()   const noexcept { return end(); }
+	const RowIterator cbegin() const noexcept { return begin(); }
+	const RowIterator cend()   const noexcept { return end(); }
 
-	const RowProxy crbegin() const noexcept { return rbegin(); }
-	const RowProxy crend()   const noexcept { return rend(); }
+	const RowIterator crbegin() const noexcept { return rbegin(); }
+	const RowIterator crend()   const noexcept { return rend(); }
 	#pragma endregion
 };
 #pragma endregion
