@@ -4,6 +4,8 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include <utility>
+
 #include "Interface.hpp"
 #include "../Guest.hpp"
 #include "../Registers.hpp"
@@ -42,14 +44,14 @@ void FunctionsForClassic8::drawByte(
 	const std::size_t R, const std::size_t SHR,
 	const std::size_t Y, const std::size_t DATA
 ) {
-	if (!DATA || L >= vm->Plane.X) return;
+	if (!DATA || std::cmp_greater_equal(L, vm->Plane.X)) return;
 	const auto DATA_L{ DATA >> SHR & 0xFF };
 	
 	if (!vm->Reg->V[0xF]) [[unlikely]]
 		vm->Reg->V[0xF]     = (vm->Mem->display[Y][L] & DATA_L) != 0;
 	vm->Mem->display[Y][L] ^= DATA_L;
 
-	if (!SHR || R >= vm->Plane.X) return;
+	if (!SHR || std::cmp_greater_equal(R, vm->Plane.X)) return;
 	const auto DATA_R{ DATA << SHL & 0xFF };
 
 	if (!vm->Reg->V[0xF]) [[unlikely]]
@@ -84,9 +86,9 @@ void FunctionsForClassic8::drawSprite(
 		X2 &= vm->Plane.Xb;
 	}
 
-	for (auto H{ VY }; H < N; ++H) {
+	for (auto H{ VY }; std::cmp_less(H, N); ++H) {
 		if (!vm->Quirk.wrapSprite)
-			if (H >= vm->Plane.H) break;
+			if (std::cmp_greater_equal(H, vm->Plane.H)) break;
 
 		const auto Y{ H & vm->Plane.Hb };
 
@@ -106,7 +108,7 @@ void FunctionsForClassic8::drawColors(
 
 	if (N) {
 		const auto X{ VX >> 3 };
-		for (auto _Y{ 0 }; _Y < N; ++_Y) {
+		for (auto _Y{ 0 }; std::cmp_less(_Y, N); ++_Y) {
 			const auto Y{ VY + _Y & vm->Plane.Hb };
 			vm->Mem->bufColor8x[Y][X] = vm->Color->getFore8X(idx);
 		}
@@ -116,9 +118,9 @@ void FunctionsForClassic8::drawColors(
 		const auto H{ (VY >> 4) + 1 };
 		const auto W{ (VX >> 4) + 1 };
 
-		for (auto _Y{ 0 }; _Y < H; ++_Y) {
+		for (auto _Y{ 0 }; std::cmp_less(_Y, H); ++_Y) {
 			const auto Y{ ((VY + _Y) << 2) & vm->Plane.Hb };
-			for (auto _X{ 0 }; _X < W; ++_X) {
+			for (auto _X{ 0 }; std::cmp_less(_X, W); ++_X) {
 				const auto X{ VX + _X & vm->Plane.Xb };
 				vm->Mem->bufColor8x[Y][X] = vm->Color->getFore8X(idx);
 			}

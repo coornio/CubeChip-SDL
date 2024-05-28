@@ -4,6 +4,8 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include <utility>
+
 #include "Guest.hpp"
 #include "MemoryBanks.hpp"
 
@@ -11,34 +13,30 @@ MemoryBanks::MemoryBanks(VM_Guest* parent)
 	: vm{ parent }
 {}
 
-void MemoryBanks::changeViewportMask(const BrushType type) {
+void MemoryBanks::modifyViewport(const BrushType type) {
+	vm->isDisplayReady(true);
+
 	switch (type) {
 
 		case BrushType::CLR:
-			applyViewportMask = [](std::uint32_t& pos, const std::uint32_t) { pos = 0; };
+			display.wipeAll();
 			return;
 
 		case BrushType::XOR:
-			applyViewportMask = [](std::uint32_t& pos, const std::uint32_t mask) { pos ^= mask; };
+			for (auto& row : display)
+				row ^= vm->Plane.mask;
 			return;
 
 		case BrushType::SUB:
-			applyViewportMask = [](std::uint32_t& pos, const std::uint32_t mask) { pos &= ~mask; };
+			for (auto& row : display)
+				row &= ~vm->Plane.mask;
 			return;
 
 		case BrushType::ADD:
-			applyViewportMask = [](std::uint32_t& pos, const std::uint32_t mask) { pos |= mask; };
+			for (auto& row : display)
+				row |= vm->Plane.mask;
 			return;
 	}
-}
-
-void MemoryBanks::modifyViewport(const BrushType type) {
-	vm->isDisplayReady(true);
-	changeViewportMask(type);
-
-	for (auto& row : display)
-		for (auto& elem : row)
-			applyViewportMask(elem, vm->Plane.mask);
 }
 
 void MemoryBanks::flushBuffers(const bool firstFlush) {
@@ -52,12 +50,13 @@ void MemoryBanks::flushBuffers(const bool firstFlush) {
 }
 
 void MemoryBanks::loadPalette(std::int32_t index, const std::int32_t count) {
-	for (auto idx{ 0 }; idx < count; index += 4) {
-		palette[++idx] =
-			vm->mrw(index + 0) << 24 |
-			vm->mrw(index + 1) << 16 |
-			vm->mrw(index + 2) << 8 |
-			vm->mrw(index + 3);
+	for (std::size_t idx{ 0 }; std::cmp_less(idx, count); index += 4) {
+		palette[++idx] = static_cast<std::uint32_t>(
+			vm->mrw(index + 0u) << 24u |
+			vm->mrw(index + 1u) << 16u |
+			vm->mrw(index + 2u) <<  8u |
+			vm->mrw(index + 3u)
+		);
 	}
 }
 

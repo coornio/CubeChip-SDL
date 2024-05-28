@@ -4,8 +4,10 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include "BasicVideoSpec.hpp"
+#include <utility>
 #include <stdexcept>
+
+#include "BasicVideoSpec.hpp"
 
 BasicVideoSpec::BasicVideoSpec(const Sint32 w, const Sint32 h)
 	: emuName   { "CubeChip" }
@@ -98,20 +100,20 @@ void BasicVideoSpec::changeTitle(const char* name) {
 bool BasicVideoSpec::showErrorBoxSDL(
 	std::string_view title
 ) {
-	return SDL_ShowSimpleMessageBox(
+	return std::cmp_not_equal(SDL_ShowSimpleMessageBox(
 		SDL_MESSAGEBOX_ERROR, title.data(),
 		SDL_GetError(), nullptr
-	);
+	), 0);
 }
 
 bool BasicVideoSpec::showErrorBox(
 	std::string_view message,
 	std::string_view title
 ) {
-	return SDL_ShowSimpleMessageBox(
+	return std::cmp_not_equal(SDL_ShowSimpleMessageBox(
 		SDL_MESSAGEBOX_ERROR, title.data(),
 		message.data(), nullptr
-	);
+	), 0);
 }
 
 void BasicVideoSpec::AudioOutline(Uint32 color) {

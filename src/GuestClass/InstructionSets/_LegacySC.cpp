@@ -51,13 +51,13 @@ void FunctionsForLegacySC::drawByte(
 	const std::size_t R, const std::size_t SHR,
 	const std::size_t Y, const std::size_t DATA
 ) {
-	if (!DATA || L >= vm->Plane.X) return;
+	if (!DATA || std::cmp_greater_equal(L, vm->Plane.X)) return;
 	const auto DATA_L{ DATA >> SHR & 0xFF };
 
 	vm->Reg->V[0xF]        += (DATA_L & vm->Mem->display[Y][L]) != 0;
 	vm->Mem->display[Y][L] ^=  DATA_L;
 
-	if (!SHR || R >= vm->Plane.X) return;
+	if (!SHR || std::cmp_greater_equal(R, vm->Plane.X)) return;
 	const auto DATA_R{ DATA << SHL & 0xFF };
 
 	vm->Reg->V[0xF]        += (DATA_R & vm->Mem->display[Y][R]) != 0;
@@ -69,14 +69,14 @@ void FunctionsForLegacySC::drawShort(
 	const std::size_t R, const std::size_t SHR,
 	const std::size_t Y, const std::size_t DATA
 ) {
-	if (!DATA || L >= vm->Plane.X) return;
+	if (!DATA || std::cmp_greater_equal(L, vm->Plane.X)) return;
 	const auto DATA_L{ DATA >> SHR & 0xFF };
 	
 	if (!vm->Reg->V[0xF]) [[unlikely]]
 		vm->Reg->V[0xF]        = (vm->Mem->display[Y][L]  & DATA_L) != 0;
 	vm->Mem->display[Y + 1][L] =  vm->Mem->display[Y][L] ^= DATA_L;
 
-	if (!SHR || R >= vm->Plane.X) return;
+	if (!SHR || std::cmp_greater_equal(R, vm->Plane.X)) return;
 	const auto DATA_R{ DATA << SHL & 0xFF };
 
 	if (!vm->Reg->V[0xF]) [[unlikely]]
@@ -112,9 +112,9 @@ void FunctionsForLegacySC::drawSprite(
 		X2 &= vm->Plane.Xb;
 	}
 
-	for (auto H{ VY }; H < N; H += mode) {
+	for (auto H{ VY }; std::cmp_less(H, N); H += mode) {
 		if (!vm->Quirk.wrapSprite)
-			if (H >= vm->Plane.H) break;
+			if (std::cmp_greater_equal(H, vm->Plane.H)) break;
 		const auto Y{ H & vm->Plane.Hb };
 
 		if (mode == vm->Resolution::LO) { // lores 8xN (doubled)
@@ -139,11 +139,12 @@ void FunctionsForLegacySC::drawColors(
 	auto mode{ vm->Program->screenMode };
 
 	if (N) {
-		if (mode == vm->Resolution::LO)
-			VY <<= 1, VX <<= 1, N <<= 1;
+		if (mode == vm->Resolution::LO) {
+			VY <<= 1; VX <<= 1; N <<= 1;
+		}
 
 		const auto X{ VX >> 3 };
-		for (auto _Y{ 0 }; _Y < N; ++_Y) {
+		for (auto _Y{ 0 }; std::cmp_less(_Y, N); ++_Y) {
 			const auto Y{ VY + _Y & vm->Plane.Hb };
 			vm->Mem->bufColor8x[Y][X + 0] = vm->Color->getFore8X(idx);
 			if (mode != vm->Resolution::LO) continue;
@@ -160,9 +161,9 @@ void FunctionsForLegacySC::drawColors(
 		const auto H{ (VY >> 4) + mode };
 		const auto W{ (VX >> 4) + mode };
 
-		for (auto _Y{ 0 }; _Y < H; ++_Y) {
+		for (auto _Y{ 0 }; std::cmp_less(_Y, H); ++_Y) {
 			const auto Y{ ((VY + _Y) << 2) & vm->Plane.Hb };
-			for (auto _X{ 0 }; _X < W; ++_X) {
+			for (auto _X{ 0 }; std::cmp_less(_X, W); ++_X) {
 				const auto X{ VX + _X & vm->Plane.Xb };
 				vm->Mem->bufColor8x[Y + 0][X] = vm->Color->getFore8X(idx);
 				//if (mode != vm->Resolution::LO) continue;

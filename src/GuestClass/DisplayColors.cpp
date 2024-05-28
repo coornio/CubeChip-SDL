@@ -31,8 +31,8 @@ void DisplayColors::setMegaHex(const uint32_t color) {
 }
 
 void DisplayColors::setBit332(const std::size_t idx, const std::size_t color) {
-	static constexpr std::array<uint8_t, 8> map3b{ 0x00, 0x20, 0x40, 0x60, 0x80, 0xA0, 0xC0, 0xFF };
-	static constexpr std::array<uint8_t, 4> map2b{ 0x00,             0x60,       0xA0,       0xFF };
+	static constexpr std::array<uint8_t, 8> map3b{ { 0x00, 0x20, 0x40, 0x60, 0x80, 0xA0, 0xC0, 0xFF } };
+	static constexpr std::array<uint8_t, 4> map2b{ { 0x00,             0x60,       0xA0,       0xFF } };
 
 	bit[idx & 0xF] = 0xFF000000
 		| map3b[color >> 5 & 7] << 16 // red

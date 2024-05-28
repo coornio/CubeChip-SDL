@@ -18,8 +18,8 @@ class HexInput final {
 
 	static constexpr auto _{ SDL_SCANCODE_UNKNOWN };
 
+	      std::vector<KeyInfo> currentBinds;
 	const std::vector<KeyInfo> defaultBinds;
-	std::vector<KeyInfo> currentBinds;
 
 	Uint32 keysCurr{}; // bitfield of key states in current frame
 	Uint32 keysPrev{}; // bitfield of key states in previous frame

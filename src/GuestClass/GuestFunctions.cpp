@@ -227,7 +227,8 @@ void VM_Guest::instructionLoop() {
 									Trait.setFlags(Reg->V[Y]);
 									SetGigachip.chooseBlend(N);
 								} else {				// 080N - set blend mode to N *MEGACHIP*
-									Trait.alpha = std::array{ 1.0f, 0.25f, 0.50f, 0.75f }[N > 3 ? 0 : N];
+									static constexpr float alpha[]{ 1.0f, 0.25f, 0.50f, 0.75f };
+									Trait.alpha = alpha[N > 3 ? 0 : N];
 									SetMegachip.chooseBlend(N);
 								}
 								break;

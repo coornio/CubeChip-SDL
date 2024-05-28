@@ -12,6 +12,7 @@
 #include <fstream>
 #include <sstream>
 #include <iomanip>
+#include <utility>
 
 static constexpr std::size_t BLOCK_INTS  { 16 }; // number of 32-bit integers per SHA1 block
 static constexpr std::size_t BLOCK_BYTES { BLOCK_INTS * 4 };
@@ -172,10 +173,10 @@ inline static void buffer_to_block(
 ) {
 	// convert the std::string (byte buffer) to a std::uint32_t array (MSB)
 	for (std::size_t i{ 0 }; i < BLOCK_INTS; ++i) {
-		block[i] = (buffer[4 * i + 3] & 0xFF)
-				 | (buffer[4 * i + 2] & 0xFF) <<  8
-				 | (buffer[4 * i + 1] & 0xFF) << 16
-				 | (buffer[4 * i + 0] & 0xFF) << 24;
+		block[i] = (buffer[4 * i + 3] & 0xFFu)
+				 | (buffer[4 * i + 2] & 0xFFu) <<  8u
+				 | (buffer[4 * i + 1] & 0xFFu) << 16u
+				 | (buffer[4 * i + 0] & 0xFFu) << 24u;
 	}
 }
 
@@ -195,7 +196,8 @@ void SHA1::update(const std::string& s) {
 void SHA1::update(std::istream& is) {
 	while (true) {
 		char sbuf[BLOCK_BYTES]{};
-		is.read(sbuf, BLOCK_BYTES - buffer.size());
+		const auto chunksize{ BLOCK_BYTES - buffer.size() };
+		is.read(sbuf, static_cast<std::streamsize>(chunksize));
 
 		buffer.append(sbuf, static_cast<std::size_t>(is.gcount()));
 		if (buffer.size() != BLOCK_BYTES) return;

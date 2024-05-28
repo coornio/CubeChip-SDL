@@ -771,21 +771,21 @@ private:
 			const RowProxy& other
 		) requires arithmetic<T> {
 			if (this == &other) [[unlikely]] return *this;
-			const auto len{ std::min<paramU>(other.size(), mLength) };
+			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
 			std::copy(other.begin(), other.begin() + len, mBegin);
 			return *this;
 		}
 		RowProxy& operator=(
 			MapRow<T>&& other
 		) requires arithmetic<T> {
-			const auto len{ std::min<paramU>(other.size(), mLength) };
+			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
 			std::move(other.begin(), other.begin() + len, mBegin);
 			return *this;
 		}
 		RowProxy& operator=(
 			const MapRow<T>& other
 		) requires arithmetic<T> {
-			const auto len{ std::min<paramU>(other.size(), mLength) };
+			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
 			std::copy(other.begin(), other.begin() + len, mBegin);
 			return *this;
 		}
@@ -812,7 +812,7 @@ private:
 		RowProxy& operator+=(
 			const MapRow<T>& other
 		) requires arithmetic<T> {
-			const auto len{ std::min<paramU>(other.size(), mLength) };
+			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
 			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
 				(*this)[i] += other[i];
 			}
@@ -840,7 +840,7 @@ private:
 		RowProxy& operator-=(
 			const MapRow<T>& other
 		) requires arithmetic<T> {
-			const auto len{ std::min<paramU>(other.size(), mLength) };
+			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
 			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
 				(*this)[i] -= other[i];
 			}
@@ -868,7 +868,7 @@ private:
 		RowProxy& operator*=(
 			const MapRow<T>& other
 		) requires arithmetic<T> {
-			const auto len{ std::min<paramU>(other.size(), mLength) };
+			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
 			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
 				(*this)[i] *= other[i];
 			}
@@ -904,7 +904,7 @@ private:
 		RowProxy& operator/=(
 			const MapRow<T>& other
 		) requires arithmetic<T> {
-			const auto len{ std::min<paramU>(other.size(), mLength) };
+			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
 			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
 				if (std::cmp_equal(other[i], 0)) {
 					(*this)[i] = 0;
@@ -944,7 +944,7 @@ private:
 		RowProxy& operator%=(
 			const MapRow<T>& other
 		) requires arithmetic<T> {
-			const auto len{ std::min<paramU>(other.size(), mLength) };
+			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
 			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
 				if (std::cmp_equal(other[i], 0)) {
 					(*this)[i] = 0;
@@ -1005,7 +1005,7 @@ private:
 		RowProxy& operator|=(
 			const MapRow<T>& other
 		) requires integral<T> {
-			const auto len{ std::min<paramU>(other.size(), mLength) };
+			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
 			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
 				(*this)[i] |= other[i];
 			}
@@ -1033,7 +1033,7 @@ private:
 		RowProxy& operator^=(
 			const MapRow<T>& other
 		) requires integral<T> {
-			const auto len{ std::min<paramU>(other.size(), mLength) };
+			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
 			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
 				(*this)[i] ^= other[i];
 			}
@@ -1061,7 +1061,7 @@ private:
 		RowProxy& operator<<=(
 			const MapRow<T>& other
 		) requires integral<T> {
-			const auto len{ std::min<paramU>(other.size(), mLength) };
+			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
 			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
 				(*this)[i] <<= other[i];
 			}
@@ -1089,7 +1089,7 @@ private:
 		RowProxy& operator>>=(
 			const MapRow<T>& other
 		) requires integral<T> {
-			const auto len{ std::min<paramU>(other.size(), mLength) };
+			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
 			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
 				(*this)[i] >>= other[i];
 			}
@@ -1621,13 +1621,13 @@ public:
 				for (auto Y{ 0 }; Y < mRows; ++Y) {
 					(*this)[Y] &= ~mask;
 					if (Y >= mRows + rows) continue;
-					(*this)[Y] |= (*this)[Y - rows].clone() & (mask & limiter);
+					(*this)[Y] |= (*this)[Y - rows].clone() & mask;
 				}
 			} else {
 				for (auto Y{ mRows - 1 }; Y >= 0; --Y) {
 					(*this)[Y] &= ~mask;
 					if (Y < rows) continue;
-					(*this)[Y] |= (*this)[Y - rows].clone() & (mask & limiter);
+					(*this)[Y] |= (*this)[Y - rows].clone() & mask;
 				}
 			}
 		}

@@ -184,7 +184,7 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
-      <AdditionalOptions>/fsanitize=address,undefined %(AdditionalOptions)</AdditionalOptions>
+      <DisableSpecificWarnings>4820;4514;4464;5027;4626;4623;4625;5045;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

@@ -16,14 +16,14 @@ class VM_Guest;
 /*------------------------------------------------------------------*/
 
 struct FncSetInterface {
-    virtual void scrollUP(std::int32_t) = 0;
-    virtual void scrollDN(std::int32_t) = 0;
-    virtual void scrollLT(std::int32_t) = 0;
-    virtual void scrollRT(std::int32_t) = 0;
-    virtual void drawSprite(std::int32_t, std::int32_t, std::int32_t, std::uint32_t) = 0;
-    virtual void drawColors(std::int32_t, std::int32_t, std::int32_t, std::int32_t)  = 0;
+	virtual void scrollUP(std::int32_t) = 0;
+	virtual void scrollDN(std::int32_t) = 0;
+	virtual void scrollLT(std::int32_t) = 0;
+	virtual void scrollRT(std::int32_t) = 0;
+	virtual void drawSprite(std::int32_t, std::int32_t, std::int32_t, std::uint32_t) = 0;
+	virtual void drawColors(std::int32_t, std::int32_t, std::int32_t, std::int32_t) = 0;
 
-    virtual ~FncSetInterface() {};
+	virtual ~FncSetInterface() {};
 };
 
 /*------------------------------------------------------------------*/
@@ -31,41 +31,41 @@ struct FncSetInterface {
 /*------------------------------------------------------------------*/
 
 class FunctionsForGigachip final : public FncSetInterface {
-    VM_Guest* vm;
+	VM_Guest* vm;
 
-    struct SrcColor { float A{}, R{}, G{}, B{}; } src;
-    struct DstColor { float A{}, R{}, G{}, B{}; } dst;
+	struct SrcColor { float A{}, R{}, G{}, B{}; } src;
+	struct DstColor { float A{}, R{}, G{}, B{}; } dst;
 
-    float (*blendType)(float, float) {};
+	float (*blendType)(float, float) {};
 
-    std::uint32_t blendPixel(std::uint32_t, std::uint32_t&);
-    std::uint32_t applyBlend(float (*)(float, float)) const;
+	std::uint32_t blendPixel(std::uint32_t, std::uint32_t&);
+	std::uint32_t applyBlend(float (*)(float, float)) const;
 
-    enum Trait {
-        RGB, BRG, GBR,
-        RBG, GRB, BGR,
-        GRAY, SEPIA,
-    };
+	enum Trait {
+		RGB, BRG, GBR,
+		RBG, GRB, BGR,
+		GRAY, SEPIA,
+	};
 
-    enum Blend {
-        NORMAL,
-        LIGHTEN_ONLY, SCREEN,   COLOR_DODGE, LINEAR_DODGE,
-        DARKEN_ONLY,  MULTIPLY, COLOR_BURN,  LINEAR_BURN,
-        AVERAGE, DIFFERENCE, NEGATION,
-        OVERLAY, REFLECT,    GLOW,
-        OVERWRITE,
-    };
+	enum Blend {
+		NORMAL,
+		LIGHTEN_ONLY, SCREEN,   COLOR_DODGE, LINEAR_DODGE,
+		DARKEN_ONLY,  MULTIPLY, COLOR_BURN,  LINEAR_BURN,
+		AVERAGE, DIFFERENCE, NEGATION,
+		OVERLAY, REFLECT,    GLOW,
+		OVERWRITE,
+	};
 
-    void scrollUP(std::int32_t) override;
-    void scrollDN(std::int32_t) override;
-    void scrollLT(std::int32_t) override;
-    void scrollRT(std::int32_t) override;
-    void drawSprite(std::int32_t, std::int32_t, std::int32_t, std::uint32_t) override;
-    void drawColors(std::int32_t, std::int32_t, std::int32_t, std::int32_t)  override {};
+	void scrollUP(std::int32_t) override;
+	void scrollDN(std::int32_t) override;
+	void scrollLT(std::int32_t) override;
+	void scrollRT(std::int32_t) override;
+	void drawSprite(std::int32_t, std::int32_t, std::int32_t, std::uint32_t) override;
+	void drawColors(std::int32_t, std::int32_t, std::int32_t, std::int32_t)  override {};
 
 public:
-    void chooseBlend(std::size_t);
-    FunctionsForGigachip(VM_Guest*);
+	void chooseBlend(std::size_t);
+	FunctionsForGigachip(VM_Guest*);
 };
 
 /*------------------------------------------------------------------*/
@@ -73,33 +73,33 @@ public:
 /*------------------------------------------------------------------*/
 
 class FunctionsForMegachip final : public FncSetInterface {
-    VM_Guest* vm;
-    
-    struct SrcColor { float A{}, R{}, G{}, B{}; } src;
-    struct DstColor { float A{}, R{}, G{}, B{}; } dst;
+	VM_Guest* vm;
 
-    float (*blendType)(float, float) {};
+	struct SrcColor { float A{}, R{}, G{}, B{}; } src;
+	struct DstColor { float A{}, R{}, G{}, B{}; } dst;
 
-    std::uint32_t blendPixel(std::uint32_t, std::uint32_t);
-    std::uint32_t applyBlend(float (*)(float, float)) const;
-    void blendToDisplay(auto&, auto&);
+	float (*blendType)(float, float) {};
 
-    enum Blend {
-        NORMAL       = 0,
-        LINEAR_DODGE = 4,
-        MULTIPLY     = 5,
-    };
+	std::uint32_t blendPixel(std::uint32_t, std::uint32_t);
+	std::uint32_t applyBlend(float (*)(float, float)) const;
+	void blendToDisplay(auto&, auto&);
 
-    void scrollUP(std::int32_t) override;
-    void scrollDN(std::int32_t) override;
-    void scrollLT(std::int32_t) override;
-    void scrollRT(std::int32_t) override;
-    void drawSprite(std::int32_t, std::int32_t, std::int32_t, std::uint32_t) override;
-    void drawColors(std::int32_t, std::int32_t, std::int32_t, std::int32_t)  override {};
+	enum Blend {
+		NORMAL       = 0,
+		LINEAR_DODGE = 4,
+		MULTIPLY     = 5,
+	};
+
+	void scrollUP(std::int32_t) override;
+	void scrollDN(std::int32_t) override;
+	void scrollLT(std::int32_t) override;
+	void scrollRT(std::int32_t) override;
+	void drawSprite(std::int32_t, std::int32_t, std::int32_t, std::uint32_t) override;
+	void drawColors(std::int32_t, std::int32_t, std::int32_t, std::int32_t)  override {};
 
 public:
-    void chooseBlend(std::size_t);
-    FunctionsForMegachip(VM_Guest*);
+	void chooseBlend(std::size_t);
+	FunctionsForMegachip(VM_Guest*);
 };
 
 /*------------------------------------------------------------------*/
@@ -107,21 +107,21 @@ public:
 /*------------------------------------------------------------------*/
 
 class FunctionsForModernXO final : public FncSetInterface {
-    VM_Guest* vm;
+	VM_Guest* vm;
 
-    void drawByte(std::size_t, std::size_t, std::size_t, std::size_t, std::size_t, std::size_t);
-    std::size_t  bitBloat(std::size_t);
-    void applyBrush(std::uint32_t&, std::size_t);
+	void drawByte(std::size_t, std::size_t, std::size_t, std::size_t, std::size_t, std::size_t);
+	std::size_t  bitBloat(std::size_t);
+	void applyBrush(std::uint32_t&, std::size_t);
 
-    void scrollUP(std::int32_t) override;
-    void scrollDN(std::int32_t) override;
-    void scrollLT(std::int32_t) override;
-    void scrollRT(std::int32_t) override;
-    void drawSprite(std::int32_t, std::int32_t, std::int32_t, std::uint32_t) override;
-    void drawColors(std::int32_t, std::int32_t, std::int32_t, std::int32_t)  override {};
+	void scrollUP(std::int32_t) override;
+	void scrollDN(std::int32_t) override;
+	void scrollLT(std::int32_t) override;
+	void scrollRT(std::int32_t) override;
+	void drawSprite(std::int32_t, std::int32_t, std::int32_t, std::uint32_t) override;
+	void drawColors(std::int32_t, std::int32_t, std::int32_t, std::int32_t)  override {};
 
 public:
-    FunctionsForModernXO(VM_Guest*);
+	FunctionsForModernXO(VM_Guest*);
 };
 
 /*------------------------------------------------------------------*/
@@ -129,21 +129,21 @@ public:
 /*------------------------------------------------------------------*/
 
 class FunctionsForLegacySC final : public FncSetInterface {
-    VM_Guest* vm;
+	VM_Guest* vm;
 
-    void drawByte(std::size_t, std::size_t, std::size_t, std::size_t, std::size_t, std::size_t);
-    void drawShort(std::size_t, std::size_t, std::size_t, std::size_t, std::size_t, std::size_t);
-    std::size_t  bitBloat(std::size_t);
+	void drawByte(std::size_t, std::size_t, std::size_t, std::size_t, std::size_t, std::size_t);
+	void drawShort(std::size_t, std::size_t, std::size_t, std::size_t, std::size_t, std::size_t);
+	std::size_t  bitBloat(std::size_t);
 
-    void scrollUP(std::int32_t) override;
-    void scrollDN(std::int32_t) override;
-    void scrollLT(std::int32_t) override;
-    void scrollRT(std::int32_t) override;
-    void drawSprite(std::int32_t, std::int32_t, std::int32_t, std::uint32_t) override;
-    void drawColors(std::int32_t, std::int32_t, std::int32_t, std::int32_t)  override;
+	void scrollUP(std::int32_t) override;
+	void scrollDN(std::int32_t) override;
+	void scrollLT(std::int32_t) override;
+	void scrollRT(std::int32_t) override;
+	void drawSprite(std::int32_t, std::int32_t, std::int32_t, std::uint32_t) override;
+	void drawColors(std::int32_t, std::int32_t, std::int32_t, std::int32_t)  override;
 
 public:
-    FunctionsForLegacySC(VM_Guest*);
+	FunctionsForLegacySC(VM_Guest*);
 };
 
 /*------------------------------------------------------------------*/
@@ -151,17 +151,17 @@ public:
 /*------------------------------------------------------------------*/
 
 class FunctionsForClassic8 final : public FncSetInterface {
-    VM_Guest* vm;
+	VM_Guest* vm;
 
-    void drawByte(std::size_t, std::size_t, std::size_t, std::size_t, std::size_t, std::size_t);
+	void drawByte(std::size_t, std::size_t, std::size_t, std::size_t, std::size_t, std::size_t);
 
-    void scrollUP(std::int32_t) override;
-    void scrollDN(std::int32_t) override;
-    void scrollLT(std::int32_t) override;
-    void scrollRT(std::int32_t) override;
-    void drawSprite(std::int32_t, std::int32_t, std::int32_t, std::uint32_t) override;
-    void drawColors(std::int32_t, std::int32_t, std::int32_t, std::int32_t)  override;
+	void scrollUP(std::int32_t) override;
+	void scrollDN(std::int32_t) override;
+	void scrollLT(std::int32_t) override;
+	void scrollRT(std::int32_t) override;
+	void drawSprite(std::int32_t, std::int32_t, std::int32_t, std::uint32_t) override;
+	void drawColors(std::int32_t, std::int32_t, std::int32_t, std::int32_t)  override;
 
 public:
-    FunctionsForClassic8(VM_Guest*);
+	FunctionsForClassic8(VM_Guest*);
 };

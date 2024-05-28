@@ -4,18 +4,20 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include <utility>
+#include <SDL3/SDL.h>
+
 #include "BasicHome.hpp"
 #include "PathExceptionClass.hpp"
-#include <SDL3/SDL.h>
 
 bool BasicHome::showErrorBox(
 	std::string_view message,
 	std::string_view title
 ) {
-	return SDL_ShowSimpleMessageBox(
+	return std::cmp_not_equal(SDL_ShowSimpleMessageBox(
 		SDL_MESSAGEBOX_ERROR, title.data(),
 		message.data(), nullptr
-	);
+	), 0);
 }
 
 BasicHome::BasicHome(const char* path) {

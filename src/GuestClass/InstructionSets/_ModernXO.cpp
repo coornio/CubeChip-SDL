@@ -60,14 +60,14 @@ void FunctionsForModernXO::drawByte(
 	const std::size_t R, const std::size_t SHR,
 	const std::size_t Y, const std::size_t DATA
 ) {
-	if (!DATA || L >= vm->Plane.X) return;
+	if (!DATA || std::cmp_greater_equal(L, vm->Plane.X)) return;
 	const auto DATA_L{ DATA >> SHR & 0xFFFFFFFF };
 
 	if (!vm->Reg->V[0xF]) [[unlikely]]
 		vm->Reg->V[0xF]  = (DATA_L & vm->Mem->display[Y][L]) != 0;
 	applyBrush(vm->Mem->display[Y][L], DATA_L);
 
-	if (!SHR || R >= vm->Plane.X) return;
+	if (!SHR || std::cmp_greater_equal(R, vm->Plane.X)) return;
 	const auto DATA_R{ DATA << SHL & 0xFFFFFFFF };
 
 	if (!vm->Reg->V[0xF]) [[unlikely]]
@@ -107,12 +107,12 @@ void FunctionsForModernXO::drawSprite(
 		X2 &= vm->Plane.Xb;
 	}
 
-	for (auto mask{ 1 }; mask <= 0x8; mask <<= 1) {
+	for (auto mask{ 1 }; std::cmp_less_equal(mask, 0x8); mask <<= 1) {
 		if (!(mask & vm->Plane.selected)) continue;
 
-		for (auto H{ VY }; H < N; ++H) {
+		for (auto H{ VY }; std::cmp_less(H, N); ++H) {
 			if (!vm->Quirk.wrapSprite)
-				if (H >= vm->Plane.H) break;
+				if (std::cmp_greater_equal(H, vm->Plane.H)) break;
 
 			const auto Y{ H & vm->Plane.Hb };
 

@@ -41,9 +41,9 @@ public:
 	}
 
 	FrameLimiter(const FrameLimiter& other)
-		: timeFrequency{ other.timeFrequency }
-		, skipFirstPass{ other.skipFirstPass }
+		: skipFirstPass{ other.skipFirstPass }
 		, skipLostFrame{ other.skipLostFrame }
+		, timeFrequency{ other.timeFrequency }
 	{}
 
 	void setLimiter(

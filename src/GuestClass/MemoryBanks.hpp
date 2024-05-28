@@ -17,7 +17,6 @@ class VM_Guest;
 
 class MemoryBanks final {
 	VM_Guest* vm;
-	void (*applyViewportMask)(std::uint32_t&, std::uint32_t) {};
 
 public:
 	Map2D<std::uint32_t> display;
@@ -30,7 +29,6 @@ public:
 
 	explicit MemoryBanks(VM_Guest*);
 	void modifyViewport(BrushType);
-	void changeViewportMask(BrushType);
 
 	void flushBuffers(bool);
 	void loadPalette(std::int32_t, std::int32_t);
