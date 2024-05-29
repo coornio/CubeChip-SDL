@@ -469,20 +469,19 @@ class Map2D final {
 
 	paramS mRows;
 	paramS mCols;
-	paramU mSize;
 	std::unique_ptr<T[]> pData;
 
 public:
-	paramU size() const { return mSize; }
+	paramU size() const { return static_cast<paramU>(mRows * mCols); }
 	paramS lenX() const { return mCols; }
 	paramS lenY() const { return mRows; }
 
 	T& front() { return at_raw(0); }
-	T& back()  { return at_raw(mSize - 1); }
+	T& back()  { return at_raw(size() - 1); }
 	T* data()  { return &front(); }
 
 	const T& front() const { return at_raw(0); }
-	const T& back()  const { return at_raw(mSize - 1); }
+	const T& back()  const { return at_raw(size() - 1); }
 	const T* data()  const { return &front(); }
 
 public:
@@ -514,12 +513,12 @@ private:
 	public:
 		auto size() const { return mLength; }
 
-		T& front() { return (*this)[0]; }
-		T& back()  { return (*this)[mSize - 1]; }
+		T& front() { return mBegin[0]; }
+		T& back()  { return mBegin[mLength - 1]; }
 		T* data()  { return &front(); }
 
-		const T& front() const { return (*this)[0]; }
-		const T& back()  const { return (*this)[mSize - 1]; }
+		const T& front() const { return mBegin[0]; }
+		const T& back()  const { return mBegin[mLength - 1]; }
 		const T* data()  const { return &front(); }
 
 	public:
@@ -1105,8 +1104,7 @@ private:
 	explicit Map2D(const paramS rows, const paramS cols)
 		: mRows{ rows }
 		, mCols{ cols }
-		, mSize{ static_cast<paramU>(rows * cols) }
-		, pData{ std::make_unique<T[]>(mSize) }
+		, pData{ std::make_unique<T[]>(static_cast<paramU>(rows * cols)) }
 	{}
 	#pragma endregion
 
@@ -1137,7 +1135,7 @@ public:
 	#pragma region Move/Copy Assignment
 	Map2D& operator=(Map2D&&) = default;   // move assignment
 	Map2D& operator=(const Map2D& other) { // copy assignment
-		if (this != &other && mSize == other.mSize) {
+		if (this != &other && size() == other.size()) {
 			std::copy(other.begin(), other.end(), begin());
 			mRows = other.mRows; mCols = other.mCols;
 		}
@@ -1296,7 +1294,7 @@ public:
 	Map2D& copyLinear(
 		const Map2D& other
 	) requires arithmetic<T> {
-		const auto nSize{ std::min(mSize, other.mSize) };
+		const auto nSize{ std::min(size(), other.size())};
 		std::copy_n(other.mBegin(), nSize, mBegin());
 		return *this;
 	}
@@ -1318,7 +1316,7 @@ public:
 		const integral auto size
 	) requires arithmetic<T> {
 		const auto nSize{ static_cast<paramU>(std::abs(size)) };
-		std::copy_n(other, std::min(nSize, mSize), mBegin());
+		std::copy_n(other, std::min(nSize, size()), mBegin());
 		return *this;
 	}
 	#pragma endregion
@@ -1364,9 +1362,7 @@ private:
 		const auto minRows{ std::min(rows, mRows) };
 		const auto minCols{ std::min(cols, mCols) };
 
-		mSize = static_cast<paramU>(rows * cols);
-
-		auto pCopy{ std::make_unique<T[]>(mSize) };
+		auto pCopy{ std::make_unique<T[]>(static_cast<paramU>(mRows * mCols)) };
 
 		for (auto row{ 0 }; std::cmp_less(row, minRows); ++row) {
 			const auto srcIdx{ pData.get() + row * mCols };
@@ -1389,12 +1385,11 @@ private:
 		const paramS rows,
 		const paramS cols
 	) {
-		mSize = static_cast<paramU>(rows * cols);
 		mRows = rows;
 		mCols = cols;
 
 		pData = nullptr;
-		pData = std::make_unique<T[]>(mSize);
+		pData = std::make_unique<T[]>(size());
 		return *this;
 	}
 	#pragma endregion
@@ -1543,7 +1538,7 @@ public:
 	 */
 	Map2D& transpose() {
 		if (std::cmp_greater(mRows, 1) || std::cmp_greater(mCols, 1)) {
-			for (paramU a{ 1 }, b{ 1 }; std::cmp_less(a, mSize - 1); b = ++a) {
+			for (paramU a{ 1 }, b{ 1 }; std::cmp_less(a, size() - 1); b = ++a) {
 				do {
 					b = (b % mRows) * mCols + (b / mRows);
 				} while (std::cmp_less(b, a));
@@ -1622,7 +1617,7 @@ public:
 private:
 	#pragma region Raw Iterator begin/end
 	T* mBegin()  const noexcept { return pData.get(); }
-	T* mEnd()    const noexcept { return pData.get() + mSize; }
+	T* mEnd()    const noexcept { return pData.get() + size(); }
 
 	T* mBeginR() const noexcept { return mEnd() - 1; }
 	T* mEndR()   const noexcept { return mBegin() - 1; }
