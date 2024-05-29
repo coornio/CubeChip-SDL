@@ -1362,7 +1362,7 @@ private:
 		const auto minRows{ std::min(rows, mRows) };
 		const auto minCols{ std::min(cols, mCols) };
 
-		auto pCopy{ std::make_unique<T[]>(static_cast<paramU>(mRows * mCols)) };
+		auto pCopy{ std::make_unique<T[]>(static_cast<paramU>(rows * cols)) };
 
 		for (auto row{ 0 }; std::cmp_less(row, minRows); ++row) {
 			const auto srcIdx{ pData.get() + row * mCols };
