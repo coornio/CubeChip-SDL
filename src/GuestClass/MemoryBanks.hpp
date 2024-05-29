@@ -19,13 +19,15 @@ class MemoryBanks final {
 	VM_Guest* vm;
 
 public:
-	Map2D<std::uint32_t> display;
-	Map2D<std::uint32_t> bufColor8x;
-	Map2D<std::uint32_t> bufColorMC;
-	Map2D<std::uint8_t>  bufPalette;
+	std::vector<std::uint8_t>  memory{};
+	std::vector<std::uint32_t> megaPalette{};
 
-	std::vector<std::uint8_t>      ram{};
-	std::array<std::uint32_t, 256> palette{};
+	Map2D<std::uint32_t> foregroundBuffer;
+	Map2D<std::uint32_t> backgroundBuffer;
+	Map2D<std::uint8_t>  collisionPalette;
+
+	Map2D<std::uint8_t>  displayBuffer[4];
+	Map2D<std::uint32_t> color8xBuffer;
 
 	explicit MemoryBanks(VM_Guest*);
 	void modifyViewport(BrushType);

@@ -25,34 +25,50 @@ FunctionsForMegachip::FunctionsForMegachip(VM_Guest* parent)
 }
 
 void FunctionsForMegachip::scrollUP(const std::int32_t N) {
-	vm->Mem->display.shift(-N, 0);
-	blendToDisplay(vm->Mem->display, vm->Mem->bufColorMC);
+	vm->Mem->foregroundBuffer.shift(-N, 0);
+	blendToDisplay(
+		vm->Mem->foregroundBuffer.data(),
+		vm->Mem->backgroundBuffer.data(),
+		vm->Plane.size
+	);
 }
 void FunctionsForMegachip::scrollDN(const std::int32_t N) {
-	vm->Mem->display.shift(+N, 0);
-	blendToDisplay(vm->Mem->display, vm->Mem->bufColorMC);
+	vm->Mem->foregroundBuffer.shift(+N, 0);
+	blendToDisplay(
+		vm->Mem->foregroundBuffer.data(),
+		vm->Mem->backgroundBuffer.data(),
+		vm->Plane.size
+	);
 }
 void FunctionsForMegachip::scrollLT(const std::int32_t N) {
-	vm->Mem->display.shift(0, -N);
-	blendToDisplay(vm->Mem->display, vm->Mem->bufColorMC);
+	vm->Mem->foregroundBuffer.shift(0, -N);
+	blendToDisplay(
+		vm->Mem->foregroundBuffer.data(),
+		vm->Mem->backgroundBuffer.data(),
+		vm->Plane.size
+	);
 }
 void FunctionsForMegachip::scrollRT(const std::int32_t N) {
-	vm->Mem->display.shift(0, +N);
-	blendToDisplay(vm->Mem->display, vm->Mem->bufColorMC);
+	vm->Mem->foregroundBuffer.shift(0, +N);
+	blendToDisplay(
+		vm->Mem->foregroundBuffer.data(),
+		vm->Mem->backgroundBuffer.data(),
+		vm->Plane.size
+	);
 }
 
 /*------------------------------------------------------------------*/
 
-void FunctionsForMegachip::blendToDisplay(auto& src, auto& dst) {
-	auto*& pixels{ vm->Video->pixels };
+template <typename T>
+void FunctionsForMegachip::blendToDisplay(
+	const T* const src, const T* const dst,
+	const std::size_t size
+) {
 	vm->Video->lockTexture();
-
-	for (auto H{ 0 }; H < vm->Plane.H; ++H)
-		for (auto W{ 0 }; W < vm->Plane.W; ++W)
-			*pixels++ = blendPixel(src[H][W], dst[H][W]);
-
+	for (std::size_t idx{ 0 }; std::cmp_less(idx, size); ++idx) {
+		vm->Video->pixels[idx] = blendPixel(src[idx], dst[idx]);
+	}
 	vm->Video->unlockTexture();
-	vm->Video->renderPresent();
 }
 
 uint32_t FunctionsForMegachip::blendPixel(
@@ -92,8 +108,8 @@ uint32_t FunctionsForMegachip::applyBlend(
 	}
 
 	return 0xFF000000u
-		| static_cast<std::uint8_t>(std::roundf(R * 255.0f)) << 16
-		| static_cast<std::uint8_t>(std::roundf(G * 255.0f)) <<  8
+		| static_cast<std::uint8_t>(std::roundf(R * 255.0f)) << 16u
+		| static_cast<std::uint8_t>(std::roundf(G * 255.0f)) <<  8u
 		| static_cast<std::uint8_t>(std::roundf(B * 255.0f));
 }
 
@@ -115,8 +131,8 @@ void FunctionsForMegachip::drawSprite(
 			for (auto W{ 7 }; W >= 0; --W, ++X &= 0xFFu) {
 				if (!(srcIndex >> W & 0x1)) continue;
 
-				auto& colorIdx{ vm->Mem->bufPalette[VY][X] }; // DESTINATION pixel's collision palette index
-				auto& colorDst{ vm->Mem->bufColorMC[VY][X] }; // DESTINATION pixel's color
+				auto& colorIdx{ vm->Mem->collisionPalette[VY][X] }; // DESTINATION pixel's collision megaPalette index
+				auto& colorDst{ vm->Mem->backgroundBuffer[VY][X] }; // DESTINATION pixel's color
 
 				if (colorIdx) [[unlikely]] {
 					colorIdx = 0;
@@ -141,14 +157,14 @@ void FunctionsForMegachip::drawSprite(
 			const auto srcIndex{ vm->mrw(I++) }; // palette index from RAM 
 			if (!srcIndex) continue;
 
-			auto& colorIdx{ vm->Mem->bufPalette[VY][X] }; // DESTINATION pixel's collision palette index
-			auto& colorDst{ vm->Mem->bufColorMC[VY][X] }; // DESTINATION pixel's color
+			auto& colorIdx{ vm->Mem->collisionPalette[VY][X] }; // DESTINATION pixel's collision palette index
+			auto& colorDst{ vm->Mem->backgroundBuffer[VY][X] }; // DESTINATION pixel's color
 
 			if (!vm->Reg->V[0xF] && colorIdx == vm->Trait.collision) [[unlikely]]
 				vm->Reg->V[0xF] = 1;
 
 			colorIdx = srcIndex;
-			colorDst = blendPixel(vm->Mem->palette[srcIndex], colorDst);
+			colorDst = blendPixel(vm->Mem->megaPalette[srcIndex], colorDst);
 		}
 	}
 }

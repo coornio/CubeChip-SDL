@@ -21,80 +21,62 @@ FunctionsForClassic8::FunctionsForClassic8(VM_Guest* parent)
 {}
 
 void FunctionsForClassic8::scrollUP(const std::int32_t N) {
-	vm->isDisplayReady(true);
-	vm->Mem->display.shift(-N, 0);
+	vm->Mem->displayBuffer[0].shift(-N, 0);
 }
 void FunctionsForClassic8::scrollDN(const std::int32_t N) {
-	vm->isDisplayReady(true);
-	vm->Mem->display.shift(+N, 0);
+	vm->Mem->displayBuffer[0].shift(+N, 0);
 }
 void FunctionsForClassic8::scrollLT(const std::int32_t) {
-	vm->isDisplayReady(true);
-	vm->Mem->display.shiftBit(0, -4, 8);
+	vm->Mem->displayBuffer[0].shift(0, -4);
 }
 void FunctionsForClassic8::scrollRT(const std::int32_t) {
-	vm->isDisplayReady(true);
-	vm->Mem->display.shiftBit(0, +4, 8);
+	vm->Mem->displayBuffer[0].shift(0, +4);
 }
 
 /*------------------------------------------------------------------*/
 
 void FunctionsForClassic8::drawByte(
-	const std::size_t L, const std::size_t SHL,
-	const std::size_t R, const std::size_t SHR,
-	const std::size_t Y, const std::size_t DATA
+	std::int32_t X, std::int32_t Y,
+	const std::size_t DATA
 ) {
-	if (!DATA || std::cmp_greater_equal(L, vm->Plane.X)) return;
-	const auto DATA_L{ DATA >> SHR & 0xFF };
-	
-	if (!vm->Reg->V[0xF]) [[unlikely]]
-		vm->Reg->V[0xF]     = (vm->Mem->display[Y][L] & DATA_L) != 0;
-	vm->Mem->display[Y][L] ^= DATA_L;
+	if (!DATA || std::cmp_equal(X, vm->Plane.W)) return;
 
-	if (!SHR || std::cmp_greater_equal(R, vm->Plane.X)) return;
-	const auto DATA_R{ DATA << SHL & 0xFF };
-
-	if (!vm->Reg->V[0xF]) [[unlikely]]
-		vm->Reg->V[0xF]     = (vm->Mem->display[Y][R] & DATA_R) != 0;
-	vm->Mem->display[Y][R] ^= DATA_R;
+	for (std::size_t B{ 0 }; std::cmp_less(B, 8); ++B) {
+		if (DATA >> (7u - B) & 0x1u) {
+			auto& elem{ vm->Mem->displayBuffer[0].at_raw(Y, X) };
+			if (std::cmp_not_equal(elem, 0)) {
+				vm->Reg->V[0xF] = 1;
+			}
+			elem ^= 1;
+		}
+		if (std::cmp_equal(++X, vm->Plane.W)) {
+			if (vm->Quirk.wrapSprite)
+				X &= vm->Plane.Wb;
+			else return;
+		}
+	}
 }
 
 void FunctionsForClassic8::drawSprite(
-	std::int32_t VX,
-	std::int32_t VY,
-	std::int32_t  N,
-	std::uint32_t I
+	std::int32_t VX, std::int32_t VY,
+	std::int32_t  N, std::uint32_t I
 ) {
-	vm->isDisplayReady(true);
-
 	VX &= vm->Plane.Wb;
 	VY &= vm->Plane.Hb;
 	vm->Reg->V[0xF] = 0;
 
 	const bool wide{ N == 0 };
-	N = VY + (wide ? 16 : N);
+	if (wide) N = 16;
 
-	const auto SHR{ VX & 7 };
-	const auto SHL{ 8 - SHR };
-
-	auto X0{ VX >> 3 };
-	auto X1{ X0 + 1 };
-	auto X2{ X0 + 2 };
-
-	if (vm->Quirk.wrapSprite) {
-		X1 &= vm->Plane.Xb;
-		X2 &= vm->Plane.Xb;
-	}
-
-	for (auto H{ VY }; std::cmp_less(H, N); ++H) {
-		if (!vm->Quirk.wrapSprite)
-			if (std::cmp_greater_equal(H, vm->Plane.H)) break;
-
-		const auto Y{ H & vm->Plane.Hb };
-
-		drawByte(X0, SHL, X1, SHR, Y, vm->mrw(I++));
-		if (!wide) continue;
-		drawByte(X1, SHL, X2, SHR, Y, vm->mrw(I++));
+	for (auto Y{ 0 }; std::cmp_less(Y, N); ++Y) {
+		if (true) drawByte(VX + 0, VY, vm->mrw(I++));
+		if (wide) drawByte(VX + 8, VY, vm->mrw(I++));
+		
+		if (std::cmp_greater(++VY, vm->Plane.Hb)) {
+			if (vm->Quirk.wrapSprite)
+				VY &= vm->Plane.Hb;
+			else return;
+		}
 	}
 }
 
@@ -104,13 +86,12 @@ void FunctionsForClassic8::drawColors(
 	const std::int32_t idx,
 	const std::int32_t N
 ) {
-	vm->isDisplayReady(true);
-
+	auto Xb{ vm->Plane.W >> 3 };
 	if (N) {
 		const auto X{ VX >> 3 };
 		for (auto _Y{ 0 }; std::cmp_less(_Y, N); ++_Y) {
 			const auto Y{ VY + _Y & vm->Plane.Hb };
-			vm->Mem->bufColor8x[Y][X] = vm->Color->getFore8X(idx);
+			vm->Mem->color8xBuffer[Y][X] = vm->Color->getFore8X(idx);
 		}
 		vm->State.chip8X_hires = true;
 	}
@@ -121,8 +102,8 @@ void FunctionsForClassic8::drawColors(
 		for (auto _Y{ 0 }; std::cmp_less(_Y, H); ++_Y) {
 			const auto Y{ ((VY + _Y) << 2) & vm->Plane.Hb };
 			for (auto _X{ 0 }; std::cmp_less(_X, W); ++_X) {
-				const auto X{ VX + _X & vm->Plane.Xb };
-				vm->Mem->bufColor8x[Y][X] = vm->Color->getFore8X(idx);
+				const auto X{ VX + _X & Xb };
+				vm->Mem->color8xBuffer[Y][X] = vm->Color->getFore8X(idx);
 			}
 		}
 		vm->State.chip8X_hires = false;

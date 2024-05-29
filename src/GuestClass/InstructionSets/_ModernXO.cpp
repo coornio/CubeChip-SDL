@@ -19,60 +19,69 @@ FunctionsForModernXO::FunctionsForModernXO(VM_Guest* parent)
 
 void FunctionsForModernXO::scrollUP(const std::int32_t N) {
 	if (!vm->Plane.selected) return;
-	vm->isDisplayReady(true);
-	vm->Mem->display.shiftBitMask(-N, 0, vm->Plane.mask);
+
+	for (auto P{ 0 }; std::cmp_less(P, 4); ++P) {
+		if (std::cmp_not_equal(vm->Plane.selected & (1 << P), 0)) {
+			vm->Mem->displayBuffer[P].shift(-N, 0);
+		}
+	}
 }
 void FunctionsForModernXO::scrollDN(const std::int32_t N) {
 	if (!vm->Plane.selected) return;
-	vm->isDisplayReady(true);
-	vm->Mem->display.shiftBitMask(+N, 0, vm->Plane.mask);
+
+	for (auto P{ 0 }; std::cmp_less(P, 4); ++P) {
+		if (std::cmp_not_equal(vm->Plane.selected & (1 << P), 0)) {
+			vm->Mem->displayBuffer[P].shift(+N, 0);
+		}
+	}
 }
 void FunctionsForModernXO::scrollLT(const std::int32_t) {
 	if (!vm->Plane.selected) return;
-	vm->isDisplayReady(true);
-	vm->Mem->display.shiftBitMask(0, -16, vm->Plane.mask);
+
+	for (auto P{ 0 }; std::cmp_less(P, 4); ++P) {
+		if (std::cmp_not_equal(vm->Plane.selected & (1 << P), 0)) {
+			vm->Mem->displayBuffer[P].shift(0, -4);
+		}
+	}
 }
 void FunctionsForModernXO::scrollRT(const std::int32_t) {
 	if (!vm->Plane.selected) return;
-	vm->isDisplayReady(true);
-	vm->Mem->display.shiftBitMask(0, +16, vm->Plane.mask);
+
+	for (auto P{ 0 }; std::cmp_less(P, 4); ++P) {
+		if (std::cmp_not_equal(vm->Plane.selected & (1 << P), 0)) {
+			vm->Mem->displayBuffer[P].shift(0, +4);
+		}
+	}
 }
 
 /*------------------------------------------------------------------*/
 
-void FunctionsForModernXO::applyBrush(uint32_t& addr, const std::size_t data) {
-	switch (vm->Plane.brush) {
-		case BrushType::XOR: addr ^=  data; return;
-		case BrushType::SUB: addr &= ~data; return;
-		case BrushType::ADD: addr |=  data; return;
-	}
-}
-
-std::size_t  FunctionsForModernXO::bitBloat(std::size_t byte) {
-	if (!byte) return 0;
-	byte = (byte << 12 | byte) & 0x000F000F;
-	byte = (byte <<  6 | byte) & 0x03030303;
-	return (byte <<  3 | byte) & 0x11111111;
-}
-
 void FunctionsForModernXO::drawByte(
-	const std::size_t L, const std::size_t SHL,
-	const std::size_t R, const std::size_t SHR,
-	const std::size_t Y, const std::size_t DATA
+	std::int32_t X, std::int32_t Y,
+	const std::int32_t P,
+	const std::size_t DATA
 ) {
-	if (!DATA || std::cmp_greater_equal(L, vm->Plane.X)) return;
-	const auto DATA_L{ DATA >> SHR & 0xFFFFFFFF };
+	if (!DATA || std::cmp_equal(X, vm->Plane.W)) return;
 
-	if (!vm->Reg->V[0xF]) [[unlikely]]
-		vm->Reg->V[0xF]  = (DATA_L & vm->Mem->display[Y][L]) != 0;
-	applyBrush(vm->Mem->display[Y][L], DATA_L);
-
-	if (!SHR || std::cmp_greater_equal(R, vm->Plane.X)) return;
-	const auto DATA_R{ DATA << SHL & 0xFFFFFFFF };
-
-	if (!vm->Reg->V[0xF]) [[unlikely]]
-		vm->Reg->V[0xF]  = (DATA_R & vm->Mem->display[Y][R]) != 0;
-	applyBrush(vm->Mem->display[Y][R], DATA_R);
+	for (std::size_t B{ 0 }; std::cmp_less(B, 8); ++B) {
+		if (DATA >> (7u - B) & 0x1u) {
+			auto& elem{ vm->Mem->displayBuffer[P].at_raw(Y, X) };
+			if (std::cmp_not_equal(elem, 0)) {
+				vm->Reg->V[0xF] = 1;
+			}
+			switch (vm->Plane.brush) {
+				case BrushType::XOR: elem ^=  1; break;
+				case BrushType::SUB: elem &= ~1; break;
+				case BrushType::ADD: elem |=  1; break;
+				case BrushType::CLR: break;
+			}
+		}
+		if (std::cmp_equal(++X, vm->Plane.W)) {
+			if (vm->Quirk.wrapSprite)
+				X &= vm->Plane.Wb;
+			else return;
+		}
+	}
 }
 
 void FunctionsForModernXO::drawSprite(
@@ -81,44 +90,31 @@ void FunctionsForModernXO::drawSprite(
 	std::int32_t  N,
 	std::uint32_t I
 ) {
-	if (!vm->Plane.selected) {
+	if (std::cmp_equal(vm->Plane.selected, 0)) {
 		vm->Reg->V[0xF] = 0;
 		return;
 	}
-
-	vm->isDisplayReady(true);
 
 	VX &= vm->Plane.Wb;
 	VY &= vm->Plane.Hb;
 	vm->Reg->V[0xF] = 0;
 
 	const bool wide{ N == 0 };
-	N = VY + (wide ? 16 : N);
+	if (wide) N = 16;
 
-	const auto SHR{ (VX & 7) << 2 };
-	const auto SHL{ 32 - SHR };
+	for (auto P{ 0 }; std::cmp_less(P, 4); ++P) {
+		if (std::cmp_equal(vm->Plane.selected & (1 << P), 0)) continue;
 
-	auto X0{ VX >> 3 };
-	auto X1{ X0 + 1 };
-	auto X2{ X0 + 2 };
+		auto _VY{ VY };
+		for (auto Y{ 0 }; std::cmp_less(Y, N); ++Y) {
+			if (true) drawByte(VX + 0, _VY, P, vm->mrw(I++));
+			if (wide) drawByte(VX + 8, _VY, P, vm->mrw(I++));
 
-	if (vm->Quirk.wrapSprite) {
-		X1 &= vm->Plane.Xb;
-		X2 &= vm->Plane.Xb;
-	}
-
-	for (auto mask{ 1 }; std::cmp_less_equal(mask, 0x8); mask <<= 1) {
-		if (!(mask & vm->Plane.selected)) continue;
-
-		for (auto H{ VY }; std::cmp_less(H, N); ++H) {
-			if (!vm->Quirk.wrapSprite)
-				if (std::cmp_greater_equal(H, vm->Plane.H)) break;
-
-			const auto Y{ H & vm->Plane.Hb };
-
-			drawByte(X0, SHL, X1, SHR, Y, bitBloat(vm->mrw(I++)) * mask);
-			if (!wide) continue;
-			drawByte(X1, SHL, X2, SHR, Y, bitBloat(vm->mrw(I++)) * mask);
+			if (std::cmp_greater(++_VY, vm->Plane.Hb)) {
+				if (vm->Quirk.wrapSprite)
+					_VY &= vm->Plane.Hb;
+				else return;
+			}
 		}
 	}
 }

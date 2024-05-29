@@ -14,44 +14,47 @@ MemoryBanks::MemoryBanks(VM_Guest* parent)
 {}
 
 void MemoryBanks::modifyViewport(const BrushType type) {
-	vm->isDisplayReady(true);
+	if (!vm->State.xochip_color) {
+		displayBuffer[0].wipeAll();
+		return;
+	}
 
-	switch (type) {
-
-		case BrushType::CLR:
-			display.wipeAll();
-			return;
-
-		case BrushType::XOR:
-			for (auto& row : display)
-				row ^= vm->Plane.mask;
-			return;
-
-		case BrushType::SUB:
-			for (auto& row : display)
-				row &= ~vm->Plane.mask;
-			return;
-
-		case BrushType::ADD:
-			for (auto& row : display)
-				row |= vm->Plane.mask;
-			return;
+	for (auto P{ 0 }; std::cmp_less(P, 4); ++P) {
+		if (std::cmp_not_equal(vm->Plane.selected & (1 << P), 0)) {
+			switch (type) {
+				case BrushType::CLR:
+					vm->Mem->displayBuffer[P].wipeAll();
+					break;
+				case BrushType::XOR:
+					for (auto& row : displayBuffer[P]) row ^= 1;
+					break;
+				case BrushType::SUB:
+					for (auto& row : displayBuffer[P]) row &= ~1;
+					break;
+				case BrushType::ADD:
+					for (auto& row : displayBuffer[P]) row |= 1;
+					break;
+			}
+		}
 	}
 }
 
 void MemoryBanks::flushBuffers(const bool firstFlush) {
-	vm->isDisplayReady(true);
+	if (firstFlush) {
+		for (auto& elem : megaPalette) { elem = {}; }
+	} else {
+		foregroundBuffer.copyLinear(backgroundBuffer);
+	}
 
-	if (firstFlush) palette.fill(0);
-	else display.copyLinear(bufColorMC);
+	backgroundBuffer.wipeAll();
+	collisionPalette.wipeAll();
 
-	bufColorMC.wipeAll();
-	bufPalette.wipeAll();
+	vm->flushDisplay();
 }
 
 void MemoryBanks::loadPalette(std::int32_t index, const std::int32_t count) {
 	for (std::size_t idx{ 0 }; std::cmp_less(idx, count); index += 4) {
-		palette[++idx] = static_cast<std::uint32_t>(
+		megaPalette[++idx] = static_cast<decltype(megaPalette)::value_type>(
 			vm->mrw(index + 0u) << 24u |
 			vm->mrw(index + 1u) << 16u |
 			vm->mrw(index + 2u) <<  8u |
@@ -61,8 +64,6 @@ void MemoryBanks::loadPalette(std::int32_t index, const std::int32_t count) {
 }
 
 void MemoryBanks::clearPages(std::int32_t H) {
-	vm->isDisplayReady(true);
-
 	while (H++ < vm->Plane.H)
-		display[H].wipeAll();
+		displayBuffer[0][H].wipeAll();
 }

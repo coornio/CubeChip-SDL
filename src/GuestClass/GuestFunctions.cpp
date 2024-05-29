@@ -45,7 +45,7 @@ VM_Guest& VM_Guest::isSystemPaused(const bool state) { _isSystemPaused = state; 
 VM_Guest& VM_Guest::isDisplayReady(const bool state) { _isDisplayReady = state; return *this; }
 
 double   VM_Guest::fetchFramerate()           { return Program->framerate; }
-uint8_t& VM_Guest::mrw(const std::size_t idx) { return Mem->ram[idx & Program->limiter]; }
+uint8_t& VM_Guest::mrw(const std::size_t idx) { return Mem->memory[idx & Program->limiter]; }
 uint8_t& VM_Guest::VX()                       { return Reg->V[(Program->opcode >> 8) & 0xF]; }
 uint16_t VM_Guest::NNNN()                     { return mrw(Program->counter) << 8 | mrw(Program->counter + 1); }
 
@@ -68,9 +68,8 @@ void VM_Guest::readyAudioVideo() {
 	Video->AudioOutline(color);
 	Sound->renderAudio();
 
-	if (isDisplayReady()) {
+	if (!State.mega_enabled) {
 		flushDisplay();
-		isDisplayReady(false);
 	}
 }
 
@@ -467,7 +466,6 @@ void VM_Guest::instructionLoop() {
 				default: switch (LO) {
 					case 0x01:							// FX01 - set plane drawing to X *XOCHIP*
 						Plane.selected = X;
-						Plane.mask = X * 0x11111111;
 						break;
 					case 0x03:							// FX03 - load 24bit color X from RAM at I, I+1, I+2 *HWCHIP64*
 						if (!State.chip8E_rom) {

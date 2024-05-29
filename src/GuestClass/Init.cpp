@@ -165,10 +165,10 @@ bool VM_Guest::romTypeCheck() {
 
 bool VM_Guest::loadRomToRam(const std::size_t size, const std::size_t offset) {
 	Program->limiter = size - 1; // set program memory limit
-	Mem->ram.resize(size);       // resize the memory vector
+	Mem->memory.resize(size);    // resize the memory vector
 
 	std::basic_ifstream<char> ifs(File->path, std::ios::binary);
-	ifs.read(reinterpret_cast<char*>(&Mem->ram[offset]), File->size);
+	ifs.read(reinterpret_cast<char*>(&Mem->memory[offset]), File->size);
 	return !ifs.fail();
 }
 
@@ -186,7 +186,7 @@ void VM_Guest::initPlatform() {
 	Program->setSpeed(0);
 	//Quirk.waitScroll = true;
 	//Quirk.waitVblank = true;
-	//Quirk.wrapSprite = true;
+	Quirk.wrapSprite = true;
 	Input->reset();
 
 	// XXX - apply custom rom settings here
@@ -212,12 +212,12 @@ void VM_Guest::initPlatform() {
 		Color->cycleBackground();
 
 		if (!State.schip_legacy)
-			Mem->bufColor8x[0][0] = Color->getFore8X(2);
+			Mem->color8xBuffer[0][0] = Color->getFore8X(2);
 		else {
-			Mem->bufColor8x[0][0] =
-			Mem->bufColor8x[0][1] =
-			Mem->bufColor8x[4][0] =
-			Mem->bufColor8x[4][1] = Color->getFore8X(2);
+			Mem->color8xBuffer[0][0] =
+			Mem->color8xBuffer[0][1] =
+			Mem->color8xBuffer[4][0] =
+			Mem->color8xBuffer[4][1] = Color->getFore8X(2);
 		}
 	}
 
@@ -233,21 +233,22 @@ void VM_Guest::setupDisplay(const std::int32_t mode, const bool forced) {
 
 	Plane.W = wSize[modeSelect]; Plane.Wb = Plane.W - 1;
 	Plane.H = hSize[modeSelect]; Plane.Hb = Plane.H - 1;
-	Plane.X = Plane.W >> 3;      Plane.Xb = Plane.X - 1;
+	Plane.size = Plane.W * Plane.H;
 
 	Program->screenMode = mode;
+	Mem->displayBuffer[0].resize(!forced, Plane.H, Plane.W);
+	Mem->displayBuffer[1].resize(!forced, Plane.H, Plane.W);
+	Mem->displayBuffer[2].resize(!forced, Plane.H, Plane.W);
+	Mem->displayBuffer[3].resize(!forced, Plane.H, Plane.W);
 
 	if (State.mega_enabled) {
-		Mem->display.resize(!forced, Plane.H, Plane.W);
-		Mem->bufColorMC.resize(true, Plane.H, Plane.W);
-		Mem->bufPalette.resize(true, Plane.H, Plane.W);
-	} else {
-		Mem->display.resize(!forced, Plane.H, Plane.X);
-		Mem->bufColorMC.resize(true, 1, 1);
-		Mem->bufPalette.resize(true, 1, 1);
+		Mem->foregroundBuffer.resize(true, Plane.H, Plane.W);
+		Mem->backgroundBuffer.resize(true, Plane.H, Plane.W);
+		Mem->collisionPalette.resize(true, Plane.H, Plane.W);
+		Mem->megaPalette.resize(256);
 	}
 	if (State.chip8X_rom) {
-		Mem->bufColor8x.resize(false, Plane.H, Plane.X);
+		Mem->color8xBuffer.resize(false, Plane.H, Plane.W);
 	}
 
 	Video->createTexture(Plane.W, Plane.H);
@@ -256,8 +257,6 @@ void VM_Guest::setupDisplay(const std::int32_t mode, const bool forced) {
 		State.mega_enabled ? 384 : 256,
 		State.mega_enabled ?  -4 :   4
 	);
-
-	isDisplayReady(true);
 
 	const bool legacy{
 		State.chip8E_rom   ||
@@ -334,7 +333,7 @@ void VM_Guest::loadFontData() {
 	std::copy(
 		FONT_DATA.begin(),
 		FONT_DATA.end() - (State.schip_legacy ? 60 : 0),
-		Mem->ram.begin()
+		Mem->memory.begin()
 	);
 
 	if (!State.megachip_rom) return;
@@ -343,7 +342,7 @@ void VM_Guest::loadFontData() {
 	std::copy(
 		MEGA_FONT_DATA.begin(),
 		MEGA_FONT_DATA.end(),
-		Mem->ram.begin() + 240
+		Mem->memory.begin() + 240
 	);
 }
 
@@ -352,24 +351,23 @@ void VM_Guest::flushDisplay() {
 	Video->lockTexture();
 
 	if (State.mega_enabled) {
-		for (const auto& row : Mem->display) {
-			for (const auto& elem : row) {
-				*pixels++ = elem;
-			}
+		for (std::size_t idx{ 0 }; std::cmp_less(idx, Plane.size); ++idx) {
+			Video->pixels[idx] = Mem->foregroundBuffer.at_raw(idx);
 		}
 	} else if (State.xochip_color) {
-		for (const auto& row : Mem->display) {
-			for (const auto& elem : row) {
-				for (auto B{ 28 }; B >= 0; B -= 4) {
-					*pixels++ = Color->bit[elem >> B & 0xF];
-				}
-			}
+		for (std::size_t idx{ 0 }; std::cmp_less(idx, Plane.size); ++idx) {
+			Video->pixels[idx] = Color->bit[
+				Mem->displayBuffer[0].at_raw(idx) << 0u |
+				Mem->displayBuffer[1].at_raw(idx) << 1u |
+				Mem->displayBuffer[2].at_raw(idx) << 2u |
+				Mem->displayBuffer[3].at_raw(idx) << 3u
+			];
 		}
 	} else if (State.chip8X_rom) {
 		const auto mask{ State.chip8X_hires ? 0xFF : 0xFC };
-		for (auto Y{ 0 }; const auto & row : Mem->display) {
+		for (auto Y{ 0 }; const auto & row : Mem->displayBuffer[0]) {
 			for (auto X{ 0 }; const auto & elem : row) {
-				const auto color{ Mem->bufColor8x[Y & mask][X] };
+				const auto color{ Mem->color8xBuffer[Y & mask][X] };
 				for (auto B{ 7 }; B >= 0; --B) {
 					*pixels++ = (elem >> B & 0x1) ? color : Color->bit[0];
 				}
@@ -378,12 +376,8 @@ void VM_Guest::flushDisplay() {
 			++Y;
 		}
 	} else {
-		for (const auto& row : Mem->display) {
-			for (const auto& elem : row) {
-				for (auto B{ 7 }; B >= 0; --B) {
-					*pixels++ = Color->bit[elem >> B & 1];
-				}
-			}
+		for (std::size_t idx{ 0 }; std::cmp_less(idx, Plane.size); ++idx) {
+			Video->pixels[idx] = Color->bit[Mem->displayBuffer[0].at_raw(idx)];
 		}
 	}
 	Video->unlockTexture();

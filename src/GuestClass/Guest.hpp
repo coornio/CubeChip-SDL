@@ -72,25 +72,24 @@ public:
 	};
 
 	struct BitPlaneProperties final {
-		int32_t W{},  H{},  X{};
-		int32_t Wb{}, Hb{}, Xb{};
-
-		uint32_t selected{ 1 };
-		uint32_t mask{ 0x11111111 };
+		std::int32_t W{},  H{};
+		std::int32_t Wb{}, Hb{};
+		std::int32_t size{};
+		std::int32_t selected{ 1 };
 
 		using enum BrushType;
 		BrushType brush{ XOR };
 	} Plane;
 
 	struct TextureTraits final {
-		int32_t W{}, H{};
+		std::int32_t W{}, H{};
 
-		uint8_t collision{ 0xFF };
+		std::uint8_t collision{ 0xFF };
 		bool    rotate{};
 		bool    flip_X{};
 		bool    flip_Y{};
 		bool    invert{};
-		uint8_t rgbmod{};
+		std::uint8_t rgbmod{};
 		bool    nodraw{};
 		bool    uneven{};
 
@@ -143,7 +142,7 @@ public:
 	void instructionDecoder();
 
 	double   fetchFramerate();
-	uint8_t& mrw(std::size_t);
-	uint8_t& VX();
-	uint16_t NNNN();
+	std::uint8_t& mrw(std::size_t);
+	std::uint8_t& VX();
+	std::uint16_t NNNN();
 };

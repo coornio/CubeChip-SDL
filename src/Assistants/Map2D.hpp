@@ -473,9 +473,17 @@ class Map2D final {
 	std::unique_ptr<T[]> pData;
 
 public:
-	auto size() const { return mSize; }
-	auto lenX() const { return mCols; }
-	auto lenY() const { return mRows; }
+	paramU size()  const { return mSize; }
+	paramS lenX()  const { return mCols; }
+	paramS lenY()  const { return mRows; }
+
+	T& front() { return at_raw(0); }
+	T& back()  { return at_raw(mSize - 1); }
+	T* data()  { return &front(); }
+
+	const T& front() const { return at_raw(0); }
+	const T& back()  const { return at_raw(mSize - 1); }
+	const T* data()  const { return &front(); }
 
 public:
 	#pragma region Raw Accessors
@@ -505,6 +513,14 @@ private:
 
 	public:
 		auto size() const { return mLength; }
+
+		T& front() { return (*this)[0]; }
+		T& back()  { return (*this)[mSize - 1]; }
+		T* data()  { return &front(); }
+
+		const T& front() const { return (*this)[0]; }
+		const T& back()  const { return (*this)[mSize - 1]; }
+		const T* data()  const { return &front(); }
 
 	public:
 		#pragma region Ctor
@@ -623,92 +639,6 @@ private:
 				rotate(cols);
 			}
 			return wipe(cols);
-		}
-		#pragma endregion
-		
-		#pragma region shiftBit() :: Matrix[R]
-		/**
-		 * @brief Shifts the row's data in a bitwise manner in a given direction.
-		 * @return Self reference for method chaining.
-		 *
-		 * @param[in] cols  :: Total column bit positions to shift. Directional.
-		 * @param[in] limit :: Apply a bit limiter. Defaults to T size, optional.
-		 *
-		 * @warning The sign of the param controls the application direction.
-		 * @warning If the param exceeds row length, all row data is wiped.
-		 * @warning Row bit shifting is limited in distance to matrix T type.
-		 */
-		RowProxy& shiftBit(
-			const integral auto cols,
-			const paramU limit = sizeof(T) * 8
-		) requires integral<T> {
-			if (std::cmp_not_equal(cols, 0)) {
-				const auto limiter{ (1 << limit) - 1 };
-
-				if (std::cmp_less(cols, 0)) {
-					for (auto X{ 0 }; X < mLength; ++X) {
-						auto temp{ (*this)[X] << -cols };
-						if (X < mLength - 1) {
-							temp |= (*this)[X + 1] >> (limit + cols);
-						}
-						(*this)[X] = temp & limiter;
-					}
-				} else {
-					for (auto X{ mLength - 1 }; X >= 0; --X) {
-						auto temp{ (*this)[X] >> cols };
-						if (X > 0) {
-							temp |= (*this)[X - 1] << (limit - cols);
-						}
-						(*this)[X] = temp & limiter;
-					}
-				}
-			}
-			return *this;
-		}
-		#pragma endregion
-		
-		#pragma region shiftBitMask() :: Matrix[R]
-		/**
-		 * @brief Shifts the row's data in a marked bitwise manner in a given direction.
-		 * @return Self reference for method chaining.
-		 *
-		 * @param[in] cols  :: Total column bit positions to shift. Directional.
-		 * @param[in] mask  :: Bit mask to control the shift pattern.
-		 * @param[in] limit :: Apply a bit limiter. Defaults to T size, optional.
-		 *
-		 * @warning The sign of the param controls the application direction.
-		 * @warning If the param exceeds row length, all row data is wiped.
-		 * @warning Row bit shifting is limited in distance to matrix T type.
-		 */
-		RowProxy& shiftBitMask(
-			const integral auto cols,
-			const integral auto mask,
-			const paramU limit = sizeof(T) * 8
-		) requires integral<T> {
-			if (std::cmp_not_equal(cols, 0)) {
-				const auto limiter{ (1 << limit) - 1 };
-
-				if (std::cmp_less(cols, 0)) {
-					for (auto X{ 0 }; X < mLength; ++X) {
-						auto temp{ (*this)[X] << -cols };
-						if (X < mLength - 1) {
-							temp |= (*this)[X + 1] >> (limit + cols);
-						}
-						(*this)[X] &= ~mask;
-						(*this)[X] |= temp & (mask & limiter);
-					}
-				} else {
-					for (auto X{ mLength - 1 }; X >= 0; --X) {
-						auto temp{ (*this)[X] >> cols };
-						if (X > 0) {
-							temp |= (*this)[X - 1] << (limit - cols);
-						}
-						(*this)[X] &= ~mask;
-						(*this)[X] |= temp & (mask & limiter);
-					}
-				}
-			}
-			return *this;
 		}
 		#pragma endregion
 		
@@ -1431,7 +1361,7 @@ private:
 		const auto minRows{ std::min(rows, mRows) };
 		const auto minCols{ std::min(cols, mCols) };
 
-		mSize = rows * cols;
+		mSize = static_cast<paramU>(rows * cols);
 
 		auto pCopy{ std::make_unique<T[]>(mSize) };
 
@@ -1456,7 +1386,7 @@ private:
 		const paramS rows,
 		const paramS cols
 	) {
-		mSize = rows * cols;
+		mSize = static_cast<paramU>(rows * cols);
 		mRows = rows;
 		mCols = cols;
 
@@ -1566,78 +1496,6 @@ public:
 	}
 	#pragma endregion
 	
-	#pragma region shiftBit() :: Matrix (Integral)
-	/**
-	 * @brief Shifts the matrix's data in a bitwise manner in a given direction.
-	 * @return Self reference for method chaining.
-	 *
-	 * @param[in] rows  :: Total row positions to shift. Directional.
-	 * @param[in] cols  :: Total column bit positions to shift. Directional.
-	 * @param[in] limit :: Apply a bit limiter. Defaults to T size, optional.
-	 *
-	 * @warning The sign of the params control the application direction.
-	 * @warning If the params exceed row/column length, all row data is wiped.
-	 * @warning Row bit shifting is limited in distance to matrix T type.
-	 */
-	Map2D& shiftBit(
-		const integral auto rows,
-		const integral auto cols,
-		const paramU limit = sizeof(T) * 8
-	) requires integral<T> {
-		if (std::cmp_less(std::abs(rows), mRows)) {
-			shift(rows, 0);
-		}
-		for (auto& row : *this) {
-			row.shiftBit(cols, limit);
-		}
-		return *this;
-	}
-	#pragma endregion
-	
-	#pragma region shiftBitMask() :: Matrix (Integral)
-	/**
-	 * @brief Shifts the matrix's data in a marked bitwise manner in a given direction.
-	 * @return Self reference for method chaining.
-	 *
-	 * @param[in] rows  :: Total row positions to shift. Directional.
-	 * @param[in] cols  :: Total column bit positions to shift. Directional.
-	 * @param[in] mask  :: Bit mask to control the shift pattern.
-	 * @param[in] limit :: Apply a bit limiter. Defaults to T size, optional.
-	 *
-	 * @warning The sign of the params control the application direction.
-	 * @warning If the params exceed row/column length, all row data is wiped.
-	 * @warning Row bit shifting is limited in distance to matrix T type.
-	 */
-	Map2D& shiftBitMask(
-		const integral auto rows,
-		const integral auto cols,
-		const integral auto mask,
-		const paramU limit = sizeof(T) * 8
-	) requires integral<T> {
-		if (std::cmp_not_equal(rows, 0)) {
-			const auto limiter{ (1 << limit) - 1 };
-
-			if (std::cmp_less(rows, 0)) {
-				for (auto Y{ 0 }; Y < mRows; ++Y) {
-					(*this)[Y] &= ~mask;
-					if (Y >= mRows + rows) continue;
-					(*this)[Y] |= (*this)[Y - rows].clone() & mask;
-				}
-			} else {
-				for (auto Y{ mRows - 1 }; Y >= 0; --Y) {
-					(*this)[Y] &= ~mask;
-					if (Y < rows) continue;
-					(*this)[Y] |= (*this)[Y - rows].clone() & mask;
-				}
-			}
-		}
-		for (auto& row : *this) {
-			row.shiftBitMask(cols, mask, limit);
-		}
-		return *this;
-	}
-	#pragma endregion
-	
 	#pragma region reverse() :: Matrix + View
 	/**
 	 * @brief Reverses the matrix's data.
@@ -1697,14 +1555,14 @@ public:
 
 private:
 	#pragma region Accessor Bounds Checkers
-	paramS checkRowBounds(const integral auto row) const {
+	auto checkRowBounds(const integral auto row) const {
 		if (std::cmp_less(row, -mRows) || std::cmp_greater_equal(row, mRows)) {
 			throw std::out_of_range("row index out of range");
 		}
 		if (std::cmp_less(row, 0)) return row + mRows;
 		else return row;
 	}
-	paramS checkColBounds(const integral auto col) const {
+	auto checkColBounds(const integral auto col) const {
 		if (std::cmp_less(col, -mCols) || std::cmp_greater_equal(col, mCols)) {
 			throw std::out_of_range("column index out of range");
 		}

@@ -24,20 +24,16 @@ FunctionsForGigachip::FunctionsForGigachip(VM_Guest* parent)
 /*------------------------------------------------------------------*/
 
 void FunctionsForGigachip::scrollUP(const std::int32_t N) {
-	vm->isDisplayReady(true);
-	vm->Mem->display.rotate(-N, 0);
+	vm->Mem->foregroundBuffer.rotate(-N, 0);
 }
 void FunctionsForGigachip::scrollDN(const std::int32_t N) {
-	vm->isDisplayReady(true);
-	vm->Mem->display.rotate(+N, 0);
+	vm->Mem->foregroundBuffer.rotate(+N, 0);
 }
 void FunctionsForGigachip::scrollLT(const std::int32_t N) {
-	vm->isDisplayReady(true);
-	vm->Mem->display.rotate(0, -N);
+	vm->Mem->foregroundBuffer.rotate(0, -N);
 }
 void FunctionsForGigachip::scrollRT(const std::int32_t N) {
-	vm->isDisplayReady(true);
-	vm->Mem->display.rotate(0, +N);
+	vm->Mem->foregroundBuffer.rotate(0, +N);
 }
 
 /*------------------------------------------------------------------*/
@@ -50,16 +46,16 @@ uint32_t FunctionsForGigachip::blendPixel(
 	src.A = (colorSrc >> 24) / 255.0f * vm->Trait.alpha;
 	if (src.A < minA) [[unlikely]] return colorDst; // pixel is fully transparent
 
-	if (vm->Trait.invert) colorSrc ^= 0x00'FF'FF'FF;
+	if (vm->Trait.invert) colorSrc ^= 0x00'FF'FF'FFu;
 
 	src.R = (colorSrc >> 16 & 0xFF) / 255.0f;
 	src.G = (colorSrc >>  8 & 0xFF) / 255.0f;
-	src.B = (colorSrc & 0xFF) / 255.0f;
+	src.B = (colorSrc       & 0xFF) / 255.0f;
 
 	dst.A = (colorDst >> 24       ) / 255.0f;
 	dst.R = (colorDst >> 16 & 0xFF) / 255.0f;
 	dst.G = (colorDst >>  8 & 0xFF) / 255.0f;
-	dst.B = (colorDst & 0xFF) / 255.0f;
+	dst.B = (colorDst       & 0xFF) / 255.0f;
 
 	switch (vm->Trait.rgbmod) {
 		case Trait::BRG:
@@ -94,9 +90,9 @@ uint32_t FunctionsForGigachip::blendPixel(
 	}
 
 	if (!blendType) {
-		return static_cast<std::uint8_t>(std::round(src.A * 255.0f)) << 24
-			 | static_cast<std::uint8_t>(std::round(src.R * 255.0f)) << 16
-			 | static_cast<std::uint8_t>(std::round(src.G * 255.0f)) <<  8
+		return static_cast<std::uint8_t>(std::round(src.A * 255.0f)) << 24u
+			 | static_cast<std::uint8_t>(std::round(src.R * 255.0f)) << 16u
+			 | static_cast<std::uint8_t>(std::round(src.G * 255.0f)) <<  8u
 			 | static_cast<std::uint8_t>(std::round(src.B * 255.0f));
 	}
 	else {
@@ -167,8 +163,8 @@ void FunctionsForGigachip::drawSprite(
 			const auto srcIndex{ vm->mrw(I + (memY * oW) + memX) }; // palette index from RAM 
 			if (!srcIndex) continue;
 
-			auto& colorDst{ vm->Mem->bufColorMC[VY][VX] }; // DESTINATION pixel's destination color
-			auto& colorIdx{ vm->Mem->bufPalette[VY][VX] }; // DESTINATION pixel's color/collision palette index
+			auto& colorDst{ vm->Mem->backgroundBuffer[VY][VX] }; // DESTINATION pixel's destination color
+			auto& colorIdx{ vm->Mem->collisionPalette[VY][VX] }; // DESTINATION pixel's color/collision palette index
 			
 			if (!vm->Reg->V[0xF] && colorIdx == vm->Trait.collision) [[unlikely]] {
 				vm->Reg->V[0xF] = 1;
@@ -178,7 +174,7 @@ void FunctionsForGigachip::drawSprite(
 
 			if (vm->Trait.nodraw) continue;
 
-			colorDst = blendPixel(vm->Mem->palette[srcIndex], colorDst);
+			colorDst = blendPixel(vm->Mem->megaPalette[srcIndex], colorDst);
 		}
 		VX -= vm->Trait.W;
 	}

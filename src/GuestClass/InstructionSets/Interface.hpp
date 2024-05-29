@@ -82,7 +82,9 @@ class FunctionsForMegachip final : public FncSetInterface {
 
 	std::uint32_t blendPixel(std::uint32_t, std::uint32_t);
 	std::uint32_t applyBlend(float (*)(float, float)) const;
-	void blendToDisplay(auto&, auto&);
+
+	template <typename T>
+	void blendToDisplay(const T*, const T*, std::size_t);
 
 	enum Blend {
 		NORMAL       = 0,
@@ -109,9 +111,7 @@ public:
 class FunctionsForModernXO final : public FncSetInterface {
 	VM_Guest* vm;
 
-	void drawByte(std::size_t, std::size_t, std::size_t, std::size_t, std::size_t, std::size_t);
-	std::size_t  bitBloat(std::size_t);
-	void applyBrush(std::uint32_t&, std::size_t);
+	void drawByte(std::int32_t, std::int32_t, std::int32_t, std::size_t);
 
 	void scrollUP(std::int32_t) override;
 	void scrollDN(std::int32_t) override;
@@ -131,9 +131,9 @@ public:
 class FunctionsForLegacySC final : public FncSetInterface {
 	VM_Guest* vm;
 
-	void drawByte(std::size_t, std::size_t, std::size_t, std::size_t, std::size_t, std::size_t);
-	void drawShort(std::size_t, std::size_t, std::size_t, std::size_t, std::size_t, std::size_t);
-	std::size_t  bitBloat(std::size_t);
+	void drawByte(std::int32_t, std::int32_t, std::size_t);
+	void drawShort(std::int32_t, std::int32_t, std::size_t);
+	std::size_t bitBloat(std::size_t);
 
 	void scrollUP(std::int32_t) override;
 	void scrollDN(std::int32_t) override;
@@ -153,7 +153,7 @@ public:
 class FunctionsForClassic8 final : public FncSetInterface {
 	VM_Guest* vm;
 
-	void drawByte(std::size_t, std::size_t, std::size_t, std::size_t, std::size_t, std::size_t);
+	void drawByte(std::int32_t, std::int32_t, std::size_t);
 
 	void scrollUP(std::int32_t) override;
 	void scrollDN(std::int32_t) override;

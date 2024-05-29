@@ -20,68 +20,71 @@ FunctionsForLegacySC::FunctionsForLegacySC(VM_Guest* parent)
 {}
 
 void FunctionsForLegacySC::scrollUP(const std::int32_t N) {
-	vm->isDisplayReady(true);
-	vm->Mem->display.shift(-N, 0);
+	vm->Mem->displayBuffer[0].shift(-N, 0);
 }
 void FunctionsForLegacySC::scrollDN(const std::int32_t N) {
-	vm->isDisplayReady(true);
-	vm->Mem->display.shift(+N, 0);
+	vm->Mem->displayBuffer[0].shift(+N, 0);
 }
 void FunctionsForLegacySC::scrollLT(const std::int32_t) {
-	vm->isDisplayReady(true);
-	vm->Mem->display.shiftBit(0, -4, 8);
+	vm->Mem->displayBuffer[0].shift(0, -4);
 }
 void FunctionsForLegacySC::scrollRT(const std::int32_t) {
-	vm->isDisplayReady(true);
-	vm->Mem->display.shiftBit(0, +4, 8);
+	vm->Mem->displayBuffer[0].shift(0, +4);
 }
 
 /*------------------------------------------------------------------*/
 
-std::size_t  FunctionsForLegacySC::bitBloat(std::size_t byte) {
-	if (!byte) return 0;
-	byte = (byte << 4 | byte) & 0x0F0F;
-	byte = (byte << 2 | byte) & 0x3333;
-	byte = (byte << 1 | byte) & 0x5555;
-	return  byte << 1 | byte;
+std::size_t FunctionsForLegacySC::bitBloat(std::size_t byte) {
+	if (std::cmp_equal(byte, 0)) return 0;
+	byte = (byte << 4u | byte) & 0x0F0Fu;
+	byte = (byte << 2u | byte) & 0x3333u;
+	byte = (byte << 1u | byte) & 0x5555u;
+	return  byte << 1u | byte;
 }
 
 void FunctionsForLegacySC::drawByte(
-	const std::size_t L, const std::size_t SHL,
-	const std::size_t R, const std::size_t SHR,
-	const std::size_t Y, const std::size_t DATA
+	std::int32_t X, std::int32_t Y,
+	const std::size_t DATA
 ) {
-	if (!DATA || std::cmp_greater_equal(L, vm->Plane.X)) return;
-	const auto DATA_L{ DATA >> SHR & 0xFF };
+	if (!DATA || std::cmp_equal(X, vm->Plane.W)) return;
 
-	vm->Reg->V[0xF]        += (DATA_L & vm->Mem->display[Y][L]) != 0;
-	vm->Mem->display[Y][L] ^=  DATA_L;
-
-	if (!SHR || std::cmp_greater_equal(R, vm->Plane.X)) return;
-	const auto DATA_R{ DATA << SHL & 0xFF };
-
-	vm->Reg->V[0xF]        += (DATA_R & vm->Mem->display[Y][R]) != 0;
-	vm->Mem->display[Y][R] ^=  DATA_R;
+	for (std::size_t B{ 0 }; std::cmp_less(B, 8); ++B) {
+		if (DATA >> (7u - B) & 0x1u) {
+			auto& elem{ vm->Mem->displayBuffer[0].at_raw(Y, X) };
+			if (std::cmp_not_equal(elem, 0)) {
+				++vm->Reg->V[0xF];
+			}
+			elem ^= 1;
+		}
+		if (std::cmp_equal(++X, vm->Plane.W)) {
+			if (vm->Quirk.wrapSprite)
+				X &= vm->Plane.Wb;
+			else return;
+		}
+	}
 }
 
 void FunctionsForLegacySC::drawShort(
-	const std::size_t L, const std::size_t SHL,
-	const std::size_t R, const std::size_t SHR,
-	const std::size_t Y, const std::size_t DATA
+	std::int32_t X, std::int32_t Y,
+	const std::size_t DATA
 ) {
-	if (!DATA || std::cmp_greater_equal(L, vm->Plane.X)) return;
-	const auto DATA_L{ DATA >> SHR & 0xFF };
-	
-	if (!vm->Reg->V[0xF]) [[unlikely]]
-		vm->Reg->V[0xF]        = (vm->Mem->display[Y][L]  & DATA_L) != 0;
-	vm->Mem->display[Y + 1][L] =  vm->Mem->display[Y][L] ^= DATA_L;
+	if (!DATA) return;
 
-	if (!SHR || std::cmp_greater_equal(R, vm->Plane.X)) return;
-	const auto DATA_R{ DATA << SHL & 0xFF };
-
-	if (!vm->Reg->V[0xF]) [[unlikely]]
-		vm->Reg->V[0xF]        = (vm->Mem->display[Y][R]  & DATA_R) != 0;
-	vm->Mem->display[Y + 1][R] =  vm->Mem->display[Y][R] ^= DATA_R;
+	for (std::size_t B{ 0 }; std::cmp_less(B, 16); ++B) {
+		if (DATA >> (15u - B) & 0x1u) {
+			auto& elem0{ vm->Mem->displayBuffer[0].at_raw(Y + 0, X) };
+			auto& elem1{ vm->Mem->displayBuffer[0].at_raw(Y + 1, X) };
+			if (std::cmp_not_equal(elem0, 0)) {
+				vm->Reg->V[0xF] = 1;
+			}
+			elem1 = elem0 ^= 1;
+		}
+		if (std::cmp_equal(++X, vm->Plane.W)) {
+			if (vm->Quirk.wrapSprite)
+				X &= vm->Plane.Wb;
+			else return;
+		}
+	}
 }
 
 void FunctionsForLegacySC::drawSprite(
@@ -90,7 +93,6 @@ void FunctionsForLegacySC::drawSprite(
 	std::int32_t  N,
 	std::uint32_t I
 ) {
-	vm->isDisplayReady(true);
 	const auto mode{ vm->Program->screenMode };
 
 	VX *= mode; VX &= vm->Plane.Wb;
@@ -98,33 +100,20 @@ void FunctionsForLegacySC::drawSprite(
 	vm->Reg->V[0xF] = 0;
 
 	const bool wide{ N == 0 };
-	N = VY + (wide ? 16 : N) * mode;
+	if (wide) N = 16;
 
-	const auto SHR{ VX & 7 };
-	const auto SHL{ 8 - SHR };
-
-	auto X0{ VX >> 3 };
-	auto X1{ X0 + 1 };
-	auto X2{ X0 + 2 };
-
-	if (vm->Quirk.wrapSprite) {
-		X1 &= vm->Plane.Xb;
-		X2 &= vm->Plane.Xb;
-	}
-
-	for (auto H{ VY }; std::cmp_less(H, N); H += mode) {
-		if (!vm->Quirk.wrapSprite)
-			if (std::cmp_greater_equal(H, vm->Plane.H)) break;
-		const auto Y{ H & vm->Plane.Hb };
-
+	for (auto Y{ 0 }; std::cmp_less(Y, N); ++Y) {
 		if (mode == vm->Resolution::LO) { // lores 8xN (doubled)
-			const auto DATA{ bitBloat(vm->mrw(I++)) & 0xFFFFu };
-			drawShort(X0, SHL, X1, SHR, Y, DATA >> 0x8u);
-			drawShort(X1, SHL, X2, SHR, Y, DATA & 0xFFu);
+			drawShort(VX, VY, bitBloat(vm->mrw(I++)));
 		} else {						 // hires 8xN / 16xN
-			drawByte(X0, SHL, X1, SHR, Y, vm->mrw(I++));
-			if (!wide) continue;
-			drawByte(X1, SHL, X2, SHR, Y, vm->mrw(I++));
+			if (true) drawByte(VX + 0, VY, vm->mrw(I++));
+			if (wide) drawByte(VX + 8, VY, vm->mrw(I++));
+		}
+
+		if (std::cmp_greater(VY += mode, vm->Plane.Hb)) {
+			if (vm->Quirk.wrapSprite)
+				VY &= vm->Plane.Hb;
+			else return;
 		}
 	}
 }
@@ -135,8 +124,8 @@ void FunctionsForLegacySC::drawColors(
 	std::int32_t idx,
 	std::int32_t N
 ) {
-	vm->isDisplayReady(true);
 	auto mode{ vm->Program->screenMode };
+	auto Xb{ vm->Plane.W >> 3 };
 
 	if (N) {
 		if (mode == vm->Resolution::LO) {
@@ -146,9 +135,9 @@ void FunctionsForLegacySC::drawColors(
 		const auto X{ VX >> 3 };
 		for (auto _Y{ 0 }; std::cmp_less(_Y, N); ++_Y) {
 			const auto Y{ VY + _Y & vm->Plane.Hb };
-			vm->Mem->bufColor8x[Y][X + 0] = vm->Color->getFore8X(idx);
+			vm->Mem->color8xBuffer[Y][X + 0] = vm->Color->getFore8X(idx);
 			if (mode != vm->Resolution::LO) continue;
-			vm->Mem->bufColor8x[Y][X + 1] = vm->Color->getFore8X(idx);
+			vm->Mem->color8xBuffer[Y][X + 1] = vm->Color->getFore8X(idx);
 		}
 		vm->State.chip8X_hires = true;
 	}
@@ -164,10 +153,10 @@ void FunctionsForLegacySC::drawColors(
 		for (auto _Y{ 0 }; std::cmp_less(_Y, H); ++_Y) {
 			const auto Y{ ((VY + _Y) << 2) & vm->Plane.Hb };
 			for (auto _X{ 0 }; std::cmp_less(_X, W); ++_X) {
-				const auto X{ VX + _X & vm->Plane.Xb };
-				vm->Mem->bufColor8x[Y + 0][X] = vm->Color->getFore8X(idx);
+				const auto X{ VX + _X & Xb };
+				vm->Mem->color8xBuffer[Y + 0][X] = vm->Color->getFore8X(idx);
 				//if (mode != vm->Resolution::LO) continue;
-				//vm->Mem->bufColor8x[Y + 1][X] = vm->Color->getFore8X(idx);
+				//vm->Mem->color8xBuffer[Y + 1][X] = vm->Color->getFore8X(idx);
 			}
 		}
 		vm->State.chip8X_hires = false;
