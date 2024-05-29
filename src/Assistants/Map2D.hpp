@@ -473,9 +473,9 @@ class Map2D final {
 	std::unique_ptr<T[]> pData;
 
 public:
-	paramU size()  const { return mSize; }
-	paramS lenX()  const { return mCols; }
-	paramS lenY()  const { return mRows; }
+	paramU size() const { return mSize; }
+	paramS lenX() const { return mCols; }
+	paramS lenY() const { return mRows; }
 
 	T& front() { return at_raw(0); }
 	T& back()  { return at_raw(mSize - 1); }
@@ -661,8 +661,11 @@ private:
 			if (std::cmp_less(col, -mLength) || std::cmp_greater_equal(col, mLength)) {
 				throw std::out_of_range("column index out of range");
 			}
-			if (std::cmp_less(col, 0)) return col + mLength;
-			else return col;
+			if (std::cmp_less(col, 0)) {
+				return static_cast<paramS>(col + mLength);
+			} else {
+				return static_cast<paramS>(col);
+			}
 		}
 		#pragma endregion
 
@@ -1555,19 +1558,25 @@ public:
 
 private:
 	#pragma region Accessor Bounds Checkers
-	auto checkRowBounds(const integral auto row) const {
+	paramS checkRowBounds(const integral auto row) const {
 		if (std::cmp_less(row, -mRows) || std::cmp_greater_equal(row, mRows)) {
 			throw std::out_of_range("row index out of range");
 		}
-		if (std::cmp_less(row, 0)) return row + mRows;
-		else return row;
+		if (std::cmp_less(row, 0)) {
+			return static_cast<paramS>(row + mRows);
+		} else {
+			return static_cast<paramS>(row);
+		}
 	}
-	auto checkColBounds(const integral auto col) const {
+	paramS checkColBounds(const integral auto col) const {
 		if (std::cmp_less(col, -mCols) || std::cmp_greater_equal(col, mCols)) {
 			throw std::out_of_range("column index out of range");
 		}
-		if (std::cmp_less(col, 0)) return col + mCols;
-		else return col;
+		if (std::cmp_less(col, 0)) {
+			return static_cast<paramS>(col + mCols);
+		} else {
+			return static_cast<paramS>(col);
+		}
 	}
 	#pragma endregion
 
