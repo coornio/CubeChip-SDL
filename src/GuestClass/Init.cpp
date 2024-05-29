@@ -236,19 +236,22 @@ void VM_Guest::setupDisplay(const std::int32_t mode, const bool forced) {
 	Plane.size = Plane.W * Plane.H;
 
 	Program->screenMode = mode;
-	Mem->displayBuffer[0].resize(!forced, Plane.H, Plane.W);
-	Mem->displayBuffer[1].resize(!forced, Plane.H, Plane.W);
-	Mem->displayBuffer[2].resize(!forced, Plane.H, Plane.W);
-	Mem->displayBuffer[3].resize(!forced, Plane.H, Plane.W);
 
 	if (State.mega_enabled) {
 		Mem->foregroundBuffer.resize(true, Plane.H, Plane.W);
 		Mem->backgroundBuffer.resize(true, Plane.H, Plane.W);
 		Mem->collisionPalette.resize(true, Plane.H, Plane.W);
 		Mem->megaPalette.resize(256);
-	}
-	if (State.chip8X_rom) {
-		Mem->color8xBuffer.resize(false, Plane.H, Plane.W);
+	} else {
+		Mem->displayBuffer[0].resize(!forced, Plane.H, Plane.W);
+		if (State.xochip_color) {
+			Mem->displayBuffer[1].resize(!forced, Plane.H, Plane.W);
+			Mem->displayBuffer[2].resize(!forced, Plane.H, Plane.W);
+			Mem->displayBuffer[3].resize(!forced, Plane.H, Plane.W);
+		}
+		if (State.chip8X_rom) {
+			Mem->color8xBuffer.resize(false, Plane.H, Plane.W);
+		}
 	}
 
 	Video->createTexture(Plane.W, Plane.H);
@@ -273,7 +276,7 @@ void VM_Guest::setupDisplay(const std::int32_t mode, const bool forced) {
 };
 
 void VM_Guest::loadFontData() {
-	static constexpr std::array<std::uint8_t, 80 + 160> FONT_DATA{ {
+	static constexpr std::uint8_t FONT_DATA[]{
 		0x60, 0xA0, 0xA0, 0xA0, 0xC0, // 0
 		0x40, 0xC0, 0x40, 0x40, 0xE0, // 1
 		0xC0, 0x20, 0x40, 0x80, 0xE0, // 2
@@ -308,9 +311,9 @@ void VM_Guest::loadFontData() {
 		0xF8, 0x6C, 0x66, 0x66, 0x66, 0x66, 0x66, 0x6C, 0xF8, 0x00, // D
 		0xFE, 0x62, 0x60, 0x64, 0x7C, 0x64, 0x60, 0x62, 0xFE, 0x00, // E
 		0xFE, 0x66, 0x62, 0x64, 0x7C, 0x64, 0x60, 0x60, 0xF0, 0x00, // F
-	} };
+	};
 
-	static constexpr std::array<std::uint8_t, 160> MEGA_FONT_DATA{ {
+	static constexpr std::uint8_t MEGA_FONT_DATA[]{
 		0x3C, 0x7E, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0x7E, 0x3C, // 0
 		0x18, 0x38, 0x58, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x3C, // 1
 		0x3E, 0x7F, 0xC3, 0x06, 0x0C, 0x18, 0x30, 0x60, 0xFF, 0xFF, // 2
@@ -327,21 +330,18 @@ void VM_Guest::loadFontData() {
 		0x3C, 0x7E, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0x7E, 0x3C, // 0
 		0x3C, 0x7E, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0x7E, 0x3C, // 0
 		0x3C, 0x7E, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0x7E, 0x3C  // 0
-	} };
+	};
 
 	// copy the FONT at the desired offset, and omit A-F superchip sprites if needed
-	std::copy(
-		FONT_DATA.begin(),
-		FONT_DATA.end() - (State.schip_legacy ? 60 : 0),
+	std::copy_n(
+		FONT_DATA, State.schip_legacy ? 180 : 240,
 		Mem->memory.begin()
 	);
 
 	if (!State.megachip_rom) return;
-	if (!State.gigachip_rom) return;
 
-	std::copy(
-		MEGA_FONT_DATA.begin(),
-		MEGA_FONT_DATA.end(),
+	std::copy_n(
+		MEGA_FONT_DATA, 160,
 		Mem->memory.begin() + 240
 	);
 }
