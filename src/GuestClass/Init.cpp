@@ -225,9 +225,9 @@ void VM_Guest::initPlatform() {
 }
 
 void VM_Guest::setupDisplay(const std::int32_t mode, const bool forced) {
-	//                                 HI   LO   TP   FP   MC
-	static constexpr int32_t wSize[]{ 128,  64,  64,  64, 256 };
-	static constexpr int32_t hSize[]{  64,  32,  64, 128, 192 };
+	//                                      HI   LO   TP   FP   MC
+	static constexpr std::int32_t wSize[]{ 128,  64,  64,  64, 256 };
+	static constexpr std::int32_t hSize[]{  64,  32,  64, 128, 192 };
 
 	const auto modeSelect{ State.schip_legacy ? 0 : mode - 1 };
 
@@ -273,7 +273,7 @@ void VM_Guest::setupDisplay(const std::int32_t mode, const bool forced) {
 };
 
 void VM_Guest::loadFontData() {
-	static constexpr std::array<uint8_t, 80 + 160> FONT_DATA{ {
+	static constexpr std::array<std::uint8_t, 80 + 160> FONT_DATA{ {
 		0x60, 0xA0, 0xA0, 0xA0, 0xC0, // 0
 		0x40, 0xC0, 0x40, 0x40, 0xE0, // 1
 		0xC0, 0x20, 0x40, 0x80, 0xE0, // 2
@@ -310,7 +310,7 @@ void VM_Guest::loadFontData() {
 		0xFE, 0x66, 0x62, 0x64, 0x7C, 0x64, 0x60, 0x60, 0xF0, 0x00, // F
 	} };
 
-	static constexpr std::array<uint8_t, 160> MEGA_FONT_DATA{ {
+	static constexpr std::array<std::uint8_t, 160> MEGA_FONT_DATA{ {
 		0x3C, 0x7E, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0x7E, 0x3C, // 0
 		0x18, 0x38, 0x58, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x3C, // 1
 		0x3E, 0x7F, 0xC3, 0x06, 0x0C, 0x18, 0x30, 0x60, 0xFF, 0xFF, // 2
@@ -368,9 +368,7 @@ void VM_Guest::flushDisplay() {
 		for (auto Y{ 0 }; const auto & row : Mem->displayBuffer[0]) {
 			for (auto X{ 0 }; const auto & elem : row) {
 				const auto color{ Mem->color8xBuffer[Y & mask][X] };
-				for (auto B{ 7 }; B >= 0; --B) {
-					*pixels++ = (elem >> B & 0x1) ? color : Color->bit[0];
-				}
+					*pixels++ = elem ? color : Color->bit[0];
 				++X;
 			}
 			++Y;

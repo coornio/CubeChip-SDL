@@ -8,42 +8,47 @@
 
 #include "DisplayColors.hpp"
 
-DisplayColors::DisplayColors()
-	: bit{ BitColors }
-{
-	setMegaHex(0xFFFFFFFF);
+DisplayColors::DisplayColors() {
+	initBitColors();
+	initHexColors();
 }
 
-void DisplayColors::setMegaHex(const uint32_t color) {
-	megahex = color;
+void DisplayColors::initBitColors() {
+	for (auto i{ 0 }; std::cmp_less(i, 16); ++i) {
+		bit[i] = BitColors[i];
+	}
+}
 
-	for (auto i{ 0 }; auto& byte : hex) {
-		const float mult{ 1.0f - 0.045f * i++ };
-		const float R   { (color >> 16 & 0xFF) * mult * 1.03f };
-		const float G   { (color >>  8 & 0xFF) * mult * 1.14f };
-		const float B   { (color       & 0xFF) * mult * 1.21f };
+void DisplayColors::initHexColors() {
+	static constexpr auto r{ 0xFFu }, g{ 0xFFu }, b{ 0xFFu };
 
-		byte = 0xFF000000
-			| static_cast<uint32_t>(std::min(std::roundf(R), 255.0f)) << 16
-			| static_cast<uint32_t>(std::min(std::roundf(G), 255.0f)) <<  8
-			| static_cast<uint32_t>(std::min(std::roundf(B), 255.0f));
+	for (auto i{ 0 }; std::cmp_less(i, 10); ++i) {
+		const float mult{ 1.0f - 0.045f * static_cast<float>(i) };
+		const float R   { r * mult * 1.03f };
+		const float G   { g * mult * 1.14f };
+		const float B   { b * mult * 1.21f };
+
+		hex[i] = 0xFF000000u
+			| static_cast<std::uint32_t>(std::min(std::roundf(R), 255.0f)) << 16u
+			| static_cast<std::uint32_t>(std::min(std::roundf(G), 255.0f)) <<  8u
+			| static_cast<std::uint32_t>(std::min(std::roundf(B), 255.0f));
 	}
 }
 
 void DisplayColors::setBit332(const std::size_t idx, const std::size_t color) {
-	static constexpr std::array<uint8_t, 8> map3b{ { 0x00, 0x20, 0x40, 0x60, 0x80, 0xA0, 0xC0, 0xFF } };
-	static constexpr std::array<uint8_t, 4> map2b{ { 0x00,             0x60,       0xA0,       0xFF } };
+	static constexpr std::uint8_t map3b[]{ 0x00u, 0x20u, 0x40u, 0x60u, 0x80u, 0xA0u, 0xC0u, 0xFFu };
+	static constexpr std::uint8_t map2b[]{ 0x00u,               0x60u,        0xA0u,        0xFFu };
 
-	bit[idx & 0xF] = 0xFF000000
-		| map3b[color >> 5 & 7] << 16 // red
-		| map3b[color >> 2 & 7] <<  8 // green
-		| map2b[color      & 3];      // blue
+	bit[idx & 0xFu] = 0xFF000000u
+		| map3b[color >> 5u & 0x7u] << 16u // red
+		| map3b[color >> 2u & 0x7u] <<  8u // green
+		| map2b[color       & 0x3u];       // blue
 }
 
 void DisplayColors::cycleBackground() {
-	bit[0] = BackColors[bgindex++ & 0x3];
+	bit[0] = BackColors[bgindex++ & 0x3u];
 }
 
-uint32_t DisplayColors::getFore8X(const std::size_t idx) const {
-	return ForeColors[idx & 0x7];
+std::uint32_t DisplayColors::getFore8X(const std::int32_t idx) const {
+	return ForeColors[idx & 0x7u];
 }
