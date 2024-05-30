@@ -71,13 +71,15 @@ void FunctionsForLegacySC::drawShort(
 	if (!DATA) return;
 
 	for (std::size_t B{ 0 }; std::cmp_less(B, 16); ++B) {
+		auto& elem0{ vm->Mem->displayBuffer[0].at_raw(Y + 0, X) };
+		auto& elem1{ vm->Mem->displayBuffer[0].at_raw(Y + 1, X) };
 		if (DATA >> (15u - B) & 0x1u) {
-			auto& elem0{ vm->Mem->displayBuffer[0].at_raw(Y + 0, X) };
-			auto& elem1{ vm->Mem->displayBuffer[0].at_raw(Y + 1, X) };
 			if (std::cmp_not_equal(elem0, 0)) {
 				vm->Reg->V[0xF] = 1;
 			}
 			elem1 = elem0 ^= 1;
+		} else {
+			elem1 = elem0;
 		}
 		if (std::cmp_equal(++X, vm->Plane.W)) {
 			if (vm->Quirk.wrapSprite)
@@ -101,11 +103,12 @@ void FunctionsForLegacySC::drawSprite(
 
 	const bool wide{ N == 0 };
 	if (wide) N = 16;
+	printf("\nDXYN called, %d rows", N);
 
 	for (auto Y{ 0 }; std::cmp_less(Y, N); ++Y) {
 		if (mode == vm->Resolution::LO) { // lores 8xN (doubled)
 			drawShort(VX, VY, bitBloat(vm->mrw(I++)));
-		} else {						 // hires 8xN / 16xN
+		} else {                          // hires 8xN / 16xN
 			if (true) drawByte(VX + 0, VY, vm->mrw(I++));
 			if (wide) drawByte(VX + 8, VY, vm->mrw(I++));
 		}

@@ -181,7 +181,7 @@ void VM_Guest::initPlatform() {
 	//Quirk.shiftVX = true;
 	//Quirk.jmpRegX = true;
 	//Quirk.idxRegNoInc = true;
-	//State.schip_legacy = true;
+	State.schip_legacy = true;
 	//State.xochip_color = true;
 	Program->setSpeed(0);
 	//Quirk.waitScroll = true;
