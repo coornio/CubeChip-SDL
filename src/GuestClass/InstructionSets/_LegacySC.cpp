@@ -127,7 +127,7 @@ void FunctionsForLegacySC::drawColors(
 	std::int32_t N
 ) {
 	const auto mode{ vm->Program->screenMode };
-	const auto Xb{ (vm->Plane.W >> 3) - 1 };
+	const auto color{ vm->Color->getFore8X(idx) };
 
 	if (N) {
 		if (mode == vm->Resolution::LO) {
@@ -135,30 +135,30 @@ void FunctionsForLegacySC::drawColors(
 		}
 
 		const auto X{ VX >> 3 };
-		for (auto _Y{ 0 }; std::cmp_less(_Y, N); ++_Y) {
-			const auto Y{ VY + _Y & vm->Plane.Hb };
-			vm->Mem->color8xBuffer.at_raw(Y, X + 0) = vm->Color->getFore8X(idx);
+		for (auto Y{ 0 }; std::cmp_less(Y, N); ++Y) {
+			vm->Mem->color8xBuffer.at_wrap(VY + Y, X + 0) = color;
 			if (mode != vm->Resolution::LO) continue;
-			vm->Mem->color8xBuffer.at_raw(Y, X + 1) = vm->Color->getFore8X(idx);
+			vm->Mem->color8xBuffer.at_wrap(VY + Y, X + 1) = color;
 		}
 		vm->State.chip8X_hires = true;
 	}
 	else {
-		VY &= 0x77, VX &= 0x77;
+		VY &= 0x77; VX &= 0x77;
 
-		if (mode == vm->Resolution::LO)
-			VY <<= 1, VX <<= 1;
+		if (mode == vm->Resolution::LO) {
+			VY <<= 1; VX <<= 1;
+		}
 
 		const auto H{ (VY >> 4) + mode };
 		const auto W{ (VX >> 4) + mode };
 
-		for (auto _Y{ 0 }; std::cmp_less(_Y, H); ++_Y) {
-			const auto Y{ ((VY + _Y) << 2) & vm->Plane.Hb };
-			for (auto _X{ 0 }; std::cmp_less(_X, W); ++_X) {
-				const auto X{ VX + _X & Xb };
-				vm->Mem->color8xBuffer.at_raw(Y + 0, X) = vm->Color->getFore8X(idx);
+		for (auto Y{ 0 }; std::cmp_less(Y, H); ++Y) {
+			const auto _Y{ (VY + Y) << 2 };
+			for (auto X{ 0 }; std::cmp_less(X, W); ++X) {
+				const auto _X{ VX + X };
+				vm->Mem->color8xBuffer.at_wrap(_Y + 0, _X) = color;
 				//if (mode != vm->Resolution::LO) continue;
-				//vm->Mem->color8xBuffer.at_raw(Y + 1, X) = vm->Color->getFore8X(idx);
+				//vm->Mem->color8xBuffer.at_wrap(_Y + 1, _X) = color;
 			}
 		}
 		vm->State.chip8X_hires = false;

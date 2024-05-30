@@ -86,24 +86,18 @@ void FunctionsForClassic8::drawColors(
 	const std::int32_t idx,
 	const std::int32_t N
 ) {
-	const auto Xb{ (vm->Plane.W >> 3) - 1 };
+	const auto color{ vm->Color->getFore8X(idx) };
+
 	if (N) {
-		const auto X{ VX >> 3 };
-		for (auto _Y{ 0 }; std::cmp_less(_Y, N); ++_Y) {
-			const auto Y{ VY + _Y & vm->Plane.Hb };
-			vm->Mem->color8xBuffer.at_raw(Y, X) = vm->Color->getFore8X(idx);
+		for (auto Y{ VY }, X{ VX >> 3 }; std::cmp_less(Y, VY + N); ++Y) {
+			vm->Mem->color8xBuffer.at_wrap(Y, X) = color;
 		}
 		vm->State.chip8X_hires = true;
 	}
 	else {
-		const auto H{ (VY >> 4) + 1 };
-		const auto W{ (VX >> 4) + 1 };
-
-		for (auto _Y{ 0 }; std::cmp_less(_Y, H); ++_Y) {
-			const auto Y{ ((VY + _Y) << 2) & vm->Plane.Hb };
-			for (auto _X{ 0 }; std::cmp_less(_X, W); ++_X) {
-				const auto X{ VX + _X & Xb };
-				vm->Mem->color8xBuffer.at_raw(Y, X) = vm->Color->getFore8X(idx);
+		for (auto Y{ 0 }, H{ VY >> 4 }; std::cmp_less_equal(Y, H); ++Y) {
+			for (auto X{ 0 }, W{ VX >> 4 }; std::cmp_less_equal(X, W); ++X) {
+				vm->Mem->color8xBuffer.at_wrap(VY + Y << 2, VX + X) = color;
 			}
 		}
 		vm->State.chip8X_hires = false;
