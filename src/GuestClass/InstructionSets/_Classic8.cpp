@@ -86,12 +86,12 @@ void FunctionsForClassic8::drawColors(
 	const std::int32_t idx,
 	const std::int32_t N
 ) {
-	auto Xb{ vm->Plane.W >> 3 };
+	const auto Xb{ (vm->Plane.W >> 3) - 1 };
 	if (N) {
 		const auto X{ VX >> 3 };
 		for (auto _Y{ 0 }; std::cmp_less(_Y, N); ++_Y) {
 			const auto Y{ VY + _Y & vm->Plane.Hb };
-			vm->Mem->color8xBuffer[Y][X] = vm->Color->getFore8X(idx);
+			vm->Mem->color8xBuffer.at_raw(Y, X) = vm->Color->getFore8X(idx);
 		}
 		vm->State.chip8X_hires = true;
 	}
@@ -103,7 +103,7 @@ void FunctionsForClassic8::drawColors(
 			const auto Y{ ((VY + _Y) << 2) & vm->Plane.Hb };
 			for (auto _X{ 0 }; std::cmp_less(_X, W); ++_X) {
 				const auto X{ VX + _X & Xb };
-				vm->Mem->color8xBuffer[Y][X] = vm->Color->getFore8X(idx);
+				vm->Mem->color8xBuffer.at_raw(Y, X) = vm->Color->getFore8X(idx);
 			}
 		}
 		vm->State.chip8X_hires = false;

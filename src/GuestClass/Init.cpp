@@ -367,8 +367,7 @@ void VM_Guest::flushDisplay() {
 		const auto mask{ State.chip8X_hires ? 0xFF : 0xFC };
 		for (auto Y{ 0 }; const auto & row : Mem->displayBuffer[0]) {
 			for (auto X{ 0 }; const auto & elem : row) {
-				const auto color{ Mem->color8xBuffer[Y & mask][X] };
-					*pixels++ = elem ? color : Color->bit[0];
+				*pixels++ = elem ? Mem->color8xBuffer.at_raw(Y & mask, X >> 3) : Color->bit[0];
 				++X;
 			}
 			++Y;

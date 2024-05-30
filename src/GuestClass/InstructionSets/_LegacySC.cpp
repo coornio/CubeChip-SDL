@@ -103,7 +103,6 @@ void FunctionsForLegacySC::drawSprite(
 
 	const bool wide{ N == 0 };
 	if (wide) N = 16;
-	printf("\nDXYN called, %d rows", N);
 
 	for (auto Y{ 0 }; std::cmp_less(Y, N); ++Y) {
 		if (mode == vm->Resolution::LO) { // lores 8xN (doubled)
@@ -127,8 +126,8 @@ void FunctionsForLegacySC::drawColors(
 	std::int32_t idx,
 	std::int32_t N
 ) {
-	auto mode{ vm->Program->screenMode };
-	auto Xb{ vm->Plane.W >> 3 };
+	const auto mode{ vm->Program->screenMode };
+	const auto Xb{ (vm->Plane.W >> 3) - 1 };
 
 	if (N) {
 		if (mode == vm->Resolution::LO) {
@@ -138,9 +137,9 @@ void FunctionsForLegacySC::drawColors(
 		const auto X{ VX >> 3 };
 		for (auto _Y{ 0 }; std::cmp_less(_Y, N); ++_Y) {
 			const auto Y{ VY + _Y & vm->Plane.Hb };
-			vm->Mem->color8xBuffer[Y][X + 0] = vm->Color->getFore8X(idx);
+			vm->Mem->color8xBuffer.at_raw(Y, X + 0) = vm->Color->getFore8X(idx);
 			if (mode != vm->Resolution::LO) continue;
-			vm->Mem->color8xBuffer[Y][X + 1] = vm->Color->getFore8X(idx);
+			vm->Mem->color8xBuffer.at_raw(Y, X + 1) = vm->Color->getFore8X(idx);
 		}
 		vm->State.chip8X_hires = true;
 	}
@@ -157,9 +156,9 @@ void FunctionsForLegacySC::drawColors(
 			const auto Y{ ((VY + _Y) << 2) & vm->Plane.Hb };
 			for (auto _X{ 0 }; std::cmp_less(_X, W); ++_X) {
 				const auto X{ VX + _X & Xb };
-				vm->Mem->color8xBuffer[Y + 0][X] = vm->Color->getFore8X(idx);
+				vm->Mem->color8xBuffer.at_raw(Y + 0, X) = vm->Color->getFore8X(idx);
 				//if (mode != vm->Resolution::LO) continue;
-				//vm->Mem->color8xBuffer[Y + 1][X] = vm->Color->getFore8X(idx);
+				//vm->Mem->color8xBuffer.at_raw(Y + 1, X) = vm->Color->getFore8X(idx);
 			}
 		}
 		vm->State.chip8X_hires = false;
