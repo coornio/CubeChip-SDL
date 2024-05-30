@@ -7,6 +7,7 @@
 #pragma once
 
 #include <cmath>
+#include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -97,8 +98,8 @@ public:
 	) requires arithmetic<T> {
 		const auto len{ std::min(this->size(), other.size()) };
 		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
-			if (std::cmp_equal(other[i], 0)) {
-				(*this)[i] = 0;
+			if (other[i] == 0) {
+				throw std::domain_error("division by zero");
 			} else {
 				(*this)[i] /= other[i];
 			}
@@ -109,8 +110,8 @@ public:
 		const arithmetic auto& value
 	) requires arithmetic<T> {
 		for (T& elem : *this) {
-			if (std::cmp_equal(value, 0)) {
-				elem = 0;
+			if (value == 0) {
+				throw std::domain_error("division by zero");
 			} else {
 				elem /= value;
 			}
@@ -124,8 +125,8 @@ public:
 	) requires arithmetic<T> {
 		const auto len{ std::min(this->size(), other.size()) };
 		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
-			if (std::cmp_equal(other[i], 0)) {
-				(*this)[i] = 0;
+			if (other[i] == 0) {
+				throw std::domain_error("division by zero");
 			} else {
 				(*this)[i] = std::fmod((*this)[i], other[i]);
 			}
@@ -136,8 +137,8 @@ public:
 		const arithmetic auto& value
 		) requires arithmetic<T> {
 		for (T& elem : *this) {
-			if (std::cmp_equal(value, 0)) {
-				elem = 0;
+			if (value == 0) {
+				throw std::domain_error("division by zero");
 			} else {
 				elem = std::fmod(elem, value);
 			}
@@ -312,8 +313,8 @@ public:
 		auto temp{ *this };
 		const auto len{ std::min(temp.size(), other.size()) };
 		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
-			if (std::cmp_equal(other[i], 0)) {
-				temp[i] = 0;
+			if (other[i] == 0) {
+				throw std::domain_error("division by zero");
 			} else {
 				temp[i] /= other[i];
 			}
@@ -325,8 +326,8 @@ public:
 	) const requires arithmetic<T> {
 		auto temp{ *this };
 		for (T& elem : temp) {
-			if (std::cmp_equal(value, 0)) {
-				elem = 0;
+			if (value == 0) {
+				throw std::domain_error("division by zero");
 			} else {
 				elem /= value;
 			}
@@ -341,8 +342,8 @@ public:
 		auto temp{ *this };
 		const auto len{ std::min(temp.size(), other.size()) };
 		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
-			if (std::cmp_equal(other[i], 0)) {
-				temp[i] = 0;
+			if (other[i] == 0) {
+				throw std::domain_error("division by zero");
 			} else {
 				temp[i] /= std::fmod(temp[i], other[i]);
 			}
@@ -354,8 +355,8 @@ public:
 	) const requires arithmetic<T> {
 		auto temp{ *this };
 		for (T& elem : temp) {
-			if (std::cmp_equal(value, 0)) {
-				elem = 0;
+			if (value == 0) {
+				throw std::domain_error("division by zero");
 			} else {
 				elem = std::fmod(elem, value);;
 			}
@@ -487,20 +488,30 @@ public:
 public:
 	#pragma region Raw Accessors
 	auto at_raw(const integral auto idx)
-	-> T&
-	{ return pData.get()[idx]; }
+	-> T& {
+		assert(idx >= 0 && idx < size() && "at_raw() index out of bounds");
+		return pData.get()[idx];
+	}
 
 	auto at_raw(const integral auto idx) const
-	-> const T&
-	{ return pData.get()[idx]; }
+	-> const T& {
+		assert(idx >= 0 && idx < size() && "at_raw() index out of bounds");
+		return pData.get()[idx];
+	}
 
 	auto at_raw(const integral auto row, const integral auto col)
-	-> T&
-	{ return pData.get()[row * mCols + col]; }
+	-> T& {
+		assert(row >= 0 && row < mRows && "at_raw() row index out of bounds");
+		assert(col >= 0 && col < mCols && "at_raw() col index out of bounds");
+		return pData.get()[row * mCols + col];
+	}
 
 	auto at_raw(const integral auto row, const integral auto col) const
-	-> const T&
-	{ return pData.get()[row * mCols + col]; }
+	-> const T& {
+		assert(row >= 0 && row < mRows && "at_raw() row index out of bounds");
+		assert(col >= 0 && col < mCols && "at_raw() col index out of bounds");
+		return pData.get()[row * mCols + col];
+	}
 	#pragma endregion
 
 private:
@@ -683,12 +694,16 @@ private:
 		/* unsafe accessors */
 
 		auto operator[](const integral auto col)
-		-> T&
-		{ return *(begin() + col); }
+		-> T& {
+			assert(col >= 0 && col < mLength && "operator[] col index out of bounds");
+			return *(begin() + col);
+		}
 
 		auto operator[](const integral auto col) const
-		-> const T&
-		{ return *(begin() + col); }
+		-> const T& {
+			assert(col >= 0 && col < mLength && "operator[] col index out of bounds");
+			return *(begin() + col);
+		}
 		#pragma endregion
 
 	public:
@@ -812,8 +827,8 @@ private:
 			const arithmetic auto& value
 		) requires arithmetic<T> {
 			for (T& elem : *this) {
-				if (std::cmp_equal(value, 0)) {
-					elem = 0;
+				if (value == 0) {
+					throw std::domain_error("division by zero");
 				} else {
 					elem /= value;
 				}
@@ -825,8 +840,8 @@ private:
 		) requires arithmetic<T> {
 			const auto len{ std::min(other.mLength, mLength) };
 			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
-				if (std::cmp_equal(other[i], 0)) {
-					(*this)[i] = 0;
+				if (other[i] == 0) {
+					throw std::domain_error("division by zero");
 				} else {
 					(*this)[i] /= other[i];
 				}
@@ -838,8 +853,8 @@ private:
 		) requires arithmetic<T> {
 			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
 			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
-				if (std::cmp_equal(other[i], 0)) {
-					(*this)[i] = 0;
+				if (other[i] == 0) {
+					throw std::domain_error("division by zero");
 				} else {
 					(*this)[i] /= other[i];
 				}
@@ -852,8 +867,8 @@ private:
 			const arithmetic auto& value
 		) requires arithmetic<T> {
 			for (T& elem : *this) {
-				if (std::cmp_equal(value, 0)) {
-					elem = 0;
+				if (value == 0) {
+					throw std::domain_error("division by zero");
 				} else {
 					elem = std::fmod(elem, value);
 				}
@@ -865,8 +880,8 @@ private:
 		) requires arithmetic<T> {
 			const auto len{ std::min(other.mLength, mLength) };
 			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
-				if (std::cmp_equal(other[i], 0)) {
-					(*this)[i] = 0;
+				if (other[i] == 0) {
+					throw std::domain_error("division by zero");
 				} else {
 					(*this)[i] = std::fmod((*this)[i], other[i]);
 				}
@@ -878,8 +893,8 @@ private:
 		) requires arithmetic<T> {
 			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
 			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
-				if (std::cmp_equal(other[i], 0)) {
-					(*this)[i] = 0;
+				if (other[i] == 0) {
+					throw std::domain_error("division by zero");
 				} else {
 					(*this)[i] = std::fmod((*this)[i], other[i]);
 				}
@@ -1330,26 +1345,33 @@ public:
 	 * @param[in] choice :: FALSE to clear data, TRUE to copy it instead.
 	 * @param[in] rows   :: Total rows of the new matrix.    (min: 1)
 	 * @param[in] cols   :: Total columns of the new matrix. (min: 1)
+	 * 
+	 * @warning A 'rows'/'cols' of 0 will default to current size.
 	 */
 	Map2D& resize(
-		const bool choice,
+		const bool choice_copy,
 		const integral auto rows,
 		const integral auto cols
 	) requires arithmetic<T> {
-		const auto nRows{ std::max<paramS>(1, std::abs(rows)) };
-		const auto nCols{ std::max<paramS>(1, std::abs(cols)) };
+		auto nRows{ static_cast<paramS>(std::abs(rows)) };
+		auto nCols{ static_cast<paramS>(std::abs(cols)) };
 
-		enum COPY : bool { NO, YES };
+		if (std::cmp_equal(nRows, 0)) nRows = mRows;
+		if (std::cmp_equal(nCols, 0)) nCols = mCols;
 
-		switch (choice) {
-			case COPY::YES:
-				if (nRows == mRows && nCols == mCols) return *this;
+		if (nRows == mRows && nCols == mCols) {
+			if (choice_copy) {
+				return *this;
+			} else {
+				return wipeAll();
+			}
+		} else {
+			if (choice_copy) {
 				return resizeCopy(nRows, nCols);
-
-			case COPY::NO:
+			} else {
 				return resizeWipe(nRows, nCols);
+			}
 		}
-		return *this;
 	}
 	#pragma endregion
 
@@ -1373,9 +1395,7 @@ private:
 		mRows = rows;
 		mCols = cols;
 
-		pData = nullptr;
 		pData = std::move(pCopy);
-
 		return *this;
 	}
 	#pragma endregion
@@ -1388,7 +1408,6 @@ private:
 		mRows = rows;
 		mCols = cols;
 
-		pData = nullptr;
 		pData = std::make_unique<T[]>(size());
 		return *this;
 	}
@@ -1598,20 +1617,30 @@ public:
 	/* unsafe accessors */
 
 	auto operator() (const integral auto row, const integral auto col)
-	-> T&
-	{ return at_raw(row, col); }
+	-> T& {
+		assert(row >= 0 && row < mRows && "operator() row index out of bounds");
+		assert(col >= 0 && col < mCols && "operator() col index out of bounds");
+		return at_raw(row, col);
+	}
 
 	auto operator() (const integral auto row, const integral auto col) const
-	-> const T&
-	{ return at_raw(row, col); }
+	-> const T& {
+		assert(row >= 0 && row < mRows && "operator() row index out of bounds");
+		assert(col >= 0 && col < mCols && "operator() col index out of bounds");
+		return at_raw(row, col);
+	}
 
 	auto operator[] (const integral auto row)
-	-> RowProxy
-	{ return RowProxy(mBegin() + row * mCols, mCols); }
+	-> RowProxy {
+		assert(row >= 0 && row < mRows && "operator[] row index out of bounds");
+		return RowProxy(mBegin() + row * mCols, mCols);
+	}
 
 	auto operator[] (const integral auto row) const
-	-> const RowProxy
-	{ return RowProxy(mBegin() + row * mCols, mCols); }
+	-> const RowProxy {
+		assert(row >= 0 && row < mRows && "operator[] row index out of bounds");
+		return RowProxy(mBegin() + row * mCols, mCols);
+	}
 	#pragma endregion
 
 private:
