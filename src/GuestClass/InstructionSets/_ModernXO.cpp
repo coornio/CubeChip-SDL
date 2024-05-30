@@ -64,7 +64,7 @@ void FunctionsForModernXO::drawByte(
 	if (!DATA || std::cmp_equal(X, vm->Plane.W)) return;
 
 	for (std::size_t B{ 0 }; std::cmp_less(B, 8); ++B) {
-		if (DATA >> (7u - B) & 0x1u) {
+		if (DATA >> (7 - B) & 0x1) {
 			auto& elem{ vm->Mem->displayBuffer[P].at_raw(Y, X) };
 			if (std::cmp_not_equal(elem, 0)) {
 				vm->Reg->V[0xF] = 1;
@@ -73,12 +73,10 @@ void FunctionsForModernXO::drawByte(
 				case BrushType::XOR: elem ^=  1; break;
 				case BrushType::SUB: elem &= ~1; break;
 				case BrushType::ADD: elem |=  1; break;
-				case BrushType::CLR: break;
 			}
 		}
 		if (std::cmp_equal(++X, vm->Plane.W)) {
-			if (vm->Quirk.wrapSprite)
-				X &= vm->Plane.Wb;
+			if (vm->Quirk.wrapSprite) X &= vm->Plane.Wb;
 			else return;
 		}
 	}
@@ -111,8 +109,7 @@ void FunctionsForModernXO::drawSprite(
 			if (wide) drawByte(VX + 8, _VY, P, vm->mrw(I++));
 
 			if (std::cmp_greater(++_VY, vm->Plane.Hb)) {
-				if (vm->Quirk.wrapSprite)
-					_VY &= vm->Plane.Hb;
+				if (vm->Quirk.wrapSprite) _VY &= vm->Plane.Hb;
 				else return;
 			}
 		}

@@ -52,18 +52,17 @@ void MemoryBanks::flushBuffers(const bool firstFlush) {
 	vm->flushDisplay();
 }
 
-void MemoryBanks::loadPalette(std::int32_t index, const std::int32_t count) {
+void MemoryBanks::loadPalette(std::uint32_t index, const std::uint32_t count) {
 	for (std::size_t idx{ 0 }; std::cmp_less(idx, count); index += 4) {
-		megaPalette[++idx] = static_cast<decltype(megaPalette)::value_type>(
-			vm->mrw(index + 0u) << 24u |
-			vm->mrw(index + 1u) << 16u |
-			vm->mrw(index + 2u) <<  8u |
-			vm->mrw(index + 3u)
-		);
+		megaPalette[++idx] = vm->mrw(index + 0) << 24
+			               | vm->mrw(index + 1) << 16
+			               | vm->mrw(index + 2) << 8
+			               | vm->mrw(index + 3);
 	}
 }
 
-void MemoryBanks::clearPages(std::int32_t H) {
-	while (H++ < vm->Plane.H)
+void MemoryBanks::clearPages(std::uint32_t H) {
+	while (std::cmp_less(H++, vm->Plane.H)) {
 		displayBuffer[0][H].wipeAll();
+	}
 }

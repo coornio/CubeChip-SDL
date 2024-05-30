@@ -36,10 +36,10 @@ void FunctionsForLegacySC::scrollRT(const std::int32_t) {
 
 std::size_t FunctionsForLegacySC::bitBloat(std::size_t byte) {
 	if (std::cmp_equal(byte, 0)) return 0;
-	byte = (byte << 4u | byte) & 0x0F0Fu;
-	byte = (byte << 2u | byte) & 0x3333u;
-	byte = (byte << 1u | byte) & 0x5555u;
-	return  byte << 1u | byte;
+	byte = (byte << 4 | byte) & 0x0F0F;
+	byte = (byte << 2 | byte) & 0x3333;
+	byte = (byte << 1 | byte) & 0x5555;
+	return  byte << 1 | byte;
 }
 
 void FunctionsForLegacySC::drawByte(
@@ -49,7 +49,7 @@ void FunctionsForLegacySC::drawByte(
 	if (!DATA || std::cmp_equal(X, vm->Plane.W)) return;
 
 	for (std::size_t B{ 0 }; std::cmp_less(B, 8); ++B) {
-		if (DATA >> (7u - B) & 0x1u) {
+		if (DATA >> (7 - B) & 0x1) {
 			auto& elem{ vm->Mem->displayBuffer[0].at_raw(Y, X) };
 			if (std::cmp_not_equal(elem, 0)) {
 				++vm->Reg->V[0xF];
@@ -57,8 +57,7 @@ void FunctionsForLegacySC::drawByte(
 			elem ^= 1;
 		}
 		if (std::cmp_equal(++X, vm->Plane.W)) {
-			if (vm->Quirk.wrapSprite)
-				X &= vm->Plane.Wb;
+			if (vm->Quirk.wrapSprite) X &= vm->Plane.Wb;
 			else return;
 		}
 	}
@@ -73,7 +72,7 @@ void FunctionsForLegacySC::drawShort(
 	for (std::size_t B{ 0 }; std::cmp_less(B, 16); ++B) {
 		auto& elem0{ vm->Mem->displayBuffer[0].at_raw(Y + 0, X) };
 		auto& elem1{ vm->Mem->displayBuffer[0].at_raw(Y + 1, X) };
-		if (DATA >> (15u - B) & 0x1u) {
+		if (DATA >> (15 - B) & 0x1) {
 			if (std::cmp_not_equal(elem0, 0)) {
 				vm->Reg->V[0xF] = 1;
 			}
@@ -82,8 +81,7 @@ void FunctionsForLegacySC::drawShort(
 			elem1 = elem0;
 		}
 		if (std::cmp_equal(++X, vm->Plane.W)) {
-			if (vm->Quirk.wrapSprite)
-				X &= vm->Plane.Wb;
+			if (vm->Quirk.wrapSprite) X &= vm->Plane.Wb;
 			else return;
 		}
 	}
@@ -113,8 +111,7 @@ void FunctionsForLegacySC::drawSprite(
 		}
 
 		if (std::cmp_greater(VY += mode, vm->Plane.Hb)) {
-			if (vm->Quirk.wrapSprite)
-				VY &= vm->Plane.Hb;
+			if (vm->Quirk.wrapSprite) VY &= vm->Plane.Hb;
 			else return;
 		}
 	}

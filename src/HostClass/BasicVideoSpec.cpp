@@ -4,7 +4,6 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include <utility>
 #include <stdexcept>
 
 #include "BasicVideoSpec.hpp"
@@ -100,20 +99,20 @@ void BasicVideoSpec::changeTitle(const char* name) {
 bool BasicVideoSpec::showErrorBoxSDL(
 	std::string_view title
 ) {
-	return std::cmp_not_equal(SDL_ShowSimpleMessageBox(
+	return SDL_ShowSimpleMessageBox(
 		SDL_MESSAGEBOX_ERROR, title.data(),
 		SDL_GetError(), nullptr
-	), 0);
+	);
 }
 
 bool BasicVideoSpec::showErrorBox(
 	std::string_view message,
 	std::string_view title
 ) {
-	return std::cmp_not_equal(SDL_ShowSimpleMessageBox(
+	return SDL_ShowSimpleMessageBox(
 		SDL_MESSAGEBOX_ERROR, title.data(),
 		message.data(), nullptr
-	), 0);
+	);
 }
 
 void BasicVideoSpec::AudioOutline(Uint32 color) {
@@ -200,12 +199,8 @@ void BasicVideoSpec::renderPresent() {
 			SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 			SDL_SetRenderDrawColor(renderer, 0, 0, 0, 32);
 
-			for (auto y{ 4 }; y < frameFull.h; y += frameWidth) {
-				SDL_RenderLine(
-					renderer,
-					frameFull.x, y * 1.0f,
-					frameFull.w, y * 1.0f
-				);
+			for (auto y{ 4 }; std::cmp_less(y, static_cast<Sint32>(frameFull.h)); y += frameWidth) {
+				SDL_RenderLine(renderer, frameFull.x, static_cast<float>(y), frameFull.w, static_cast<float>(y));
 			}
 		}
 	} else {

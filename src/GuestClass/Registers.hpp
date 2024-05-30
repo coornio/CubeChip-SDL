@@ -16,12 +16,12 @@ class Registers final {
 	VM_Guest* vm;
 
 public:
-	std::array<uint32_t, 16> stack{};
-	std::array<uint8_t,  16> V{};
-	uint32_t I{}, SP{}, pageGuard{};
+	std::array<std::uint32_t, 16> stack{};
+	std::array<std::uint8_t,  16> V{};
+	std::uint32_t I{}, SP{}, pageGuard{};
 
 	explicit Registers(VM_Guest*);
-	void routineCall(uint32_t);
+	void routineCall(std::uint32_t);
 	void routineReturn();
 	void protectPages();
 	bool readPermRegs(std::size_t);

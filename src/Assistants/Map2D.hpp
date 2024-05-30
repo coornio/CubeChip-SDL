@@ -1072,9 +1072,6 @@ private:
 	#pragma region RowIterator Class
 	class RowIterator final : private RowProxy {
 		using diff_t = std::ptrdiff_t;
-		
-		T*&           _ptr;
-		const paramS& _len;
 
 	public:
 		#pragma region Ctor
@@ -1083,8 +1080,6 @@ private:
 			const paramS length
 		) noexcept
 			: RowProxy{ begin, length }
-			, _ptr    { this->mBegin  }
-			, _len    { this->mLength }
 		{}
 		#pragma endregion
 
@@ -1093,31 +1088,31 @@ private:
 		RowProxy& operator* () noexcept { return *this; }
 		RowProxy* operator->() noexcept { return  this; }
 
-		RowIterator& operator++() noexcept { _ptr += _len; return *this; }
-		RowIterator& operator--() noexcept { _ptr -= _len; return *this; }
+		RowIterator& operator++() noexcept { this->mBegin += this->mLength; return *this; }
+		RowIterator& operator--() noexcept { this->mBegin -= this->mLength; return *this; }
 
-		RowIterator operator++(int) noexcept { auto tmp{ *this }; _ptr += _len; return tmp; }
-		RowIterator operator--(int) noexcept { auto tmp{ *this }; _ptr -= _len; return tmp; }
+		RowIterator operator++(int) noexcept { auto tmp{ *this }; this->mBegin += this->mLength; return tmp; }
+		RowIterator operator--(int) noexcept { auto tmp{ *this }; this->mBegin -= this->mLength; return tmp; }
 		
-		RowIterator  operator+ (const diff_t rhs) const { return RowIterator(_ptr + rhs * _len, _len); }
-		RowIterator  operator- (const diff_t rhs) const { return RowIterator(_ptr - rhs * _len, _len); }
+		RowIterator  operator+ (const diff_t rhs) const { return RowIterator(this->mBegin + rhs * this->mLength, this->mLength); }
+		RowIterator  operator- (const diff_t rhs) const { return RowIterator(this->mBegin - rhs * this->mLength, this->mLength); }
 		
-		RowIterator& operator+=(const diff_t rhs) { _ptr += rhs * _len; return *this; }
-		RowIterator& operator-=(const diff_t rhs) { _ptr -= rhs * _len; return *this; }
+		RowIterator& operator+=(const diff_t rhs) { this->mBegin += rhs * this->mLength; return *this; }
+		RowIterator& operator-=(const diff_t rhs) { this->mBegin -= rhs * this->mLength; return *this; }
 
 		friend RowIterator operator+(const diff_t lhs, const RowIterator& rhs) { return rhs + lhs; }
 		friend RowIterator operator-(const diff_t lhs, const RowIterator& rhs) { return rhs - lhs; }
 
-		diff_t operator-(const RowIterator& other) const { return _ptr - other._ptr; }
+		diff_t operator-(const RowIterator& other) const { return this->mBegin - other.mBegin; }
 
-		bool operator==(const RowIterator& other) const noexcept { return _ptr == other._ptr; }
-		bool operator!=(const RowIterator& other) const noexcept { return _ptr != other._ptr; }
-		bool operator< (const RowIterator& other) const noexcept { return _ptr <  other._ptr; }
-		bool operator> (const RowIterator& other) const noexcept { return _ptr >  other._ptr; }
-		bool operator<=(const RowIterator& other) const noexcept { return _ptr <= other._ptr; }
-		bool operator>=(const RowIterator& other) const noexcept { return _ptr >= other._ptr; }
+		bool operator==(const RowIterator& other) const noexcept { return this->mBegin == other.mBegin; }
+		bool operator!=(const RowIterator& other) const noexcept { return this->mBegin != other.mBegin; }
+		bool operator< (const RowIterator& other) const noexcept { return this->mBegin <  other.mBegin; }
+		bool operator> (const RowIterator& other) const noexcept { return this->mBegin >  other.mBegin; }
+		bool operator<=(const RowIterator& other) const noexcept { return this->mBegin <= other.mBegin; }
+		bool operator>=(const RowIterator& other) const noexcept { return this->mBegin >= other.mBegin; }
 
-		RowProxy& operator[](const diff_t rhs) const { return *(_ptr + rhs * _len); }
+		RowProxy& operator[](const diff_t rhs) const { return *(this->mBegin + rhs * this->mLength); }
 		#pragma endregion
 	};
 	#pragma endregion

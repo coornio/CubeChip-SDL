@@ -48,7 +48,7 @@ VM_Guest& VM_Guest::isDisplayReady(const bool state) { _isDisplayReady = state; 
 double   VM_Guest::fetchFramerate()           { return Program->framerate; }
 uint8_t& VM_Guest::mrw(const std::size_t idx) { return Mem->memory[idx & Program->limiter]; }
 uint8_t& VM_Guest::VX()                       { return Reg->V[(Program->opcode >> 8) & 0xF]; }
-uint16_t VM_Guest::NNNN()                     { return mrw(Program->counter) << 8 | mrw(Program->counter + 1); }
+uint32_t VM_Guest::NNNN()                     { return mrw(Program->counter) << 8 | mrw(Program->counter + 1); }
 
 void VM_Guest::cycle() {
 	Input->refresh();

@@ -62,7 +62,7 @@ public:
 	VM_Guest& isSystemPaused(bool);
 	VM_Guest& isDisplayReady(bool);
 
-	enum Resolution : unsigned {
+	enum Resolution {
 		ERROR,
 		HI, // 128 x  64
 		LO, //  64 x  32
@@ -144,5 +144,5 @@ public:
 	double   fetchFramerate();
 	std::uint8_t& mrw(std::size_t);
 	std::uint8_t& VX();
-	std::uint16_t NNNN();
+	std::uint32_t NNNN();
 };

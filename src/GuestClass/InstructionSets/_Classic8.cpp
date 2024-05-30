@@ -42,7 +42,7 @@ void FunctionsForClassic8::drawByte(
 	if (!DATA || std::cmp_equal(X, vm->Plane.W)) return;
 
 	for (std::size_t B{ 0 }; std::cmp_less(B, 8); ++B) {
-		if (DATA >> (7u - B) & 0x1u) {
+		if (DATA >> (7 - B) & 0x1) {
 			auto& elem{ vm->Mem->displayBuffer[0].at_raw(Y, X) };
 			if (std::cmp_not_equal(elem, 0)) {
 				vm->Reg->V[0xF] = 1;
@@ -50,8 +50,7 @@ void FunctionsForClassic8::drawByte(
 			elem ^= 1;
 		}
 		if (std::cmp_equal(++X, vm->Plane.W)) {
-			if (vm->Quirk.wrapSprite)
-				X &= vm->Plane.Wb;
+			if (vm->Quirk.wrapSprite) X &= vm->Plane.Wb;
 			else return;
 		}
 	}
@@ -73,8 +72,7 @@ void FunctionsForClassic8::drawSprite(
 		if (wide) drawByte(VX + 8, VY, vm->mrw(I++));
 		
 		if (std::cmp_greater(++VY, vm->Plane.Hb)) {
-			if (vm->Quirk.wrapSprite)
-				VY &= vm->Plane.Hb;
+			if (vm->Quirk.wrapSprite) VY &= vm->Plane.Hb;
 			else return;
 		}
 	}
@@ -97,7 +95,7 @@ void FunctionsForClassic8::drawColors(
 	else {
 		for (auto Y{ 0 }, H{ VY >> 4 }; std::cmp_less_equal(Y, H); ++Y) {
 			for (auto X{ 0 }, W{ VX >> 4 }; std::cmp_less_equal(X, W); ++X) {
-				vm->Mem->color8xBuffer.at_wrap(VY + Y << 2, VX + X) = color;
+				vm->Mem->color8xBuffer.at_wrap((VY + Y) << 2, VX + X) = color;
 			}
 		}
 		vm->State.chip8X_hires = false;

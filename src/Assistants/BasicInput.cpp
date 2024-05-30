@@ -4,8 +4,6 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include <utility>
-
 #include "BasicInput.hpp"
 
 /*------------------------------------------------------------------*/
@@ -29,11 +27,11 @@ void BasicKeyboard::updateCopy() {
 }
 
 bool BasicKeyboard::isPrevHeld(const SDL_Scancode key) const noexcept {
-	return std::cmp_not_equal(oldState[key], 0);
+	return oldState[key];
 }
 
 bool BasicKeyboard::isHeld(const SDL_Scancode key) const noexcept {
-	return std::cmp_not_equal(SDL_GetKeyboardState(nullptr)[key], 0);
+	return SDL_GetKeyboardState(nullptr)[key];
 }
 
 bool BasicKeyboard::isPressed(const SDL_Scancode key) const noexcept {

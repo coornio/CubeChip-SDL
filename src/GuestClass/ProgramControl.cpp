@@ -104,9 +104,6 @@ void ProgramControl::handleTimersDec() {
 void ProgramControl::handleInterrupt() {
 	switch (interrupt) {
 
-		case Interrupt::NONE: // nothing to handle, simply return
-			return;
-
 		case Interrupt::ONCE: // resumes emulation after a single frame pause
 			ipf = std::abs(ipf);
 			return;

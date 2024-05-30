@@ -33,7 +33,7 @@ public:
 	void modifyViewport(BrushType);
 
 	void flushBuffers(bool);
-	void loadPalette(std::int32_t, std::int32_t);
+	void loadPalette(std::uint32_t, std::uint32_t);
 
-	void clearPages(std::int32_t);
+	void clearPages(std::uint32_t);
 };
