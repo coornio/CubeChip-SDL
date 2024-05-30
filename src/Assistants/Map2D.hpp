@@ -489,29 +489,37 @@ public:
 	#pragma region Raw Accessors
 	auto at_raw(const integral auto idx)
 	-> T& {
-		assert(idx >= 0 && idx < size() && "at_raw() index out of bounds");
+		assert(std::cmp_greater_equal(idx, 0) && std::cmp_less(idx, size()) && "at_raw() index out of bounds");
 		return pData.get()[idx];
 	}
 
 	auto at_raw(const integral auto idx) const
 	-> const T& {
-		assert(idx >= 0 && idx < size() && "at_raw() index out of bounds");
+		assert(std::cmp_greater_equal(idx, 0) && std::cmp_less(idx, size()) && "at_raw() index out of bounds");
 		return pData.get()[idx];
 	}
 
 	auto at_raw(const integral auto row, const integral auto col)
 	-> T& {
-		assert(row >= 0 && row < mRows && "at_raw() row index out of bounds");
-		assert(col >= 0 && col < mCols && "at_raw() col index out of bounds");
+		assert(std::cmp_greater_equal(row, 0) && std::cmp_less(row, mRows) && "at_raw() row index out of bounds");
+		assert(std::cmp_greater_equal(col, 0) && std::cmp_less(col, mCols) && "at_raw() col index out of bounds");
 		return pData.get()[row * mCols + col];
 	}
 
 	auto at_raw(const integral auto row, const integral auto col) const
 	-> const T& {
-		assert(row >= 0 && row < mRows && "at_raw() row index out of bounds");
-		assert(col >= 0 && col < mCols && "at_raw() col index out of bounds");
+		assert(std::cmp_greater_equal(row, 0) && std::cmp_less(row, mRows) && "at_raw() row index out of bounds");
+		assert(std::cmp_greater_equal(col, 0) && std::cmp_less(col, mCols) && "at_raw() col index out of bounds");
 		return pData.get()[row * mCols + col];
 	}
+
+	auto at_wrap(const integral auto row, const integral auto col)
+	-> T&
+	{ return pData.get()[(row & mRows - 1) * mCols + (col & mCols - 1)]; }
+
+	auto at_wrap(const integral auto row, const integral auto col) const
+	-> const T&
+	{ return pData.get()[(row & mRows - 1) * mCols + (col & mCols - 1)]; }
 	#pragma endregion
 
 private:
@@ -695,13 +703,13 @@ private:
 
 		auto operator[](const integral auto col)
 		-> T& {
-			assert(col >= 0 && col < mLength && "operator[] col index out of bounds");
+			assert(std::cmp_greater_equal(col, 0) && std::cmp_less(col, mLength) && "operator[] col index out of bounds");
 			return *(begin() + col);
 		}
 
 		auto operator[](const integral auto col) const
 		-> const T& {
-			assert(col >= 0 && col < mLength && "operator[] col index out of bounds");
+			assert(std::cmp_greater_equal(col, 0) && std::cmp_less(col, mLength) && "operator[] col index out of bounds");
 			return *(begin() + col);
 		}
 		#pragma endregion
@@ -1618,27 +1626,27 @@ public:
 
 	auto operator() (const integral auto row, const integral auto col)
 	-> T& {
-		assert(row >= 0 && row < mRows && "operator() row index out of bounds");
-		assert(col >= 0 && col < mCols && "operator() col index out of bounds");
+		assert(std::cmp_greater_equal(row, 0) && std::cmp_less(row, mRows) && "operator() row index out of bounds");
+		assert(std::cmp_greater_equal(col, 0) && std::cmp_less(col, mCols) && "operator() col index out of bounds");
 		return at_raw(row, col);
 	}
 
 	auto operator() (const integral auto row, const integral auto col) const
 	-> const T& {
-		assert(row >= 0 && row < mRows && "operator() row index out of bounds");
-		assert(col >= 0 && col < mCols && "operator() col index out of bounds");
+		assert(std::cmp_greater_equal(row, 0) && std::cmp_less(row, mRows) && "operator() row index out of bounds");
+		assert(std::cmp_greater_equal(col, 0) && std::cmp_less(col, mCols) && "operator() col index out of bounds");
 		return at_raw(row, col);
 	}
 
 	auto operator[] (const integral auto row)
 	-> RowProxy {
-		assert(row >= 0 && row < mRows && "operator[] row index out of bounds");
+		assert(std::cmp_greater_equal(row, 0) && std::cmp_less(row, mRows) && "operator[] row index out of bounds");
 		return RowProxy(mBegin() + row * mCols, mCols);
 	}
 
 	auto operator[] (const integral auto row) const
 	-> const RowProxy {
-		assert(row >= 0 && row < mRows && "operator[] row index out of bounds");
+		assert(std::cmp_greater_equal(row, 0) && std::cmp_less(row, mRows) && "operator[] row index out of bounds");
 		return RowProxy(mBegin() + row * mCols, mCols);
 	}
 	#pragma endregion
