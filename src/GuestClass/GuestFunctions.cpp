@@ -20,6 +20,7 @@
 /*  class  VM_Guest                                                 */
 /*------------------------------------------------------------------*/
 
+VM_Guest::~VM_Guest() = default;
 VM_Guest::VM_Guest(
 	HomeDirManager* hdm_ptr,
 	BasicVideoSpec* bvs_ptr,
@@ -28,15 +29,15 @@ VM_Guest::VM_Guest(
 	: File    { hdm_ptr }
 	, Video   { bvs_ptr }
 	, Audio   { bas_ptr }
-	, Input   { std::make_unique<HexInput>() }
-	, Wrand   { std::make_unique<Well512>() }
-	, Mem     { std::make_unique<MemoryBanks>(this) }
-	, Program { std::make_unique<ProgramControl>(this, currFncSet) }
-	, Sound   { std::make_unique<SoundCores>(this, Audio) }
-	, Reg     { std::make_unique<Registers>(this) }
-	, Color   { std::make_unique<DisplayColors>() }
-{}
-VM_Guest::~VM_Guest() = default;
+{
+	Input   = std::make_unique<HexInput>();
+	Wrand   = std::make_unique<Well512>();
+	Mem     = std::make_unique<MemoryBanks>(this);
+	Program = std::make_unique<ProgramControl>(this, currFncSet);
+	Sound   = std::make_unique<SoundCores>(this, Audio);
+	Reg     = std::make_unique<Registers>(this);
+	Color   = std::make_unique<DisplayColors>();
+}
 
 bool VM_Guest::isSystemPaused() const { return _isSystemPaused && Program->ipf; }
 bool VM_Guest::isDisplayReady() const { return _isDisplayReady; }

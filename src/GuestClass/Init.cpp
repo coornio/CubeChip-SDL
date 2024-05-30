@@ -181,7 +181,7 @@ void VM_Guest::initPlatform() {
 	//Quirk.shiftVX = true;
 	//Quirk.jmpRegX = true;
 	//Quirk.idxRegNoInc = true;
-	State.schip_legacy = true;
+	//State.schip_legacy = true;
 	//State.xochip_color = true;
 	Program->setSpeed(0);
 	//Quirk.waitScroll = true;
@@ -208,20 +208,26 @@ void VM_Guest::initPlatform() {
 		Quirk.jmpRegX      = true;
 		Quirk.idxRegNoInc  = true;
 	}
+
+	setupDisplay(
+		Resolution::LO +
+		State.hires_2paged +
+		State.hires_4paged,
+		true
+	);
+
 	if (State.chip8X_rom) {
-		Color->cycleBackground();
+		Mem->color8xBuffer.resize(true, Plane.H, Plane.W >> 3);
+		Mem->color8xBuffer.at_raw(0, 0) = Color->getFore8X(2);
 
-		if (!State.schip_legacy)
-			Mem->color8xBuffer[0][0] = Color->getFore8X(2);
-		else {
-			Mem->color8xBuffer[0][0] =
-			Mem->color8xBuffer[0][1] =
-			Mem->color8xBuffer[4][0] =
-			Mem->color8xBuffer[4][1] = Color->getFore8X(2);
+		if (State.schip_legacy) {
+			Mem->color8xBuffer.at_raw(4, 1) =
+			Mem->color8xBuffer.at_raw(4, 0) =
+			Mem->color8xBuffer.at_raw(0, 1) =
+			Mem->color8xBuffer.at_raw(0, 0);
 		}
+		Color->cycleBackground();
 	}
-
-	setupDisplay(Resolution::LO + State.hires_2paged + State.hires_4paged, true);
 }
 
 void VM_Guest::setupDisplay(const std::int32_t mode, const bool forced) {
@@ -248,9 +254,6 @@ void VM_Guest::setupDisplay(const std::int32_t mode, const bool forced) {
 			Mem->displayBuffer[1].resize(!forced, Plane.H, Plane.W);
 			Mem->displayBuffer[2].resize(!forced, Plane.H, Plane.W);
 			Mem->displayBuffer[3].resize(!forced, Plane.H, Plane.W);
-		}
-		if (State.chip8X_rom) {
-			Mem->color8xBuffer.resize(false, Plane.H, Plane.W);
 		}
 	}
 

@@ -23,7 +23,7 @@ SoundCores::SoundCores(VM_Guest* parent, BasicAudioSpec* bas)
 {}
 
 void SoundCores::renderAudio() {
-	const auto samplesPerFrame{ std::ceil(BAS->outFrequency / vm->Program->framerate) };
+	const auto samplesPerFrame{ std::ceil(BAS->outFrequency / vm->fetchFramerate()) };
 	std::vector<std::int16_t> audioBuffer(static_cast<std::uint32_t>(samplesPerFrame));
 
 	if (beepFx0A) {

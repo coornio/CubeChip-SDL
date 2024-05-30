@@ -51,7 +51,6 @@ reset_all:
 	mb.updateCopy();
 
 	if (Host.isReady()) {
-		Guest = nullptr; // destroy old instance, and create a new one
 		Guest = std::make_unique<VM_Guest>(HDM.get(), BVS.get(), BAS.get());
 
 		if (Guest->setupMachine()) {
