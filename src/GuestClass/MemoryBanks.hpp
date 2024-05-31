@@ -35,5 +35,5 @@ public:
 	void flushBuffers(bool);
 	void loadPalette(std::uint32_t, std::uint32_t);
 
-	void clearPages(std::uint32_t);
+	void clearPages(std::int32_t);
 };

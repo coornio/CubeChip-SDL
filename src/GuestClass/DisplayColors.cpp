@@ -14,7 +14,7 @@ DisplayColors::DisplayColors() {
 }
 
 void DisplayColors::initBitColors() {
-	for (auto i{ 0 }; std::cmp_less(i, 16); ++i) {
+	for (auto i{ 0 }; i < 16; ++i) {
 		bit[i] = BitColors[i];
 	}
 }
@@ -22,7 +22,7 @@ void DisplayColors::initBitColors() {
 void DisplayColors::initHexColors() {
 	static constexpr auto r{ 0xFF }, g{ 0xFF }, b{ 0xFF };
 
-	for (auto i{ 0 }; std::cmp_less(i, 10); ++i) {
+	for (auto i{ 0 }; i < 10; ++i) {
 		const float mult{ 1.0f - 0.045f * i };
 		const float R   { r * mult * 1.03f };
 		const float G   { g * mult * 1.14f };
@@ -42,7 +42,7 @@ void DisplayColors::setBit332(const std::size_t idx, const std::size_t color) {
 	bit[idx & 0xF] = 0xFF000000
 		| map3b[color >> 5 & 0x7] << 16 // red
 		| map3b[color >> 2 & 0x7] <<  8 // green
-		| map2b[color      & 0x3];       // blue
+		| map2b[color      & 0x3];      // blue
 }
 
 void DisplayColors::cycleBackground() {

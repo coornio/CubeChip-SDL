@@ -13,15 +13,15 @@
 /*  class  FncSetInterface -> FunctionsForModernXO                  */
 /*------------------------------------------------------------------*/
 
-FunctionsForModernXO::FunctionsForModernXO(VM_Guest* parent)
+FunctionsForModernXO::FunctionsForModernXO(VM_Guest* parent) noexcept
 	: vm{ parent }
 {}
 
 void FunctionsForModernXO::scrollUP(const std::int32_t N) {
 	if (!vm->Plane.selected) return;
 
-	for (auto P{ 0 }; std::cmp_less(P, 4); ++P) {
-		if (std::cmp_not_equal(vm->Plane.selected & (1 << P), 0)) {
+	for (auto P{ 0 }; P < 4; ++P) {
+		if (vm->Plane.selected & (1 << P)) {
 			vm->Mem->displayBuffer[P].shift(-N, 0);
 		}
 	}
@@ -29,8 +29,8 @@ void FunctionsForModernXO::scrollUP(const std::int32_t N) {
 void FunctionsForModernXO::scrollDN(const std::int32_t N) {
 	if (!vm->Plane.selected) return;
 
-	for (auto P{ 0 }; std::cmp_less(P, 4); ++P) {
-		if (std::cmp_not_equal(vm->Plane.selected & (1 << P), 0)) {
+	for (auto P{ 0 }; P < 4; ++P) {
+		if (vm->Plane.selected & (1 << P)) {
 			vm->Mem->displayBuffer[P].shift(+N, 0);
 		}
 	}
@@ -38,8 +38,8 @@ void FunctionsForModernXO::scrollDN(const std::int32_t N) {
 void FunctionsForModernXO::scrollLT(const std::int32_t) {
 	if (!vm->Plane.selected) return;
 
-	for (auto P{ 0 }; std::cmp_less(P, 4); ++P) {
-		if (std::cmp_not_equal(vm->Plane.selected & (1 << P), 0)) {
+	for (auto P{ 0 }; P < 4; ++P) {
+		if (vm->Plane.selected & (1 << P)) {
 			vm->Mem->displayBuffer[P].shift(0, -4);
 		}
 	}
@@ -47,8 +47,8 @@ void FunctionsForModernXO::scrollLT(const std::int32_t) {
 void FunctionsForModernXO::scrollRT(const std::int32_t) {
 	if (!vm->Plane.selected) return;
 
-	for (auto P{ 0 }; std::cmp_less(P, 4); ++P) {
-		if (std::cmp_not_equal(vm->Plane.selected & (1 << P), 0)) {
+	for (auto P{ 0 }; P < 4; ++P) {
+		if (vm->Plane.selected & (1 << P)) {
 			vm->Mem->displayBuffer[P].shift(0, +4);
 		}
 	}
@@ -61,21 +61,20 @@ void FunctionsForModernXO::drawByte(
 	const std::int32_t P,
 	const std::size_t DATA
 ) {
-	if (!DATA || std::cmp_equal(X, vm->Plane.W)) return;
+	if (!DATA || X == vm->Plane.W) return;
 
-	for (std::size_t B{ 0 }; std::cmp_less(B, 8); ++B) {
+	for (auto B{ 0 }; B < 8; ++B) {
 		if (DATA >> (7 - B) & 0x1) {
 			auto& elem{ vm->Mem->displayBuffer[P].at_raw(Y, X) };
-			if (std::cmp_not_equal(elem, 0)) {
-				vm->Reg->V[0xF] = 1;
-			}
+			if (elem) vm->Reg->V[0xF] = 1;
+
 			switch (vm->Plane.brush) {
 				case BrushType::XOR: elem ^=  1; break;
 				case BrushType::SUB: elem &= ~1; break;
 				case BrushType::ADD: elem |=  1; break;
 			}
 		}
-		if (std::cmp_equal(++X, vm->Plane.W)) {
+		if (++X == vm->Plane.W) {
 			if (vm->Quirk.wrapSprite) X &= vm->Plane.Wb;
 			else return;
 		}
@@ -88,7 +87,7 @@ void FunctionsForModernXO::drawSprite(
 	std::int32_t  N,
 	std::uint32_t I
 ) {
-	if (std::cmp_equal(vm->Plane.selected, 0)) {
+	if (!vm->Plane.selected) {
 		vm->Reg->V[0xF] = 0;
 		return;
 	}
@@ -100,15 +99,15 @@ void FunctionsForModernXO::drawSprite(
 	const bool wide{ N == 0 };
 	if (wide) N = 16;
 
-	for (auto P{ 0 }; std::cmp_less(P, 4); ++P) {
-		if (std::cmp_equal(vm->Plane.selected & (1 << P), 0)) continue;
+	for (auto P{ 0 }; P <4; ++P) {
+		if (!(vm->Plane.selected & (1 << P))) continue;
 
 		auto _VY{ VY };
-		for (auto Y{ 0 }; std::cmp_less(Y, N); ++Y) {
+		for (auto Y{ 0 }; Y < N; ++Y) {
 			if (true) drawByte(VX + 0, _VY, P, vm->mrw(I++));
 			if (wide) drawByte(VX + 8, _VY, P, vm->mrw(I++));
 
-			if (std::cmp_greater(++_VY, vm->Plane.Hb)) {
+			if (++_VY == vm->Plane.H) {
 				if (vm->Quirk.wrapSprite) _VY &= vm->Plane.Hb;
 				else return;
 			}

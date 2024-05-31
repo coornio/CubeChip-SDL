@@ -19,8 +19,8 @@ void MemoryBanks::modifyViewport(const BrushType type) {
 		return;
 	}
 
-	for (auto P{ 0 }; std::cmp_less(P, 4); ++P) {
-		if (std::cmp_not_equal(vm->Plane.selected & (1 << P), 0)) {
+	for (auto P{ 0 }; P < 4; ++P) {
+		if (vm->Plane.selected & (1 << P)) {
 			switch (type) {
 				case BrushType::CLR:
 					vm->Mem->displayBuffer[P].wipeAll();
@@ -53,7 +53,7 @@ void MemoryBanks::flushBuffers(const bool firstFlush) {
 }
 
 void MemoryBanks::loadPalette(std::uint32_t index, const std::uint32_t count) {
-	for (std::size_t idx{ 0 }; std::cmp_less(idx, count); index += 4) {
+	for (std::size_t idx{ 0 }; idx < count; index += 4) {
 		megaPalette[++idx] = vm->mrw(index + 0) << 24
 			               | vm->mrw(index + 1) << 16
 			               | vm->mrw(index + 2) << 8
@@ -61,8 +61,8 @@ void MemoryBanks::loadPalette(std::uint32_t index, const std::uint32_t count) {
 	}
 }
 
-void MemoryBanks::clearPages(std::uint32_t H) {
-	while (std::cmp_less(H++, vm->Plane.H)) {
+void MemoryBanks::clearPages(std::int32_t H) {
+	while (H++ < vm->Plane.H) {
 		displayBuffer[0][H].wipeAll();
 	}
 }

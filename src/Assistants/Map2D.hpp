@@ -33,6 +33,7 @@ concept ar_pointer = std::is_pointer_v<T> && std::is_arithmetic_v<std::remove_po
 template<typename T> requires arithmetic<T> || ar_pointer<T>
 class MapRow : public std::vector<T> {
 	using std::vector<T>::vector;
+	using paramU = std::size_t;
 
 public:
 	#pragma region operator +=
@@ -40,7 +41,7 @@ public:
 		const MapRow& other
 	) requires arithmetic<T> {
 		const auto len{ std::min(this->size(), other.size()) };
-		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+		for (paramU i{ 0 }; i < len; ++i) {
 			(*this)[i] += other[i];
 		}
 		return *this;
@@ -59,7 +60,7 @@ public:
 		const MapRow& other
 	) requires arithmetic<T> {
 		const auto len{ std::min(this->size(), other.size()) };
-		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+		for (paramU i{ 0 }; i < len; ++i) {
 			(*this)[i] += other[i];
 		}
 		return *this;
@@ -78,7 +79,7 @@ public:
 		const MapRow& other
 	) requires arithmetic<T> {
 		const auto len{ std::min(this->size(), other.size()) };
-		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+		for (paramU i{ 0 }; i < len; ++i) {
 			(*this)[i] *= other[i];
 		}
 		return *this;
@@ -97,7 +98,7 @@ public:
 		const MapRow& other
 	) requires arithmetic<T> {
 		const auto len{ std::min(this->size(), other.size()) };
-		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+		for (paramU i{ 0 }; i < len; ++i) {
 			if (other[i] == 0) {
 				throw std::domain_error("division by zero");
 			} else {
@@ -124,7 +125,7 @@ public:
 		const MapRow& other
 	) requires arithmetic<T> {
 		const auto len{ std::min(this->size(), other.size()) };
-		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+		for (paramU i{ 0 }; i < len; ++i) {
 			if (other[i] == 0) {
 				throw std::domain_error("division by zero");
 			} else {
@@ -152,7 +153,7 @@ public:
 		const MapRow& other
 	) requires integral<T> {
 		const auto len{ std::min(this->size(), other.size()) };
-		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+		for (paramU i{ 0 }; i < len; ++i) {
 			(*this)[i] &= other[i];
 		}
 		return *this;
@@ -171,7 +172,7 @@ public:
 		const MapRow& other
 	) requires integral<T> {
 		const auto len{ std::min(this->size(), other.size()) };
-		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+		for (paramU i{ 0 }; i < len; ++i) {
 			(*this)[i] |= other[i];
 		}
 		return *this;
@@ -190,7 +191,7 @@ public:
 		const MapRow& other
 	) requires integral<T> {
 		const auto len{ std::min(this->size(), other.size()) };
-		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+		for (paramU i{ 0 }; i < len; ++i) {
 			(*this)[i] ^= other[i];
 		}
 		return *this;
@@ -209,7 +210,7 @@ public:
 		const MapRow& other
 	) requires integral<T> {
 		const auto len{ std::min(this->size(), other.size()) };
-		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+		for (paramU i{ 0 }; i < len; ++i) {
 			(*this)[i] <<= other[i];
 		}
 		return *this;
@@ -228,7 +229,7 @@ public:
 		const MapRow& other
 	) requires integral<T> {
 		const auto len{ std::min(this->size(), other.size()) };
-		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+		for (paramU i{ 0 }; i < len; ++i) {
 			(*this)[i] >>= other[i];
 		}
 		return *this;
@@ -249,7 +250,7 @@ public:
 	) const requires arithmetic<T> {
 		auto temp{ *this };
 		const auto len{ std::min(temp.size(), other.size()) };
-		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+		for (paramU i{ 0 }; i < len; ++i) {
 			temp[i] += other[i];
 		}
 		return temp;
@@ -270,7 +271,7 @@ public:
 	) const requires arithmetic<T> {
 		auto temp{ *this };
 		const auto len{ std::min(temp.size(), other.size()) };
-		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+		for (paramU i{ 0 }; i < len; ++i) {
 			temp[i] -= other[i];
 		}
 		return temp;
@@ -291,7 +292,7 @@ public:
 	) const requires arithmetic<T> {
 		auto temp{ *this };
 		const auto len{ std::min(temp.size(), other.size()) };
-		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+		for (paramU i{ 0 }; i < len; ++i) {
 			temp[i] *= other[i];
 		}
 		return temp;
@@ -312,7 +313,7 @@ public:
 	) const requires arithmetic<T> {
 		auto temp{ *this };
 		const auto len{ std::min(temp.size(), other.size()) };
-		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+		for (paramU i{ 0 }; i < len; ++i) {
 			if (other[i] == 0) {
 				throw std::domain_error("division by zero");
 			} else {
@@ -341,7 +342,7 @@ public:
 	) const requires arithmetic<T> {
 		auto temp{ *this };
 		const auto len{ std::min(temp.size(), other.size()) };
-		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+		for (paramU i{ 0 }; i < len; ++i) {
 			if (other[i] == 0) {
 				throw std::domain_error("division by zero");
 			} else {
@@ -371,7 +372,7 @@ public:
 	) const requires integral<T> {
 		auto temp{ *this };
 		const auto len{ std::min(temp.size(), other.size()) };
-		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+		for (paramU i{ 0 }; i < len; ++i) {
 			temp[i] &= other[i];
 		}
 		return temp;
@@ -392,7 +393,7 @@ public:
 	) const requires integral<T> {
 		auto temp{ *this };
 		const auto len{ std::min(temp.size(), other.size()) };
-		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+		for (paramU i{ 0 }; i < len; ++i) {
 			temp[i] |= other[i];
 		}
 		return temp;
@@ -413,7 +414,7 @@ public:
 	) const requires integral<T> {
 		auto temp{ *this };
 		const auto len{ std::min(temp.size(), other.size()) };
-		for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+		for (paramU i{ 0 }; i < len; ++i) {
 			temp[i] ^= other[i];
 		}
 		return temp;
@@ -473,7 +474,7 @@ class Map2D final {
 	std::unique_ptr<T[]> pData;
 
 public:
-	paramU size() const { return static_cast<paramU>(mRows * mCols); }
+	paramU size() const { return mRows * mCols; }
 	paramS lenX() const { return mCols; }
 	paramS lenY() const { return mRows; }
 
@@ -487,37 +488,37 @@ public:
 
 public:
 	#pragma region Raw Accessors
-	auto at_raw(const integral auto idx)
+	auto at_raw(const paramU idx)
 	-> T& {
-		assert(std::cmp_greater_equal(idx, 0) && std::cmp_less(idx, size()) && "at_raw() index out of bounds");
+		assert(idx < size() && "at_raw() index out of bounds");
 		return pData.get()[idx];
 	}
 
-	auto at_raw(const integral auto idx) const
+	auto at_raw(const paramU idx) const
 	-> const T& {
-		assert(std::cmp_greater_equal(idx, 0) && std::cmp_less(idx, size()) && "at_raw() index out of bounds");
+		assert(idx < size() && "at_raw() index out of bounds");
 		return pData.get()[idx];
 	}
 
-	auto at_raw(const integral auto row, const integral auto col)
+	auto at_raw(const paramU row, const paramU col)
 	-> T& {
-		assert(std::cmp_greater_equal(row, 0) && std::cmp_less(row, mRows) && "at_raw() row index out of bounds");
-		assert(std::cmp_greater_equal(col, 0) && std::cmp_less(col, mCols) && "at_raw() col index out of bounds");
+		assert(rowValid(row) && "at_raw() row index out of bounds");
+		assert(colValid(col) && "at_raw() col index out of bounds");
 		return pData.get()[row * mCols + col];
 	}
 
-	auto at_raw(const integral auto row, const integral auto col) const
+	auto at_raw(const paramU row, const paramU col) const
 	-> const T& {
-		assert(std::cmp_greater_equal(row, 0) && std::cmp_less(row, mRows) && "at_raw() row index out of bounds");
-		assert(std::cmp_greater_equal(col, 0) && std::cmp_less(col, mCols) && "at_raw() col index out of bounds");
+		assert(rowValid(row) && "at_raw() row index out of bounds");
+		assert(colValid(col) && "at_raw() col index out of bounds");
 		return pData.get()[row * mCols + col];
 	}
 
-	auto at_wrap(const integral auto row, const integral auto col)
+	auto at_wrap(const paramU row, const paramU col)
 	-> T&
 	{ return pData.get()[(row & mRows - 1) * mCols + (col & mCols - 1)]; }
 
-	auto at_wrap(const integral auto row, const integral auto col) const
+	auto at_wrap(const paramU row, const paramU col) const
 	-> const T&
 	{ return pData.get()[(row & mRows - 1) * mCols + (col & mCols - 1)]; }
 	#pragma endregion
@@ -530,7 +531,7 @@ private:
 		const paramS mLength;
 
 	public:
-		auto size() const { return mLength; }
+		paramS size() const { return mLength; }
 
 		T& front() { return mBegin[0]; }
 		T& back()  { return mBegin[mLength - 1]; }
@@ -603,13 +604,16 @@ private:
 		RowProxy& wipe(
 			const integral auto cols
 		) requires arithmetic<T> {
-			if (std::cmp_greater_equal(std::abs(cols), mLength)) {
+			if (!colValidAbs(cols)) {
 				wipeAll();
-			} else if (std::cmp_not_equal(cols, 0)) {
-				if (std::cmp_less(cols, 0)) {
-					std::fill(end() - std::abs(cols), end(), T());
-				} else {
-					std::fill(begin(), begin() + std::abs(cols), T());
+			} else {
+				const auto _cols{ static_cast<paramS>(cols) };
+				if (_cols) {
+					if (_cols < 0) {
+						std::fill(end() - std::abs(_cols), end(), T());
+					} else {
+						std::fill(begin(), begin() + std::abs(_cols), T());
+					}
 				}
 			}
 			return *this;
@@ -628,11 +632,12 @@ private:
 		RowProxy& rotate(
 			const integral auto cols
 		) {
-			if (std::cmp_not_equal(cols, 0)) {
-				if (std::cmp_less(cols, 0)) {
-					std::rotate(begin(), begin() + std::abs(cols) % mLength, end());
+			const auto _cols{ static_cast<paramS>(cols) };
+			if (_cols) {
+				if (_cols < 0) {
+					std::rotate(begin(), begin() + std::abs(_cols) % mLength, end());
 				} else {
-					std::rotate(begin(), end() - std::abs(cols) % mLength, end());
+					std::rotate(begin(), end() - std::abs(_cols) % mLength, end());
 				}
 			}
 			return *this;
@@ -653,7 +658,7 @@ private:
 		RowProxy& shift(
 			const integral auto cols
 		) requires arithmetic<T> {
-			if (std::cmp_less(std::abs(cols), mLength)) {
+			if (colValidAbs(cols)) {
 				rotate(cols);
 			}
 			return wipe(cols);
@@ -673,17 +678,18 @@ private:
 
 	private:
 		#pragma region Accessor Bounds Checker
-		paramS checkColBounds(
-			const integral auto col
-		) const {
-			if (std::cmp_less(col, -mLength) || std::cmp_greater_equal(col, mLength)) {
+		paramS checkColBounds(const paramS col) const {
+			if (col < -mLength || col > mLength) {
 				throw std::out_of_range("column index out of range");
 			}
-			if (std::cmp_less(col, 0)) {
-				return static_cast<paramS>(col + mLength);
-			} else {
-				return static_cast<paramS>(col);
-			}
+			return col + (col < 0 ? mLength : 0);
+		}
+		
+		bool colValid(const paramU idx) const noexcept {
+			return idx < static_cast<paramU>(mLength);
+		}
+		bool colValidAbs(const integral auto idx) const noexcept {
+			return std::abs(static_cast<paramS>(idx)) < mLength;
 		}
 		#pragma endregion
 
@@ -693,23 +699,23 @@ private:
 
 		auto at(const integral auto col)
 		-> T&
-		{ return *(begin() + checkColBounds(col)); }
+		{ return *(begin() + checkColBounds(static_cast<paramS>(col))); }
 
 		auto at(const integral auto col) const
 		-> const T&
-		{ return *(begin() + checkColBounds(col)); }
+		{ return *(begin() + checkColBounds(static_cast<paramS>(col))); }
 
 		/* unsafe accessors */
 
-		auto operator[](const integral auto col)
+		auto operator[](const paramU col)
 		-> T& {
-			assert(std::cmp_greater_equal(col, 0) && std::cmp_less(col, mLength) && "operator[] col index out of bounds");
+			assert(colValid(col) && "operator[] col index out of bounds");
 			return *(begin() + col);
 		}
 
-		auto operator[](const integral auto col) const
+		auto operator[](const paramU col) const
 		-> const T& {
-			assert(std::cmp_greater_equal(col, 0) && std::cmp_less(col, mLength) && "operator[] col index out of bounds");
+			assert(colValid(col) && "operator[] col index out of bounds");
 			return *(begin() + col);
 		}
 		#pragma endregion
@@ -759,7 +765,7 @@ private:
 			const RowProxy& other
 		) requires arithmetic<T> {
 			const auto len{ std::min(other.mLength, mLength) };
-			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			for (paramS i{ 0 }; i < len; ++i) {
 				(*this)[i] += other[i];
 			}
 			return *this;
@@ -768,7 +774,7 @@ private:
 			const MapRow<T>& other
 		) requires arithmetic<T> {
 			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
-			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			for (paramU i{ 0 }; i < len; ++i) {
 				(*this)[i] += other[i];
 			}
 			return *this;
@@ -787,7 +793,7 @@ private:
 			const RowProxy& other
 		) requires arithmetic<T> {
 			const auto len{ std::min(other.mLength, mLength) };
-			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			for (paramS i{ 0 }; i < len; ++i) {
 				(*this)[i] -= other[i];
 			}
 			return *this;
@@ -796,7 +802,7 @@ private:
 			const MapRow<T>& other
 		) requires arithmetic<T> {
 			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
-			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			for (paramU i{ 0 }; i < len; ++i) {
 				(*this)[i] -= other[i];
 			}
 			return *this;
@@ -815,7 +821,7 @@ private:
 			const RowProxy& other
 		) requires arithmetic<T> {
 			const auto len{ std::min(other.mLength, mLength) };
-			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			for (paramS i{ 0 }; i < len; ++i) {
 				(*this)[i] *= other[i];
 			}
 			return *this;
@@ -824,7 +830,7 @@ private:
 			const MapRow<T>& other
 		) requires arithmetic<T> {
 			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
-			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			for (paramU i{ 0 }; i < len; ++i) {
 				(*this)[i] *= other[i];
 			}
 			return *this;
@@ -847,7 +853,7 @@ private:
 			const RowProxy& other
 		) requires arithmetic<T> {
 			const auto len{ std::min(other.mLength, mLength) };
-			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			for (paramS i{ 0 }; i < len; ++i) {
 				if (other[i] == 0) {
 					throw std::domain_error("division by zero");
 				} else {
@@ -860,7 +866,7 @@ private:
 			const MapRow<T>& other
 		) requires arithmetic<T> {
 			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
-			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			for (paramU i{ 0 }; i < len; ++i) {
 				if (other[i] == 0) {
 					throw std::domain_error("division by zero");
 				} else {
@@ -887,7 +893,7 @@ private:
 			const RowProxy& other
 		) requires arithmetic<T> {
 			const auto len{ std::min(other.mLength, mLength) };
-			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			for (paramS i{ 0 }; i < len; ++i) {
 				if (other[i] == 0) {
 					throw std::domain_error("division by zero");
 				} else {
@@ -900,7 +906,7 @@ private:
 			const MapRow<T>& other
 		) requires arithmetic<T> {
 			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
-			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			for (paramU i{ 0 }; i < len; ++i) {
 				if (other[i] == 0) {
 					throw std::domain_error("division by zero");
 				} else {
@@ -924,7 +930,7 @@ private:
 			const RowProxy& other
 		) requires integral<T> {
 			const auto len{ std::min(other.mLength, mLength) };
-			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			for (paramS i{ 0 }; i < len; ++i) {
 				(*this)[i] &= other[i];
 			}
 			return *this;
@@ -933,7 +939,7 @@ private:
 			const MapRow<T>& other
 		) requires integral<T> {
 			const auto len{ std::min<paramU>(other.size(), mLength) };
-			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			for (paramU i{ 0 }; i < len; ++i) {
 				(*this)[i] &= other[i];
 			}
 			return *this;
@@ -952,7 +958,7 @@ private:
 			const RowProxy& other
 		) requires integral<T> {
 			const auto len{ std::min(other.mLength, mLength) };
-			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			for (paramS i{ 0 }; i < len; ++i) {
 				(*this)[i] |= other[i];
 			}
 			return *this;
@@ -961,7 +967,7 @@ private:
 			const MapRow<T>& other
 		) requires integral<T> {
 			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
-			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			for (paramU i{ 0 }; i < len; ++i) {
 				(*this)[i] |= other[i];
 			}
 			return *this;
@@ -980,7 +986,7 @@ private:
 			const RowProxy& other
 		) requires integral<T> {
 			const auto len{ std::min(other.mLength, mLength) };
-			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			for (paramS i{ 0 }; i < len; ++i) {
 				(*this)[i] ^= other[i];
 			}
 			return *this;
@@ -989,7 +995,7 @@ private:
 			const MapRow<T>& other
 		) requires integral<T> {
 			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
-			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			for (paramU i{ 0 }; i < len; ++i) {
 				(*this)[i] ^= other[i];
 			}
 			return *this;
@@ -1008,7 +1014,7 @@ private:
 			const RowProxy& other
 		) requires integral<T> {
 			const auto len{ std::min(other.mLength, mLength) };
-			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			for (paramS i{ 0 }; i < len; ++i) {
 				(*this)[i] <<= other[i];
 			}
 			return *this;
@@ -1017,7 +1023,7 @@ private:
 			const MapRow<T>& other
 		) requires integral<T> {
 			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
-			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			for (paramU i{ 0 }; i < len; ++i) {
 				(*this)[i] <<= other[i];
 			}
 			return *this;
@@ -1036,7 +1042,7 @@ private:
 			const RowProxy& other
 		) requires integral<T> {
 			const auto len{ std::min(other.mLength, mLength) };
-			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			for (paramS i{ 0 }; i < len; ++i) {
 				(*this)[i] >>= other[i];
 			}
 			return *this;
@@ -1045,7 +1051,7 @@ private:
 			const MapRow<T>& other
 		) requires integral<T> {
 			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
-			for (auto i{ 0 }; std::cmp_less(i, len); ++i) {
+			for (paramU i{ 0 }; i < len; ++i) {
 				(*this)[i] >>= other[i];
 			}
 			return *this;
@@ -1122,7 +1128,7 @@ private:
 	explicit Map2D(const paramS rows, const paramS cols)
 		: mRows{ rows }
 		, mCols{ cols }
-		, pData{ std::make_unique<T[]>(static_cast<paramU>(rows * cols)) }
+		, pData{ std::make_unique<T[]>(rows * cols) }
 	{}
 	#pragma endregion
 
@@ -1165,10 +1171,10 @@ private:
 	#pragma region negmod()
 	auto negmod(const integral auto lhs, const integral auto rhs) const {
 		const auto _mod{
-			static_cast<std::ptrdiff_t>(lhs) %
-			static_cast<std::ptrdiff_t>(rhs)
+			static_cast<paramS>(lhs) %
+			static_cast<paramS>(rhs)
 		};
-		if (std::cmp_less(_mod, 0)) {
+		if (_mod < 0) {
 			return _mod + rhs;
 		} else {
 			return _mod;
@@ -1196,8 +1202,11 @@ public:
 		const integral auto posY = 0,
 		const integral auto posX = 0
 	) const requires arithmetic<T> {
-		const auto nRows{ std::cmp_equal(rows, 0) ? mRows : static_cast<paramS>(std::abs(rows)) };
-		const auto nCols{ std::cmp_equal(cols, 0) ? mCols : static_cast<paramS>(std::abs(cols)) };
+		const auto _rows{ static_cast<paramS>(std::abs(rows)) };
+		const auto _cols{ static_cast<paramS>(std::abs(cols)) };
+
+		const auto nRows = !_rows ? mRows : _rows;
+		const auto nCols = !_cols ? mRows : _cols;
 
 		Map2D<const T*> obj;
 		return obj.setView(this, nRows, nCols, posY, posX);
@@ -1223,8 +1232,11 @@ public:
 		const integral auto posY = 0,
 		const integral auto posX = 0
 	) const requires ar_pointer<T> {
-		const auto nRows{ std::cmp_equal(rows, 0) ? mRows : static_cast<paramS>(std::abs(rows)) };
-		const auto nCols{ std::cmp_equal(cols, 0) ? mCols : static_cast<paramS>(std::abs(cols)) };
+		const auto _rows{ static_cast<paramS>(std::abs(rows)) };
+		const auto _cols{ static_cast<paramS>(std::abs(cols)) };
+
+		const auto nRows = !_rows ? mRows : _rows;
+		const auto nCols = !_cols ? mRows : _cols;
 
 		Map2D obj;
 		return obj.setView(this, nRows, nCols, posY, posX);
@@ -1251,13 +1263,16 @@ public:
 		const integral auto posY = 0,
 		const integral auto posX = 0
 	) requires ar_pointer<T> {
-		mRows = std::cmp_equal(rows, 0) ? mRows : static_cast<paramS>(std::abs(rows));
-		mCols = std::cmp_equal(cols, 0) ? mRows : static_cast<paramS>(std::abs(cols));
+		const auto _rows{ static_cast<paramS>(std::abs(rows)) };
+		const auto _cols{ static_cast<paramS>(std::abs(cols)) };
 
+		mRows = !_rows ? mRows : _rows;
+		mCols = !_cols ? mRows : _cols;
 		resizeWipe(mRows, mCols);
-		for (paramS y{}; std::cmp_less(y, mRows); ++y) {
+
+		for (paramS y{}; y < mRows; ++y) {
 			const auto offsetY{ negmod(y + posY, base->lenY()) };
-			for (paramS x{}; std::cmp_less(x, mCols); ++x) {
+			for (paramS x{}; x < mCols; ++x) {
 				const auto offsetX{ negmod(x + posX, base->lenX()) };
 				at_raw(y, x) = &base->at_raw(offsetY, offsetX);
 			}
@@ -1286,13 +1301,16 @@ public:
 		const integral auto posY = 0,
 		const integral auto posX = 0
 	) requires ar_pointer<T> {
-		mRows = std::cmp_equal(rows, 0) ? mRows : static_cast<paramS>(std::abs(rows));
-		mCols = std::cmp_equal(cols, 0) ? mRows : static_cast<paramS>(std::abs(cols));
+		const auto _rows{ static_cast<paramS>(std::abs(rows)) };
+		const auto _cols{ static_cast<paramS>(std::abs(cols)) };
 
+		mRows = !_rows ? mRows : _rows;
+		mCols = !_cols ? mRows : _cols;
 		resizeWipe(mRows, mCols);
-		for (paramS y{}; std::cmp_less(y, mRows); ++y) {
+
+		for (paramS y{}; y < mRows; ++y) {
 			const auto offsetY{ negmod(y + posY, base->lenY()) };
-			for (paramS x{}; std::cmp_less(x, mCols); ++x) {
+			for (paramS x{}; x < mCols; ++x) {
 				const auto offsetX{ negmod(x + posX, base->lenX()) };
 				at_raw(y, x) = base->at_raw(offsetY, offsetX);
 			}
@@ -1312,8 +1330,8 @@ public:
 	Map2D& copyLinear(
 		const Map2D& other
 	) requires arithmetic<T> {
-		const auto nSize{ std::min(size(), other.size())};
-		std::copy_n(other.mBegin(), nSize, mBegin());
+		const auto _len{ std::min(size(), other.size())};
+		std::copy_n(other.mBegin(), _len, mBegin());
 		return *this;
 	}
 	#pragma endregion
@@ -1331,10 +1349,10 @@ public:
 	 */
 	Map2D& copyLinear(
 		const T* const other,
-		const integral auto size
+		const integral auto len
 	) requires arithmetic<T> {
-		const auto nSize{ static_cast<paramU>(std::abs(size)) };
-		std::copy_n(other, std::min(nSize, size()), mBegin());
+		const auto _len{ static_cast<paramU>(std::abs(len)) };
+		std::copy_n(other, std::min(_len, size()), mBegin());
 		return *this;
 	}
 	#pragma endregion
@@ -1359,8 +1377,8 @@ public:
 		auto nRows{ static_cast<paramS>(std::abs(rows)) };
 		auto nCols{ static_cast<paramS>(std::abs(cols)) };
 
-		if (std::cmp_equal(nRows, 0)) nRows = mRows;
-		if (std::cmp_equal(nCols, 0)) nCols = mCols;
+		if (!nRows) nRows = mRows;
+		if (!nCols) nCols = mCols;
 
 		if (nRows == mRows && nCols == mCols) {
 			if (choice_copy) {
@@ -1387,9 +1405,9 @@ private:
 		const auto minRows{ std::min(rows, mRows) };
 		const auto minCols{ std::min(cols, mCols) };
 
-		auto pCopy{ std::make_unique<T[]>(static_cast<paramU>(rows * cols)) };
+		auto pCopy{ std::make_unique<T[]>(rows * cols) };
 
-		for (auto row{ 0 }; std::cmp_less(row, minRows); ++row) {
+		for (auto row{ 0 }; row < minRows; ++row) {
 			const auto srcIdx{ pData.get() + row * mCols };
 			const auto dstIdx{ pCopy.get() + row * cols };
 			std::move(srcIdx, srcIdx + minCols, dstIdx);
@@ -1443,19 +1461,21 @@ public:
 		const integral auto rows,
 		const integral auto cols
 	) requires arithmetic<T> {
-		if (std::cmp_greater_equal(std::abs(rows), mRows) || std::cmp_greater_equal(std::abs(cols), mCols)) {
+		if (!rowValidAbs(rows) || !colValidAbs(cols)) {
 			wipeAll();
 		} else {
-			if (std::cmp_not_equal(rows, 0)) {
-				if (std::cmp_less(rows, 0)) {
-					std::fill(mEnd() + rows * mCols, mEnd(), T());
+			const auto _rows{ static_cast<paramS>(rows) };
+			const auto _cols{ static_cast<paramS>(cols) };
+			if (_rows) {
+				if (_rows < 0) {
+					std::fill(mEnd() + _rows * mCols, mEnd(), T());
 				} else {
-					std::fill(mBegin(), mBegin() + rows * mCols, T());
+					std::fill(mBegin(), mBegin() + _rows * mCols, T());
 				}
 			}
-			if (std::cmp_not_equal(cols, 0)) {
+			if (_cols) {
 				for (auto& row : *this) {
-					row.wipe(cols);
+					row.wipe(_cols);
 				}
 			}
 		}
@@ -1477,16 +1497,18 @@ public:
 		const integral auto rows,
 		const integral auto cols
 	) {
-		if (std::abs(rows) % mRows) {
-			if (std::cmp_less(rows, 0)) {
-				std::rotate(mBegin(), mBegin() - rows * mCols, mEnd());
+		const auto _rows{ static_cast<paramS>(rows) };
+		const auto _cols{ static_cast<paramS>(cols) };
+		if (_rows % mRows) {
+			if (_rows < 0) {
+				std::rotate(mBegin(), mBegin() - _rows * mCols, mEnd());
 			} else {
-				std::rotate(mBegin(), mEnd() - rows * mCols, mEnd());
+				std::rotate(mBegin(), mEnd() - _rows * mCols, mEnd());
 			}
 		}
-		if (std::abs(cols) % mCols) {
+		if (_cols % mCols) {
 			for (auto& row : *this) {
-				row.rotate(cols);
+				row.rotate(_cols);
 			}
 		}
 		return *this;
@@ -1509,7 +1531,7 @@ public:
 		const integral auto rows,
 		const integral auto cols
 	) requires arithmetic<T> {
-		if (std::cmp_less(std::abs(rows), mRows) && std::cmp_less(std::abs(cols), mCols)) {
+		if (rowValidAbs(rows) && colValidAbs(cols)) {
 			rotate(rows, cols);
 		}
 		return wipe(rows, cols);
@@ -1533,7 +1555,7 @@ public:
 	 * @return Self reference for method chaining.
 	 */
 	Map2D& reverseY() {
-		for (auto row{ 0 }; std::cmp_less(row, mRows / 2); ++row) {
+		for (auto row{ 0 }; row < mRows / 2; ++row) {
 			(*this)[row].swap((*this)[mRows - row - 1]);
 		}
 		return *this;
@@ -1559,11 +1581,11 @@ public:
 	 * @return Self reference for method chaining.
 	 */
 	Map2D& transpose() {
-		if (std::cmp_greater(mRows, 1) || std::cmp_greater(mCols, 1)) {
-			for (paramU a{ 1 }, b{ 1 }; std::cmp_less(a, size() - 1); b = ++a) {
+		if (mRows > 1 || mCols > 1) {
+			for (paramU a{ 1 }, b{ 1 }; a < size() - 1; b = ++a) {
 				do {
 					b = (b % mRows) * mCols + (b / mRows);
-				} while (std::cmp_less(b, a));
+				} while (b < a);
 
 				if (b != a) std::iter_swap(mBegin() + a, mBegin() + b);
 			}
@@ -1575,25 +1597,30 @@ public:
 
 private:
 	#pragma region Accessor Bounds Checkers
-	paramS checkRowBounds(const integral auto row) const {
-		if (std::cmp_less(row, -mRows) || std::cmp_greater_equal(row, mRows)) {
+	paramS checkRowBounds(const paramS row) const {
+		if (row < -mRows || row >= mRows) {
 			throw std::out_of_range("row index out of range");
 		}
-		if (std::cmp_less(row, 0)) {
-			return static_cast<paramS>(row + mRows);
-		} else {
-			return static_cast<paramS>(row);
-		}
+		return row + (row < 0 ? mRows : 0);
 	}
-	paramS checkColBounds(const integral auto col) const {
-		if (std::cmp_less(col, -mCols) || std::cmp_greater_equal(col, mCols)) {
+	paramS checkColBounds(const paramS col) const {
+		if (col < -mCols || col >= mCols) {
 			throw std::out_of_range("column index out of range");
 		}
-		if (std::cmp_less(col, 0)) {
-			return static_cast<paramS>(col + mCols);
-		} else {
-			return static_cast<paramS>(col);
-		}
+		return col + (col < 0 ? mCols : 0);
+	}
+
+	bool rowValid(const paramU idx) const noexcept {
+		return idx < static_cast<paramU>(mRows);
+	}
+	bool colValid(const paramU idx) const noexcept {
+		return idx < static_cast<paramU>(mCols);
+	}
+	bool rowValidAbs(const integral auto idx) const noexcept {
+		return std::abs(static_cast<paramS>(idx)) < mRows;
+	}
+	bool colValidAbs(const integral auto idx) const noexcept {
+		return std::abs(static_cast<paramS>(idx)) < mCols;
 	}
 	#pragma endregion
 
@@ -1603,45 +1630,45 @@ public:
 
 	auto at(const integral auto row, const integral auto col)
 	-> T&
-	{ return at_raw(checkRowBounds(row), checkColBounds(col)); }
+	{ return at_raw(checkRowBounds(static_cast<paramS>(row)), checkColBounds(static_cast<paramS>(col))); }
 
 	auto at(const integral auto row, const integral auto col) const
 	-> const T&
-	{ return at_raw(checkRowBounds(row), checkColBounds(col)); }
+	{ return at_raw(checkRowBounds(static_cast<paramS>(row)), checkColBounds(static_cast<paramS>(col))); }
 
 	auto at(const integral auto row)
 	-> RowProxy
-	{ return RowProxy(mBegin() + checkRowBounds(row) * mCols, mCols); }
+	{ return RowProxy(mBegin() + checkRowBounds(static_cast<paramS>(row)) * mCols, mCols); }
 
 	auto at(const integral auto row) const
 	-> const RowProxy
-	{ return RowProxy(mBegin() + checkRowBounds(row) * mCols, mCols); }
+	{ return RowProxy(mBegin() + checkRowBounds(static_cast<paramS>(row)) * mCols, mCols); }
 
 	/* unsafe accessors */
 
-	auto operator() (const integral auto row, const integral auto col)
+	auto operator() (const paramU row, const paramU col)
 	-> T& {
-		assert(std::cmp_greater_equal(row, 0) && std::cmp_less(row, mRows) && "operator() row index out of bounds");
-		assert(std::cmp_greater_equal(col, 0) && std::cmp_less(col, mCols) && "operator() col index out of bounds");
+		assert(rowValid(row) && "operator() row index out of bounds");
+		assert(colValid(col) && "operator() col index out of bounds");
 		return at_raw(row, col);
 	}
 
-	auto operator() (const integral auto row, const integral auto col) const
+	auto operator() (const paramU row, const paramU col) const
 	-> const T& {
-		assert(std::cmp_greater_equal(row, 0) && std::cmp_less(row, mRows) && "operator() row index out of bounds");
-		assert(std::cmp_greater_equal(col, 0) && std::cmp_less(col, mCols) && "operator() col index out of bounds");
+		assert(rowValid(row) && "operator() row index out of bounds");
+		assert(colValid(col) && "operator() col index out of bounds");
 		return at_raw(row, col);
 	}
 
-	auto operator[] (const integral auto row)
+	auto operator[] (const paramU row)
 	-> RowProxy {
-		assert(std::cmp_greater_equal(row, 0) && std::cmp_less(row, mRows) && "operator[] row index out of bounds");
+		assert(rowValid(row) && "operator[] row index out of bounds");
 		return RowProxy(mBegin() + row * mCols, mCols);
 	}
 
-	auto operator[] (const integral auto row) const
+	auto operator[] (const paramU row) const
 	-> const RowProxy {
-		assert(std::cmp_greater_equal(row, 0) && std::cmp_less(row, mRows) && "operator[] row index out of bounds");
+		assert(rowValid(row) && "operator[] row index out of bounds");
 		return RowProxy(mBegin() + row * mCols, mCols);
 	}
 	#pragma endregion

@@ -16,7 +16,7 @@ bool RomFileTypes::checkSize(
 	const std::size_t offset,
 	const std::size_t limit
 ) {
-	return std::cmp_less_equal(size + offset, limit);
+	return size + offset <= limit;
 }
 
 bool RomFileTypes::validate(

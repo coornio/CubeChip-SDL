@@ -15,7 +15,7 @@
 /*  class  FncSetInterface -> FunctionsForLegacySC                  */
 /*------------------------------------------------------------------*/
 
-FunctionsForLegacySC::FunctionsForLegacySC(VM_Guest* parent)
+FunctionsForLegacySC::FunctionsForLegacySC(VM_Guest* parent) noexcept
 	: vm{ parent }
 {}
 
@@ -35,7 +35,7 @@ void FunctionsForLegacySC::scrollRT(const std::int32_t) {
 /*------------------------------------------------------------------*/
 
 std::size_t FunctionsForLegacySC::bitBloat(std::size_t byte) {
-	if (std::cmp_equal(byte, 0)) return 0;
+	if (!byte) return 0;
 	byte = (byte << 4 | byte) & 0x0F0F;
 	byte = (byte << 2 | byte) & 0x3333;
 	byte = (byte << 1 | byte) & 0x5555;
@@ -46,17 +46,15 @@ void FunctionsForLegacySC::drawByte(
 	std::int32_t X, std::int32_t Y,
 	const std::size_t DATA
 ) {
-	if (!DATA || std::cmp_equal(X, vm->Plane.W)) return;
+	if (!DATA || X == vm->Plane.W) return;
 
-	for (std::size_t B{ 0 }; std::cmp_less(B, 8); ++B) {
+	for (auto B{ 0 }; B < 8; ++B) {
 		if (DATA >> (7 - B) & 0x1) {
 			auto& elem{ vm->Mem->displayBuffer[0].at_raw(Y, X) };
-			if (std::cmp_not_equal(elem, 0)) {
-				++vm->Reg->V[0xF];
-			}
+			if (elem) ++vm->Reg->V[0xF];
 			elem ^= 1;
 		}
-		if (std::cmp_equal(++X, vm->Plane.W)) {
+		if (++X == vm->Plane.W) {
 			if (vm->Quirk.wrapSprite) X &= vm->Plane.Wb;
 			else return;
 		}
@@ -69,18 +67,16 @@ void FunctionsForLegacySC::drawShort(
 ) {
 	if (!DATA) return;
 
-	for (std::size_t B{ 0 }; std::cmp_less(B, 16); ++B) {
+	for (auto B{ 0 }; B < 16; ++B) {
 		auto& elem0{ vm->Mem->displayBuffer[0].at_raw(Y + 0, X) };
 		auto& elem1{ vm->Mem->displayBuffer[0].at_raw(Y + 1, X) };
 		if (DATA >> (15 - B) & 0x1) {
-			if (std::cmp_not_equal(elem0, 0)) {
-				vm->Reg->V[0xF] = 1;
-			}
+			if (elem0) vm->Reg->V[0xF] = 1;
 			elem1 = elem0 ^= 1;
 		} else {
 			elem1 = elem0;
 		}
-		if (std::cmp_equal(++X, vm->Plane.W)) {
+		if (++X == vm->Plane.W) {
 			if (vm->Quirk.wrapSprite) X &= vm->Plane.Wb;
 			else return;
 		}
@@ -102,7 +98,7 @@ void FunctionsForLegacySC::drawSprite(
 	const bool wide{ N == 0 };
 	if (wide) N = 16;
 
-	for (auto Y{ 0 }; std::cmp_less(Y, N); ++Y) {
+	for (auto Y{ 0 }; Y < N; ++Y) {
 		if (mode == vm->Resolution::LO) { // lores 8xN (doubled)
 			drawShort(VX, VY, bitBloat(vm->mrw(I++)));
 		} else {                          // hires 8xN / 16xN
@@ -110,7 +106,7 @@ void FunctionsForLegacySC::drawSprite(
 			if (wide) drawByte(VX + 8, VY, vm->mrw(I++));
 		}
 
-		if (std::cmp_greater(VY += mode, vm->Plane.Hb)) {
+		if ((VY += mode) == vm->Plane.H) {
 			if (vm->Quirk.wrapSprite) VY &= vm->Plane.Hb;
 			else return;
 		}
@@ -132,7 +128,7 @@ void FunctionsForLegacySC::drawColors(
 		}
 
 		const auto X{ VX >> 3 };
-		for (auto Y{ 0 }; std::cmp_less(Y, N); ++Y) {
+		for (auto Y{ 0 }; Y < N; ++Y) {
 			vm->Mem->color8xBuffer.at_wrap(VY + Y, X + 0) = color;
 			if (mode != vm->Resolution::LO) continue;
 			vm->Mem->color8xBuffer.at_wrap(VY + Y, X + 1) = color;
@@ -149,9 +145,9 @@ void FunctionsForLegacySC::drawColors(
 		const auto H{ (VY >> 4) + mode };
 		const auto W{ (VX >> 4) + mode };
 
-		for (auto Y{ 0 }; std::cmp_less(Y, H); ++Y) {
+		for (auto Y{ 0 }; Y < H; ++Y) {
 			const auto _Y{ (VY + Y) << 2 };
-			for (auto X{ 0 }; std::cmp_less(X, W); ++X) {
+			for (auto X{ 0 }; X < W; ++X) {
 				const auto _X{ VX + X };
 				vm->Mem->color8xBuffer.at_wrap(_Y + 0, _X) = color;
 				//if (mode != vm->Resolution::LO) continue;

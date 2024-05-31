@@ -23,7 +23,7 @@ struct FncSetInterface {
 	virtual void drawSprite(std::int32_t, std::int32_t, std::int32_t, std::uint32_t) = 0;
 	virtual void drawColors(std::int32_t, std::int32_t, std::int32_t, std::int32_t) = 0;
 
-	virtual ~FncSetInterface() {};
+	virtual ~FncSetInterface() noexcept {};
 };
 
 /*------------------------------------------------------------------*/
@@ -65,7 +65,7 @@ class FunctionsForGigachip final : public FncSetInterface {
 
 public:
 	void chooseBlend(std::size_t);
-	FunctionsForGigachip(VM_Guest*);
+	explicit FunctionsForGigachip(VM_Guest*) noexcept;
 };
 
 /*------------------------------------------------------------------*/
@@ -78,10 +78,10 @@ class FunctionsForMegachip final : public FncSetInterface {
 	struct SrcColor { float A{}, R{}, G{}, B{}; } src;
 	struct DstColor { float A{}, R{}, G{}, B{}; } dst;
 
-	float (*blendType)(float, float) {};
+	float (*blendType)(float, float) noexcept {};
 
-	std::uint32_t blendPixel(std::uint32_t, std::uint32_t);
-	std::uint32_t applyBlend(float (*)(float, float)) const;
+	std::uint32_t blendPixel(std::uint32_t, std::uint32_t) noexcept;
+	std::uint32_t applyBlend(float (*)(float, float)) const noexcept;
 
 	template <typename T>
 	void blendToDisplay(const T*, const T*, std::size_t);
@@ -100,8 +100,8 @@ class FunctionsForMegachip final : public FncSetInterface {
 	void drawColors(std::int32_t, std::int32_t, std::int32_t, std::int32_t)  override {};
 
 public:
-	void chooseBlend(std::size_t);
-	FunctionsForMegachip(VM_Guest*);
+	void chooseBlend(std::size_t) noexcept;
+	explicit FunctionsForMegachip(VM_Guest*) noexcept;
 };
 
 /*------------------------------------------------------------------*/
@@ -121,7 +121,7 @@ class FunctionsForModernXO final : public FncSetInterface {
 	void drawColors(std::int32_t, std::int32_t, std::int32_t, std::int32_t)  override {};
 
 public:
-	FunctionsForModernXO(VM_Guest*);
+	explicit FunctionsForModernXO(VM_Guest*) noexcept;
 };
 
 /*------------------------------------------------------------------*/
@@ -143,7 +143,7 @@ class FunctionsForLegacySC final : public FncSetInterface {
 	void drawColors(std::int32_t, std::int32_t, std::int32_t, std::int32_t)  override;
 
 public:
-	FunctionsForLegacySC(VM_Guest*);
+	explicit FunctionsForLegacySC(VM_Guest*) noexcept;
 };
 
 /*------------------------------------------------------------------*/
@@ -163,5 +163,5 @@ class FunctionsForClassic8 final : public FncSetInterface {
 	void drawColors(std::int32_t, std::int32_t, std::int32_t, std::int32_t)  override;
 
 public:
-	FunctionsForClassic8(VM_Guest*);
+	explicit FunctionsForClassic8(VM_Guest*) noexcept;
 };

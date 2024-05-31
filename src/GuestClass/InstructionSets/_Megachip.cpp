@@ -18,7 +18,7 @@
 /*  class  FncSetInterface -> FunctionsForMegachip                  */
 /*------------------------------------------------------------------*/
 
-FunctionsForMegachip::FunctionsForMegachip(VM_Guest* parent)
+FunctionsForMegachip::FunctionsForMegachip(VM_Guest* parent) noexcept
 	: vm{ parent }
 {
 	chooseBlend(Blend::NORMAL);
@@ -65,7 +65,7 @@ void FunctionsForMegachip::blendToDisplay(
 	const std::size_t size
 ) {
 	vm->Video->lockTexture();
-	for (std::size_t idx{ 0 }; std::cmp_less(idx, size); ++idx) {
+	for (std::size_t idx{ 0 }; idx < size; ++idx) {
 		vm->Video->pixels[idx] = blendPixel(src[idx], dst[idx]);
 	}
 	vm->Video->unlockTexture();
@@ -74,7 +74,7 @@ void FunctionsForMegachip::blendToDisplay(
 uint32_t FunctionsForMegachip::blendPixel(
 	const std::uint32_t colorSrc,
 	const std::uint32_t colorDst
-) {
+)  noexcept {
 	static constexpr float minA{ 1.0f / 255.0f };
 	src.A = (colorSrc >> 24) / 255.0f * vm->Trait.alpha;
 	if (src.A < minA) [[unlikely]] return colorDst;
@@ -93,7 +93,7 @@ uint32_t FunctionsForMegachip::blendPixel(
 
 uint32_t FunctionsForMegachip::applyBlend(
 	float (*blend)(const float, const float)
-) const {
+) const noexcept {
 	float R{ blend(src.R, dst.R) };
 	float G{ blend(src.G, dst.G) };
 	float B{ blend(src.B, dst.B) };
@@ -107,9 +107,9 @@ uint32_t FunctionsForMegachip::applyBlend(
 		B = dW * dst.B + sW * B;
 	}
 
-	return 0xFF000000u
-		| static_cast<std::uint8_t>(std::roundf(R * 255.0f)) << 16u
-		| static_cast<std::uint8_t>(std::roundf(G * 255.0f)) <<  8u
+	return 0xFF000000
+		| static_cast<std::uint8_t>(std::roundf(R * 255.0f)) << 16
+		| static_cast<std::uint8_t>(std::roundf(G * 255.0f)) <<  8
 		| static_cast<std::uint8_t>(std::roundf(B * 255.0f));
 }
 
@@ -122,17 +122,17 @@ void FunctionsForMegachip::drawSprite(
 	vm->Reg->V[0xF] = 0;
 
 	if (I < 0xF0) [[unlikely]] { // font sprite rendering
-		for (auto H{ 0 }; H < N; ++I, ++H, ++VY &= 0xFFu) {
+		for (auto H{ 0 }; H < N; ++I, ++H, ++VY &= 0xFF) {
 			if (VY >= vm->Plane.H) [[unlikely]] continue;
 
 			auto X{ VX };
 			const auto srcIndex{ vm->mrw(I) }; // font byte
 
-			for (auto W{ 7 }; W >= 0; --W, ++X &= 0xFFu) {
+			for (auto W{ 7 }; W >= 0; --W, ++X &= 0xFF) {
 				if (!(srcIndex >> W & 0x1)) continue;
 
-				auto& colorIdx{ vm->Mem->collisionPalette[VY][X] }; // DESTINATION pixel's collision megaPalette index
-				auto& colorDst{ vm->Mem->backgroundBuffer[VY][X] }; // DESTINATION pixel's color
+				auto& colorIdx{ vm->Mem->collisionPalette.at_raw(VY, X) }; // DESTINATION pixel's collision megaPalette index
+				auto& colorDst{ vm->Mem->backgroundBuffer.at_raw(VY, X) }; // DESTINATION pixel's color
 
 				if (colorIdx) [[unlikely]] {
 					colorIdx = 0;
@@ -147,18 +147,18 @@ void FunctionsForMegachip::drawSprite(
 		return;
 	}
 
-	for (auto H{ 0 }; H < vm->Trait.H; ++H, ++VY &= 0xFFu) {
+	for (auto H{ 0 }; H < vm->Trait.H; ++H, ++VY &= 0xFF) {
 		if (VY >= vm->Plane.H) [[unlikely]] {
 			I += vm->Trait.W; 
 			continue;
 		}
 		auto X{ VX };
-		for (auto W{ 0 }; W < vm->Trait.W; ++W, ++X &= 0xFFu) {
+		for (auto W{ 0 }; W < vm->Trait.W; ++W, ++X &= 0xFF) {
 			const auto srcIndex{ vm->mrw(I++) }; // palette index from RAM 
 			if (!srcIndex) continue;
 
-			auto& colorIdx{ vm->Mem->collisionPalette[VY][X] }; // DESTINATION pixel's collision palette index
-			auto& colorDst{ vm->Mem->backgroundBuffer[VY][X] }; // DESTINATION pixel's color
+			auto& colorIdx{ vm->Mem->collisionPalette.at_raw(VY, X) }; // DESTINATION pixel's collision palette index
+			auto& colorDst{ vm->Mem->backgroundBuffer.at_raw(VY, X) }; // DESTINATION pixel's color
 
 			if (!vm->Reg->V[0xF] && colorIdx == vm->Trait.collision) [[unlikely]]
 				vm->Reg->V[0xF] = 1;
@@ -169,24 +169,24 @@ void FunctionsForMegachip::drawSprite(
 	}
 }
 
-void FunctionsForMegachip::chooseBlend(const std::size_t N) {
+void FunctionsForMegachip::chooseBlend(const std::size_t N) noexcept {
 	switch (N) {
 
 		case Blend::LINEAR_DODGE:
-			blendType = [](const float src, const float dst) {
+			blendType = [](const float src, const float dst) noexcept {
 				return std::min(src + dst, 1.0f);
 			};
 			break;
 
 		case Blend::MULTIPLY:
-			blendType = [](const float src, const float dst) {
+			blendType = [](const float src, const float dst) noexcept {
 				return src * dst;
 			};
 			break;
 
 		default:
 		case Blend::NORMAL:
-			blendType = [](const float src, const float) {
+			blendType = [](const float src, const float) noexcept {
 				return src;
 			};
 			break;

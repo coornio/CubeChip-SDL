@@ -199,7 +199,7 @@ void BasicVideoSpec::renderPresent() {
 			SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 			SDL_SetRenderDrawColor(renderer, 0, 0, 0, 32);
 
-			for (auto y{ 4 }; std::cmp_less(y, static_cast<Sint32>(frameFull.h)); y += frameWidth) {
+			for (auto y{ 4 }; y < static_cast<Sint32>(frameFull.h); y += frameWidth) {
 				SDL_RenderLine(renderer, frameFull.x, static_cast<float>(y), frameFull.w, static_cast<float>(y));
 			}
 		}

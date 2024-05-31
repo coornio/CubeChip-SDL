@@ -354,11 +354,11 @@ void VM_Guest::flushDisplay() {
 	Video->lockTexture();
 
 	if (State.mega_enabled) {
-		for (std::size_t idx{ 0 }; std::cmp_less(idx, Plane.size); ++idx) {
+		for (auto idx{ 0 }; idx < Plane.size; ++idx) {
 			Video->pixels[idx] = Mem->foregroundBuffer.at_raw(idx);
 		}
 	} else if (State.xochip_color) {
-		for (std::size_t idx{ 0 }; std::cmp_less(idx, Plane.size); ++idx) {
+		for (auto idx{ 0 }; idx < Plane.size; ++idx) {
 			Video->pixels[idx] = Color->bit[
 				Mem->displayBuffer[0].at_raw(idx) << 0u |
 				Mem->displayBuffer[1].at_raw(idx) << 1u |
@@ -376,7 +376,7 @@ void VM_Guest::flushDisplay() {
 			++Y;
 		}
 	} else {
-		for (std::size_t idx{ 0 }; std::cmp_less(idx, Plane.size); ++idx) {
+		for (auto idx{ 0 }; idx < Plane.size; ++idx) {
 			Video->pixels[idx] = Color->bit[Mem->displayBuffer[0].at_raw(idx)];
 		}
 	}
