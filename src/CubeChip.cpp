@@ -25,11 +25,10 @@ int32_t SDL_main(int32_t argc, char* argv[]) {
 	}
 	#endif
 
-	// low latency mode is unreliable, best go with OS messaging queue
 	SDL_SetHint(SDL_HINT_WINDOWS_RAW_KEYBOARD, "0");
-
-	// direct3d requires less memory, and we don't do anything fancy
 	SDL_SetHint(SDL_HINT_RENDER_DRIVER, "direct3d");
+	SDL_SetHint(SDL_HINT_RENDER_VSYNC, "0"); // until the UI is independent
+	SDL_SetHint(SDL_HINT_APP_NAME, "CubeChip");
 
 	std::unique_ptr<HomeDirManager> HDM;
 	std::unique_ptr<BasicVideoSpec> BVS;
