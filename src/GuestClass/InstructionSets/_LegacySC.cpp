@@ -134,16 +134,6 @@ void FunctionsForLegacySC::drawLoresColor(
 			vm->Mem->color8xBuffer.at_wrap(((VY + Y) << (2 + lores)) + 1, VX + X) = color;
 		}
 	}
-
-	//for (auto Y{ 0 }; Y < H; ++Y) {
-	//	const auto _Y{ (VY + Y) << 2 };
-	//	for (auto X{ 0 }; X < W; ++X) {
-	//		const auto _X{ VX + X };
-	//		vm->Mem->color8xBuffer.at_wrap(_Y + 0, _X) = color;
-	//		//if (mode != vm->Resolution::LO) continue;
-	//		//vm->Mem->color8xBuffer.at_wrap(_Y + 1, _X) = color;
-	//	}
-	//}
 }
 
 void FunctionsForLegacySC::drawHiresColor(

@@ -29,20 +29,3 @@ bool VM_Host::doBench() const { return _doBench; }
 
 VM_Host& VM_Host::isReady(const bool state) { _isReady = state; return *this; }
 VM_Host& VM_Host::doBench(const bool state) { _doBench = state; return *this; }
-
-/*
-		if (benchmarking) {
-			if (!Frame(FrameLimiter::SPINLOCK)) continue;
-			std::cout << "\33[1;1H" << (cycles++ / 60.0f) << std::endl;
-			std::cout << "cycles: " << cycles
-				<< "\nipf: " << vm.Program.ipf
-				<< std::endl;
-
-			if (!Frame.paced())
-				std::cout << "cannot keep up!!" << std::endl;
-			else
-				std::cout << "keeping up pace." << std::endl;
-
-			std::cout << "time since last frame: " << Frame.elapsed() << std::endl;
-		} else if (!Frame(FrameLimiter::SLEEP)) continue;
-*/
