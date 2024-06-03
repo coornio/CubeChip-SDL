@@ -29,7 +29,7 @@ void FunctionsForMegachip::scrollUP(const std::int32_t N) {
 	blendToDisplay(
 		vm->Mem->foregroundBuffer.data(),
 		vm->Mem->backgroundBuffer.data(),
-		vm->Plane.size
+		vm->Plane.S
 	);
 }
 void FunctionsForMegachip::scrollDN(const std::int32_t N) {
@@ -37,7 +37,7 @@ void FunctionsForMegachip::scrollDN(const std::int32_t N) {
 	blendToDisplay(
 		vm->Mem->foregroundBuffer.data(),
 		vm->Mem->backgroundBuffer.data(),
-		vm->Plane.size
+		vm->Plane.S
 	);
 }
 void FunctionsForMegachip::scrollLT(const std::int32_t N) {
@@ -45,7 +45,7 @@ void FunctionsForMegachip::scrollLT(const std::int32_t N) {
 	blendToDisplay(
 		vm->Mem->foregroundBuffer.data(),
 		vm->Mem->backgroundBuffer.data(),
-		vm->Plane.size
+		vm->Plane.S
 	);
 }
 void FunctionsForMegachip::scrollRT(const std::int32_t N) {
@@ -53,7 +53,7 @@ void FunctionsForMegachip::scrollRT(const std::int32_t N) {
 	blendToDisplay(
 		vm->Mem->foregroundBuffer.data(),
 		vm->Mem->backgroundBuffer.data(),
-		vm->Plane.size
+		vm->Plane.S
 	);
 }
 
@@ -75,21 +75,43 @@ uint32_t FunctionsForMegachip::blendPixel(
 	const std::uint32_t colorSrc,
 	const std::uint32_t colorDst
 )  noexcept {
-	static constexpr float minA{ 1.0f / 255.0f };
-	src.A = (colorSrc >> 24) / 255.0f * vm->Trait.alpha;
-	if (src.A < minA) [[unlikely]] return colorDst;
+	static constexpr float minF{ 1.0f / 255.0f };
 
-	src.R = ((colorSrc >> 16) & 0xFF) / 255.0f;
-	src.G = ((colorSrc >>  8) & 0xFF) / 255.0f;
-	src.B = ( colorSrc        & 0xFF) / 255.0f;
+	src.A = (colorSrc >> 24) * minF * vm->Trait.alpha;
+	if (src.A < minF) [[unlikely]] return colorDst;
+	src.R = ((colorSrc >> 16) & 0xFF) * minF;
+	src.G = ((colorSrc >>  8) & 0xFF) * minF;
+	src.B = ( colorSrc        & 0xFF) * minF;
 
-	dst.A = ( colorDst >> 24)         / 255.0f;
-	dst.R = ((colorDst >> 16) & 0xFF) / 255.0f;
-	dst.G = ((colorDst >>  8) & 0xFF) / 255.0f;
-	dst.B = ( colorDst        & 0xFF) / 255.0f;
+	dst.A = ( colorDst >> 24)         * minF;
+	dst.R = ((colorDst >> 16) & 0xFF) * minF;
+	dst.G = ((colorDst >>  8) & 0xFF) * minF;
+	dst.B = ( colorDst        & 0xFF) * minF;
 
 	return applyBlend(blendType);
 }
+
+/*
+std::uint32_t FunctionsForMegachip::blendPixel(
+	const BytePun<std::uint32_t> colorSrc,
+	const BytePun<std::uint32_t> colorDst
+)  noexcept {
+	static constexpr float minF{ 1.0f / 255.0f };
+
+	src.A = colorSrc[3] * minF * vm->Trait.alpha;
+	if (src.A < minF) [[unlikely]] return colorDst;
+	src.R = colorSrc[2] * minF;
+	src.G = colorSrc[1] * minF;
+	src.B = colorSrc[0] * minF;
+
+	dst.A = colorDst[3] * minF;
+	dst.R = colorDst[2] * minF;
+	dst.G = colorDst[1] * minF;
+	dst.B = colorDst[0] * minF;
+
+	return applyBlend(blendType);
+}
+*/
 
 uint32_t FunctionsForMegachip::applyBlend(
 	float (*blend)(const float, const float)
@@ -119,54 +141,58 @@ void FunctionsForMegachip::drawSprite(
 	std::int32_t  N,
 	std::uint32_t I
 ) {
-	vm->Reg->V[0xF] = 0;
-
 	if (I < 0xF0) [[unlikely]] { // font sprite rendering
-		for (auto H{ 0 }; H < N; ++I, ++H, ++VY &= 0xFF) {
-			if (VY >= vm->Plane.H) [[unlikely]] continue;
+		for (auto H{ 0 }, Y{ VY }; H < N; ++I, ++H, ++Y &= 0xFF) {
+			if (Y >= vm->Plane.H) [[unlikely]] continue;
 
-			auto X{ VX };
-			const auto srcIndex{ vm->mrw(I) }; // font byte
+			const auto bytePixel{ vm->mrw(I) }; // font byte
 
-			for (auto W{ 7 }; W >= 0; --W, ++X &= 0xFF) {
-				if (!(srcIndex >> W & 0x1)) continue;
+			for (auto W{ 7 }, X{ VX }; W >= 0; --W, ++X &= 0xFF) {
+				if (!(bytePixel >> W & 0x1)) continue;
 
-				auto& colorIdx{ vm->Mem->collisionPalette.at_raw(VY, X) }; // DESTINATION pixel's collision megaPalette index
-				auto& colorDst{ vm->Mem->backgroundBuffer.at_raw(VY, X) }; // DESTINATION pixel's color
+				auto& collideCoord{ vm->Mem->collisionPalette.at_raw(Y, X) };
+				auto& backbufCoord{ vm->Mem->backgroundBuffer.at_raw(Y, X) };
 
-				if (colorIdx) [[unlikely]] {
-					colorIdx = 0;
-					colorDst = 0;
+				if (collideCoord) [[unlikely]] {
+					collideCoord = 0;
+					backbufCoord = 0;
 					vm->Reg->V[0xF] = 1;
 				} else {
-					colorIdx = 254;
-					colorDst = vm->Color->hex[H];
+					collideCoord = 254;
+					backbufCoord = vm->Color->hex[H];
 				}
 			}
 		}
 		return;
 	}
 
-	for (auto H{ 0 }; H < vm->Trait.H; ++H, ++VY &= 0xFF) {
-		if (VY >= vm->Plane.H) [[unlikely]] {
-			I += vm->Trait.W; 
+	auto collideHits{ 0 };
+
+	for (auto H{ 0 }, Y{ VY }; H < vm->Trait.H; ++H, ++Y &= 0xFF) {
+		if (Y >= vm->Plane.H) [[unlikely]] {
+			I += vm->Trait.W; // 192+ is fake, skip row of indices
 			continue;
 		}
-		auto X{ VX };
-		for (auto W{ 0 }; W < vm->Trait.W; ++W, ++X &= 0xFF) {
-			const auto srcIndex{ vm->mrw(I++) }; // palette index from RAM 
-			if (!srcIndex) continue;
 
-			auto& colorIdx{ vm->Mem->collisionPalette.at_raw(VY, X) }; // DESTINATION pixel's collision palette index
-			auto& colorDst{ vm->Mem->backgroundBuffer.at_raw(VY, X) }; // DESTINATION pixel's color
+		for (auto W{ 0 }, X{ VX }; W < vm->Trait.W; ++W, ++X &= 0xFF) {
+			const auto srcColorIndex{ vm->mrw(I++) };
+			if (!srcColorIndex) continue;
 
-			if (!vm->Reg->V[0xF] && colorIdx == vm->Trait.collision) [[unlikely]]
-				vm->Reg->V[0xF] = 1;
+			auto& collideCoord{ vm->Mem->collisionPalette.at_raw(Y, X) };
+			auto& backbufCoord{ vm->Mem->backgroundBuffer.at_raw(Y, X) };
 
-			colorIdx = srcIndex;
-			colorDst = blendPixel(vm->Mem->megaPalette[srcIndex], colorDst);
+			if (collideCoord == vm->Trait.collision) [[unlikely]]
+				++collideHits;
+
+			collideCoord = srcColorIndex;
+			backbufCoord = blendPixel(
+				vm->Mem->megaPalette[srcColorIndex],
+				backbufCoord
+			);
 		}
 	}
+
+	vm->Reg->V[0xF] = collideHits != 0;
 }
 
 void FunctionsForMegachip::chooseBlend(const std::size_t N) noexcept {

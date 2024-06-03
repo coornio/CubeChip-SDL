@@ -45,7 +45,9 @@ bool VM_Guest::isDisplayReady() const { return _isDisplayReady; }
 VM_Guest& VM_Guest::isSystemPaused(const bool state) { _isSystemPaused = state; return *this; }
 VM_Guest& VM_Guest::isDisplayReady(const bool state) { _isDisplayReady = state; return *this; }
 
-double   VM_Guest::fetchFramerate()           { return Program->framerate; }
+std::int32_t VM_Guest::fetchIPF()       const { return Program->ipf; }
+double       VM_Guest::fetchFramerate() const { return Program->framerate; }
+
 uint8_t& VM_Guest::mrw(const std::size_t idx) { return Mem->memory[idx & Program->limiter]; }
 uint8_t& VM_Guest::VX()                       { return Reg->V[(Program->opcode >> 8) & 0xF]; }
 uint32_t VM_Guest::NNNN()                     { return mrw(Program->counter) << 8 | mrw(Program->counter + 1); }
@@ -281,7 +283,7 @@ void VM_Guest::instructionLoop() {
 					if (!State.chip8X_rom) {
 						if (Reg->V[X] > Reg->V[Y]) Program->skipInstruction();
 					} else {							// 5XY1 - add nibbles of VX,VY and modulo 8 to VX *CHIP-8X*
-						const auto mask{ Program->screenMode == Resolution::LO ? 0x77 : 0xFF };
+						const auto mask{ Program->screenLores ? 0x77 : 0xFF };
 						const auto lenX{ (Reg->V[X] & 0xF0) + (Reg->V[Y] & 0xF0) };
 						const auto lenY{ (Reg->V[X] + Reg->V[Y]) & 0xF };
 						Reg->V[X] = static_cast<uint8_t>((lenX | lenY) & mask);
@@ -418,7 +420,13 @@ void VM_Guest::instructionLoop() {
 					[[unlikely]] default: Program->requestHalt();
 				}
 				else if (State.chip8X_rom) {			// BXYN - set foreground color *CHIP-8X*
-					currFncSet->drawColors(Reg->V[X], Reg->V[X + 1], Reg->V[Y] & 0x7, N);
+					if (N) {
+						currFncSet->drawHiresColor(Reg->V[X], Reg->V[X + 1], Reg->V[Y] & 0x7, N);
+						State.chip8X_hires = true;
+					} else {
+						currFncSet->drawLoresColor(Reg->V[X], Reg->V[X + 1], Reg->V[Y] & 0x7);
+						State.chip8X_hires = false;
+					}
 				} else {								// BXNN - jump to NNN + V0 (else VX *SCHIP*)
 					Program->jumpInstruction(NNN + (Quirk.jmpRegX ? Reg->V[X] : Reg->V[0]));
 				}

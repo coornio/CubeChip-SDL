@@ -47,18 +47,20 @@ void FunctionsForLegacySC::drawByte(
 	const std::size_t DATA
 ) {
 	if (!DATA || X == vm->Plane.W) return;
+	auto collideHits{ 0 };
 
 	for (auto B{ 0 }; B < 8; ++B) {
 		if (DATA >> (7 - B) & 0x1) {
 			auto& elem{ vm->Mem->displayBuffer[0].at_raw(Y, X) };
-			if (elem) ++vm->Reg->V[0xF];
+			if (elem) ++collideHits;
 			elem ^= 1;
 		}
 		if (++X == vm->Plane.W) {
 			if (vm->Quirk.wrapSprite) X &= vm->Plane.Wb;
-			else return;
+			else break;
 		}
 	}
+	vm->Reg->V[0xF] += collideHits != 0;
 }
 
 void FunctionsForLegacySC::drawShort(
@@ -99,11 +101,11 @@ void FunctionsForLegacySC::drawSprite(
 	if (wide) N = 16;
 
 	for (auto Y{ 0 }; Y < N; ++Y) {
-		if (mode == vm->Resolution::LO) { // lores 8xN (doubled)
-			drawShort(VX, VY, bitBloat(vm->mrw(I++)));
-		} else {                          // hires 8xN / 16xN
+		if (vm->Program->screenHires) { // hires 8xN / 16xN
 			if (true) drawByte(VX + 0, VY, vm->mrw(I++));
 			if (wide) drawByte(VX + 8, VY, vm->mrw(I++));
+		} else {                        // lores 8xN (doubled)
+			drawShort(VX, VY, bitBloat(vm->mrw(I++)));
 		}
 
 		if ((VY += mode) == vm->Plane.H) {
@@ -113,47 +115,55 @@ void FunctionsForLegacySC::drawSprite(
 	}
 }
 
-void FunctionsForLegacySC::drawColors(
+void FunctionsForLegacySC::drawLoresColor(
+	std::int32_t VX,
+	std::int32_t VY,
+	std::int32_t idx
+) {
+	const auto lores{ vm->Program->screenLores };
+	const auto color{ vm->Color->getFore8X(idx) };
+
+	VY &= 0x77; VX &= 0x77;
+
+	if (lores) { VX <<= 1; }
+
+	for (auto Y{ 0 }, H{ (VY >> 4) + 1 }; Y < H; ++Y) {
+		for (auto X{ 0 }, W{ (VX >> 4) + 1 + lores }; X < W; ++X) {
+			vm->Mem->color8xBuffer.at_wrap(((VY + Y) << (2 + lores)) + 0, VX + X) = color;
+			if (!lores) continue;
+			vm->Mem->color8xBuffer.at_wrap(((VY + Y) << (2 + lores)) + 1, VX + X) = color;
+		}
+	}
+
+	//for (auto Y{ 0 }; Y < H; ++Y) {
+	//	const auto _Y{ (VY + Y) << 2 };
+	//	for (auto X{ 0 }; X < W; ++X) {
+	//		const auto _X{ VX + X };
+	//		vm->Mem->color8xBuffer.at_wrap(_Y + 0, _X) = color;
+	//		//if (mode != vm->Resolution::LO) continue;
+	//		//vm->Mem->color8xBuffer.at_wrap(_Y + 1, _X) = color;
+	//	}
+	//}
+}
+
+void FunctionsForLegacySC::drawHiresColor(
 	std::int32_t VX,
 	std::int32_t VY,
 	std::int32_t idx,
 	std::int32_t N
 ) {
-	const auto mode{ vm->Program->screenMode };
+	const auto lores{ vm->Program->screenLores };
 	const auto color{ vm->Color->getFore8X(idx) };
 
-	if (N) {
-		if (mode == vm->Resolution::LO) {
-			VY <<= 1; VX <<= 1; N <<= 1;
-		}
-
-		const auto X{ VX >> 3 };
-		for (auto Y{ 0 }; Y < N; ++Y) {
-			vm->Mem->color8xBuffer.at_wrap(VY + Y, X + 0) = color;
-			if (mode != vm->Resolution::LO) continue;
-			vm->Mem->color8xBuffer.at_wrap(VY + Y, X + 1) = color;
-		}
-		vm->State.chip8X_hires = true;
+	if (lores) {
+		VY <<= 1;
+		VX <<= 1;
+		N  <<= 1;
 	}
-	else {
-		VY &= 0x77; VX &= 0x77;
 
-		if (mode == vm->Resolution::LO) {
-			VY <<= 1; VX <<= 1;
-		}
-
-		const auto H{ (VY >> 4) + mode };
-		const auto W{ (VX >> 4) + mode };
-
-		for (auto Y{ 0 }; Y < H; ++Y) {
-			const auto _Y{ (VY + Y) << 2 };
-			for (auto X{ 0 }; X < W; ++X) {
-				const auto _X{ VX + X };
-				vm->Mem->color8xBuffer.at_wrap(_Y + 0, _X) = color;
-				//if (mode != vm->Resolution::LO) continue;
-				//vm->Mem->color8xBuffer.at_wrap(_Y + 1, _X) = color;
-			}
-		}
-		vm->State.chip8X_hires = false;
+	for (auto Y{ 0 }, X{ VX >> 3 }; Y < N; ++Y) {
+		vm->Mem->color8xBuffer.at_wrap(VY + Y, X + 0) = color;
+		if (!lores) continue;
+		vm->Mem->color8xBuffer.at_wrap(VY + Y, X + 1) = color;
 	}
 }

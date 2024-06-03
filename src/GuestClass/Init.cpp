@@ -181,7 +181,7 @@ void VM_Guest::initPlatform() {
 	//Quirk.shiftVX = true;
 	//Quirk.jmpRegX = true;
 	//Quirk.idxRegNoInc = true;
-	//State.schip_legacy = true;
+	State.schip_legacy = true;
 	//State.xochip_color = true;
 	Program->setSpeed(0);
 	//Quirk.waitScroll = true;
@@ -217,16 +217,16 @@ void VM_Guest::initPlatform() {
 	);
 
 	if (State.chip8X_rom) {
+		Color->cycleBackground();
 		Mem->color8xBuffer.resize(true, Plane.H, Plane.W >> 3);
 		Mem->color8xBuffer.at_raw(0, 0) = Color->getFore8X(2);
 
-		if (State.schip_legacy) {
-			Mem->color8xBuffer.at_raw(4, 1) =
-			Mem->color8xBuffer.at_raw(4, 0) =
-			Mem->color8xBuffer.at_raw(0, 1) =
-			Mem->color8xBuffer.at_raw(0, 0);
-		}
-		Color->cycleBackground();
+		if (!State.schip_legacy) return;
+
+		Mem->color8xBuffer.at_raw(4, 1) =
+		Mem->color8xBuffer.at_raw(4, 0) =
+		Mem->color8xBuffer.at_raw(0, 1) =
+		Mem->color8xBuffer.at_raw(0, 0);
 	}
 }
 
@@ -235,20 +235,25 @@ void VM_Guest::setupDisplay(const std::int32_t mode, const bool forced) {
 	static constexpr std::int32_t wSize[]{ 128,  64,  64,  64, 256 };
 	static constexpr std::int32_t hSize[]{  64,  32,  64, 128, 192 };
 
-	const auto modeSelect{ State.schip_legacy ? 0 : mode - 1 };
+	const auto select{ State.schip_legacy ? 0 : mode - 1 };
+	const auto hires{ mode == Resolution::HI };
+	const auto lores{ mode == Resolution::LO };
 
-	Plane.W = wSize[modeSelect]; Plane.Wb = Plane.W - 1;
-	Plane.H = hSize[modeSelect]; Plane.Hb = Plane.H - 1;
-	Plane.size = Plane.W * Plane.H;
+	Plane.W = wSize[select]; Plane.Wb = Plane.W - 1;
+	Plane.H = hSize[select]; Plane.Hb = Plane.H - 1;
+	Plane.S = Plane.W * Plane.H;
 
-	Program->screenMode = mode;
+	Program->screenMode  = mode;
+	Program->screenHires = hires;
+	Program->screenLores = lores;
 
 	if (State.mega_enabled) {
 		Mem->foregroundBuffer.resize(true, Plane.H, Plane.W);
 		Mem->backgroundBuffer.resize(true, Plane.H, Plane.W);
 		Mem->collisionPalette.resize(true, Plane.H, Plane.W);
 		Mem->megaPalette.resize(256);
-	} else {
+	}
+	else {
 		Mem->displayBuffer[0].resize(!forced, Plane.H, Plane.W);
 		if (State.xochip_color) {
 			Mem->displayBuffer[1].resize(!forced, Plane.H, Plane.W);
@@ -270,11 +275,10 @@ void VM_Guest::setupDisplay(const std::int32_t mode, const bool forced) {
 		State.schip_legacy ||
 		State.chip8_legacy
 	};
-	const bool lores{ Program->screenMode == Resolution::LO };
 
 	if (legacy && (forced || Quirk.waitVblank ^ lores)) {
-		Program->ipf += Program->boost *= -1;
-		Quirk.waitVblank = lores;
+		Program->ipf     += Program->boost *= -1;
+		Quirk.waitVblank  = lores;
 	}
 };
 
@@ -350,34 +354,41 @@ void VM_Guest::loadFontData() {
 }
 
 void VM_Guest::flushDisplay() {
-	auto*& pixels{ Video->pixels };
 	Video->lockTexture();
 
 	if (State.mega_enabled) {
-		for (auto idx{ 0 }; idx < Plane.size; ++idx) {
+		for (auto idx{ 0 }; idx < Plane.S; ++idx) {
 			Video->pixels[idx] = Mem->foregroundBuffer.at_raw(idx);
 		}
 	} else if (State.xochip_color) {
-		for (auto idx{ 0 }; idx < Plane.size; ++idx) {
+		for (auto idx{ 0 }; idx < Plane.S; ++idx) {
 			Video->pixels[idx] = Color->bit[
-				Mem->displayBuffer[0].at_raw(idx) << 0u |
-				Mem->displayBuffer[1].at_raw(idx) << 1u |
-				Mem->displayBuffer[2].at_raw(idx) << 2u |
-				Mem->displayBuffer[3].at_raw(idx) << 3u
+				Mem->displayBuffer[0].at_raw(idx) << 0 |
+				Mem->displayBuffer[1].at_raw(idx) << 1 |
+				Mem->displayBuffer[2].at_raw(idx) << 2 |
+				Mem->displayBuffer[3].at_raw(idx) << 3
 			];
 		}
 	} else if (State.chip8X_rom) {
-		const auto mask{ State.chip8X_hires ? 0xFF : 0xFC };
-		for (auto Y{ 0 }; const auto & row : Mem->displayBuffer[0]) {
-			for (auto X{ 0 }; const auto & elem : row) {
-				*pixels++ = elem ? Mem->color8xBuffer.at_raw(Y & mask, X >> 3) : Color->bit[0];
-				++X;
-			}
-			++Y;
+		auto mask{ 0xFC };
+		if (State.chip8X_hires) mask = 0xFF;
+		else if (State.schip_legacy) {
+			mask = Program->screenLores ? 0xF8 : 0xFC;
+		}
+		for (auto idx{ 0 }; idx < Plane.S; ++idx) {
+			const auto Y = idx / Plane.W & mask;
+			const auto X = idx % Plane.W >> 3;
+
+
+
+			Video->pixels[idx] = Mem->displayBuffer[0].at_raw(idx)
+				? Mem->color8xBuffer.at_raw(Y, X) : Color->bit[0];
 		}
 	} else {
-		for (auto idx{ 0 }; idx < Plane.size; ++idx) {
-			Video->pixels[idx] = Color->bit[Mem->displayBuffer[0].at_raw(idx)];
+		for (auto idx{ 0 }; idx < Plane.S; ++idx) {
+			Video->pixels[idx] = Color->bit[
+				Mem->displayBuffer[0].at_raw(idx)
+			];
 		}
 	}
 	Video->unlockTexture();

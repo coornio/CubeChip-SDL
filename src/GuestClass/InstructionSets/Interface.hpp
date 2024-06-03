@@ -20,8 +20,11 @@ struct FncSetInterface {
 	virtual void scrollDN(std::int32_t) = 0;
 	virtual void scrollLT(std::int32_t) = 0;
 	virtual void scrollRT(std::int32_t) = 0;
+
 	virtual void drawSprite(std::int32_t, std::int32_t, std::int32_t, std::uint32_t) = 0;
-	virtual void drawColors(std::int32_t, std::int32_t, std::int32_t, std::int32_t) = 0;
+
+	virtual void drawLoresColor(std::int32_t, std::int32_t, std::int32_t)               = 0;
+	virtual void drawHiresColor(std::int32_t, std::int32_t, std::int32_t, std::int32_t) = 0;
 
 	virtual ~FncSetInterface() noexcept {};
 };
@@ -60,8 +63,11 @@ class FunctionsForGigachip final : public FncSetInterface {
 	void scrollDN(std::int32_t) override;
 	void scrollLT(std::int32_t) override;
 	void scrollRT(std::int32_t) override;
+
 	void drawSprite(std::int32_t, std::int32_t, std::int32_t, std::uint32_t) override;
-	void drawColors(std::int32_t, std::int32_t, std::int32_t, std::int32_t)  override {};
+
+	void drawLoresColor(std::int32_t, std::int32_t, std::int32_t)               override {};
+	void drawHiresColor(std::int32_t, std::int32_t, std::int32_t, std::int32_t) override {};
 
 public:
 	void chooseBlend(std::size_t);
@@ -96,8 +102,11 @@ class FunctionsForMegachip final : public FncSetInterface {
 	void scrollDN(std::int32_t) override;
 	void scrollLT(std::int32_t) override;
 	void scrollRT(std::int32_t) override;
+
 	void drawSprite(std::int32_t, std::int32_t, std::int32_t, std::uint32_t) override;
-	void drawColors(std::int32_t, std::int32_t, std::int32_t, std::int32_t)  override {};
+
+	void drawLoresColor(std::int32_t, std::int32_t, std::int32_t)               override {};
+	void drawHiresColor(std::int32_t, std::int32_t, std::int32_t, std::int32_t) override {};
 
 public:
 	void chooseBlend(std::size_t) noexcept;
@@ -117,8 +126,11 @@ class FunctionsForModernXO final : public FncSetInterface {
 	void scrollDN(std::int32_t) override;
 	void scrollLT(std::int32_t) override;
 	void scrollRT(std::int32_t) override;
+
 	void drawSprite(std::int32_t, std::int32_t, std::int32_t, std::uint32_t) override;
-	void drawColors(std::int32_t, std::int32_t, std::int32_t, std::int32_t)  override {};
+
+	void drawLoresColor(std::int32_t, std::int32_t, std::int32_t)               override {};
+	void drawHiresColor(std::int32_t, std::int32_t, std::int32_t, std::int32_t) override {};
 
 public:
 	explicit FunctionsForModernXO(VM_Guest*) noexcept;
@@ -139,8 +151,11 @@ class FunctionsForLegacySC final : public FncSetInterface {
 	void scrollDN(std::int32_t) override;
 	void scrollLT(std::int32_t) override;
 	void scrollRT(std::int32_t) override;
+
 	void drawSprite(std::int32_t, std::int32_t, std::int32_t, std::uint32_t) override;
-	void drawColors(std::int32_t, std::int32_t, std::int32_t, std::int32_t)  override;
+
+	void drawLoresColor(std::int32_t, std::int32_t, std::int32_t)               override;
+	void drawHiresColor(std::int32_t, std::int32_t, std::int32_t, std::int32_t) override;
 
 public:
 	explicit FunctionsForLegacySC(VM_Guest*) noexcept;
@@ -159,8 +174,11 @@ class FunctionsForClassic8 final : public FncSetInterface {
 	void scrollDN(std::int32_t) override;
 	void scrollLT(std::int32_t) override;
 	void scrollRT(std::int32_t) override;
+
 	void drawSprite(std::int32_t, std::int32_t, std::int32_t, std::uint32_t) override;
-	void drawColors(std::int32_t, std::int32_t, std::int32_t, std::int32_t)  override;
+
+	void drawLoresColor(std::int32_t, std::int32_t, std::int32_t)               override;
+	void drawHiresColor(std::int32_t, std::int32_t, std::int32_t, std::int32_t) override;
 
 public:
 	explicit FunctionsForClassic8(VM_Guest*) noexcept;

@@ -74,7 +74,7 @@ public:
 	struct BitPlaneProperties final {
 		std::int32_t W{},  H{};
 		std::int32_t Wb{}, Hb{};
-		std::int32_t size{};
+		std::int32_t S{};
 		std::int32_t selected{ 1 };
 
 		using enum BrushType;
@@ -141,7 +141,9 @@ public:
 	template <std::size_t variant>
 	void instructionDecoder();
 
-	double   fetchFramerate();
+	std::int32_t fetchIPF()       const;
+	double       fetchFramerate() const;
+
 	std::uint8_t& mrw(std::size_t);
 	std::uint8_t& VX();
 	std::uint32_t NNNN();

@@ -7,6 +7,10 @@
 #include <SDL3/SDL_main.h>
 #include "Includes.hpp"
 
+#include <iostream>
+#include <iomanip>
+#include <chrono>
+
 int32_t SDL_main(int32_t argc, char* argv[]) {
 
 	atexit(SDL_Quit);
@@ -42,9 +46,7 @@ int32_t SDL_main(int32_t argc, char* argv[]) {
 	FrameLimiter Frame(60.0, true, true);
 	SDL_Event    Event;
 
-	if (HDM->verifyFile(argc > 1 ? argv[1] : nullptr)) {
-		Host.isReady(true);
-	}
+	Host.isReady(HDM->verifyFile(argc > 1 ? argv[1] : nullptr));
 
 reset_all:
 	kb.updateCopy();
@@ -94,38 +96,62 @@ reset_all:
 			: FrameLimiter::SLEEP
 		)) continue;
 
-		if (kb.isPressed(KEY(ESCAPE))) {
-			if (Host.isReady()) {
+		BVS->renderPresent();
+
+		if (Host.isReady()) {
+			if (kb.isPressed(KEY(ESCAPE))) {
 				Host.isReady(false);
 				BVS->changeTitle();
 				BVS->createTexture();
 				BVS->renderPresent();
 				goto reset_all;
-			} else {
-				return EXIT_SUCCESS;
 			}
-		}
-		if (kb.isPressed(KEY(RSHIFT))) {
-			Host.doBench(!Host.doBench());
-		}
-		if (kb.isPressed(KEY(UP))) {
-			BAS->changeVolume(+15);
-		}
-		if (kb.isPressed(KEY(DOWN))) {
-			BAS->changeVolume(-15);
-		}
-
-		if (Host.isReady()) {
 			if (kb.isPressed(KEY(BACKSPACE))) {
 				goto reset_all;
 			}
+			if (kb.isPressed(KEY(RSHIFT))) {
+				Host.doBench(!Host.doBench());
+				std::cout << "\33[1;1H\33[2J\33[?25l"
+					<< "Cycle time:      ms |     μs";
+			}
+			if (kb.isPressed(KEY(UP))) {
+				BAS->changeVolume(+15);
+			}
+			if (kb.isPressed(KEY(DOWN))) {
+				BAS->changeVolume(-15);
+			}
 
-			if (!Guest->isSystemPaused()) {
+			if (Host.doBench()) {
+				using namespace std::chrono;
+
+				std::cout << "\33[2;1H" << std::dec << std::setfill(' ') << std::setprecision(6)
+					<< "\ncycle: " << Host.cycles++
+					<< "\nipf:   " << std::abs(Guest->fetchIPF())
+					<< (Frame.paced() ? "\n\n > keeping up pace."s : "\n\n > cannot keep up!!"s)
+					<< "\n\nelapsed since last: " << Frame.elapsed() << std::endl;
+
+				auto start = high_resolution_clock::now();
+				if (!Guest->isSystemPaused()) {
+					Guest->cycle();
+				}
+				auto end = high_resolution_clock::now();
+				auto duration = end - start;
+				auto ms = duration_cast<std::chrono::milliseconds>(duration);
+				auto mu = duration_cast<std::chrono::microseconds>(duration - ms);
+
+				std::cout
+					<< "\33[1;13H" << std::setw(4) << ms.count()
+					<< "\33[1;23H" << std::setw(3) << mu.count();
+			}
+			else if (!Guest->isSystemPaused()) {
 				Guest->cycle();
+			}
+		} else {
+			if (kb.isPressed(KEY(ESCAPE))) {
+				return EXIT_SUCCESS;
 			}
 		}
 
-		BVS->renderPresent();
 		kb.updateCopy();
 		mb.updateCopy();
 	}

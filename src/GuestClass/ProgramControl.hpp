@@ -35,6 +35,9 @@ public:
 
 	Interrupt interrupt{};
 
+	bool screenLores{};
+	bool screenHires{};
+
 	std::uint8_t timerDelay{};
 	std::uint8_t timerSound{};
 
