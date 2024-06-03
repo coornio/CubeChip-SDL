@@ -66,7 +66,7 @@ void FunctionsForModernXO::drawByte(
 	for (auto B{ 0 }; B < 8; ++B) {
 		if (DATA >> (7 - B) & 0x1) {
 			auto& elem{ vm->Mem->displayBuffer[P].at_raw(Y, X) };
-			if (elem) vm->Reg->V[0xF] = 1;
+			if (elem) { vm->Reg->V[0xF] = 1; }
 
 			switch (vm->Plane.brush) {
 				case BrushType::XOR: elem ^=  1; break;
@@ -75,7 +75,7 @@ void FunctionsForModernXO::drawByte(
 			}
 		}
 		if (++X == vm->Plane.W) {
-			if (vm->Quirk.wrapSprite) X &= vm->Plane.Wb;
+			if (vm->Quirk.wrapSprite) { X &= vm->Plane.Wb; }
 			else return;
 		}
 	}
@@ -97,18 +97,17 @@ void FunctionsForModernXO::drawSprite(
 	vm->Reg->V[0xF] = 0;
 
 	const bool wide{ N == 0 };
-	if (wide) N = 16;
+	if (wide) { N = 16; }
 
 	for (auto P{ 0 }; P <4; ++P) {
 		if (!(vm->Plane.selected & (1 << P))) continue;
 
-		auto _VY{ VY };
-		for (auto Y{ 0 }; Y < N; ++Y) {
-			if (true) drawByte(VX + 0, _VY, P, vm->mrw(I++));
-			if (wide) drawByte(VX + 8, _VY, P, vm->mrw(I++));
+		for (auto Y{ 0 }, _VY{ VY }; Y < N; ++Y) {
+			if (true) { drawByte(VX + 0, _VY, P, vm->mrw(I++)); }
+			if (wide) { drawByte(VX + 8, _VY, P, vm->mrw(I++)); }
 
 			if (++_VY == vm->Plane.H) {
-				if (vm->Quirk.wrapSprite) _VY &= vm->Plane.Hb;
+				if (vm->Quirk.wrapSprite) { _VY &= vm->Plane.Hb; }
 				else return;
 			}
 		}

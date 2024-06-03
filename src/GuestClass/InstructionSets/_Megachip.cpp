@@ -181,8 +181,8 @@ void FunctionsForMegachip::drawSprite(
 			auto& collideCoord{ vm->Mem->collisionPalette.at_raw(Y, X) };
 			auto& backbufCoord{ vm->Mem->backgroundBuffer.at_raw(Y, X) };
 
-			if (collideCoord == vm->Trait.collision) [[unlikely]]
-				++collideHits;
+			if (collideCoord == vm->Trait.collision)
+				[[unlikely]] { ++collideHits; }
 
 			collideCoord = srcColorIndex;
 			backbufCoord = blendPixel(

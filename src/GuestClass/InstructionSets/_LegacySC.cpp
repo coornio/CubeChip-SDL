@@ -44,23 +44,21 @@ std::size_t FunctionsForLegacySC::bitBloat(std::size_t byte) {
 
 void FunctionsForLegacySC::drawByte(
 	std::int32_t X, std::int32_t Y,
-	const std::size_t DATA
+	const std::size_t DATA, bool& HIT
 ) {
 	if (!DATA || X == vm->Plane.W) return;
-	auto collideHits{ 0 };
 
 	for (auto B{ 0 }; B < 8; ++B) {
 		if (DATA >> (7 - B) & 0x1) {
 			auto& elem{ vm->Mem->displayBuffer[0].at_raw(Y, X) };
-			if (elem) ++collideHits;
+			if (elem) { HIT = true; }
 			elem ^= 1;
 		}
 		if (++X == vm->Plane.W) {
-			if (vm->Quirk.wrapSprite) X &= vm->Plane.Wb;
-			else break;
+			if (vm->Quirk.wrapSprite) { X &= vm->Plane.Wb; }
+			else return;
 		}
 	}
-	vm->Reg->V[0xF] += collideHits != 0;
 }
 
 void FunctionsForLegacySC::drawShort(
@@ -73,13 +71,13 @@ void FunctionsForLegacySC::drawShort(
 		auto& elem0{ vm->Mem->displayBuffer[0].at_raw(Y + 0, X) };
 		auto& elem1{ vm->Mem->displayBuffer[0].at_raw(Y + 1, X) };
 		if (DATA >> (15 - B) & 0x1) {
-			if (elem0) vm->Reg->V[0xF] = 1;
+			if (elem0) { vm->Reg->V[0xF] = 1; }
 			elem1 = elem0 ^= 1;
 		} else {
 			elem1 = elem0;
 		}
 		if (++X == vm->Plane.W) {
-			if (vm->Quirk.wrapSprite) X &= vm->Plane.Wb;
+			if (vm->Quirk.wrapSprite) { X &= vm->Plane.Wb; }
 			else return;
 		}
 	}
@@ -91,25 +89,28 @@ void FunctionsForLegacySC::drawSprite(
 	std::int32_t  N,
 	std::uint32_t I
 ) {
-	const auto mode{ vm->Program->screenMode };
+	const auto lores{ vm->Program->screenLores };
 
-	VX *= mode; VX &= vm->Plane.Wb;
-	VY *= mode; VY &= vm->Plane.Hb;
+	VX *= 1 + lores; VX &= vm->Plane.Wb;
+	VY *= 1 + lores; VY &= vm->Plane.Hb;
 	vm->Reg->V[0xF] = 0;
 
 	const bool wide{ N == 0 };
-	if (wide) N = 16;
+	if (wide) { N = 16; }
 
 	for (auto Y{ 0 }; Y < N; ++Y) {
 		if (vm->Program->screenHires) { // hires 8xN / 16xN
-			if (true) drawByte(VX + 0, VY, vm->mrw(I++));
-			if (wide) drawByte(VX + 8, VY, vm->mrw(I++));
-		} else {                        // lores 8xN (doubled)
+			bool ltHit{}, rtHit{};
+			if (true) { drawByte(VX + 0, VY, vm->mrw(I++), ltHit); }
+			if (wide) { drawByte(VX + 8, VY, vm->mrw(I++), rtHit); }
+			vm->Reg->V[0xF] += ltHit || rtHit;
+		}
+		else {                        // lores 8xN (doubled)
 			drawShort(VX, VY, bitBloat(vm->mrw(I++)));
 		}
 
-		if ((VY += mode) == vm->Plane.H) {
-			if (vm->Quirk.wrapSprite) VY &= vm->Plane.Hb;
+		if ((VY += 1 + lores) == vm->Plane.H) {
+			if (vm->Quirk.wrapSprite) { VY &= vm->Plane.Hb; }
 			else return;
 		}
 	}

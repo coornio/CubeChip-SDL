@@ -143,7 +143,7 @@ public:
 class FunctionsForLegacySC final : public FncSetInterface {
 	VM_Guest* vm;
 
-	void drawByte(std::int32_t, std::int32_t, std::size_t);
+	void drawByte(std::int32_t, std::int32_t, std::size_t, bool&);
 	void drawShort(std::int32_t, std::int32_t, std::size_t);
 	std::size_t bitBloat(std::size_t);
 

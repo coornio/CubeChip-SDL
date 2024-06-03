@@ -377,9 +377,7 @@ void VM_Guest::flushDisplay() {
 		}
 		for (auto idx{ 0 }; idx < Plane.S; ++idx) {
 			const auto Y = idx / Plane.W & mask;
-			const auto X = idx % Plane.W >> 3;
-
-
+			const auto X = idx % Plane.W >> 0x3;
 
 			Video->pixels[idx] = Mem->displayBuffer[0].at_raw(idx)
 				? Mem->color8xBuffer.at_raw(Y, X) : Color->bit[0];

@@ -44,11 +44,11 @@ void FunctionsForClassic8::drawByte(
 	for (auto B{ 0 }; B < 8; ++B) {
 		if (DATA >> (7 - B) & 0x1) {
 			auto& elem{ vm->Mem->displayBuffer[0].at_raw(Y, X) };
-			if (elem) vm->Reg->V[0xF] = 1;
+			if (elem) { vm->Reg->V[0xF] = 1; }
 			elem ^= 1;
 		}
 		if (++X == vm->Plane.W) {
-			if (vm->Quirk.wrapSprite) X &= vm->Plane.Wb;
+			if (vm->Quirk.wrapSprite) { X &= vm->Plane.Wb; }
 			else return;
 		}
 	}
@@ -63,14 +63,14 @@ void FunctionsForClassic8::drawSprite(
 	vm->Reg->V[0xF] = 0;
 
 	const bool wide{ N == 0 };
-	if (wide) N = 16;
+	if (wide) { N = 16; }
 
 	for (auto Y{ 0 }; Y < N; ++Y) {
-		if (true) drawByte(VX + 0, VY, vm->mrw(I++));
-		if (wide) drawByte(VX + 8, VY, vm->mrw(I++));
+		if (true) { drawByte(VX + 0, VY, vm->mrw(I++)); }
+		if (wide) { drawByte(VX + 8, VY, vm->mrw(I++)); }
 		
 		if (++VY == vm->Plane.H) {
-			if (vm->Quirk.wrapSprite) VY &= vm->Plane.Hb;
+			if (vm->Quirk.wrapSprite) { VY &= vm->Plane.Hb; }
 			else return;
 		}
 	}
