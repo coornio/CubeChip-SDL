@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "../Concepts.hpp"
+
 #include <cmath>
 #include <cassert>
 #include <cstddef>
@@ -15,19 +17,6 @@
 #include <vector>
 #include <stdexcept>
 #include <utility>
-#include <limits>
-#include <type_traits>
-
-#pragma region Concepts
-template<class T>
-concept integral = std::is_integral_v<T>;
-
-template<class T>
-concept arithmetic = std::is_arithmetic_v<T>;
-
-template<class T>
-concept ar_pointer = std::is_pointer_v<T> && std::is_arithmetic_v<std::remove_pointer_t<T>>;
-#pragma endregion
 
 #pragma region MapRow Class
 template<typename T> requires arithmetic<T> || ar_pointer<T>

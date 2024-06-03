@@ -49,11 +49,13 @@
     <ClInclude Include="src\Assistants\BasicHome.hpp" />
     <ClInclude Include="src\Assistants\BasicInput.hpp" />
     <ClInclude Include="src\Assistants\BasicLogger.hpp" />
+    <ClInclude Include="src\Assistants\BytePun.hpp" />
     <ClInclude Include="src\Assistants\FrameLimiter.hpp" />
     <ClInclude Include="src\Assistants\PathExceptionClass.hpp" />
     <ClInclude Include="src\Assistants\SHA1.hpp" />
     <ClInclude Include="src\Assistants\Map2D.hpp" />
     <ClInclude Include="src\Assistants\Well512.hpp" />
+    <ClInclude Include="src\Concepts.hpp" />
     <ClInclude Include="src\GuestClass\DisplayColors.hpp" />
     <ClInclude Include="src\GuestClass\Enums.hpp" />
     <ClInclude Include="src\GuestClass\FileTypes.hpp" />
@@ -209,6 +211,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>SDL3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <Profile>true</Profile>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

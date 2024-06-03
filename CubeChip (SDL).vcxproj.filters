@@ -197,5 +197,11 @@
     <ClInclude Include="src\Assistants\Map2D.hpp">
       <Filter>Header Files\Assistants</Filter>
     </ClInclude>
+    <ClInclude Include="src\Assistants\BytePun.hpp">
+      <Filter>Header Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Concepts.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
