@@ -136,9 +136,9 @@ uint32_t FunctionsForMegachip::applyBlend(
 }
 
 void FunctionsForMegachip::drawSprite(
-	std::int32_t VX,
-	std::int32_t VY,
-	std::int32_t  N,
+	const std::int32_t VX,
+	const std::int32_t VY,
+	const std::int32_t  N,
 	std::uint32_t I
 ) {
 	if (I < 0xF0) [[unlikely]] { // font sprite rendering

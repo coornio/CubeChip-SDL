@@ -181,7 +181,7 @@ void VM_Guest::initPlatform() {
 	//Quirk.shiftVX = true;
 	//Quirk.jmpRegX = true;
 	//Quirk.idxRegNoInc = true;
-	State.schip_legacy = true;
+	//State.schip_legacy = true;
 	//State.xochip_color = true;
 	Program->setSpeed(0);
 	//Quirk.waitScroll = true;
@@ -236,7 +236,7 @@ void VM_Guest::setupDisplay(const std::int32_t mode, const bool forced) {
 	static constexpr std::int32_t hSize[]{  64,  32,  64, 128, 192 };
 
 	const auto select{ State.schip_legacy ? 0 : mode - 1 };
-	const auto hires{ mode == Resolution::HI };
+	const auto hires{ mode != Resolution::LO };
 	const auto lores{ mode == Resolution::LO };
 
 	Plane.W = wSize[select]; Plane.Wb = Plane.W - 1;

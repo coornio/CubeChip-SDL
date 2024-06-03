@@ -117,44 +117,52 @@ void FunctionsForLegacySC::drawSprite(
 }
 
 void FunctionsForLegacySC::drawLoresColor(
-	std::int32_t VX,
-	std::int32_t VY,
-	std::int32_t idx
+	const std::int32_t VX,
+	const std::int32_t VY,
+	const std::int32_t idx
 ) {
-	const auto lores{ vm->Program->screenLores };
-	const auto color{ vm->Color->getFore8X(idx) };
+	if (vm->Program->screenLores) {
+		const auto H{ (VY & 0x77) << 0 }, maxH{ (H >> 4) + 1 };
+		const auto W{ (VX & 0x77) << 1 }, maxW{ (W >> 4) + 2 };
 
-	VY &= 0x77; VX &= 0x77;
+		for (auto Y{ 0 }; Y < maxH; ++Y) {
+			for (auto X{ 0 }; X < maxW; ++X) {
+				vm->Mem->color8xBuffer.at_wrap(((H + Y) << 3) + 0, W + X) =
+				vm->Mem->color8xBuffer.at_wrap(((H + Y) << 3) + 1, W + X) =
+					vm->Color->getFore8X(idx);
+			}
+		}
+	}
+	else {
+		const auto H{ VY & 0x77 }, maxH{ (H >> 4) + 1 };
+		const auto W{ VX & 0x77 }, maxW{ (W >> 4) + 1 };
 
-	if (lores) { VX <<= 1; }
-
-	for (auto Y{ 0 }, H{ (VY >> 4) + 1 }; Y < H; ++Y) {
-		for (auto X{ 0 }, W{ (VX >> 4) + 1 + lores }; X < W; ++X) {
-			vm->Mem->color8xBuffer.at_wrap(((VY + Y) << (2 + lores)) + 0, VX + X) = color;
-			if (!lores) continue;
-			vm->Mem->color8xBuffer.at_wrap(((VY + Y) << (2 + lores)) + 1, VX + X) = color;
+		for (auto Y{ 0 }; Y < maxH; ++Y) {
+			for (auto X{ 0 }; X < maxW; ++X) {
+				vm->Mem->color8xBuffer.at_wrap(((H + Y) << 2), W + X) =
+					vm->Color->getFore8X(idx);
+			}
 		}
 	}
 }
 
 void FunctionsForLegacySC::drawHiresColor(
-	std::int32_t VX,
-	std::int32_t VY,
-	std::int32_t idx,
-	std::int32_t N
+	const std::int32_t VX,
+	const std::int32_t VY,
+	const std::int32_t idx,
+	const std::int32_t N
 ) {
-	const auto lores{ vm->Program->screenLores };
-	const auto color{ vm->Color->getFore8X(idx) };
-
-	if (lores) {
-		VY <<= 1;
-		VX <<= 1;
-		N  <<= 1;
+	if (vm->Program->screenLores) {
+		for (auto R{ 0 }, Y{ VY << 1 }, X{ VX << 1 >> 3 }; R < (N << 1); ++R) {
+			vm->Mem->color8xBuffer.at_wrap(Y + R, X + 0) =
+			vm->Mem->color8xBuffer.at_wrap(Y + R, X + 1) =
+				vm->Color->getFore8X(idx);
+		}
 	}
-
-	for (auto Y{ 0 }, X{ VX >> 3 }; Y < N; ++Y) {
-		vm->Mem->color8xBuffer.at_wrap(VY + Y, X + 0) = color;
-		if (!lores) continue;
-		vm->Mem->color8xBuffer.at_wrap(VY + Y, X + 1) = color;
+	else {
+		for (auto R{ 0 }, Y{ VY }, X{ VX >> 3 }; R < N; ++R) {
+			vm->Mem->color8xBuffer.at_wrap(Y + R, X) =
+				vm->Color->getFore8X(idx);
+		}
 	}
 }

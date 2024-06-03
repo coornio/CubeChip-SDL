@@ -81,9 +81,10 @@ void FunctionsForClassic8::drawLoresColor(
 	const std::int32_t VY,
 	const std::int32_t idx
 ) {
-	for (auto Y{ 0 }, H{ VY >> 4 }; Y <= H; ++Y) {
-		for (auto X{ 0 }, W{ VX >> 4 }; X <= W; ++X) {
-			vm->Mem->color8xBuffer.at_wrap((VY + Y) << 2, VX + X) = vm->Color->getFore8X(idx);
+	for (auto Y{ 0 }, maxH{ VY >> 4 }; Y <= maxH; ++Y) {
+		for (auto X{ 0 }, maxW{ VX >> 4 }; X <= maxW; ++X) {
+			vm->Mem->color8xBuffer.at_wrap((VY + Y) << 2, VX + X) = 
+				vm->Color->getFore8X(idx);
 		}
 	}
 }
@@ -95,6 +96,7 @@ void FunctionsForClassic8::drawHiresColor(
 	const std::int32_t N
 ) {
 	for (auto Y{ VY }, X{ VX >> 3 }; Y < VY + N; ++Y) {
-		vm->Mem->color8xBuffer.at_wrap(Y, X) = vm->Color->getFore8X(idx);
+		vm->Mem->color8xBuffer.at_wrap(Y, X) =
+			vm->Color->getFore8X(idx);
 	}
 }
