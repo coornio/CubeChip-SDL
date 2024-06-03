@@ -50,7 +50,7 @@ bool FrameLimiter::isValidFrame() {
 	}
 
 	if (skipLostFrame) {
-		lastFrameLost = timeVariation >= timeFrequency * 1.002f;
+		lastFrameLost = timeVariation >= timeFrequency * 1.003f;
 		timeOvershoot = std::fmod(timeVariation, timeFrequency);
 	} else {
 		timeOvershoot = timeVariation - timeFrequency;
