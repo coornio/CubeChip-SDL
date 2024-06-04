@@ -669,7 +669,7 @@ private:
 		#pragma region Accessor Bounds Checker
 		paramS checkColBounds(const paramS col) const {
 			if (col < -mLength || col > mLength) {
-				throw std::out_of_range("column index out of range");
+				throw std::out_of_range("proxy at() col index out of range");
 			}
 			return col + (col < 0 ? mLength : 0);
 		}
@@ -698,13 +698,13 @@ private:
 
 		auto operator[](const paramU col)
 		-> T& {
-			assert(colValid(col) && "operator[] col index out of bounds");
+			assert(colValid(col) && "proxy operator[] col index out of bounds");
 			return *(begin() + col);
 		}
 
 		auto operator[](const paramU col) const
 		-> const T& {
-			assert(colValid(col) && "operator[] col index out of bounds");
+			assert(colValid(col) && "proxy operator[] col index out of bounds");
 			return *(begin() + col);
 		}
 		#pragma endregion
@@ -1588,13 +1588,13 @@ private:
 	#pragma region Accessor Bounds Checkers
 	paramS checkRowBounds(const paramS row) const {
 		if (row < -mRows || row >= mRows) {
-			throw std::out_of_range("row index out of range");
+			throw std::out_of_range("at() row index out of range");
 		}
 		return row + (row < 0 ? mRows : 0);
 	}
 	paramS checkColBounds(const paramS col) const {
 		if (col < -mCols || col >= mCols) {
-			throw std::out_of_range("column index out of range");
+			throw std::out_of_range("at() col index out of range");
 		}
 		return col + (col < 0 ? mCols : 0);
 	}
