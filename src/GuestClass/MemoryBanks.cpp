@@ -62,7 +62,7 @@ void MemoryBanks::loadPalette(std::uint32_t index, const std::uint32_t count) {
 }
 
 void MemoryBanks::clearPages(std::int32_t H) {
-	while (H++ < vm->Plane.H) {
-		displayBuffer[0][H].wipeAll();
+	while (H < vm->Plane.H) {
+		displayBuffer[0][H++].wipeAll();
 	}
 }
