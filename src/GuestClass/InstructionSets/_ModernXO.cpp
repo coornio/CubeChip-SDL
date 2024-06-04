@@ -61,7 +61,7 @@ void FunctionsForModernXO::drawByte(
 	const std::int32_t P,
 	const std::size_t DATA
 ) {
-	if (!DATA || X == vm->Plane.W) return;
+	if (!DATA || X >= vm->Plane.W) return;
 
 	for (auto B{ 0 }; B < 8; ++B) {
 		if (DATA >> (7 - B) & 0x1) {

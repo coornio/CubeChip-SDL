@@ -46,7 +46,7 @@ void FunctionsForLegacySC::drawByte(
 	std::int32_t X, std::int32_t Y,
 	const std::size_t DATA, bool& HIT
 ) {
-	if (!DATA || X == vm->Plane.W) return;
+	if (!DATA || X >= vm->Plane.W) return;
 
 	for (auto B{ 0 }; B < 8; ++B) {
 		if (DATA >> (7 - B) & 0x1) {
