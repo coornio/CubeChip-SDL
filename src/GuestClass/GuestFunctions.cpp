@@ -63,7 +63,7 @@ void VM_Guest::cycle() {
 
 void VM_Guest::readyAudioVideo() {
 	const auto color{
-		State.mega_enabled ? 0xFF000000u :
+		State.mega_enabled ? 0xFF202020u :
 		Sound->XO.isOn() ? Color->bit[0] :
 		Color->bit[Program->timerSound != 0]
 	};
