@@ -467,49 +467,49 @@ public:
 	paramS lenX() const { return mCols; }
 	paramS lenY() const { return mRows; }
 
-	T& front() { return at_raw(0); }
-	T& back()  { return at_raw(size() - 1); }
-	T* data()  { return &front(); }
+	T& front() { return pData[0]; }
+	T& back()  { return pData[size() - 1]; }
+	T* data()  { return pData.get(); }
 
-	const T& front() const { return at_raw(0); }
-	const T& back()  const { return at_raw(size() - 1); }
-	const T* data()  const { return &front(); }
+	const T& front() const { return pData[0]; }
+	const T& back()  const { return pData[size() - 1]; }
+	const T* data()  const { return pData.get(); }
 
 public:
 	#pragma region Raw Accessors
 	auto at_raw(const paramU idx)
 	-> T& {
 		assert(idx < size() && "at_raw() index out of bounds");
-		return pData.get()[idx];
+		return pData[idx];
 	}
 
 	auto at_raw(const paramU idx) const
 	-> const T& {
 		assert(idx < size() && "at_raw() index out of bounds");
-		return pData.get()[idx];
+		return pData[idx];
 	}
 
 	auto at_raw(const paramU row, const paramU col)
 	-> T& {
 		assert(rowValid(row) && "at_raw() row index out of bounds");
 		assert(colValid(col) && "at_raw() col index out of bounds");
-		return pData.get()[row * mCols + col];
+		return pData[row * mCols + col];
 	}
 
 	auto at_raw(const paramU row, const paramU col) const
 	-> const T& {
 		assert(rowValid(row) && "at_raw() row index out of bounds");
 		assert(colValid(col) && "at_raw() col index out of bounds");
-		return pData.get()[row * mCols + col];
+		return pData[row * mCols + col];
 	}
 
 	auto at_wrap(const paramU row, const paramU col)
 	-> T&
-	{ return pData.get()[(row % mRows) * mCols + (col % mCols)]; }
+	{ return pData[(row % mRows) * mCols + (col % mCols)]; }
 
 	auto at_wrap(const paramU row, const paramU col) const
 	-> const T&
-	{ return pData.get()[(row % mRows) * mCols + (col % mCols)]; }
+	{ return pData[(row % mRows) * mCols + (col % mCols)]; }
 	#pragma endregion
 
 private:
@@ -524,11 +524,11 @@ private:
 
 		T& front() { return mBegin[0]; }
 		T& back()  { return mBegin[mLength - 1]; }
-		T* data()  { return &front(); }
+		T* data()  { return mBegin; }
 
 		const T& front() const { return mBegin[0]; }
 		const T& back()  const { return mBegin[mLength - 1]; }
-		const T* data()  const { return &front(); }
+		const T* data()  const { return mBegin; }
 
 	public:
 		#pragma region Ctor
