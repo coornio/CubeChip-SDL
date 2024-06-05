@@ -505,11 +505,11 @@ public:
 
 	auto at_wrap(const paramU row, const paramU col)
 	-> T&
-	{ return pData.get()[(row & mRows - 1) * mCols + (col & mCols - 1)]; }
+	{ return pData.get()[(row % mRows) * mCols + (col % mCols)]; }
 
 	auto at_wrap(const paramU row, const paramU col) const
 	-> const T&
-	{ return pData.get()[(row & mRows - 1) * mCols + (col & mCols - 1)]; }
+	{ return pData.get()[(row % mRows) * mCols + (col % mCols)]; }
 	#pragma endregion
 
 private:
