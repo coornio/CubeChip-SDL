@@ -48,6 +48,7 @@ int32_t SDL_main(int32_t argc, char* argv[]) {
 	Host.isReady(HDM->verifyFile(argc > 1 ? argv[1] : nullptr));
 
 reset_all:
+	Guest = nullptr;
 	kb.updateCopy();
 	mb.updateCopy();
 
