@@ -66,7 +66,7 @@ void BasicVideoSpec::createRenderer() {
 void BasicVideoSpec::createTexture(Sint32 width, Sint32 height) {
 	quitTexture();
 
-	if (!width && !height) {
+	if (!width || !height) {
 		texture = nullptr;
 		return;
 	} else {
