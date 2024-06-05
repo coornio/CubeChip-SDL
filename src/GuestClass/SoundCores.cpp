@@ -47,7 +47,8 @@ void SoundCores::renderAudio() {
 
 SoundCores::Classic::Classic(SoundCores* parent, BasicAudioSpec* bas)
 	: Sound{ parent }
-	, BAS{ bas } {}
+	, BAS{ bas }
+{}
 
 void SoundCores::Classic::setTone(const std::size_t sp, const std::size_t pc) {
 	// sets a unique tone for each sound call

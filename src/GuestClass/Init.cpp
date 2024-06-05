@@ -186,16 +186,18 @@ void VM_Guest::initPlatform() {
 	Program->setSpeed(0);
 	//Quirk.waitScroll = true;
 	//Quirk.waitVblank = true;
-	Quirk.wrapSprite = true;
+	//Quirk.wrapSprite = true;
 	Input->reset();
 
 	// XXX - apply custom rom settings here
 
 	if (State.hires_2paged || State.hires_4paged) {
-		State.schip_legacy = false; // incompatible together
+		State.xochip_color = false;
+		State.schip_legacy = false;
 	}
 	if (State.megachip_rom) {
-		State.schip_legacy = false; // incompatible together
+		State.xochip_color = false;
+		State.schip_legacy = false;
 	}
 	if (State.chip8_legacy) {
 		Quirk.clearVF    = true;

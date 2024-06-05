@@ -45,7 +45,7 @@ uint32_t FunctionsForGigachip::blendPixel(
 	static constexpr float minF{ 1.0f / 255.0f };
 
 	src.A = (colorSrc >> 24) * minF * vm->Trait.alpha;
-	if (src.A < minF) [[unlikely]] return colorDst; // pixel is fully transparent
+	if (src.A < minF) [[unlikely]] { return colorDst; }
 	if (vm->Trait.invert) { colorSrc ^= 0x00FFFFFF; }
 	src.R = (colorSrc >> 16 & 0xFF) * minF;
 	src.G = (colorSrc >>  8 & 0xFF) * minF;
@@ -122,11 +122,11 @@ uint32_t FunctionsForGigachip::applyBlend(float (*blend)(const float, const floa
 }
 
 void FunctionsForGigachip::drawSprite(
-	const std::int32_t VX,
-	const std::int32_t VY,
-	const std::int32_t  N,
-	const std::uint32_t I
+	const std::int32_t VX, const std::int32_t  VY,
+	const std::int32_t  N, const std::uint32_t IR
 ) {
+	vm->Reg->V[0xF] = 0;
+
 	const auto currW{ vm->Trait.W }; auto tempW{ currW };
 	const auto currH{ vm->Trait.H }; auto tempH{ currH };
 
@@ -141,41 +141,39 @@ void FunctionsForGigachip::drawSprite(
 	}
 
 	auto memY{ 0 }, memX{ 0 }; // position vars for RAM access
-	auto collideHits{ 0 };
-	
+
 	for (auto H{ 0 }, Y{ VY }; H < tempH; ++H, ++Y %= vm->Plane.H) {
-		for (auto W{ 0 }, X{ VX }; W < tempW; ++W, ++X &= 0xFF) {
+		for (auto W{ 0 }, X{ VX }; W < tempW; ++W, ++X &= vm->Plane.Wb) {
 
 			if (vm->Trait.rotate) {
-				memX = H;
-				memY = tempW - W - 1;
+				memX = H; memY = tempW - W - 1;
 			} else {
-				memX = W;
-				memY = H;
+				memX = W; memY = H;
 			}
 
 			if (flipX) { memX = currW - memX - 1; }
 			if (flipY) { memY = currH - memY - 1; }
 
-			const auto srcColorIndex{ vm->mrw(I + (memY * currW) + memX) };
-			if (!srcColorIndex) continue;
+			const auto sourceColorIdx{ vm->mrw(IR + (memY * currW) + memX) };
+			if (sourceColorIdx) {
+				auto& collideCoord{ vm->Mem->collisionPalette.at_raw(Y, X) };
+				auto& backbufCoord{ vm->Mem->backgroundBuffer.at_raw(Y, X) };
 
-			auto& collideCoord{ vm->Mem->collisionPalette.at_raw(Y, X) };
-			auto& backbufCoord{ vm->Mem->backgroundBuffer.at_raw(Y, X) };
-			
-			if (collideCoord == vm->Trait.collision)
-				[[unlikely]] { ++collideHits; }
-			
-			collideCoord = srcColorIndex;
-			if (vm->Trait.nodraw) continue;
-			backbufCoord = blendPixel(
-				vm->Mem->megaPalette[srcColorIndex],
-				backbufCoord
-			);
+				if (collideCoord == vm->Trait.collision)
+					[[unlikely]] { vm->Reg->V[0xF] = 1; }
+
+				collideCoord = sourceColorIdx;
+				if (!vm->Trait.nodraw) {
+					backbufCoord = blendPixel(
+						vm->Mem->megaPalette[sourceColorIdx],
+						backbufCoord
+					);
+				}
+			}
+			if (!vm->Quirk.wrapSprite && X == vm->Plane.Wb) { break; }
 		}
+		if (!vm->Quirk.wrapSprite && Y == vm->Plane.Hb) { break; }
 	}
-
-	vm->Reg->V[0xF] = collideHits != 0;
 }
 
 void FunctionsForGigachip::chooseBlend(

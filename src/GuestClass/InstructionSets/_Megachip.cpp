@@ -78,7 +78,7 @@ uint32_t FunctionsForMegachip::blendPixel(
 	static constexpr float minF{ 1.0f / 255.0f };
 
 	src.A = (colorSrc >> 24) * minF * vm->Trait.alpha;
-	if (src.A < minF) [[unlikely]] return colorDst;
+	if (src.A < minF) [[unlikely]] { return colorDst; }
 	src.R = ((colorSrc >> 16) & 0xFF) * minF;
 	src.G = ((colorSrc >>  8) & 0xFF) * minF;
 	src.B = ( colorSrc        & 0xFF) * minF;
@@ -90,28 +90,6 @@ uint32_t FunctionsForMegachip::blendPixel(
 
 	return applyBlend(blendType);
 }
-
-/*
-std::uint32_t FunctionsForMegachip::blendPixel(
-	const BytePun<std::uint32_t> colorSrc,
-	const BytePun<std::uint32_t> colorDst
-)  noexcept {
-	static constexpr float minF{ 1.0f / 255.0f };
-
-	src.A = colorSrc[3] * minF * vm->Trait.alpha;
-	if (src.A < minF) [[unlikely]] return colorDst;
-	src.R = colorSrc[2] * minF;
-	src.G = colorSrc[1] * minF;
-	src.B = colorSrc[0] * minF;
-
-	dst.A = colorDst[3] * minF;
-	dst.R = colorDst[2] * minF;
-	dst.G = colorDst[1] * minF;
-	dst.B = colorDst[0] * minF;
-
-	return applyBlend(blendType);
-}
-*/
 
 uint32_t FunctionsForMegachip::applyBlend(
 	float (*blend)(const float, const float)
@@ -136,20 +114,24 @@ uint32_t FunctionsForMegachip::applyBlend(
 }
 
 void FunctionsForMegachip::drawSprite(
-	const std::int32_t VX,
-	const std::int32_t VY,
-	const std::int32_t  N,
-	std::uint32_t I
+	const std::int32_t  VX,
+	const std::int32_t  VY,
+	const std::int32_t  FR,
+	const std::uint32_t IR
 ) {
-	if (I < 0xF0) [[unlikely]] { // font sprite rendering
-		for (auto H{ 0 }, Y{ VY }; H < N; ++I, ++H, ++Y &= 0xFF) {
-			if (Y >= vm->Plane.H) [[unlikely]] continue;
+	vm->Reg->V[0xF] = 0;
+	if (!vm->Quirk.wrapSprite && VY >= vm->Plane.H) { return; }
+	if (IR >= 0xF0) [[likely]] { goto paintTexture; }
 
-			const auto bytePixel{ vm->mrw(I) }; // font byte
+	for (auto H{ 0 }, Y{ VY }; H < FR; ++H, ++Y &= vm->Plane.Wb)
+	{
+		if (vm->Quirk.wrapSprite && Y >= vm->Plane.H) { continue; }
+		const auto bytePixel{ vm->mrw(IR + H) };
 
-			for (auto W{ 7 }, X{ VX }; W >= 0; --W, ++X &= 0xFF) {
-				if (!(bytePixel >> W & 0x1)) continue;
-
+		for (auto W{ 7 }, X{ VX }; W >= 0; --W, ++X &= vm->Plane.Wb)
+		{
+			if (bytePixel >> W & 0x1)
+			{
 				auto& collideCoord{ vm->Mem->collisionPalette.at_raw(Y, X) };
 				auto& backbufCoord{ vm->Mem->backgroundBuffer.at_raw(Y, X) };
 
@@ -162,37 +144,38 @@ void FunctionsForMegachip::drawSprite(
 					backbufCoord = vm->Color->hex[H];
 				}
 			}
+			if (!vm->Quirk.wrapSprite && X == vm->Plane.Wb) { break; }
 		}
-		return;
+		if (!vm->Quirk.wrapSprite && Y == vm->Plane.Hb) { break; }
 	}
+	return;
 
-	auto collideHits{ 0 };
+paintTexture:
+	for (auto H{ 0 }, Y{ VY }; H < vm->Trait.H; ++H, ++Y &= vm->Plane.Wb)
+	{
+		if (vm->Quirk.wrapSprite && Y >= vm->Plane.H) { continue; }
+		auto I = IR + H * vm->Trait.W;
 
-	for (auto H{ 0 }, Y{ VY }; H < vm->Trait.H; ++H, ++Y &= 0xFF) {
-		if (Y >= vm->Plane.H) [[unlikely]] {
-			I += vm->Trait.W; // 192+ is fake, skip row of indices
-			continue;
+		for (auto W{ 0 }, X{ VX }; W < vm->Trait.W; ++W, ++X &= vm->Plane.Wb)
+		{
+			if (const auto sourceColorIdx{ vm->mrw(I++) }; sourceColorIdx)
+			{
+				auto& collideCoord{ vm->Mem->collisionPalette.at_raw(Y, X) };
+				auto& backbufCoord{ vm->Mem->backgroundBuffer.at_raw(Y, X) };
+
+				if (collideCoord == vm->Trait.collision)
+					[[unlikely]] { vm->Reg->V[0xF] = 1; }
+
+				collideCoord = sourceColorIdx;
+				backbufCoord = blendPixel(
+					vm->Mem->megaPalette[sourceColorIdx],
+					backbufCoord
+				);
+			}
+			if (!vm->Quirk.wrapSprite && X == vm->Plane.Wb) { break; }
 		}
-
-		for (auto W{ 0 }, X{ VX }; W < vm->Trait.W; ++W, ++X &= 0xFF) {
-			const auto srcColorIndex{ vm->mrw(I++) };
-			if (!srcColorIndex) continue;
-
-			auto& collideCoord{ vm->Mem->collisionPalette.at_raw(Y, X) };
-			auto& backbufCoord{ vm->Mem->backgroundBuffer.at_raw(Y, X) };
-
-			if (collideCoord == vm->Trait.collision)
-				[[unlikely]] { ++collideHits; }
-
-			collideCoord = srcColorIndex;
-			backbufCoord = blendPixel(
-				vm->Mem->megaPalette[srcColorIndex],
-				backbufCoord
-			);
-		}
+		if (!vm->Quirk.wrapSprite && Y == vm->Plane.Hb) { break; }
 	}
-
-	vm->Reg->V[0xF] = collideHits != 0;
 }
 
 void FunctionsForMegachip::chooseBlend(const std::size_t N) noexcept {

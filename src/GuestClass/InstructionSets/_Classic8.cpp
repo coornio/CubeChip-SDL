@@ -39,24 +39,22 @@ void FunctionsForClassic8::drawByte(
 	std::int32_t X, std::int32_t Y,
 	const std::size_t DATA
 ) {
-	if (!DATA || X >= vm->Plane.W) return;
+	if (!DATA || X >= vm->Plane.W) { return; }
 
-	for (auto B{ 0 }; B < 8; ++B) {
-		if (DATA >> (7 - B) & 0x1) {
+	for (auto B{ 0 }; B++ < 8; ++X &= vm->Plane.Wb)
+	{
+		if (DATA >> (8 - B) & 0x1) {
 			auto& elem{ vm->Mem->displayBuffer[0].at_raw(Y, X) };
 			if (elem) { vm->Reg->V[0xF] = 1; }
 			elem ^= 1;
 		}
-		if (++X == vm->Plane.W) {
-			if (vm->Quirk.wrapSprite) { X &= vm->Plane.Wb; }
-			else return;
-		}
+		if (!vm->Quirk.wrapSprite && X == vm->Plane.Wb) { return; }
 	}
 }
 
 void FunctionsForClassic8::drawSprite(
-	std::int32_t VX, std::int32_t VY,
-	std::int32_t  N, std::uint32_t I
+	std::int32_t VX, std::int32_t  VY,
+	std::int32_t  N, std::uint32_t IR
 ) {
 	VX &= vm->Plane.Wb;
 	VY &= vm->Plane.Hb;
@@ -65,14 +63,12 @@ void FunctionsForClassic8::drawSprite(
 	const bool wide{ N == 0 };
 	if (wide) { N = 16; }
 
-	for (auto Y{ 0 }; Y < N; ++Y) {
-		if (true) { drawByte(VX + 0, VY, vm->mrw(I++)); }
-		if (wide) { drawByte(VX + 8, VY, vm->mrw(I++)); }
+	for (auto H{ 0 }; H < N; ++H, ++VY &= vm->Plane.Hb)
+	{
+		if (true) { drawByte(VX + 0, VY, vm->mrw(IR++)); }
+		if (wide) { drawByte(VX + 8, VY, vm->mrw(IR++)); }
 		
-		if (++VY == vm->Plane.H) {
-			if (vm->Quirk.wrapSprite) { VY &= vm->Plane.Hb; }
-			else return;
-		}
+		if (!vm->Quirk.wrapSprite && VY == vm->Plane.Hb) { break; }
 	}
 }
 
