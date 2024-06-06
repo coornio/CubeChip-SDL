@@ -8,6 +8,7 @@
 
 #include "../Concepts.hpp"
 
+#include <span>
 #include <cmath>
 #include <cassert>
 #include <cstddef>
@@ -475,6 +476,9 @@ public:
 	const T& back()  const { return pData[size() - 1]; }
 	const T* data()  const { return pData.get(); }
 
+	auto span()       { return std::span<      T>(data(), size()); }
+	auto span() const { return std::span<const T>(data(), size()); }
+
 public:
 	#pragma region Raw Accessors
 	auto at_raw(const paramU idx)
@@ -529,6 +533,9 @@ private:
 		const T& front() const { return mBegin[0]; }
 		const T& back()  const { return mBegin[mLength - 1]; }
 		const T* data()  const { return mBegin; }
+
+		auto span()       { return std::span<      T>(mBegin, mLength); }
+		auto span() const { return std::span<const T>(mBegin, mLength); }
 
 	public:
 		#pragma region Ctor
