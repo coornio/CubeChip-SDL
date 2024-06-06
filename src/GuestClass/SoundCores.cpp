@@ -57,7 +57,7 @@ void SoundCores::Classic::setTone(const std::size_t sp, const std::size_t pc) {
 
 void SoundCores::Classic::setTone(const std::size_t vx) {
 	// sets the tone for each 8X sound call
-	tone = (160.0f + ((0xFF - vx) >> 3 << 4)) / BAS->outFrequency;
+	tone = (160.0f + ((0xFF - (vx ? vx : 0x7F)) >> 3 << 4)) / BAS->outFrequency;
 }
 
 void SoundCores::Classic::render(std::vector<std::int16_t>& buffer) {
