@@ -54,14 +54,14 @@ bool Registers::readPermRegs(const std::size_t X) {
 			in.close();
 
 			if (totalBytes < X) {
-				std::fill_n(V.begin() + totalBytes, X - totalBytes, uint8_t{ 0 });
+				std::fill_n(V.data() + totalBytes, X - totalBytes, std::uint8_t());
 			}
 		} else {
 			blog.stdLogOut("Could not open SHA1 file to read: " + sha1.string());
 			return false;
 		}
 	} else {
-		std::fill_n(V.begin(), X, uint8_t{ 0 });
+		std::fill_n(V.data(), X, std::uint8_t());
 	}
 	return true;
 }
@@ -77,26 +77,26 @@ bool Registers::writePermRegs(const std::size_t X) {
 			return false;
 		}
 
-		std::array<char, 16> tempV{};
+		char tempV[16]{};
 		std::ifstream in(sha1, std::ios::binary);
 
 		if (in.is_open()) {
 			in.seekg(0, std::ios::end);
-			const auto totalBytes{ static_cast<std::size_t>(in.tellg()) };
+			const auto totalBytes{ in.tellg() };
 			in.seekg(0, std::ios::beg);
 
-			in.read(tempV.data(), std::min(totalBytes, X));
+			in.read(tempV, std::min<std::size_t>(totalBytes, X));
 			in.close();
 		} else {
 			blog.stdLogOut("Could not open SHA1 file to read: " + sha1.string());
 			return false;
 		}
 
-		std::copy_n(V.begin(), X, tempV.begin());
+		std::copy_n(V.data(), X, tempV);
 
 		std::ofstream out(sha1, std::ios::binary);
 		if (out.is_open()) {
-			out.write(tempV.data(), tempV.size());
+			out.write(tempV, 16);
 			out.close();
 		} else {
 			blog.stdLogOut("Could not open SHA1 file to write: " + sha1.string());
@@ -107,8 +107,8 @@ bool Registers::writePermRegs(const std::size_t X) {
 		if (out.is_open()) {
 			out.write(reinterpret_cast<const char*>(V.data()), X);
 			if (X < 16) {
-				const std::vector<char> padding(16 - X, '\x00');
-				out.write(padding.data(), padding.size());
+				const char padding[16]{};
+				out.write(padding, 16 - X);
 			}
 			out.close();
 		} else {
