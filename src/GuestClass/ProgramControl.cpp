@@ -88,9 +88,9 @@ void ProgramControl::setInterrupt(const Interrupt type) {
 
 void ProgramControl::requestHalt() {
 	if (opcode & 0xF000) {
-		blog.errLogOut("Unknown instruction detected: " + hexOpcode());
+		blog.stdLogOut("Unknown instruction detected: " + hexOpcode());
 	} else {
-		blog.errLogOut("ML routines are unsupported: " + hexOpcode());
+		blog.stdLogOut("ML routines are unsupported: " + hexOpcode());
 	}
 	setInterrupt(Interrupt::STOP);
 }

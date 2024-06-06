@@ -19,9 +19,9 @@ class BasicLogger final {
 	friend std::unique_ptr<BasicLogger> std::make_unique<BasicLogger>();
 
 	std::filesystem::path stdLogPath{};
-	std::filesystem::path errLogPath{};
+	std::filesystem::path dbgLogPath{};
 
-	std::size_t cStd{}, cErr{};
+	std::size_t cStd{}, cDbg{};
 
 	void createDirectory(
 		const std::string&,
@@ -38,10 +38,10 @@ public:
 	static BasicLogger& create();
 
 	void setStdLogFile(const std::string&, const std::filesystem::path&);
-	void setErrLogFile(const std::string&, const std::filesystem::path&);
+	void setDbgLogFile(const std::string&, const std::filesystem::path&);
 
 	void stdLogOut(const std::string&);
-	void errLogOut(const std::string&);
+	void dbgLogOut(const std::string&);
 };
 
 namespace blogger { // basic logger class

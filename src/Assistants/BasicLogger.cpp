@@ -55,19 +55,19 @@ void BasicLogger::setStdLogFile(
 	try {
 		createDirectory(name, path, stdLogPath);
 	} catch (const std::exception& e) {
-		std::cerr << e.what() << std::endl;
+		std::cerr << ":: ERROR :: " << e.what() << std::endl;
 		throw;
 	}
 }
 
-void BasicLogger::setErrLogFile(
+void BasicLogger::setDbgLogFile(
 	const std::string&           name,
 	const std::filesystem::path& path
 ) {
 	try {
-		createDirectory(name, path, errLogPath);
+		createDirectory(name, path, dbgLogPath);
 	} catch (const std::exception& e) {
-		std::cerr << e.what() << std::endl;
+		std::cerr << ":: ERROR :: " << e.what() << std::endl;
 		throw;
 	}
 }
@@ -86,25 +86,26 @@ void BasicLogger::writeLogFile(
 		}
 	}
 
+	std::cout << ++counter << " :: " << message << std::endl;
 	std::ofstream logFile(logFilePath, std::ios::app);
 	if (!logFile.is_open()) {
 		throw PathException("Unable to access log file: ", logFilePath);
 	}
-	logFile << ++counter << " :: " << message << std::endl;
+	logFile << counter << " :: " << message << std::endl;
 }
 
 void BasicLogger::stdLogOut(const std::string& text) {
 	try {
 		writeLogFile(text, stdLogPath, cStd);
 	} catch (const std::exception& e) {
-		std::cerr << e.what() << std::endl;
+		std::cerr << ":: ERROR :: " << e.what() << std::endl;
 	}
 }
 
-void BasicLogger::errLogOut(const std::string& text) {
+void BasicLogger::dbgLogOut(const std::string& text) {
 	try {
-		writeLogFile(text, errLogPath, cErr);
+		writeLogFile(text, dbgLogPath, cDbg);
 	} catch (const std::exception& e) {
-		std::cerr << e.what() << std::endl;
+		std::cerr << ":: ERROR :: " << e.what() << std::endl;
 	}
 }

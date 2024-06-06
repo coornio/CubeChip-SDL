@@ -19,7 +19,7 @@ HomeDirManager::HomeDirManager(const char* homeName) try
 {
 	try {
 		blog.setStdLogFile("program.log", getHome());
-		blog.setErrLogFile("debug.log", getHome());
+		blog.setDbgLogFile("debug.log", getHome());
 		addDirectory();
 	} catch (const std::exception& e) {
 		BasicHome::showErrorBox(e.what(), "Fatal Initialization Error");
@@ -48,31 +48,31 @@ bool HomeDirManager::verifyFile(const char* filepath) {
 	namespace fs = std::filesystem;
 
 	const fs::path fspath{ filepath };
-	blog.stdLogOut("New file received: " + fspath.string());
+	blog.stdLogOut("Attempting to access file: " + fspath.string());
 
 	if (!fs::exists(fspath) || !fs::is_regular_file(fspath)) {
-		blog.errLogOut("Unable to use locate path: " + fspath.string());
+		blog.dbgLogOut("Unable to use locate path: " + fspath.string());
 		return false;
 	}
 
 	std::ifstream fileStream(fspath);
 	if (!fileStream.is_open()) {
-		blog.errLogOut("Failed to open file: " + fspath.string());
+		blog.dbgLogOut("Failed to open file: " + fspath.string());
 		return false;
 	}
 	if (!fileStream.good()) {
-		blog.errLogOut("File is not readable: " + fspath.string());
+		blog.dbgLogOut("File is not readable: " + fspath.string());
 		return false;
 	}
 
 	std::error_code error;
 	const auto fslen{ fs::file_size(fspath, error) };
 	if (error) {
-		blog.errLogOut("Unable to access file: " + fspath.string());
+		blog.dbgLogOut("Unable to access file: " + fspath.string());
 		return false;
 	}
 	if (fslen == 0) {
-		blog.errLogOut("File is empty: " + fspath.string());
+		blog.dbgLogOut("File is empty: " + fspath.string());
 		return false;
 	}
 

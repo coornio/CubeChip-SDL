@@ -40,7 +40,7 @@ bool Registers::readPermRegs(const std::size_t X) {
 
 	if (std::filesystem::exists(sha1)) {
 		if (!std::filesystem::is_regular_file(sha1)) {
-			blog.errLogOut("Log file is malformed: " + sha1.string());
+			blog.stdLogOut("SHA1 file is malformed: " + sha1.string());
 			return false;
 		}
 
@@ -57,7 +57,7 @@ bool Registers::readPermRegs(const std::size_t X) {
 				std::fill_n(V.begin() + totalBytes, X - totalBytes, uint8_t{ 0 });
 			}
 		} else {
-			blog.errLogOut("Could not open SHA1 file to read: " + sha1.string());
+			blog.stdLogOut("Could not open SHA1 file to read: " + sha1.string());
 			return false;
 		}
 	} else {
@@ -73,7 +73,7 @@ bool Registers::writePermRegs(const std::size_t X) {
 
 	if (std::filesystem::exists(sha1)) {
 		if (!std::filesystem::is_regular_file(sha1)) {
-			blog.errLogOut("Log file is malformed: " + sha1.string());
+			blog.stdLogOut("SHA1 file is malformed: " + sha1.string());
 			return false;
 		}
 
@@ -88,7 +88,7 @@ bool Registers::writePermRegs(const std::size_t X) {
 			in.read(tempV.data(), std::min(totalBytes, X));
 			in.close();
 		} else {
-			blog.errLogOut("Could not open SHA1 file to read: " + sha1.string());
+			blog.stdLogOut("Could not open SHA1 file to read: " + sha1.string());
 			return false;
 		}
 
@@ -99,7 +99,7 @@ bool Registers::writePermRegs(const std::size_t X) {
 			out.write(tempV.data(), tempV.size());
 			out.close();
 		} else {
-			blog.errLogOut("Could not open SHA1 file to write: " + sha1.string());
+			blog.stdLogOut("Could not open SHA1 file to write: " + sha1.string());
 			return false;
 		}
 	} else {
@@ -112,7 +112,7 @@ bool Registers::writePermRegs(const std::size_t X) {
 			}
 			out.close();
 		} else {
-			blog.errLogOut("Could not open SHA1 file to write: " + sha1.string());
+			blog.stdLogOut("Could not open SHA1 file to write: " + sha1.string());
 			return false;
 		}
 	}
