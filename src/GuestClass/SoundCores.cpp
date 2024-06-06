@@ -47,7 +47,7 @@ void SoundCores::renderAudio() {
 
 SoundCores::Classic::Classic(SoundCores* parent, BasicAudioSpec* bas)
 	: Sound{ parent }
-	, BAS{ bas }
+	, BAS  { bas }
 {}
 
 void SoundCores::Classic::setTone(const std::size_t sp, const std::size_t pc) {
@@ -60,7 +60,7 @@ void SoundCores::Classic::setTone(const std::size_t vx) {
 	tone = (160.0f + ((0xFF - (vx ? vx : 0x7F)) >> 3 << 4)) / BAS->outFrequency;
 }
 
-void SoundCores::Classic::render(std::vector<std::int16_t>& buffer) {
+void SoundCores::Classic::render(std::span<std::int16_t> buffer) {
 	for (auto& sample : buffer) {
 		sample = Sound->wavePhase > 0.5f ? BAS->amplitude : -BAS->amplitude;
 		Sound->wavePhase = std::fmod(Sound->wavePhase + tone, 1.0f);
@@ -97,7 +97,7 @@ void SoundCores::XOchip::loadPattern(std::size_t idx) {
 	}
 }
 
-void SoundCores::XOchip::render(std::vector<std::int16_t>& buffer) {
+void SoundCores::XOchip::render(std::span<std::int16_t> buffer) {
 	for (auto& sample : buffer) {
 		const auto step{ static_cast<std::int32_t>(std::clamp(Sound->wavePhase * 128.0f, 0.0f, 127.0f)) };
 		const auto mask{ 1 << (7 - (step & 7)) };
@@ -112,8 +112,8 @@ void SoundCores::XOchip::render(std::vector<std::int16_t>& buffer) {
 
 SoundCores::MegaChip::MegaChip(SoundCores* parent, BasicAudioSpec* bas, VM_Guest* guest)
 	: Sound{ parent }
-	, BAS{ bas }
-	, vm{ guest }
+	, BAS  { bas }
+	, vm   { guest }
 {}
 
 bool SoundCores::MegaChip::isOn() const {
@@ -145,7 +145,7 @@ void SoundCores::MegaChip::enable(
 	pos    = 0.0;
 }
 
-void SoundCores::MegaChip::render(std::vector<std::int16_t>& buffer) {
+void SoundCores::MegaChip::render(std::span<std::int16_t> buffer) {
 	for (auto& sample : buffer) {
 		auto   _curidx{ vm->mrw(start + static_cast<std::uint32_t>(pos)) };
 		double _offset{ pos + step };

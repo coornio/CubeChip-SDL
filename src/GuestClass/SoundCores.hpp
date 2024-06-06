@@ -8,6 +8,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <span>
 #include <array>
 #include <vector>
 
@@ -38,7 +39,7 @@ public:
 
 		void setTone(std::size_t, std::size_t);
 		void setTone(std::size_t);
-		void render(std::vector<std::int16_t>&);
+		void render(std::span<std::int16_t>);
 	} C8{ this, BAS };
 
 	/*------------------------------------------------------------------*/
@@ -59,7 +60,7 @@ public:
 
 		void setPitch(std::size_t);
 		void loadPattern(std::size_t);
-		void render(std::vector<std::int16_t>&);
+		void render(std::span<std::int16_t>);
 	} XO{ this, BAS, vm };
 
 	/*------------------------------------------------------------------*/
@@ -82,6 +83,6 @@ public:
 
 		void reset();
 		void enable(std::size_t, std::size_t, std::size_t, bool);
-		void render(std::vector<std::int16_t>&);
+		void render(std::span<std::int16_t>);
 	} MC{ this, BAS, vm };
 };
