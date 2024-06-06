@@ -96,8 +96,6 @@ reset_all:
 			: FrameLimiter::SLEEP
 		)) continue;
 
-		BVS->renderPresent();
-
 		if (Host.isReady()) {
 			if (kb.isPressed(KEY(ESCAPE))) {
 				Host.isReady(false);
@@ -151,6 +149,8 @@ reset_all:
 				return EXIT_SUCCESS;
 			}
 		}
+
+		BVS->renderPresent();
 
 		kb.updateCopy();
 		mb.updateCopy();

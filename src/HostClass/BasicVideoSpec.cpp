@@ -10,7 +10,7 @@
 
 BasicVideoSpec::BasicVideoSpec(const Sint32 w, const Sint32 h)
 	: emuName   { "CubeChip" }
-	, emuVersion{ "[20.05.24]" }
+	, emuVersion{ "[06.06.24]" }
 {
 	try {
 		SDL_InitSubSystem(SDL_INIT_VIDEO);
@@ -90,8 +90,8 @@ void BasicVideoSpec::createTexture(Sint32 width, Sint32 height) {
 }
 
 void BasicVideoSpec::changeTitle(const char* name) {
-	windowTitle  = emuVersion + " :: ";
-	windowTitle += emuName    + " :: ";
+	//windowTitle  = emuVersion + " :: ";
+	windowTitle  = emuName    + " :: ";
 	windowTitle += (name ? name : "Waiting for file...");
 	SDL_SetWindowTitle(window, windowTitle.c_str());
 }
