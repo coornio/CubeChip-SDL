@@ -39,7 +39,7 @@ bool VM_Guest::romTypeCheck() {
 	* This place requires a database check, only after which would
 	* we fall back to deriving the platform specifics via extension
 	*/
-	switch (File->hash) {
+	switch (HDM->hash) {
 
 		case (FileTypes::c2x):
 			if (!loadRomToRam(4'096, 0x300))
@@ -167,8 +167,8 @@ bool VM_Guest::loadRomToRam(const std::size_t size, const std::size_t offset) {
 	Program->limiter = size - 1; // set program memory limit
 	Mem->memory.resize(size);    // resize the memory vector
 
-	std::basic_ifstream<char> ifs(File->path, std::ios::binary);
-	ifs.read(reinterpret_cast<char*>(&Mem->memory[offset]), File->size);
+	std::basic_ifstream<char> ifs(HDM->path, std::ios::binary);
+	ifs.read(reinterpret_cast<char*>(&Mem->memory[offset]), HDM->size);
 	return !ifs.fail();
 }
 
@@ -264,8 +264,8 @@ void VM_Guest::setupDisplay(const std::int32_t mode, const bool forced) {
 		}
 	}
 
-	Video->createTexture(Plane.W, Plane.H);
-	Video->setAspectRatio(
+	BVS->createTexture(Plane.W, Plane.H);
+	BVS->setAspectRatio(
 		State.mega_enabled ? 512 : 512,
 		State.mega_enabled ? 384 : 256,
 		State.mega_enabled ?  -4 :   4
@@ -356,15 +356,15 @@ void VM_Guest::loadFontData() {
 }
 
 void VM_Guest::flushDisplay() {
-	Video->lockTexture();
+	BVS->lockTexture();
 
 	if (State.mega_enabled) {
 		for (auto idx{ 0 }; idx < Plane.S; ++idx) {
-			Video->pixels[idx] = Mem->foregroundBuffer.at_raw(idx);
+			BVS->pixels[idx] = Mem->foregroundBuffer.at_raw(idx);
 		}
 	} else if (State.xochip_color) {
 		for (auto idx{ 0 }; idx < Plane.S; ++idx) {
-			Video->pixels[idx] = Color->bit[
+			BVS->pixels[idx] = Color->bit[
 				Mem->displayBuffer[0].at_raw(idx) << 0 |
 				Mem->displayBuffer[1].at_raw(idx) << 1 |
 				Mem->displayBuffer[2].at_raw(idx) << 2 |
@@ -381,15 +381,15 @@ void VM_Guest::flushDisplay() {
 			const auto Y = idx / Plane.W & mask;
 			const auto X = idx % Plane.W >> 0x3;
 
-			Video->pixels[idx] = Mem->displayBuffer[0].at_raw(idx)
+			BVS->pixels[idx] = Mem->displayBuffer[0].at_raw(idx)
 				? Mem->color8xBuffer.at_raw(Y, X) : Color->bit[0];
 		}
 	} else {
 		for (auto idx{ 0 }; idx < Plane.S; ++idx) {
-			Video->pixels[idx] = Color->bit[
+			BVS->pixels[idx] = Color->bit[
 				Mem->displayBuffer[0].at_raw(idx)
 			];
 		}
 	}
-	Video->unlockTexture();
+	BVS->unlockTexture();
 }
