@@ -131,7 +131,7 @@ public:
 	void initPlatform();
 	void loadFontData();
 	void setupDisplay(std::int32_t, bool = false);
-	void flushDisplay();
+	void renderToTexture();
 
 	// core functions
 	void cycle();

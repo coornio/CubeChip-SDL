@@ -61,19 +61,9 @@ void VM_Guest::cycle() {
 	readyAudioVideo();
 }
 
-void VM_Guest::readyAudioVideo() {
-	const auto color{
-		State.mega_enabled ? 0xFF202020u :
-		Sound->XO.isOn() ? Color->bit[0] :
-		Color->bit[Program->timerSound != 0]
-	};
-	
-	Video->AudioOutline(color);
-	Sound->renderAudio();
+	if (State.mega_enabled) { return; }
 
-	if (!State.mega_enabled) {
-		flushDisplay();
-	}
+	renderToTexture(); // MegaChip calls it on demand
 }
 
 void VM_Guest::instructionLoop() {

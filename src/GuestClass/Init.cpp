@@ -355,7 +355,7 @@ void VM_Guest::loadFontData() {
 	);
 }
 
-void VM_Guest::flushDisplay() {
+void VM_Guest::renderToTexture() {
 	BVS->lockTexture();
 
 	if (State.mega_enabled) {
