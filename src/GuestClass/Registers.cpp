@@ -16,8 +16,9 @@ using namespace blogger;
 #include "Registers.hpp"
 #include "Guest.hpp"
 
-Registers::Registers(VM_Guest* parent)
-	: vm{ parent }
+Registers::Registers(VM_Guest* parent, HomeDirManager* hdm_ptr)
+	: vm { parent  }
+	, HDM{ hdm_ptr }
 {}
 
 void Registers::routineCall(const uint32_t addr) {
@@ -35,7 +36,7 @@ void Registers::protectPages() {
 
 bool Registers::readPermRegs(const std::size_t X) {
 	static const std::filesystem::path sha1{
-		vm->File->permRegs / vm->File->sha1
+		HDM->permRegs / HDM->sha1
 	};
 
 	if (std::filesystem::exists(sha1)) {
@@ -68,7 +69,7 @@ bool Registers::readPermRegs(const std::size_t X) {
 
 bool Registers::writePermRegs(const std::size_t X) {
 	static const std::filesystem::path sha1{
-		vm->File->permRegs / vm->File->sha1
+		HDM->permRegs / HDM->sha1
 	};
 
 	if (std::filesystem::exists(sha1)) {

@@ -26,9 +26,9 @@ VM_Guest::VM_Guest(
 	BasicVideoSpec* bvs_ptr,
 	BasicAudioSpec* bas_ptr
 )
-	: File    { hdm_ptr }
-	, Video   { bvs_ptr }
-	, Audio   { bas_ptr }
+	: HDM{ hdm_ptr }
+	, BVS{ bvs_ptr }
+	, BAS{ bas_ptr }
 {
 	Input   = std::make_unique<HexInput>();
 	Wrand   = std::make_unique<Well512>();
@@ -183,7 +183,7 @@ void VM_Guest::instructionLoop() {
 									Quirk.jmpRegX      = false;
 									setupDisplay(Resolution::LO);
 									Program->setFncSet(&SetClassic8);
-									Video->setTextureAlpha(0xFF);
+									BVS->setTextureAlpha(0xFF);
 									Sound->MC.reset();
 									break;
 								case 0x11:				// 0011 - enable mega mode *MEGACHIP*
@@ -212,7 +212,7 @@ void VM_Guest::instructionLoop() {
 								Trait.H = LO ? LO : 256;
 								break;
 							case 0x5:					// 05NN - set screen brightness to NN *MEGACHIP*
-								Video->setTextureAlpha(LO);
+								BVS->setTextureAlpha(LO);
 								break;
 							case 0x6:					// 060N - start digital sound from RAM at I, repeat if N == 0 *MEGACHIP*
 								Sound->MC.enable(

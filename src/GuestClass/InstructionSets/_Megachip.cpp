@@ -64,11 +64,11 @@ void FunctionsForMegachip::blendToDisplay(
 	const T* const src, const T* const dst,
 	const std::size_t size
 ) {
-	vm->Video->lockTexture();
+	vm->BVS->lockTexture();
 	for (std::size_t idx{ 0 }; idx < size; ++idx) {
-		vm->Video->pixels[idx] = blendPixel(src[idx], dst[idx]);
+		vm->BVS->pixels[idx] = blendPixel(src[idx], dst[idx]);
 	}
-	vm->Video->unlockTexture();
+	vm->BVS->unlockTexture();
 }
 
 uint32_t FunctionsForMegachip::blendPixel(

@@ -42,9 +42,9 @@ public:
 	);
 	~VM_Guest();
 
-	HomeDirManager* const File;
-	BasicVideoSpec* const Video;
-	BasicAudioSpec* const Audio;
+	HomeDirManager* const HDM;
+	BasicVideoSpec* const BVS;
+	BasicAudioSpec* const BAS;
 
 	std::unique_ptr<HexInput>       Input;
 	std::unique_ptr<Well512>        Wrand;
