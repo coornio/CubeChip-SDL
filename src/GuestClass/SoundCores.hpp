@@ -13,10 +13,15 @@
 #include <vector>
 
 class VM_Guest;
+
 class BasicAudioSpec;
+class BasicVideoSpec;
+
+class DisplayColors;
+class ProgramControl;
 
 class SoundCores final {
-	VM_Guest* vm;
+	VM_Guest*       vm;
 	BasicAudioSpec* BAS;
 
 public:
@@ -24,12 +29,12 @@ public:
 	bool  beepFx0A{};
 
 	explicit SoundCores(VM_Guest*, BasicAudioSpec*);
-	void renderAudio();
+	void renderAudio(BasicVideoSpec*, DisplayColors*, ProgramControl*);
 
 	/*------------------------------------------------------------------*/
 
 	class Classic final {
-		SoundCores* Sound;
+		SoundCores*     Sound;
 		BasicAudioSpec* BAS;
 
 		float tone{};
@@ -45,14 +50,14 @@ public:
 	/*------------------------------------------------------------------*/
 
 	class XOchip final {
-		SoundCores* Sound;
+		SoundCores*     Sound;
 		BasicAudioSpec* BAS;
-		VM_Guest* vm;
+		VM_Guest*       vm;
 
 		const float rate;
 		std::array<std::uint8_t, 16> pattern{};
 		float tone{};
-		bool enabled{};
+		bool  enabled{};
 
 	public:
 		explicit XOchip(SoundCores*, BasicAudioSpec*, VM_Guest*);
@@ -66,9 +71,9 @@ public:
 	/*------------------------------------------------------------------*/
 
 	class MegaChip final {
-		SoundCores* Sound;
+		SoundCores*     Sound;
 		BasicAudioSpec* BAS;
-		VM_Guest* vm;
+		VM_Guest*       vm;
 
 		std::size_t length{};
 		std::size_t start{};
@@ -81,7 +86,7 @@ public:
 		explicit MegaChip(SoundCores*, BasicAudioSpec*, VM_Guest*);
 		bool isOn() const;
 
-		void reset();
+		void reset(bool);
 		void enable(std::size_t, std::size_t, std::size_t, bool);
 		void render(std::span<std::int16_t>);
 	} MC{ this, BAS, vm };

@@ -8,9 +8,11 @@
 #include <algorithm>
 
 #include "../HostClass/BasicAudioSpec.hpp"
+#include "../HostClass/BasicVideoSpec.hpp"
 
 #include "ProgramControl.hpp"
 #include "SoundCores.hpp"
+#include "DisplayColors.hpp"
 #include "Guest.hpp"
 
 /*------------------------------------------------------------------*/
@@ -22,20 +24,29 @@ SoundCores::SoundCores(VM_Guest* parent, BasicAudioSpec* bas)
 	, BAS{ bas }
 {}
 
-void SoundCores::renderAudio() {
-	const auto samplesPerFrame{ std::ceil(BAS->outFrequency / vm->fetchFramerate()) };
+void SoundCores::renderAudio(
+	BasicVideoSpec* BVS,
+	DisplayColors*  Color,
+	ProgramControl* Program
+) {
+	const auto samplesPerFrame{ std::ceil(BAS->outFrequency / Program->framerate) };
 	std::vector<std::int16_t> audioBuffer(static_cast<std::uint32_t>(samplesPerFrame));
 
 	if (beepFx0A) {
 		C8.render(audioBuffer);
+		BVS->AudioOutline(Color->bit[1]);
 	} else if (MC.isOn()) {
 		MC.render(audioBuffer);
-	} else if (!vm->Program->timerSound) {
+		BVS->AudioOutline(0xFF'20'20'20);
+	} else if (!Program->timerSound) {
 		wavePhase = 0.0f;
+		BVS->AudioOutline(Color->bit[0]);
 	} else if (XO.isOn()) {
 		XO.render(audioBuffer);
+		BVS->AudioOutline(Color->bit[0]);
 	} else {
 		C8.render(audioBuffer);
+		BVS->AudioOutline(Color->bit[Program->timerSound != 0]);
 	}
 
 	BAS->pushAudioData(audioBuffer.data(), audioBuffer.size());
@@ -120,8 +131,8 @@ bool SoundCores::MegaChip::isOn() const {
 	return enabled;
 }
 
-void SoundCores::MegaChip::reset() {
-	enabled = false;
+void SoundCores::MegaChip::reset(const bool state) {
+	enabled = state;
 	looping = false;
 
 	length = 0;

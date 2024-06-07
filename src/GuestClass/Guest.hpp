@@ -136,7 +136,6 @@ public:
 	// core functions
 	void cycle();
 	void instructionLoop();
-	void readyAudioVideo();
 
 	template <std::size_t variant>
 	void instructionDecoder();

@@ -32,10 +32,10 @@ VM_Guest::VM_Guest(
 {
 	Input   = std::make_unique<HexInput>();
 	Wrand   = std::make_unique<Well512>();
-	Mem     = std::make_unique<MemoryBanks>(this);
-	Program = std::make_unique<ProgramControl>(this, currFncSet);
-	Sound   = std::make_unique<SoundCores>(this, Audio);
-	Reg     = std::make_unique<Registers>(this);
+	Mem     = std::make_unique<MemoryBanks>(this); // fine
+	Program = std::make_unique<ProgramControl>(this, currFncSet); // needs Sound/Input
+	Sound   = std::make_unique<SoundCores>(this, BAS); // needs Program
+	Reg     = std::make_unique<Registers>(this, HDM); // fine
 	Color   = std::make_unique<DisplayColors>();
 }
 
@@ -58,8 +58,8 @@ void VM_Guest::cycle() {
 	Program->handleInterrupt();
 
 	instructionLoop();
-	readyAudioVideo();
-}
+
+	Sound->renderAudio(BVS, Color.get(), Program.get());
 
 	if (State.mega_enabled) { return; }
 
@@ -174,7 +174,7 @@ void VM_Guest::instructionLoop() {
 									setupDisplay(Resolution::LO);
 									Program->setFncSet(&SetClassic8);
 									BVS->setTextureAlpha(0xFF);
-									Sound->MC.reset();
+									Sound->MC.reset(false);
 									break;
 								case 0x11:				// 0011 - enable mega mode *MEGACHIP*
 									State.mega_enabled = true;
@@ -185,6 +185,7 @@ void VM_Guest::instructionLoop() {
 									setupDisplay(Resolution::MC);
 									Program->setFncSet(&SetMegachip);
 									Mem->flushBuffers(CLEAR_ALL);
+									Sound->MC.reset(true);
 									break;
 								[[unlikely]] default: Program->requestHalt();
 							} break;
@@ -212,7 +213,7 @@ void VM_Guest::instructionLoop() {
 								);
 								break;
 							case 0x7:					// 0700 - stop digital sound *MEGACHIP*
-								Sound->MC.reset();
+								Sound->MC.reset(false);
 								break;
 							case 0x8:					// 08YN - set trait flags to VY (Y > 0), blend mode to N *GIGACHIP*
 								if (State.gigachip_rom) {

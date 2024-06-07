@@ -49,14 +49,14 @@ void MemoryBanks::flushBuffers(const bool firstFlush) {
 	backgroundBuffer.wipeAll();
 	collisionPalette.wipeAll();
 
-	vm->flushDisplay();
+	vm->renderToTexture();
 }
 
 void MemoryBanks::loadPalette(std::uint32_t index, const std::uint32_t count) {
 	for (std::size_t idx{ 0 }; idx < count; index += 4) {
 		megaPalette[++idx] = vm->mrw(index + 0) << 24
 			               | vm->mrw(index + 1) << 16
-			               | vm->mrw(index + 2) << 8
+			               | vm->mrw(index + 2) <<  8
 			               | vm->mrw(index + 3);
 	}
 }
