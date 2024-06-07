@@ -20,21 +20,21 @@ void MemoryBanks::modifyViewport(const BrushType type) {
 	}
 
 	for (auto P{ 0 }; P < 4; ++P) {
-		if (vm->Plane.selected & (1 << P)) {
-			switch (type) {
-				case BrushType::CLR:
-					vm->Mem->displayBuffer[P].wipeAll();
-					break;
-				case BrushType::XOR:
-					for (auto& row : displayBuffer[P]) row ^= 1;
-					break;
-				case BrushType::SUB:
-					for (auto& row : displayBuffer[P]) row &= ~1;
-					break;
-				case BrushType::ADD:
-					for (auto& row : displayBuffer[P]) row |= 1;
-					break;
-			}
+		if (!(vm->Plane.selected & (1 << P))) { continue; }
+
+		switch (type) {
+			case BrushType::CLR:
+				displayBuffer[P].wipeAll();
+				break;
+			case BrushType::XOR:
+				for (auto& px : displayBuffer[P].span()) { px ^=  1; }
+				break;
+			case BrushType::SUB:
+				for (auto& px : displayBuffer[P].span()) { px &= ~1; }
+				break;
+			case BrushType::ADD:
+				for (auto& px : displayBuffer[P].span()) { px |=  1; }
+				break;
 		}
 	}
 }
