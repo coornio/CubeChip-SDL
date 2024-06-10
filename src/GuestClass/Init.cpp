@@ -268,7 +268,7 @@ void VM_Guest::setupDisplay(const std::int32_t mode, const bool forced) {
 	BVS->setAspectRatio(
 		State.mega_enabled ? 512 : 512,
 		State.mega_enabled ? 384 : 256,
-		State.mega_enabled ?  -4 :   4
+		State.mega_enabled ?  -2 :   2
 	);
 
 	const bool legacy{
