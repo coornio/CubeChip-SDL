@@ -10,9 +10,8 @@
 static constexpr Sint32 VOL_MAX{ 255 };
 static constexpr Sint32 VOL_MIN{ 0 };
 
-BasicAudioSpec::BasicAudioSpec(const Sint32 freq)
-	: outFrequency{ freq }
-	, audiospec   { SDL_AUDIO_S16, 1, freq }
+BasicAudioSpec::BasicAudioSpec()
+	: audiospec{ SDL_AUDIO_S16, 1, outFrequency }
 {
 	SDL_InitSubSystem(SDL_INIT_AUDIO);
 	setVolume(VOL_MAX);
@@ -35,11 +34,11 @@ void BasicAudioSpec::pushAudioData(const void* const data, const std::size_t len
 }
 
 void BasicAudioSpec::setVolume(const Sint32 vol) {
-	volume = std::clamp(vol, VOL_MIN, VOL_MAX);
+	volume    = static_cast<Sint16>(std::clamp(std::abs(vol), VOL_MIN, VOL_MAX));
 	amplitude = static_cast<Sint16>(16 * volume);
 }
 
 void BasicAudioSpec::changeVolume(const Sint32 delta) {
-	volume = std::clamp(volume + delta, VOL_MIN, VOL_MAX);
+	volume    = static_cast<Sint16>(std::clamp(volume + delta, VOL_MIN, VOL_MAX));
 	amplitude = static_cast<Sint16>(16 * volume);
 }

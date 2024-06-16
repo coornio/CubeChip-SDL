@@ -11,18 +11,18 @@
 
 class BasicAudioSpec final {
 public:
-	const Sint32 outFrequency;
-	Sint32 volume{};
+	static constexpr Sint32 outFrequency{ 48'000 };
 	float  bytesLeft{};
+	Sint16 volume{};
 	Sint16 amplitude{};
 
 private:
 	SDL_AudioSpec     audiospec{};
-	SDL_AudioStream*  stream{};
 	SDL_AudioDeviceID device{};
+	SDL_AudioStream*  stream{};
 
 public:
-	explicit BasicAudioSpec(Sint32);
+	explicit BasicAudioSpec();
 	~BasicAudioSpec();
 
 	void pushAudioData(const void*, std::size_t);
