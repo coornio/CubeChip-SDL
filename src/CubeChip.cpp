@@ -114,12 +114,6 @@ reset_all:
 				std::cout << "\33[1;1H\33[2J\33[?25l"
 					<< "Cycle time:      ms |     μs";
 			}
-			if (kb.isPressed(KEY(UP))) {
-				BAS->changeVolume(+15);
-			}
-			if (kb.isPressed(KEY(DOWN))) {
-				BAS->changeVolume(-15);
-			}
 
 			if (Host.doBench()) {
 				using namespace std::chrono;
@@ -149,6 +143,12 @@ reset_all:
 		} else {
 			if (kb.isPressed(KEY(ESCAPE))) {
 				return EXIT_SUCCESS;
+			}
+			if (kb.isPressed(KEY(RIGHT))) {
+				BAS->changeVolume(+15);
+			}
+			if (kb.isPressed(KEY(LEFT))) {
+				BAS->changeVolume(-15);
 			}
 		}
 
