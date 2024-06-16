@@ -82,10 +82,12 @@ reset_all:
 					}
 
 				case SDL_EVENT_WINDOW_MINIMIZED:
+					if (!Guest) { break; }
 					Guest->isSystemPaused(true);
 					break;
 
 				case SDL_EVENT_WINDOW_RESTORED:
+					if (!Guest) { break; }
 					Guest->isSystemPaused(false);
 					break;
 			}
