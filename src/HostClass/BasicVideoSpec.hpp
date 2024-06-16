@@ -47,7 +47,7 @@ public:
 	void createRenderer();
 	void createTexture(Sint32 = 0, Sint32 = 0);
 
-	void AudioOutline(Uint32);
+	void raiseWindow();
 	void lockTexture();
 	void unlockTexture();
 	void renderPresent();

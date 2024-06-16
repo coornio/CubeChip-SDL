@@ -124,6 +124,9 @@ void BasicVideoSpec::AudioOutline(const Uint32 color_1, const Uint32 color_0) {
 	};
 }
 
+void BasicVideoSpec::raiseWindow() {
+	SDL_RaiseWindow(window);
+}
 void BasicVideoSpec::lockTexture() {
 	void* pixel_ptr{ pixels };
 	SDL_LockTexture(

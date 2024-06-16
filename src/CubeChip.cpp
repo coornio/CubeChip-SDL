@@ -72,6 +72,7 @@ reset_all:
 					return EXIT_SUCCESS;
 
 				case SDL_EVENT_DROP_FILE:
+					BVS->raiseWindow();
 					if (HDM->verifyFile(Event.drop.data)) {
 						blog.stdLogOut("File drop accepted: "s + Event.drop.data);
 						Host.isReady(true);
