@@ -17,6 +17,8 @@ void DisplayColors::initBitColors() {
 	for (auto i{ 0 }; i < 16; ++i) {
 		bit[i] = BitColors[i];
 	}
+	buzz[0] = bit[0];
+	buzz[1] = bit[1];
 }
 
 void DisplayColors::initHexColors() {

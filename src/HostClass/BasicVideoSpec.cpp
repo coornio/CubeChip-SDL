@@ -115,11 +115,11 @@ bool BasicVideoSpec::showErrorBox(
 	);
 }
 
-void BasicVideoSpec::AudioOutline(Uint32 color) {
-	frameColor = {
-		static_cast<Uint8>((color >> 16)),
-		static_cast<Uint8>((color >>  8)),
-		static_cast<Uint8>( color       ),
+void BasicVideoSpec::AudioOutline(const Uint32 color_1, const Uint32 color_0) {
+	PerimeterColor = {
+		static_cast<Uint8>(((enableBuzzGlow ? color_1 : color_0) >> 16)),
+		static_cast<Uint8>(((enableBuzzGlow ? color_1 : color_0) >>  8)),
+		static_cast<Uint8>( (enableBuzzGlow ? color_1 : color_0)       ),
 		SDL_ALPHA_OPAQUE
 	};
 }

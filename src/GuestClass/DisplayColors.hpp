@@ -27,11 +27,11 @@ class DisplayColors final {
 
 public:
 	std::uint32_t bit[16]{}; // pixel bit color (planes)
+	std::uint32_t buzz[2]{}; // colors for buzz glow
 	std::uint32_t hex[10]{}; // mega char sprite gradient
 
 private:
 	std::uint32_t bgindex{}; // background color cycle index
-	std::uint32_t megahex{}; // hex sprite color for megachip
 
 private:
 	void initBitColors();

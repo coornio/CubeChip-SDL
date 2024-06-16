@@ -55,6 +55,7 @@ public:
 	void resizeWindow(Sint32 = 0, Sint32 = 0);
 
 	void setTextureAlpha(std::size_t);
+	void AudioOutline(Uint32, Uint32);
 	void setAspectRatio(Sint32, Sint32, Sint32);
 
 	void quitWindow();

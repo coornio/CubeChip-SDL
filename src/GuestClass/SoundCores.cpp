@@ -34,19 +34,19 @@ void SoundCores::renderAudio(
 
 	if (beepFx0A) {
 		C8.render(audioBuffer);
-		BVS->AudioOutline(Color->bit[1]);
+		BVS->AudioOutline(Color->buzz[1], Color->buzz[0]);
 	} else if (MC.isOn()) {
 		MC.render(audioBuffer);
-		BVS->AudioOutline(0xFF'20'20'20);
+		BVS->AudioOutline(0xFF'20'20'20, 0xFF'20'20'20);
 	} else if (!Program->timerSound) {
 		wavePhase = 0.0f;
-		BVS->AudioOutline(Color->bit[0]);
+		BVS->AudioOutline(Color->buzz[0], Color->buzz[0]);
 	} else if (XO.isOn()) {
 		XO.render(audioBuffer);
-		BVS->AudioOutline(Color->bit[0]);
+		BVS->AudioOutline(Color->buzz[0], Color->buzz[0]);
 	} else {
 		C8.render(audioBuffer);
-		BVS->AudioOutline(Color->bit[Program->timerSound != 0]);
+		BVS->AudioOutline(Color->buzz[1], Color->buzz[0]);
 	}
 
 	BAS->pushAudioData(audioBuffer.data(), audioBuffer.size());
