@@ -108,7 +108,7 @@ reset_all:
 
 		if (Host.isReady()) {
 			if (kb.isPressed(KEY(ESCAPE))) {
-				Host.isReady(false);
+				Host.isReady(false).doBench(false);
 				BVS->resetWindow();
 				goto reset_all;
 			}
