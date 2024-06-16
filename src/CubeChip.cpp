@@ -98,6 +98,13 @@ reset_all:
 			: FrameLimiter::SLEEP
 		)) continue;
 
+		if (kb.isPressed(KEY(RIGHT))) {
+			BAS->changeVolume(+15);
+		}
+		if (kb.isPressed(KEY(LEFT))) {
+			BAS->changeVolume(-15);
+		}
+
 		if (Host.isReady()) {
 			if (kb.isPressed(KEY(ESCAPE))) {
 				Host.isReady(false);
@@ -143,12 +150,6 @@ reset_all:
 		} else {
 			if (kb.isPressed(KEY(ESCAPE))) {
 				return EXIT_SUCCESS;
-			}
-			if (kb.isPressed(KEY(RIGHT))) {
-				BAS->changeVolume(+15);
-			}
-			if (kb.isPressed(KEY(LEFT))) {
-				BAS->changeVolume(-15);
 			}
 		}
 
