@@ -37,8 +37,8 @@ int32_t SDL_main(int32_t argc, char* argv[]) {
 
 	try {
 		HDM = std::make_unique<HomeDirManager>("CubeChip_SDL");
-		BVS = std::make_unique<BasicVideoSpec>(1032, 520);
-		BAS = std::make_unique<BasicAudioSpec>(48'000);
+		BVS = std::make_unique<BasicVideoSpec>();
+		BAS = std::make_unique<BasicAudioSpec>();
 	} catch (...) { return EXIT_FAILURE; }
 
 	VM_Host      Host(HDM.get(), BVS.get(), BAS.get());
@@ -109,9 +109,7 @@ reset_all:
 		if (Host.isReady()) {
 			if (kb.isPressed(KEY(ESCAPE))) {
 				Host.isReady(false);
-				BVS->changeTitle();
-				BVS->createTexture();
-				BVS->renderPresent();
+				BVS->resetWindow();
 				goto reset_all;
 			}
 			if (kb.isPressed(KEY(BACKSPACE))) {
@@ -121,6 +119,13 @@ reset_all:
 				Host.doBench(!Host.doBench());
 				std::cout << "\33[1;1H\33[2J\33[?25l"
 					<< "Cycle time:      ms |     μs";
+			}
+
+			if (kb.isPressed(KEY(PAGEDOWN))) {
+				BVS->changeFrameMultiplier(-1);
+			}
+			if (kb.isPressed(KEY(PAGEUP))) {
+				BVS->changeFrameMultiplier(+1);
 			}
 
 			if (Host.doBench()) {

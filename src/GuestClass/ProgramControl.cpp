@@ -109,7 +109,7 @@ void ProgramControl::handleInterrupt() {
 			return;
 
 		case Interrupt::STOP: // stops emulation when sound timer reaches 0
-			if (!timerSound) ipf = 0;
+			if (!timerSound) { ipf = 0; }
 			return;
 
 		case Interrupt::WAIT: // pauses emulation while delay timer is not 0
