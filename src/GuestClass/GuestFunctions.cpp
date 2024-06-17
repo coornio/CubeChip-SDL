@@ -67,7 +67,6 @@ void VM_Guest::cycle() {
 }
 
 void VM_Guest::instructionLoop() {
-	enum { TO_DISPLAY, CLEAR_ALL };
 
 	for (auto inst{ 0 }; inst < Program->ipf; ++inst) {
 		auto HI = mrw(Program->counter++);
@@ -105,7 +104,7 @@ void VM_Guest::instructionLoop() {
 							Mem->modifyViewport(BrushType::SUB);
 						} else if (State.mega_enabled) {// 00E0 - push (and then clear) framebuffer to screen *MEGACHIP*
 							Program->setInterrupt(Interrupt::ONCE);
-							Mem->flushBuffers(TO_DISPLAY);
+							Mem->flushBuffers(FlushType::DISPLAY);
 						} else {						// 00E0 - erase whole display
 							Mem->modifyViewport(BrushType::CLR);
 						}
@@ -184,7 +183,8 @@ void VM_Guest::instructionLoop() {
 									Quirk.jmpRegX      = true;
 									setupDisplay(Resolution::MC);
 									Program->setFncSet(&SetMegachip);
-									Mem->flushBuffers(CLEAR_ALL);
+									Mem->flushBuffers(FlushType::DISCARD);
+									BVS->setTextureAlpha(0xFF);
 									Sound->MC.reset(true);
 									break;
 								[[unlikely]] default: Program->requestHalt();
@@ -484,7 +484,7 @@ void VM_Guest::instructionLoop() {
 						Sound->C8.setTone(Reg->SP, Program->counter);
 						Program->setInterrupt(Interrupt::FX0A);
 						if (State.mega_enabled) [[unlikely]] {
-							Mem->flushBuffers(TO_DISPLAY);
+							Mem->flushBuffers(FlushType::DISPLAY);
 						}
 						break;
 					case 0x15:							// FX15 - set delay timer = VX

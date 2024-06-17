@@ -39,11 +39,15 @@ void MemoryBanks::modifyViewport(const BrushType type) {
 	}
 }
 
-void MemoryBanks::flushBuffers(const bool firstFlush) {
-	if (firstFlush) {
-		for (auto& elem : megaPalette) { elem = {}; }
-	} else {
-		foregroundBuffer.copyLinear(backgroundBuffer);
+void MemoryBanks::flushBuffers(const FlushType option) {
+	switch (option) {
+		case FlushType::DISCARD:
+			for (auto& elem : megaPalette) { elem = {}; }
+			break;
+
+		case FlushType::DISPLAY:
+			foregroundBuffer.copyLinear(backgroundBuffer);
+			break;
 	}
 
 	backgroundBuffer.wipeAll();

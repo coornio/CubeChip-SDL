@@ -32,7 +32,7 @@ public:
 	explicit MemoryBanks(VM_Guest*);
 	void modifyViewport(BrushType);
 
-	void flushBuffers(bool);
+	void flushBuffers(FlushType);
 	void loadPalette(std::uint32_t, std::uint32_t);
 
 	void clearPages(std::int32_t);

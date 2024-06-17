@@ -44,7 +44,7 @@ bool VM_Guest::romTypeCheck() {
 		case (FileTypes::c2x):
 			if (!loadRomToRam(4'096, 0x300))
 				return false;
-			Program->init(0x300, 30);
+			Program->init(0x300, 15);
 			Program->setFncSet(&SetClassic8);
 			State.chip8X_rom   = true;
 			State.hires_2paged = true;
@@ -53,10 +53,9 @@ bool VM_Guest::romTypeCheck() {
 		case (FileTypes::c4x):
 			if (!loadRomToRam(4'096, 0x300))
 				return false;
-			Program->init(0x300, 30);
+			Program->init(0x300, 15);
 			Program->setFncSet(&SetClassic8);
 			State.chip8X_rom   = true;
-			State.hires_2paged = true;
 			State.hires_4paged = true;
 			break;
 
@@ -79,7 +78,7 @@ bool VM_Guest::romTypeCheck() {
 		case (FileTypes::c2h):
 			if (!loadRomToRam(4'096, 0x260))
 				return false;
-			Program->init(0x260, 30);
+			Program->init(0x260, 15);
 			Program->setFncSet(&SetClassic8);
 			State.chip_classic = true;
 			State.hires_2paged = true;
@@ -88,10 +87,9 @@ bool VM_Guest::romTypeCheck() {
 		case (FileTypes::c4h):
 			if (!loadRomToRam(4'096, 0x244))
 				return false;
-			Program->init(0x244, 30);
+			Program->init(0x244, 15);
 			Program->setFncSet(&SetClassic8);
 			State.chip_classic = true;
-			State.hires_2paged = true;
 			State.hires_4paged = true;
 			break;
 
@@ -155,7 +153,7 @@ bool VM_Guest::romTypeCheck() {
 		default:
 			if (!loadRomToRam(4'096, 0x200))
 				return false;
-			Program->init(0x200, 2'800'000);
+			Program->init(0x200, 2'900'000);
 			Program->setFncSet(&SetClassic8);
 			State.chip_classic = true;
 			blog.stdLogOut("Unknown rom type, default parameters apply.");
@@ -211,12 +209,15 @@ void VM_Guest::initPlatform() {
 		Quirk.idxRegNoInc  = true;
 	}
 
-	setupDisplay(
-		Resolution::LO +
-		State.hires_2paged +
-		State.hires_4paged,
-		true
-	);
+	if (State.hires_2paged) {
+		setupDisplay(Resolution::TP, true);
+	}
+	else if (State.hires_4paged) {
+		setupDisplay(Resolution::FP, true);
+	}
+	else {
+		setupDisplay(Resolution::LO, true);
+	}
 
 	if (State.chip8X_rom) {
 		Color->cycleBackground();
@@ -232,22 +233,18 @@ void VM_Guest::initPlatform() {
 	}
 }
 
-void VM_Guest::setupDisplay(const std::int32_t mode, const bool forced) {
-	//                                      HI   LO   TP   FP   MC
-	static constexpr std::int32_t wSize[]{ 128,  64,  64,  64, 256 };
-	static constexpr std::int32_t hSize[]{  64,  32,  64, 128, 192 };
+void VM_Guest::setupDisplay(const Resolution mode, const bool forced) {
+	//                                         HI   LO   TP   FP   MC
+	static constexpr std::int32_t wSize[]{ 0, 128,  64,  64,  64, 256 };
+	static constexpr std::int32_t hSize[]{ 0,  64,  32,  64, 128, 192 };
 
-	const auto select{ State.schip_legacy ? 0 : mode - 1 };
-	const auto hires{ mode != Resolution::LO };
-	const auto lores{ mode == Resolution::LO };
+	const auto select{ State.schip_legacy ? 1 : std::to_underlying(mode) };
+	const auto hires{ mode != Resolution::LO }; Program->screenHires = hires;
+	const auto lores{ mode == Resolution::LO }; Program->screenLores = lores;
 
 	Plane.W = wSize[select]; Plane.Wb = Plane.W - 1;
 	Plane.H = hSize[select]; Plane.Hb = Plane.H - 1;
 	Plane.S = Plane.W * Plane.H;
-
-	Program->screenMode  = mode;
-	Program->screenHires = hires;
-	Program->screenLores = lores;
 
 	if (State.mega_enabled) {
 		Mem->foregroundBuffer.resize(true, Plane.H, Plane.W);
@@ -372,14 +369,9 @@ void VM_Guest::renderToTexture() {
 			];
 		}
 	} else if (State.chip8X_rom) {
-		auto mask{ 0xFC };
-		if (State.chip8X_hires) mask = 0xFF;
-		else if (State.schip_legacy) {
-			mask = Program->screenLores ? 0xF8 : 0xFC;
-		}
 		for (auto idx{ 0 }; idx < Plane.S; ++idx) {
-			const auto Y = idx / Plane.W & mask;
-			const auto X = idx % Plane.W >> 0x3;
+			const auto Y = idx / Plane.W & Plane.mask8X;
+			const auto X = idx % Plane.W >> 3; // 8px zones
 
 			BVS->pixels[idx] = Mem->displayBuffer[0].at_raw(idx)
 				? Mem->color8xBuffer.at_raw(Y, X) : Color->bit[0];

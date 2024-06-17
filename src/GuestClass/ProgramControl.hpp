@@ -29,7 +29,6 @@ public:
 	double framerate{};
 
 	std::size_t   limiter{};
-	std::int32_t  screenMode{};
 	std::uint32_t opcode{};
 	std::uint32_t counter{};
 

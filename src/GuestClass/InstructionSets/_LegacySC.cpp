@@ -118,6 +118,7 @@ void FunctionsForLegacySC::drawLoresColor(
 	const std::int32_t idx
 ) {
 	if (vm->Program->screenLores) {
+		vm->Plane.mask8X = 0xFC;
 		const auto H{ (VY & 0x77) << 0 }, maxH{ (H >> 4) + 1 };
 		const auto W{ (VX & 0x77) << 1 }, maxW{ (W >> 4) + 2 };
 
@@ -130,6 +131,7 @@ void FunctionsForLegacySC::drawLoresColor(
 		}
 	}
 	else {
+		vm->Plane.mask8X = 0xF8;
 		const auto H{ VY & 0x77 }, maxH{ (H >> 4) + 1 };
 		const auto W{ VX & 0x77 }, maxW{ (W >> 4) + 1 };
 
@@ -148,6 +150,7 @@ void FunctionsForLegacySC::drawHiresColor(
 	const std::int32_t idx,
 	const std::int32_t N
 ) {
+	vm->Plane.mask8X = 0xFF;
 	if (vm->Program->screenLores) {
 		for (auto R{ 0 }, Y{ VY << 1 }, X{ VX << 1 >> 3 }; R < (N << 1); ++R) {
 			vm->Mem->color8xBuffer.at_wrap(Y + R, X + 0) =

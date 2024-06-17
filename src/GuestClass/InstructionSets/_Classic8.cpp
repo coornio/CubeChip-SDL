@@ -77,6 +77,7 @@ void FunctionsForClassic8::drawLoresColor(
 	const std::int32_t VY,
 	const std::int32_t idx
 ) {
+	vm->Plane.mask8X = 0xFC;
 	for (auto Y{ 0 }, maxH{ VY >> 4 }; Y <= maxH; ++Y) {
 		for (auto X{ 0 }, maxW{ VX >> 4 }; X <= maxW; ++X) {
 			vm->Mem->color8xBuffer.at_wrap((VY + Y) << 2, VX + X) = 
@@ -91,6 +92,7 @@ void FunctionsForClassic8::drawHiresColor(
 	const std::int32_t idx,
 	const std::int32_t N
 ) {
+	vm->Plane.mask8X = 0xFF;
 	for (auto Y{ VY }, X{ VX >> 3 }; Y < VY + N; ++Y) {
 		vm->Mem->color8xBuffer.at_wrap(Y, X) =
 			vm->Color->getFore8X(idx);

@@ -6,9 +6,23 @@
 
 #pragma once
 
+enum class Resolution {
+	ERROR,
+	HI, // 128 x  64 - 2:1
+	LO, //  64 x  32 - 2:1
+	TP, //  64 x  64 - 2:1
+	FP, //  64 x 128 - 2:1
+	MC, // 256 x 192 - 4:3
+};
+
 enum class BrushType {
 	CLR,
 	XOR,
 	SUB,
 	ADD,
+};
+
+enum class FlushType {
+	DISPLAY,
+	DISCARD,
 };

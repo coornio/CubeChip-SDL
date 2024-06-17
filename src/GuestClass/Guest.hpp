@@ -62,20 +62,13 @@ public:
 	VM_Guest& isSystemPaused(bool);
 	VM_Guest& isDisplayReady(bool);
 
-	enum Resolution {
-		ERROR,
-		HI, // 128 x  64
-		LO, //  64 x  32
-		TP, //  64 x  64
-		FP, //  64 x 128
-		MC, // 256 x 192
-	};
-
 	struct BitPlaneProperties final {
 		std::int32_t W{},  H{};
 		std::int32_t Wb{}, Hb{};
 		std::int32_t S{};
+
 		std::int32_t selected{ 1 };
+		std::int32_t mask8X{ 0xFC };
 
 		using enum BrushType;
 		BrushType brush{ XOR };
@@ -85,13 +78,13 @@ public:
 		std::int32_t W{}, H{};
 
 		std::uint8_t collision{ 0xFF };
-		bool    rotate{};
-		bool    flip_X{};
-		bool    flip_Y{};
-		bool    invert{};
 		std::uint8_t rgbmod{};
-		bool    nodraw{};
-		bool    uneven{};
+		bool         rotate{};
+		bool         flip_X{};
+		bool         flip_Y{};
+		bool         invert{};
+		bool         nodraw{};
+		bool         uneven{};
 
 		float   alpha{ 1.0f };
 
@@ -130,7 +123,7 @@ public:
 	bool loadRomToRam(std::size_t, std::size_t);
 	void initPlatform();
 	void loadFontData();
-	void setupDisplay(std::int32_t, bool = false);
+	void setupDisplay(Resolution, bool = false);
 	void renderToTexture();
 
 	// core functions
