@@ -7,6 +7,8 @@
 #include <SDL3/SDL_main.h>
 #include "Includes.hpp"
 
+#include "GuestClass/FileTypes.hpp"
+
 #include <iostream>
 #include <iomanip>
 #include <chrono>
@@ -45,7 +47,10 @@ int32_t SDL_main(int32_t argc, char* argv[]) {
 	FrameLimiter Frame(60.0, true, true);
 	SDL_Event    Event;
 
-	Host.isReady(HDM->verifyFile(argc > 1 ? argv[1] : nullptr));
+	Host.isReady(HDM->verifyFile(
+		RomFileTypes::validate,
+		argc > 1 ? argv[1] : nullptr
+	));
 
 reset_all:
 	Guest = nullptr;
@@ -73,7 +78,7 @@ reset_all:
 
 				case SDL_EVENT_DROP_FILE:
 					BVS->raiseWindow();
-					if (HDM->verifyFile(Event.drop.data)) {
+					if (HDM->verifyFile(RomFileTypes::validate, Event.drop.data)) {
 						blog.stdLogOut("File drop accepted: "s + Event.drop.data);
 						Host.isReady(true);
 						goto reset_all;

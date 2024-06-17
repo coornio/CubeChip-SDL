@@ -7,12 +7,15 @@
 #include <fstream>
 
 #include "HomeDirManager.hpp"
-#include "../GuestClass/FileTypes.hpp"
 #include "../Assistants/BasicLogger.hpp"
 #include "../Assistants/PathExceptionClass.hpp"
 #include "../Assistants/SHA1.hpp"
 
 using namespace blogger;
+
+inline static constexpr std::size_t cexprHash(const char* str, std::size_t v = 0) noexcept {
+	return (*str == 0) ? v : 31 * cexprHash(str + 1) + *str;
+}
 
 HomeDirManager::HomeDirManager(const char* homeName) try
 	: BasicHome{ homeName }
@@ -43,7 +46,10 @@ void HomeDirManager::addDirectory() {
 	}
 }
 
-bool HomeDirManager::verifyFile(const char* filepath) {
+bool HomeDirManager::verifyFile(
+	bool (*validate)(std::size_t hash, std::size_t fsize, std::string_view sha1),
+	const char* filepath
+) {
 	if (!filepath) return false;
 	namespace fs = std::filesystem;
 
@@ -66,12 +72,12 @@ bool HomeDirManager::verifyFile(const char* filepath) {
 	}
 
 	std::error_code error;
-	const auto fslen{ fs::file_size(fspath, error) };
+	const auto fileSize{ fs::file_size(fspath, error) };
 	if (error) {
 		blog.dbgLogOut("Unable to access file: " + fspath.string());
 		return false;
 	}
-	if (fslen == 0) {
+	if (fileSize == 0) {
 		blog.dbgLogOut("File is empty: " + fspath.string());
 		return false;
 	}
@@ -81,14 +87,14 @@ bool HomeDirManager::verifyFile(const char* filepath) {
 	auto tempHash{ cexprHash(tempType.c_str()) };
 	auto tempSHA1{ SHA1::from_file(tempPath) };
 
-	if (RomFileTypes::validate(tempHash, fslen, tempSHA1)) {
+	if (validate(tempHash, fileSize, tempSHA1)) {
 		path = tempPath;
 		file = fspath.filename().string();
 		name = fspath.stem().string();
 		type = tempType;
 		sha1 = tempSHA1;
 		hash = tempHash;
-		size = fslen;
+		size = fileSize;
 
 		return true;
 	} else {

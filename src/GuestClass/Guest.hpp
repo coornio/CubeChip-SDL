@@ -11,7 +11,7 @@
 #include <memory>
 
 #include "InstructionSets/Interface.hpp" // this should be removed eventually
-#include "Enums.hpp" // placeholder
+#include "Enums.hpp"
 
 class HomeDirManager;
 class BasicVideoSpec;

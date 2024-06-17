@@ -26,5 +26,8 @@ public:
 
 	void reset();
 	void addDirectory();
-	bool verifyFile(const char* = nullptr);
+	bool verifyFile(
+		bool (*)(std::size_t, std::size_t, std::string_view),
+		const char* = nullptr
+	);
 };
