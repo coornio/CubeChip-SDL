@@ -19,13 +19,13 @@ VM_Host::VM_Host(
 	BasicVideoSpec* bvs_ptr,
 	BasicAudioSpec* bas_ptr
 )
-	: File { hdm_ptr }
-	, Video{ bvs_ptr }
-	, Audio{ bas_ptr }
+	: HDM{ hdm_ptr }
+	, BVS{ bvs_ptr }
+	, BAS{ bas_ptr }
 {}
 
 bool VM_Host::isReady() const { return _isReady; }
 bool VM_Host::doBench() const { return _doBench; }
 
-VM_Host& VM_Host::isReady(const bool state) { _isReady = state; return *this; }
-VM_Host& VM_Host::doBench(const bool state) { _doBench = state; return *this; }
+void VM_Host::isReady(const bool state) { _isReady = state; }
+void VM_Host::doBench(const bool state) { _doBench = state; }

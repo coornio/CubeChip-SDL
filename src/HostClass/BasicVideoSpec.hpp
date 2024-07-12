@@ -14,6 +14,8 @@
 #include <string>
 #include <utility>
 
+#include "../Types.hpp"
+
 class BasicVideoSpec {
 	SDL_Window*   window{};
 	SDL_Renderer* renderer{};
@@ -21,16 +23,15 @@ class BasicVideoSpec {
 
 	SDL_FRect frameGame{};
 	SDL_FRect frameFull{};
+	SDL_Color backFrameColor{};
 	SDL_Color PerimeterColor{};
-	Sint32    PerimeterWidth{};
-	Sint32    frameMultiplier{ 2 };
-	Sint32    ppitch{};
 
-	bool      enableBuzzGlow{};
-	bool      enableScanLine{};
+	s32 PerimeterWidth{};
+	s32 frameMultiplier{ 2 };
+	s32 ppitch{};
 
-public:
-	Uint32*   pixels{};
+	bool enableBuzzGlow{};
+	bool enableScanLine{};
 
 public:
 	explicit BasicVideoSpec();
@@ -40,28 +41,31 @@ public:
 	static bool showErrorBox(std::string_view, std::string_view);
 
 private:
-	void createWindow(Sint32, Sint32);
+	void createWindow(s32, s32);
 	void createRenderer();
 
 public:
-	void createTexture(Sint32 = 0, Sint32 = 0);
+	void createTexture(s32, s32);
 	void changeTitle(const char* = nullptr);
 
 	void raiseWindow();
 	void resetWindow();
-	void lockTexture();
+
+	[[nodiscard]]
+	u32* lockTexture();
 	void unlockTexture();
 	void renderPresent();
 
-	void setTextureAlpha(std::size_t);
-	void AudioOutline(Uint32, Uint32);
-	void setAspectRatio(Sint32, Sint32, Sint32);
+	void setTextureAlpha(usz);
+	void setAudioLineColor(u32, u32);
+	void setBackgroundColor(u32);
+	void setAspectRatio(s32, s32, s32);
 
 private:
 	void multiplyWindowDimensions();
 
 public:
-	void changeFrameMultiplier(Sint32);
+	void changeFrameMultiplier(s32);
 
 private:
 	void quitWindow();

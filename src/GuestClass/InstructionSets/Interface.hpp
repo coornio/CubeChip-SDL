@@ -10,6 +10,8 @@
 #include <cstdint>
 
 class VM_Guest;
+class MemoryBanks;
+class DisplayTraits;
 
 /*------------------------------------------------------------------*/
 /*  interface class  FncSetInterface                                */
@@ -21,10 +23,20 @@ struct FncSetInterface {
 	virtual void scrollLT(std::int32_t) = 0;
 	virtual void scrollRT(std::int32_t) = 0;
 
-	virtual void drawSprite(std::int32_t, std::int32_t, std::int32_t, std::uint32_t) = 0;
+	virtual void drawSprite(
+		MemoryBanks*, DisplayTraits*,
+		std::int32_t, std::int32_t, std::int32_t
+	) = 0;
 
-	virtual void drawLoresColor(std::int32_t, std::int32_t, std::int32_t)               = 0;
-	virtual void drawHiresColor(std::int32_t, std::int32_t, std::int32_t, std::int32_t) = 0;
+	virtual void drawLoresColor(
+		MemoryBanks*, DisplayTraits*,
+		std::int32_t, std::int32_t, std::int32_t
+	) = 0;
+
+	virtual void drawHiresColor(
+		MemoryBanks*, DisplayTraits*,
+		std::int32_t, std::int32_t, std::int32_t, std::int32_t
+	) = 0;
 
 	virtual ~FncSetInterface() noexcept {};
 };
@@ -64,10 +76,20 @@ class FunctionsForGigachip final : public FncSetInterface {
 	void scrollLT(std::int32_t) override;
 	void scrollRT(std::int32_t) override;
 
-	void drawSprite(std::int32_t, std::int32_t, std::int32_t, std::uint32_t) override;
+	void drawSprite(
+		MemoryBanks*, DisplayTraits*,
+		std::int32_t, std::int32_t, std::int32_t
+	) override;
 
-	void drawLoresColor(std::int32_t, std::int32_t, std::int32_t)               override {};
-	void drawHiresColor(std::int32_t, std::int32_t, std::int32_t, std::int32_t) override {};
+	void drawLoresColor(
+		MemoryBanks*, DisplayTraits*,
+		std::int32_t, std::int32_t, std::int32_t
+	) override {};
+
+	void drawHiresColor(
+		MemoryBanks*, DisplayTraits*,
+		std::int32_t, std::int32_t, std::int32_t, std::int32_t
+	) override {};
 
 public:
 	void chooseBlend(std::size_t);
@@ -103,10 +125,20 @@ class FunctionsForMegachip final : public FncSetInterface {
 	void scrollLT(std::int32_t) override;
 	void scrollRT(std::int32_t) override;
 
-	void drawSprite(std::int32_t, std::int32_t, std::int32_t, std::uint32_t) override;
+	void drawSprite(
+		MemoryBanks*, DisplayTraits*,
+		std::int32_t, std::int32_t, std::int32_t
+	) override;
 
-	void drawLoresColor(std::int32_t, std::int32_t, std::int32_t)               override {};
-	void drawHiresColor(std::int32_t, std::int32_t, std::int32_t, std::int32_t) override {};
+	void drawLoresColor(
+		MemoryBanks*, DisplayTraits*,
+		std::int32_t, std::int32_t, std::int32_t
+	) override {};
+
+	void drawHiresColor(
+		MemoryBanks*, DisplayTraits*,
+		std::int32_t, std::int32_t, std::int32_t, std::int32_t
+	) override {};
 
 public:
 	void chooseBlend(std::size_t) noexcept;
@@ -120,17 +152,30 @@ public:
 class FunctionsForModernXO final : public FncSetInterface {
 	VM_Guest* vm;
 
-	void drawByte(std::int32_t, std::int32_t, std::int32_t, std::size_t);
+	void drawByte(
+		MemoryBanks*, DisplayTraits*,
+		std::int32_t, std::int32_t, std::int32_t, std::size_t
+	);
 
 	void scrollUP(std::int32_t) override;
 	void scrollDN(std::int32_t) override;
 	void scrollLT(std::int32_t) override;
 	void scrollRT(std::int32_t) override;
 
-	void drawSprite(std::int32_t, std::int32_t, std::int32_t, std::uint32_t) override;
+	void drawSprite(
+		MemoryBanks*, DisplayTraits*,
+		std::int32_t, std::int32_t, std::int32_t
+	) override;
 
-	void drawLoresColor(std::int32_t, std::int32_t, std::int32_t)               override {};
-	void drawHiresColor(std::int32_t, std::int32_t, std::int32_t, std::int32_t) override {};
+	void drawLoresColor(
+		MemoryBanks*, DisplayTraits*,
+		std::int32_t, std::int32_t, std::int32_t
+	) override {};
+
+	void drawHiresColor(
+		MemoryBanks*, DisplayTraits*,
+		std::int32_t, std::int32_t, std::int32_t, std::int32_t
+	) override {};
 
 public:
 	explicit FunctionsForModernXO(VM_Guest*) noexcept;
@@ -143,8 +188,14 @@ public:
 class FunctionsForLegacySC final : public FncSetInterface {
 	VM_Guest* vm;
 
-	void drawByte(std::int32_t, std::int32_t, std::size_t, bool&);
-	void drawShort(std::int32_t, std::int32_t, std::size_t);
+	void drawByte(
+		MemoryBanks*, DisplayTraits*,
+		std::int32_t, std::int32_t, std::size_t, bool&
+	);
+	void drawShort(
+		MemoryBanks*, DisplayTraits*,
+		std::int32_t, std::int32_t, std::size_t
+	);
 	std::size_t bitBloat(std::size_t);
 
 	void scrollUP(std::int32_t) override;
@@ -152,10 +203,20 @@ class FunctionsForLegacySC final : public FncSetInterface {
 	void scrollLT(std::int32_t) override;
 	void scrollRT(std::int32_t) override;
 
-	void drawSprite(std::int32_t, std::int32_t, std::int32_t, std::uint32_t) override;
+	void drawSprite(
+		MemoryBanks*, DisplayTraits*,
+		std::int32_t, std::int32_t, std::int32_t
+	) override;
 
-	void drawLoresColor(std::int32_t, std::int32_t, std::int32_t)               override;
-	void drawHiresColor(std::int32_t, std::int32_t, std::int32_t, std::int32_t) override;
+	void drawLoresColor(
+		MemoryBanks*, DisplayTraits*,
+		std::int32_t, std::int32_t, std::int32_t
+	) override;
+
+	void drawHiresColor(
+		MemoryBanks*, DisplayTraits*,
+		std::int32_t, std::int32_t, std::int32_t, std::int32_t
+	) override;
 
 public:
 	explicit FunctionsForLegacySC(VM_Guest*) noexcept;
@@ -168,17 +229,30 @@ public:
 class FunctionsForClassic8 final : public FncSetInterface {
 	VM_Guest* vm;
 
-	void drawByte(std::int32_t, std::int32_t, std::size_t);
+	void drawByte(
+		MemoryBanks*, DisplayTraits*,
+		std::int32_t, std::int32_t, std::size_t
+	);
 
 	void scrollUP(std::int32_t) override;
 	void scrollDN(std::int32_t) override;
 	void scrollLT(std::int32_t) override;
 	void scrollRT(std::int32_t) override;
 
-	void drawSprite(std::int32_t, std::int32_t, std::int32_t, std::uint32_t) override;
+	void drawSprite(
+		MemoryBanks*, DisplayTraits*,
+		std::int32_t, std::int32_t, std::int32_t
+	) override;
 
-	void drawLoresColor(std::int32_t, std::int32_t, std::int32_t)               override;
-	void drawHiresColor(std::int32_t, std::int32_t, std::int32_t, std::int32_t) override;
+	void drawLoresColor(
+		MemoryBanks*, DisplayTraits*,
+		std::int32_t, std::int32_t, std::int32_t
+	) override;
+
+	void drawHiresColor(
+		MemoryBanks*, DisplayTraits*,
+		std::int32_t, std::int32_t, std::int32_t, std::int32_t
+	) override;
 
 public:
 	explicit FunctionsForClassic8(VM_Guest*) noexcept;

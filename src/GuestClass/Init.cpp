@@ -16,11 +16,11 @@ using namespace blogger;
 #include "../HostClass/HomeDirManager.hpp"
 
 #include "Guest.hpp"
-#include "FileTypes.hpp"
+#include "RomCheck.hpp"
 #include "HexInput.hpp"
 #include "ProgramControl.hpp"
 #include "MemoryBanks.hpp"
-#include "DisplayColors.hpp"
+#include "DisplayTraits.hpp"
 
 bool VM_Guest::setupMachine() {
 	if (!romTypeCheck()) {
@@ -28,7 +28,7 @@ bool VM_Guest::setupMachine() {
 	}
 
 	initPlatform();
-	loadFontData();
+	fontCopyToMemory();
 
 	blog.stdLogOut("Successfully initialized rom/platform.");
 	return true;
@@ -41,133 +41,147 @@ bool VM_Guest::romTypeCheck() {
 	*/
 	switch (HDM->hash) {
 
-		case (FileTypes::c2x):
-			if (!loadRomToRam(4'096, 0x300))
+		case (RomExt::c2x):
+			if (!romCopyToMemory(4'096, 0x300))
 				return false;
-			Program->init(0x300, 15);
+			Program->init(Mem->counter, 0x300, 30);
 			Program->setFncSet(&SetClassic8);
 			State.chip8X_rom   = true;
+			State.chip8_legacy = true;
 			State.hires_2paged = true;
 			break;
 
-		case (FileTypes::c4x):
-			if (!loadRomToRam(4'096, 0x300))
+		case (RomExt::c4x):
+			if (!romCopyToMemory(4'096, 0x300))
 				return false;
-			Program->init(0x300, 15);
+			Program->init(Mem->counter, 0x300, 30);
 			Program->setFncSet(&SetClassic8);
 			State.chip8X_rom   = true;
+			State.chip8_legacy = true;
 			State.hires_4paged = true;
 			break;
 
-		case (FileTypes::c8x):
-			if (!loadRomToRam(4'096, 0x300))
+		case (RomExt::c8x):
+			if (!romCopyToMemory(4'096, 0x300))
 				return false;
-			Program->init(0x300, 30);
+			Program->init(Mem->counter, 0x300, 30);
 			Program->setFncSet(&SetClassic8);
-			State.chip8X_rom = true;
+			State.chip8_legacy = true;
+			State.chip8X_rom   = true;
 			break;
 
-		case (FileTypes::c8e):
-			if (!loadRomToRam(4'096, 0x200))
+		case (RomExt::c8e):
+			if (!romCopyToMemory(4'096, 0x200))
 				return false;
-			Program->init(0x200, 30);
+			Program->init(Mem->counter, 0x200, 30);
 			Program->setFncSet(&SetClassic8);
-			State.chip8E_rom = true;
+			State.chip8_legacy = true;
+			State.chip8E_rom   = true;
 			break;
 
-		case (FileTypes::c2h):
-			if (!loadRomToRam(4'096, 0x260))
+		case (RomExt::c2h):
+			if (!romCopyToMemory(4'096, 0x260))
 				return false;
-			Program->init(0x260, 15);
+			Program->init(Mem->counter, 0x260, 30);
 			Program->setFncSet(&SetClassic8);
-			State.chip_classic = true;
+			State.chip8_legacy = true;
 			State.hires_2paged = true;
 			break;
 
-		case (FileTypes::c4h):
-			if (!loadRomToRam(4'096, 0x244))
+		case (RomExt::c4h):
+			if (!romCopyToMemory(4'096, 0x244))
 				return false;
-			Program->init(0x244, 15);
+			Program->init(Mem->counter, 0x244, 30);
 			Program->setFncSet(&SetClassic8);
-			State.chip_classic = true;
+			State.chip8_legacy = true;
 			State.hires_4paged = true;
 			break;
 
-		case (FileTypes::c8h):
-			if (!loadRomToRam(4'096, 0x200))
+		case (RomExt::c8h):
+			if (!romCopyToMemory(4'096, 0x200))
 				return false;
-			if (mrw(0x200) != 0x12 || mrw(0x201) != 0x60) {
+			if (Mem->read(0x200) != 0x12 || Mem->read(0x201) != 0x60) {
 				blog.stdLogOut("Invalid TPD rom patch, aborting.");
 				return false;
 			}
-			Program->init(0x2C0, 30);
+			Program->init(Mem->counter, 0x2C0, 30);
 			Program->setFncSet(&SetClassic8);
-			State.chip_classic = true;
+			State.chip8_legacy = true;
 			State.hires_2paged = true;
 			Quirk.idxRegNoInc  = true;
 			Quirk.shiftVX      = true;
 			break;
 
-		case (FileTypes::ch8):
-			if (!loadRomToRam(4'096, 0x200))
+		case (RomExt::ch8):
+			if (!romCopyToMemory(4'096, 0x200))
 				return false;
-			Program->init(0x200, 11);
+			Program->init(Mem->counter, 0x200, 11);
 			Program->setFncSet(&SetClassic8);
-			State.chip_classic = true;
 			break;
 
-		case (FileTypes::sc8):
-			if (!loadRomToRam(4'096, 0x200))
+		case (RomExt::sc8):
+			if (!romCopyToMemory(4'096, 0x200))
 				return false;
-			Program->init(0x200, 30);
+			Program->init(Mem->counter, 0x200, 30);
 			Program->setFncSet(&SetClassic8);
-			State.chip_classic = true;
 			break;
 
-		case (FileTypes::gc8):
-			if (!loadRomToRam(16'777'216, 0x200))
+		case (RomExt::gc8):
+			if (!romCopyToMemory(16'777'216, 0x200))
 				return false;
-			Program->init(0x200, 10'000);
+			Program->init(Mem->counter, 0x200, 10'000);
 			Program->setFncSet(&SetGigachip);
 			State.gigachip_rom = true;
 			break;
 
-		case (FileTypes::mc8):
-			if (!loadRomToRam(16'777'216, 0x200))
+		case (RomExt::mc8):
+			if (!romCopyToMemory(16'777'216, 0x200))
 				return false;
-			Program->init(0x200, 3'000);
+			Program->init(Mem->counter, 0x200, 3'000);
 			Program->setFncSet(&SetMegachip);
 			State.megachip_rom = true;
+			Quirk.waitScroll   = true;
+			Quirk.idxRegNoInc  = true;
+			Quirk.shiftVX      = true;
+			Quirk.jmpRegX      = true;
 			break;
 
-		case (FileTypes::xo8):
-		case (FileTypes::hw8):
-			if (!loadRomToRam(65'536, 0x200))
+		case (RomExt::xo8):
+		case (RomExt::hw8):
+			if (!romCopyToMemory(65'536, 0x200))
 				return false;
-			Program->init(0x200, 200'000);
+			Program->init(Mem->counter, 0x200, 200'000);
 			Program->setFncSet(&SetModernXO);
-			State.xochip_color = true;
-			Quirk.wrapSprite   = true;
+			Display->isPixelBitColor(true);
+			Quirk.wrapSprite = true;
+			break;
+
+		case (RomExt::benchmark):
+			if (!romCopyToMemory(65'536, 0x200))
+				return false;
+			Program->init(Mem->counter, 0x200, 3'000'000);
+			Program->setFncSet(&SetClassic8);
+			blog.stdLogOut("benchmarking.");
 			break;
 
 		default:
-			if (!loadRomToRam(4'096, 0x200))
-				return false;
-			Program->init(0x200, 2'900'000);
-			Program->setFncSet(&SetClassic8);
-			State.chip_classic = true;
-			blog.stdLogOut("Unknown rom type, default parameters apply.");
+			blog.stdLogOut("Unknown rom type, we shouldn't be here!");
+			return false;
 	}
 	return true;
 }
 
-bool VM_Guest::loadRomToRam(const std::size_t size, const std::size_t offset) {
-	Program->limiter = size - 1; // set program memory limit
-	Mem->memory.resize(size);    // resize the memory vector
+bool VM_Guest::romCopyToMemory(const usz size, const usz offset) const {
+	Mem->resize(size);
 
 	std::basic_ifstream<char> ifs(HDM->path, std::ios::binary);
-	ifs.read(reinterpret_cast<char*>(&Mem->memory[offset]), HDM->size);
-	return !ifs.fail();
+	ifs.read(reinterpret_cast<char*>(Mem->getSpan().data() + offset), HDM->size);
+	if (ifs.fail()) {
+		blog.stdLogOut("Failed to copy rom data to memory, aborting.");
+		return false;
+	} else {
+		return true;
+	}
 }
 
 void VM_Guest::initPlatform() {
@@ -179,8 +193,10 @@ void VM_Guest::initPlatform() {
 	//Quirk.shiftVX = true;
 	//Quirk.jmpRegX = true;
 	//Quirk.idxRegNoInc = true;
+	//State.chip8_legacy = true;
 	//State.schip_legacy = true;
-	//State.xochip_color = true;
+	//Display->isPixelBitColor(true);
+	//Display->isPixelTrailing(true);
 	Program->setSpeed(0);
 	//Quirk.waitScroll = true;
 	//Quirk.waitVblank = true;
@@ -190,39 +206,44 @@ void VM_Guest::initPlatform() {
 	// XXX - apply custom rom settings here
 
 	if (State.hires_2paged || State.hires_4paged) {
-		State.xochip_color = false;
+		Display->isPixelBitColor(false);
 		State.schip_legacy = false;
 	}
 	if (State.megachip_rom) {
-		State.xochip_color = false;
+		Display->isPixelTrailing(false);
+		Display->isPixelBitColor(false);
+		Program->framerate = 60.0;
+		State.chip8_legacy = false;
 		State.schip_legacy = false;
 	}
 	if (State.chip8_legacy) {
+		Display->isPixelTrailing(true);
 		Quirk.clearVF    = true;
 		Quirk.waitVblank = true;
 	}
 	if (State.schip_legacy) {
 		Program->setFncSet(&SetLegacySC);
 		Program->framerate = 64.0; // match HP48 framerate
+		Display->isPixelTrailing(true);
 		Quirk.shiftVX      = true;
 		Quirk.jmpRegX      = true;
 		Quirk.idxRegNoInc  = true;
 	}
 
 	if (State.hires_2paged) {
-		setupDisplay(Resolution::TP, true);
+		prepDisplayArea(Resolution::TP, true);
 	}
 	else if (State.hires_4paged) {
-		setupDisplay(Resolution::FP, true);
+		prepDisplayArea(Resolution::FP, true);
 	}
 	else {
-		setupDisplay(Resolution::LO, true);
+		prepDisplayArea(Resolution::LO, true);
 	}
 
 	if (State.chip8X_rom) {
-		Color->cycleBackground();
-		Mem->color8xBuffer.resize(true, Plane.H, Plane.W >> 3);
-		Mem->color8xBuffer.at_raw(0, 0) = Color->getFore8X(2);
+		Display->Color.cycleBackground(BVS);
+		Mem->color8xBuffer.resize(true, Display->Trait.H, Display->Trait.W >> 3);
+		Mem->color8xBuffer.at_raw(0, 0) = Display->Color.getFore8X(2);
 
 		if (!State.schip_legacy) return;
 
@@ -233,55 +254,44 @@ void VM_Guest::initPlatform() {
 	}
 }
 
-void VM_Guest::setupDisplay(const Resolution mode, const bool forced) {
+void VM_Guest::prepDisplayArea(const Resolution mode, const bool forced) {
 	//                                         HI   LO   TP   FP   MC
-	static constexpr std::int32_t wSize[]{ 0, 128,  64,  64,  64, 256 };
-	static constexpr std::int32_t hSize[]{ 0,  64,  32,  64, 128, 192 };
+	static constexpr std::int32_t sizeW[]{ 0, 128,  64,  64,  64, 256 };
+	static constexpr std::int32_t sizeH[]{ 0,  64,  32,  64, 128, 192 };
 
 	const auto select{ State.schip_legacy ? 1 : std::to_underlying(mode) };
-	const auto hires{ mode != Resolution::LO }; Program->screenHires = hires;
-	const auto lores{ mode == Resolution::LO }; Program->screenLores = lores;
+	const auto lores{ mode == Resolution::LO }; Display->isLoresExtended(lores);
 
-	Plane.W = wSize[select]; Plane.Wb = Plane.W - 1;
-	Plane.H = hSize[select]; Plane.Hb = Plane.H - 1;
-	Plane.S = Plane.W * Plane.H;
+	const auto W{ sizeW[select] }; Display->Trait.W = W; Display->Trait.Wb = W - 1;
+	const auto H{ sizeH[select] }; Display->Trait.H = H; Display->Trait.Hb = H - 1;
+	
+	Display->Trait.S = W * H;
+	BVS->createTexture(W, H);
 
-	if (State.mega_enabled) {
-		Mem->foregroundBuffer.resize(true, Plane.H, Plane.W);
-		Mem->backgroundBuffer.resize(true, Plane.H, Plane.W);
-		Mem->collisionPalette.resize(true, Plane.H, Plane.W);
+	if (Display->isManualRefresh()) {
+		BVS->setAspectRatio(512, 384, -2);
+		Mem->foregroundBuffer.resize(false, H, W);
+		Mem->backgroundBuffer.resize(false, H, W);
+		Mem->collisionPalette.resize(false, H, W);
 		Mem->megaPalette.resize(256);
-	}
-	else {
-		Mem->displayBuffer[0].resize(!forced, Plane.H, Plane.W);
-		if (State.xochip_color) {
-			Mem->displayBuffer[1].resize(!forced, Plane.H, Plane.W);
-			Mem->displayBuffer[2].resize(!forced, Plane.H, Plane.W);
-			Mem->displayBuffer[3].resize(!forced, Plane.H, Plane.W);
+	} else {
+		BVS->setAspectRatio(512, 256, +2);
+		Mem->displayBuffer[0].resize(!forced, H, W);
+		if (Display->isPixelBitColor() || Display->isPixelTrailing()) {
+			Mem->displayBuffer[1].resize(!forced, H, W);
+			Mem->displayBuffer[2].resize(!forced, H, W);
+			Mem->displayBuffer[3].resize(!forced, H, W);
 		}
 	}
 
-	BVS->createTexture(Plane.W, Plane.H);
-	BVS->setAspectRatio(
-		State.mega_enabled ? 512 : 512,
-		State.mega_enabled ? 384 : 256,
-		State.mega_enabled ?  -2 :   2
-	);
-
-	const bool legacy{
-		State.chip8E_rom   ||
-		State.chip8X_rom   ||
-		State.schip_legacy ||
-		State.chip8_legacy
-	};
-
-	if (legacy && (forced || Quirk.waitVblank ^ lores)) {
-		Program->ipf     += Program->boost *= -1;
-		Quirk.waitVblank  = lores;
+	if (islegacyPlatform() && (forced || Quirk.waitVblank ^ lores)) {
+		//Program->ipf     += Program->boost *= -1;
+		//Quirk.waitVblank  = lores;
+		//printf("ipf: %d\n", Program->ipf);
 	}
 };
 
-void VM_Guest::loadFontData() {
+void VM_Guest::fontCopyToMemory() const {
 	static constexpr std::uint8_t FONT_DATA[]{
 		0x60, 0xA0, 0xA0, 0xA0, 0xC0, // 0
 		0x40, 0xC0, 0x40, 0x40, 0xE0, // 1
@@ -341,47 +351,103 @@ void VM_Guest::loadFontData() {
 	// copy the FONT at the desired offset, and omit A-F superchip sprites if needed
 	std::copy_n(
 		FONT_DATA, State.schip_legacy ? 180 : 240,
-		Mem->memory.begin()
+		Mem->getSpan().data()
 	);
 
 	if (!State.megachip_rom) return;
 
 	std::copy_n(
 		MEGA_FONT_DATA, 160,
-		Mem->memory.begin() + 240
+		Mem->getSpan().data() + 240
 	);
 }
 
 void VM_Guest::renderToTexture() {
-	BVS->lockTexture();
+	auto* pixels{ BVS->lockTexture() };
 
-	if (State.mega_enabled) {
-		for (auto idx{ 0 }; idx < Plane.S; ++idx) {
-			BVS->pixels[idx] = Mem->foregroundBuffer.at_raw(idx);
+	if (Display->isManualRefresh()) {
+		for (auto idx{ 0 }; idx < Display->Trait.S; ++idx) {
+			pixels[idx] = Mem->foregroundBuffer.at_raw(idx);
 		}
-	} else if (State.xochip_color) {
-		for (auto idx{ 0 }; idx < Plane.S; ++idx) {
-			BVS->pixels[idx] = Color->bit[
+	} else if (Display->isPixelBitColor()) {
+		for (auto idx{ 0 }; idx < Display->Trait.S; ++idx) {
+			pixels[idx] = (0xFF << 24 | Display->Color.bit[
 				Mem->displayBuffer[0].at_raw(idx) << 0 |
 				Mem->displayBuffer[1].at_raw(idx) << 1 |
 				Mem->displayBuffer[2].at_raw(idx) << 2 |
 				Mem->displayBuffer[3].at_raw(idx) << 3
-			];
+			]);
 		}
 	} else if (State.chip8X_rom) {
-		for (auto idx{ 0 }; idx < Plane.S; ++idx) {
-			const auto Y = idx / Plane.W & Plane.mask8X;
-			const auto X = idx % Plane.W >> 3; // 8px zones
+		if (Display->isPixelTrailing()) {
+			for (auto idx{ 0 }; idx < Display->Trait.S; ++idx) {
+				const auto Y = idx / Display->Trait.W & Display->Trait.mask8X;
+				const auto X = idx % Display->Trait.W >> 3; // 8px color zones
 
-			BVS->pixels[idx] = Mem->displayBuffer[0].at_raw(idx)
-				? Mem->color8xBuffer.at_raw(Y, X) : Color->bit[0];
+				if (Mem->displayBuffer[0].at_raw(idx)) {
+					pixels[idx] = (0xFF << 24 | Mem->color8xBuffer.at_raw(Y, X));
+					continue;
+				}
+				if (Mem->displayBuffer[1].at_raw(idx)) {
+					pixels[idx] = (0xE8 << 24 | Mem->color8xBuffer.at_raw(Y, X));
+					continue;
+				}
+				if (Mem->displayBuffer[2].at_raw(idx)) {
+					pixels[idx] = (0x7B << 24 | Mem->color8xBuffer.at_raw(Y, X));
+					continue;
+				}
+				if (Mem->displayBuffer[3].at_raw(idx)) {
+					pixels[idx] = (0x38 << 24 | Mem->color8xBuffer.at_raw(Y, X));
+					continue;
+				} else {
+					pixels[idx] = 0;
+				}
+			}
+			Mem->displayBuffer[3].copyLinear(Mem->displayBuffer[2]);
+			Mem->displayBuffer[2].copyLinear(Mem->displayBuffer[1]);
+			Mem->displayBuffer[1].copyLinear(Mem->displayBuffer[0]);
+		} else {
+			for (auto idx{ 0 }; idx < Display->Trait.S; ++idx) {
+				const auto Y = idx / Display->Trait.W & Display->Trait.mask8X;
+				const auto X = idx % Display->Trait.W >> 3; // 8px color zones
+
+				pixels[idx] = (0xFF << 24 | (Mem->displayBuffer[0].at_raw(idx)
+					? Mem->color8xBuffer.at_raw(Y, X) : 0));
+			}
 		}
 	} else {
-		for (auto idx{ 0 }; idx < Plane.S; ++idx) {
-			BVS->pixels[idx] = Color->bit[
-				Mem->displayBuffer[0].at_raw(idx)
-			];
+		if (Display->isPixelTrailing()) {
+			for (auto idx{ 0 }; idx < Display->Trait.S; ++idx) {
+				if (Mem->displayBuffer[0].at_raw(idx)) {
+					pixels[idx] = (0xFF << 24 | Display->Color.bit[1]);
+					continue;
+				}
+				if (Mem->displayBuffer[1].at_raw(idx)) {
+					pixels[idx] = (0xE8 << 24 | Display->Color.bit[1]);
+					continue;
+				}
+				if (Mem->displayBuffer[2].at_raw(idx)) {
+					pixels[idx] = (0x7B << 24 | Display->Color.bit[1]);
+					continue;
+				}
+				if (Mem->displayBuffer[3].at_raw(idx)) {
+					pixels[idx] = (0x38 << 24 | Display->Color.bit[1]);
+					continue;
+				} else {
+					pixels[idx] = 0;
+				}
+			}
+			Mem->displayBuffer[3].copyLinear(Mem->displayBuffer[2]);
+			Mem->displayBuffer[2].copyLinear(Mem->displayBuffer[1]);
+			Mem->displayBuffer[1].copyLinear(Mem->displayBuffer[0]);
+		} else {
+			for (auto idx{ 0 }; idx < Display->Trait.S; ++idx) {
+				pixels[idx] = (0xFF << 24 | Display->Color.bit[
+					Mem->displayBuffer[0].at_raw(idx)
+				]);
+			}
 		}
 	}
 	BVS->unlockTexture();
+
 }

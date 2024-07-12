@@ -15,6 +15,14 @@ enum class Resolution {
 	MC, // 256 x 192 - 4:3
 };
 
+enum class Interrupt {
+	NONE,
+	ONCE,
+	STOP,
+	WAIT,
+	FX0A,
+};
+
 enum class BrushType {
 	CLR,
 	XOR,
@@ -25,4 +33,11 @@ enum class BrushType {
 enum class FlushType {
 	DISPLAY,
 	DISCARD,
+};
+
+enum class Index {
+	MEMORY,
+	FONT_S,
+	FONT_L,
+	FONT_M,
 };

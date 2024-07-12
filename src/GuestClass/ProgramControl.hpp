@@ -9,51 +9,34 @@
 #include <cstdint>
 #include <string>
 
-class VM_Guest;
+#include "Enums.hpp"
+
+class HexInput;
 struct FncSetInterface;
 
-enum class Interrupt {
-	NONE,
-	ONCE,
-	STOP,
-	WAIT,
-	FX0A,
-};
-
 class ProgramControl final {
-	VM_Guest* vm;
 	FncSetInterface*& fncSet;
 
 public:
 	std::int32_t ipf{}, boost{};
 	double framerate{};
 
-	std::size_t   limiter{};
-	std::uint32_t opcode{};
-	std::uint32_t counter{};
-
-	Interrupt interrupt{};
-
-	bool screenLores{};
-	bool screenHires{};
+	using enum Interrupt;
+	Interrupt interrupt{ NONE };
 
 	std::uint8_t timerDelay{};
 	std::uint8_t timerSound{};
 
-	explicit ProgramControl(VM_Guest*, FncSetInterface*&);
-	std::string hexOpcode() const;
+	explicit ProgramControl(FncSetInterface*&);
+	std::string hexOpcode(std::uint32_t) const;
 
-	void init(std::uint32_t, std::int32_t);
+	void init(std::uint32_t&, std::uint32_t, std::int32_t);
 	void setSpeed(std::int32_t);
 	void setFncSet(FncSetInterface*);
 
-	void skipInstruction();
-	void jumpInstruction(std::uint32_t);
-	void stepInstruction(std::int32_t);
+	void requestHalt(std::uint32_t);
+	void setInterrupt(bool, Interrupt);
 
-	void requestHalt();
-	void setInterrupt(Interrupt);
-
-	void handleTimersDec();
-	void handleInterrupt();
+	void handleTimersDec(bool&);
+	void handleInterrupt(HexInput*, std::uint8_t&, bool&);
 };

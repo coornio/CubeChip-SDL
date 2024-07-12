@@ -9,11 +9,11 @@
 #include <cstddef>
 #include <string>
 
-inline constexpr std::size_t cexprHash(const char* str, std::size_t v = 0) noexcept {
-	return (*str == 0) ? v : 31 * cexprHash(str + 1) + *str;
+inline constexpr std::size_t cexprHash(const char* str) noexcept {
+	return (*str == '\0') ? 0 : cexprHash(str + 1) * 31 + *str;
 }
 
-enum FileTypes : std::size_t {
+enum RomExt : std::size_t {
 	c2x = cexprHash(".c2x"), // CHIP-8X 2-page
 	c4x = cexprHash(".c4x"), // CHIP-8X 4-page
 	c8x = cexprHash(".c8x"), // CHIP-8X
@@ -31,22 +31,20 @@ enum FileTypes : std::size_t {
 
 	xo8 = cexprHash(".xo8"), // XO-CHIP
 	hw8 = cexprHash(".hw8"), // HYPERWAVE-CHIP
+
+	benchmark = cexprHash(".benchmark")
 };
 
-class RomFileTypes final {
-	RomFileTypes() = delete;
-	~RomFileTypes() = delete;
-
-	static bool checkSize(
-		std::size_t size,
-		std::size_t offset,
-		std::size_t limit
-	);
+class RomFile final {
+	 RomFile() = delete;
+	~RomFile() = delete;
 
 public:
+	static std::string error;
+
 	static bool validate(
-		std::size_t      hash,
-		std::size_t      size,
+		std::uint64_t    hash,
+		std::uint64_t    size,
 		std::string_view sha1 = ""
 	);
 };

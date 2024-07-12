@@ -10,43 +10,43 @@
 #include "../HostClass/BasicAudioSpec.hpp"
 #include "../HostClass/BasicVideoSpec.hpp"
 
-#include "ProgramControl.hpp"
 #include "SoundCores.hpp"
-#include "DisplayColors.hpp"
-#include "Guest.hpp"
 
 /*------------------------------------------------------------------*/
 /*  class  SoundCores                                               */
 /*------------------------------------------------------------------*/
 
-SoundCores::SoundCores(VM_Guest* parent, BasicAudioSpec* bas)
-	: vm { parent }
-	, BAS{ bas }
+SoundCores::SoundCores(BasicAudioSpec* BAS)
+	: C8{ BAS->getFrequency() }
+	, XO{ BAS->getFrequency() }
+	, MC{ BAS->getFrequency() }
 {}
 
 void SoundCores::renderAudio(
 	BasicVideoSpec* BVS,
-	DisplayColors*  Color,
-	ProgramControl* Program
+	BasicAudioSpec* BAS,
+	const u32*      color,
+	const double    framerate,
+	const bool      buzzer
 ) {
-	const auto samplesPerFrame{ std::ceil(BAS->outFrequency / Program->framerate) };
-	std::vector<std::int16_t> audioBuffer(static_cast<std::uint32_t>(samplesPerFrame));
+	const auto samplesPerFrame{ std::ceil(BAS->getFrequency() / framerate) };
+	std::vector<s16> audioBuffer(static_cast<u32>(samplesPerFrame));
 
 	if (beepFx0A) {
-		C8.render(audioBuffer);
-		BVS->AudioOutline(Color->buzz[1], Color->buzz[0]);
-	} else if (MC.isOn()) {
-		MC.render(audioBuffer);
-		BVS->AudioOutline(0xFF'20'20'20, 0xFF'20'20'20);
-	} else if (!Program->timerSound) {
+		C8.render(audioBuffer, BAS->getAmplitude(), &wavePhase);
+		BVS->setAudioLineColor(color[1], color[0]);
+	} else if (MC.isEnabled()) {
+		MC.render(audioBuffer, BAS->getVolume());
+		BVS->setAudioLineColor(0x202020, 0x202020);
+	} else if (!buzzer) {
 		wavePhase = 0.0f;
-		BVS->AudioOutline(Color->buzz[0], Color->buzz[0]);
-	} else if (XO.isOn()) {
-		XO.render(audioBuffer);
-		BVS->AudioOutline(Color->buzz[0], Color->buzz[0]);
+		BVS->setAudioLineColor(color[0], color[0]);
+	} else if (XO.isEnabled()) {
+		XO.render(audioBuffer, BAS->getAmplitude(), &wavePhase);
+		BVS->setAudioLineColor(color[0], color[0]);
 	} else {
-		C8.render(audioBuffer);
-		BVS->AudioOutline(Color->buzz[1], Color->buzz[0]);
+		C8.render(audioBuffer, BAS->getAmplitude(), &wavePhase);
+		BVS->setAudioLineColor(color[1], color[0]);
 	}
 
 	BAS->pushAudioData(audioBuffer.data(), audioBuffer.size());
@@ -56,25 +56,28 @@ void SoundCores::renderAudio(
 /*  class  SoundCores::Classic                                      */
 /*------------------------------------------------------------------*/
 
-SoundCores::Classic::Classic(SoundCores* parent, BasicAudioSpec* bas)
-	: Sound{ parent }
-	, BAS  { bas }
+SoundCores::Classic::Classic(s32 frequency)
+	: freq{ frequency }
 {}
 
-void SoundCores::Classic::setTone(const std::size_t sp, const std::size_t pc) {
+void SoundCores::Classic::setTone(const u32 sp, const u32 pc) {
 	// sets a unique tone for each sound call
-	tone = (160.0f + 8.0f * ((pc >> 1) + sp + 1 & 0x3E)) / BAS->outFrequency;
+	tone = (160.0f + 8.0f * ((pc >> 1) + sp + 1 & 0x3E)) / freq;
 }
 
-void SoundCores::Classic::setTone(const std::size_t vx) {
+void SoundCores::Classic::setTone(const u32 vx) {
 	// sets the tone for each 8X sound call
-	tone = (160.0f + ((0xFF - (vx ? vx : 0x7F)) >> 3 << 4)) / BAS->outFrequency;
+	tone = (160.0f + ((0xFF - (vx ? vx : 0x7F)) >> 3 << 4)) / freq;
 }
 
-void SoundCores::Classic::render(std::span<std::int16_t> buffer) {
+void SoundCores::Classic::render(
+	std::span<s16> buffer,
+	const     s16  amplitude,
+	float*  const  wavePhase
+) const {
 	for (auto& sample : buffer) {
-		sample = Sound->wavePhase > 0.5f ? BAS->amplitude : -BAS->amplitude;
-		Sound->wavePhase = std::fmod(Sound->wavePhase + tone, 1.0f);
+		sample = *wavePhase > 0.5f ? amplitude : -amplitude;
+		*wavePhase = std::fmod(*wavePhase + tone, 1.0f);
 	}
 }
 
@@ -82,38 +85,41 @@ void SoundCores::Classic::render(std::span<std::int16_t> buffer) {
 /*  class  SoundCores::XOchip                                       */
 /*------------------------------------------------------------------*/
 
-SoundCores::XOchip::XOchip(SoundCores* parent, BasicAudioSpec* bas, VM_Guest* guest)
-	: Sound{ parent }
-	, BAS  { bas }
-	, vm   { guest }
-	, rate { 4000.0f / 128.0f / BAS->outFrequency }
+SoundCores::XOchip::XOchip(s32 frequency)
+	: rate { 4000.0f / 128.0f / frequency }
 	, tone { rate }
 {}
 
-bool SoundCores::XOchip::isOn() const {
-	return enabled;
-}
-
-void SoundCores::XOchip::setPitch(const std::size_t pitch) {
+void SoundCores::XOchip::setPitch(const usz pitch) {
 	tone = rate * std::pow(2.0f, (pitch - 64.0f) / 48.0f);
 	enabled = true;
 }
 
-void SoundCores::XOchip::loadPattern(std::size_t idx) {
-	for (auto& byte : pattern) {
-		byte = vm->mrw(idx++);
-
-		if (!enabled && byte > 0x0 && byte < 0xFF)
-			enabled = true;
+bool SoundCores::XOchip::loadPattern(
+	const std::span<const u8> mem,
+	const u32 index
+) {
+	if (index + 16 >= mem.size()) {
+		return true;
+	} else {
+		enabled = true;
+		for (auto idx{ 0 }; idx < 16; ++idx) {
+			pattern[idx] = mem[index + idx];
+		}
+		return false;
 	}
 }
 
-void SoundCores::XOchip::render(std::span<std::int16_t> buffer) {
+void SoundCores::XOchip::render(
+	std::span<s16> buffer,
+	const     s16  amplitude,
+	float* const   wavePhase
+) const {
 	for (auto& sample : buffer) {
-		const auto step{ static_cast<std::int32_t>(std::clamp(Sound->wavePhase * 128.0f, 0.0f, 127.0f)) };
-		const auto mask{ 1 << (7 - (step & 7)) };
-		sample = pattern[step >> 3] & mask ? BAS->amplitude : -BAS->amplitude;
-		Sound->wavePhase = std::fmod(Sound->wavePhase + tone, 1.0f);
+		const auto step{ static_cast<s32>(std::clamp(*wavePhase * 128.0f, 0.0f, 127.0f)) };
+		const auto mask{ 1 << (7 ^ step & 7) };
+		sample = pattern[step >> 3] & mask ? amplitude : -amplitude;
+		*wavePhase = std::fmod(*wavePhase + tone, 1.0f);
 	}
 }
 
@@ -121,59 +127,51 @@ void SoundCores::XOchip::render(std::span<std::int16_t> buffer) {
 /*  class  SoundCores::MegaChip                                     */
 /*------------------------------------------------------------------*/
 
-SoundCores::MegaChip::MegaChip(SoundCores* parent, BasicAudioSpec* bas, VM_Guest* guest)
-	: Sound{ parent }
-	, BAS  { bas }
-	, vm   { guest }
+SoundCores::MegaChip::MegaChip(s32 frequency)
+	: mFreq{ static_cast<float>(frequency) }
 {}
 
-bool SoundCores::MegaChip::isOn() const {
-	return enabled;
+void SoundCores::MegaChip::reset() {
+	pMem = nullptr;
+	mInc = mPos = mLen = 0;
 }
 
-void SoundCores::MegaChip::reset(const bool state) {
-	enabled = state;
-	looping = false;
-
-	length = 0;
-	start  = 0;
-	step   = 0.0;
-	pos    = 0.0;
-}
-
-void SoundCores::MegaChip::enable(
-	const std::size_t freq,
-	const std::size_t len,
-	const std::size_t offset,
-	const bool loop
+bool SoundCores::MegaChip::initTrack(
+	const std::span<const u8> mem,
+	const u32  idx,
+	const bool rep
 ) {
-	enabled = true;
-	looping = loop;
+	if (idx + 6 >= mem.size()) { // minimum requirement
+		reset();
+		return true;
+	}
 
-	length = len;
-	start  = offset;
-	step   = freq * 1.0 / BAS->outFrequency;
-	pos    = 0.0;
+	pMem = mem.data() + idx;
+	mLen = pMem[2] << 16 | pMem[3] << 8 | pMem[4];
+
+	if (mLen && idx + 6 + mLen < mem.size()) { // now we check the full range
+		mInc  = (pMem[0] << 8 | pMem[1]) * 1.0 / mFreq;
+		mLen  =  rep ? -mLen : mLen;
+		mPos  =  0.0;
+		pMem +=  6;
+		return false;
+	} else {
+		reset();
+		return true;
+	}
 }
 
-void SoundCores::MegaChip::render(std::span<std::int16_t> buffer) {
+void SoundCores::MegaChip::render(std::span<s16> buffer, s16 volume) {
 	for (auto& sample : buffer) {
-		auto   _curidx{ vm->mrw(start + static_cast<std::uint32_t>(pos)) };
-		double _offset{ pos + step };
+		sample = volume * (pMem[static_cast<u32>(mPos)] - 128);
 
-		if (_offset >= length) {
-			if (looping) {
-				_offset -= length;
+		if ((mPos += mInc) >= std::abs(mLen)) {
+			if (mLen < 0) {
+				mPos += mLen;
 			} else {
-				_offset = 0.0;
-				_curidx = 128;
-				length  = 0;
-				enabled = false;
+				reset();
+				return;
 			}
 		}
-		pos = _offset;
-		sample = static_cast<std::int16_t>(
-			(_curidx - 128) * BAS->volume\
-		);
 	}
 }

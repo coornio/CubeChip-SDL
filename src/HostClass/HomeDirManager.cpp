@@ -35,7 +35,7 @@ HomeDirManager::HomeDirManager(const char* homeName) try
 
 void HomeDirManager::reset() {
 	path = name = type = sha1 = {};
-	hash = size = 0;
+	size = hash = 0;
 }
 
 void HomeDirManager::addDirectory() {
@@ -47,7 +47,7 @@ void HomeDirManager::addDirectory() {
 }
 
 bool HomeDirManager::verifyFile(
-	bool (*validate)(std::size_t hash, std::size_t fsize, std::string_view sha1),
+	bool (*validate)(std::uint64_t hash, std::uint64_t fsize, std::string_view sha1),
 	const char* filepath
 ) {
 	if (!filepath) return false;
@@ -72,7 +72,7 @@ bool HomeDirManager::verifyFile(
 	}
 
 	std::error_code error;
-	const auto fileSize{ fs::file_size(fspath, error) };
+	const std::uint64_t fileSize{ fs::file_size(fspath, error) };
 	if (error) {
 		blog.dbgLogOut("Unable to access file: " + fspath.string());
 		return false;
@@ -87,7 +87,9 @@ bool HomeDirManager::verifyFile(
 	auto tempHash{ cexprHash(tempType.c_str()) };
 	auto tempSHA1{ SHA1::from_file(tempPath) };
 
-	if (validate(tempHash, fileSize, tempSHA1)) {
+	const bool result{ validate(tempHash, fileSize, tempSHA1) };
+
+	if (result) {
 		path = tempPath;
 		file = fspath.filename().string();
 		name = fspath.stem().string();
@@ -95,9 +97,7 @@ bool HomeDirManager::verifyFile(
 		sha1 = tempSHA1;
 		hash = tempHash;
 		size = fileSize;
-
-		return true;
-	} else {
-		return false;
 	}
+
+	return result;
 }

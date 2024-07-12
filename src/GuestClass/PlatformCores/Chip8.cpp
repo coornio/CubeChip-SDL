@@ -13,8 +13,7 @@
 #include "../ProgramControl.hpp"
 #include "../MemoryBanks.hpp"
 #include "../SoundCores.hpp"
-#include "../Registers.hpp"
-#include "../DisplayColors.hpp"
+#include "../DisplayTraits.hpp"
 
 
 // experimental work
@@ -74,10 +73,10 @@ enum Platforms {
 static constexpr std::size_t variation{};
 
 template <std::size_t variant>
-void VM_Guest::instructionDecoder() {
+void VM_Guest::instructionDecoder() { /*
 	for (auto inst{ 0 }; inst < Program->ipf; ++inst) {
-		auto HI = mrw(Program->counter++);
-		auto LO = mrw(Program->counter++);
+		auto HI = Mem->mrw(Program->counter++);
+		auto LO = Mem->mrw(Program->counter++);
 		Program->opcode = HI << 8 | LO;
 
 		auto   X{ HI & 0xF };
@@ -224,24 +223,24 @@ void VM_Guest::instructionDecoder() {
 					Reg->I = (Reg->V[X] & 0xF) * 5;
 					break;
 				case 0x33:								// FX33 - store BCD of VX to RAM at I, I+1, I+2
-					mrw(Reg->I + 0) = Reg->V[X] / 100;
-					mrw(Reg->I + 1) = Reg->V[X] / 10 % 10;
-					mrw(Reg->I + 2) = Reg->V[X] % 10;
+					Mem->mrw(Reg->I + 0) = Reg->V[X] / 100;
+					Mem->mrw(Reg->I + 1) = Reg->V[X] / 10 % 10;
+					Mem->mrw(Reg->I + 2) = Reg->V[X] % 10;
 					break;
 				case 0x55:								// FX55 - store V0..VX to RAM at I..I+X
 					for (auto idx{ 0 }; idx <= X; ++idx)
-						mrw(Reg->I + idx) = Reg->V[idx];
+						Mem->mrw(Reg->I + idx) = Reg->V[idx];
 					if constexpr (!(variant & idxRegNoInc))
 						Reg->I += X + !Quirk.idxRegMinus;
 					break;
 				case 0x65:								// FX65 - load V0..VX from RAM at I..I+X
 					for (auto idx{ 0 }; idx <= X; ++idx)
-						Reg->V[idx] = mrw(Reg->I + idx);
+						Reg->V[idx] = Mem->mrw(Reg->I + idx);
 					if constexpr (!(variant & idxRegNoInc))
 						Reg->I += X + !Quirk.idxRegMinus;
 					break;
 				[[unlikely]] default: Program->requestHalt();
 			} break;
 		}
-	}
+	}*/
 }

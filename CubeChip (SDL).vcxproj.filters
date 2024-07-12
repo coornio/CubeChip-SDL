@@ -48,19 +48,16 @@
     <ClCompile Include="src\CubeChip.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\GuestClass\Registers.cpp">
-      <Filter>Source Files\VM Guest</Filter>
-    </ClCompile>
     <ClCompile Include="src\GuestClass\ProgramControl.cpp">
       <Filter>Source Files\VM Guest</Filter>
     </ClCompile>
     <ClCompile Include="src\GuestClass\MemoryBanks.cpp">
       <Filter>Source Files\VM Guest</Filter>
     </ClCompile>
-    <ClCompile Include="src\GuestClass\DisplayColors.cpp">
+    <ClCompile Include="src\GuestClass\DisplayTraits.cpp">
       <Filter>Source Files\VM Guest</Filter>
     </ClCompile>
-    <ClCompile Include="src\GuestClass\FileTypes.cpp">
+    <ClCompile Include="src\GuestClass\RomCheck.cpp">
       <Filter>Source Files\VM Guest</Filter>
     </ClCompile>
     <ClCompile Include="src\GuestClass\GuestFunctions.cpp">
@@ -155,10 +152,10 @@
     <ClInclude Include="src\Assistants\BasicHome.hpp">
       <Filter>Header Files\Assistants</Filter>
     </ClInclude>
-    <ClInclude Include="src\GuestClass\FileTypes.hpp">
+    <ClInclude Include="src\GuestClass\RomCheck.hpp">
       <Filter>Header Files\VM Guest</Filter>
     </ClInclude>
-    <ClInclude Include="src\GuestClass\DisplayColors.hpp">
+    <ClInclude Include="src\GuestClass\DisplayTraits.hpp">
       <Filter>Header Files\VM Guest</Filter>
     </ClInclude>
     <ClInclude Include="src\GuestClass\Guest.hpp">
@@ -171,9 +168,6 @@
       <Filter>Header Files\VM Guest</Filter>
     </ClInclude>
     <ClInclude Include="src\GuestClass\ProgramControl.hpp">
-      <Filter>Header Files\VM Guest</Filter>
-    </ClInclude>
-    <ClInclude Include="src\GuestClass\Registers.hpp">
       <Filter>Header Files\VM Guest</Filter>
     </ClInclude>
     <ClInclude Include="src\GuestClass\SoundCores.hpp">
@@ -201,6 +195,9 @@
       <Filter>Header Files\Assistants</Filter>
     </ClInclude>
     <ClInclude Include="src\Concepts.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Types.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

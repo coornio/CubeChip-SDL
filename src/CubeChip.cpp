@@ -7,7 +7,7 @@
 #include <SDL3/SDL_main.h>
 #include "Includes.hpp"
 
-#include "GuestClass/FileTypes.hpp"
+#include "GuestClass/RomCheck.hpp"
 
 #include <iostream>
 #include <iomanip>
@@ -32,10 +32,10 @@ int32_t SDL_main(int32_t argc, char* argv[]) {
 	SDL_SetHint(SDL_HINT_RENDER_VSYNC, "0"); // until the UI is independent
 	SDL_SetHint(SDL_HINT_APP_NAME, "CubeChip");
 
-	std::unique_ptr<HomeDirManager> HDM;
-	std::unique_ptr<BasicVideoSpec> BVS;
-	std::unique_ptr<BasicAudioSpec> BAS;
-	std::unique_ptr<VM_Guest>       Guest;
+	std::unique_ptr<HomeDirManager> HDM{};
+	std::unique_ptr<BasicVideoSpec> BVS{};
+	std::unique_ptr<BasicAudioSpec> BAS{};
+	std::unique_ptr<VM_Guest>       Guest{};
 
 	try {
 		HDM = std::make_unique<HomeDirManager>("CubeChip_SDL");
@@ -47,10 +47,10 @@ int32_t SDL_main(int32_t argc, char* argv[]) {
 	FrameLimiter Frame(60.0, true, true);
 	SDL_Event    Event;
 
-	Host.isReady(HDM->verifyFile(
-		RomFileTypes::validate,
-		argc > 1 ? argv[1] : nullptr
-	));
+	Host.isReady(
+		argc <= 1 ? false :
+		HDM->verifyFile(RomFile::validate, argv[1])
+	);
 
 reset_all:
 	Guest = nullptr;
@@ -78,12 +78,11 @@ reset_all:
 
 				case SDL_EVENT_DROP_FILE:
 					BVS->raiseWindow();
-					if (HDM->verifyFile(RomFileTypes::validate, Event.drop.data)) {
-						blog.stdLogOut("File drop accepted: "s + Event.drop.data);
+					if (HDM->verifyFile(RomFile::validate, Event.drop.data)) {
 						Host.isReady(true);
 						goto reset_all;
 					} else {
-						blog.stdLogOut("File drop denied: "s + Event.drop.data);
+						blog.stdLogOut("File drop denied: "s + RomFile::error);
 						break;
 					}
 
@@ -113,7 +112,8 @@ reset_all:
 
 		if (Host.isReady()) {
 			if (kb.isPressed(KEY(ESCAPE))) {
-				Host.isReady(false).doBench(false);
+				Host.isReady(false);
+				Host.doBench(false);
 				BVS->resetWindow();
 				goto reset_all;
 			}

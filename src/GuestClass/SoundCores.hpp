@@ -6,88 +6,71 @@
 
 #pragma once
 
-#include <cstddef>
-#include <cstdint>
 #include <span>
 #include <array>
 #include <vector>
 
-class VM_Guest;
+#include "../Types.hpp"
 
 class BasicAudioSpec;
 class BasicVideoSpec;
 
-class DisplayColors;
-class ProgramControl;
-
 class SoundCores final {
-	VM_Guest*       vm;
-	BasicAudioSpec* BAS;
+	float wavePhase{};
 
 public:
-	float wavePhase{};
 	bool  beepFx0A{};
 
-	explicit SoundCores(VM_Guest*, BasicAudioSpec*);
-	void renderAudio(BasicVideoSpec*, DisplayColors*, ProgramControl*);
+	explicit SoundCores(BasicAudioSpec*);
+	void renderAudio(BasicVideoSpec*, BasicAudioSpec*, const u32*, double, bool);
 
 	/*------------------------------------------------------------------*/
 
 	class Classic final {
-		SoundCores*     Sound;
-		BasicAudioSpec* BAS;
-
+		const s32 freq;
 		float tone{};
 
 	public:
-		explicit Classic(SoundCores*, BasicAudioSpec*);
+		explicit Classic(s32);
 
-		void setTone(std::size_t, std::size_t);
-		void setTone(std::size_t);
-		void render(std::span<std::int16_t>);
-	} C8{ this, BAS };
+		void setTone(u32, u32);
+		void setTone(u32);
+		void render(std::span<s16>, s16, float* const) const;
+	} C8;
 
 	/*------------------------------------------------------------------*/
 
 	class XOchip final {
-		SoundCores*     Sound;
-		BasicAudioSpec* BAS;
-		VM_Guest*       vm;
-
+		bool enabled{};
 		const float rate;
-		std::array<std::uint8_t, 16> pattern{};
+		u8    pattern[16]{};
 		float tone{};
-		bool  enabled{};
 
 	public:
-		explicit XOchip(SoundCores*, BasicAudioSpec*, VM_Guest*);
-		bool isOn() const;
+		explicit XOchip(s32);
+		bool isEnabled() const { return enabled; }
 
-		void setPitch(std::size_t);
-		void loadPattern(std::size_t);
-		void render(std::span<std::int16_t>);
-	} XO{ this, BAS, vm };
+		void setPitch(usz);
+		bool loadPattern(const std::span<const u8>, const u32);
+		void render(std::span<s16>, s16, float* const) const;
+	} XO;
 
 	/*------------------------------------------------------------------*/
 
 	class MegaChip final {
-		SoundCores*     Sound;
-		BasicAudioSpec* BAS;
-		VM_Guest*       vm;
+		const float mFreq;
+		      s32   mLen{};
+		const u8*   pMem{};
 
-		std::size_t length{};
-		std::size_t start{};
-		double step{};
-		double pos{};
-		bool enabled{};
-		bool looping{};
+		long double mInc{};
+		long double mPos{};
 
 	public:
-		explicit MegaChip(SoundCores*, BasicAudioSpec*, VM_Guest*);
-		bool isOn() const;
+		explicit MegaChip(s32);
+		bool isEnabled() const { return mLen != 0; }
 
-		void reset(bool);
-		void enable(std::size_t, std::size_t, std::size_t, bool);
-		void render(std::span<std::int16_t>);
-	} MC{ this, BAS, vm };
+		void reset();
+		bool initTrack(const std::span<const u8>, const u32, const bool);
+		void render(std::span<s16>, s16);
+	} MC;
 };

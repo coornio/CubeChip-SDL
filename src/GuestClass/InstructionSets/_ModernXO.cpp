@@ -6,7 +6,7 @@
 
 #include "Interface.hpp"
 #include "../Guest.hpp"
-#include "../Registers.hpp"
+#include "../DisplayTraits.hpp"
 #include "../MemoryBanks.hpp"
 
 /*------------------------------------------------------------------*/
@@ -18,37 +18,37 @@ FunctionsForModernXO::FunctionsForModernXO(VM_Guest* parent) noexcept
 {}
 
 void FunctionsForModernXO::scrollUP(const std::int32_t N) {
-	if (!vm->Plane.selected) { return; }
+	if (!vm->Display->Trait.maskPlane) { return; }
 
 	for (auto P{ 0 }; P < 4; ++P) {
-		if (vm->Plane.selected & (1 << P)) {
+		if (vm->Display->Trait.maskPlane & (1 << P)) {
 			vm->Mem->displayBuffer[P].shift(-N, 0);
 		}
 	}
 }
 void FunctionsForModernXO::scrollDN(const std::int32_t N) {
-	if (!vm->Plane.selected) { return; }
+	if (!vm->Display->Trait.maskPlane) { return; }
 
 	for (auto P{ 0 }; P < 4; ++P) {
-		if (vm->Plane.selected & (1 << P)) {
+		if (vm->Display->Trait.maskPlane & (1 << P)) {
 			vm->Mem->displayBuffer[P].shift(+N, 0);
 		}
 	}
 }
 void FunctionsForModernXO::scrollLT(const std::int32_t) {
-	if (!vm->Plane.selected) { return; }
+	if (!vm->Display->Trait.maskPlane) { return; }
 
 	for (auto P{ 0 }; P < 4; ++P) {
-		if (vm->Plane.selected & (1 << P)) {
+		if (vm->Display->Trait.maskPlane & (1 << P)) {
 			vm->Mem->displayBuffer[P].shift(0, -4);
 		}
 	}
 }
 void FunctionsForModernXO::scrollRT(const std::int32_t) {
-	if (!vm->Plane.selected) { return; }
+	if (!vm->Display->Trait.maskPlane) { return; }
 
 	for (auto P{ 0 }; P < 4; ++P) {
-		if (vm->Plane.selected & (1 << P)) {
+		if (vm->Display->Trait.maskPlane & (1 << P)) {
 			vm->Mem->displayBuffer[P].shift(0, +4);
 		}
 	}
@@ -57,50 +57,56 @@ void FunctionsForModernXO::scrollRT(const std::int32_t) {
 /*------------------------------------------------------------------*/
 
 void FunctionsForModernXO::drawByte(
+	MemoryBanks* Mem, DisplayTraits* Display,
 	std::int32_t X, std::int32_t Y,
 	const std::int32_t P,
-	const std::size_t DATA
+	const std::size_t  DATA
 ) {
-	if (!DATA || X >= vm->Plane.W) { return; }
+	if (!DATA) { return; }
+	if (vm->Quirk.wrapSprite) { X &= Display->Trait.Wb; }
+	else if (X >= Display->Trait.W) { return; }
 
-	for (auto B{ 0 }; B++ < 8; ++X &= vm->Plane.Wb)
+	for (auto B{ 0 }; B++ < 8; ++X &= Display->Trait.Wb)
 	{
 		if (DATA >> (8 - B) & 0x1) {
-			auto& pixel{ vm->Mem->displayBuffer[P].at_raw(Y, X) };
-			if (pixel) { vm->Reg->V[0xF] = 1; }
+			auto& pixel{ Mem->displayBuffer[P].at_raw(Y, X) };
+			if (pixel) { Mem->vRegister[0xF] = 1; }
 
-			switch (vm->Plane.brush) {
+			switch (Display->Trait.paintBrush) {
 				case BrushType::XOR: pixel ^=  1; break;
 				case BrushType::SUB: pixel &= ~1; break;
 				case BrushType::ADD: pixel |=  1; break;
 			}
 		}
-		if (!vm->Quirk.wrapSprite && X == vm->Plane.Wb) { return; }
+		if (!vm->Quirk.wrapSprite && X == Display->Trait.Wb) { return; }
 	}
 }
 
 void FunctionsForModernXO::drawSprite(
-	std::int32_t VX, std::int32_t  VY,
-	std::int32_t  N, std::uint32_t IR
+	MemoryBanks* Mem, DisplayTraits* Display,
+	std::int32_t _X, std::int32_t _Y, std::int32_t N
 ) {
-	vm->Reg->V[0xF] = 0;
-	if (!vm->Plane.selected) { return; }
+	std::int32_t VX{ Mem->vRegister[_X] };
+	std::int32_t VY{ Mem->vRegister[_Y] };
 
-	VX &= vm->Plane.Wb;
-	VY &= vm->Plane.Hb;
+	Mem->vRegister[0xF] = 0;
+	if (!Display->Trait.maskPlane) { return; }
+
+	VX &= Display->Trait.Wb;
+	VY &= Display->Trait.Hb;
 
 	const bool wide{ N == 0 };
 	if (wide) { N = 16; }
 
-	for (auto P{ 0 }; P < 4; ++P)
+	for (auto P{ 0 }, I{ 0 }; P < 4; ++P)
 	{
-		if (!(vm->Plane.selected & (1 << P))) { continue; }
+		if (!(Display->Trait.maskPlane & (1 << P))) { continue; }
 
-		for (auto H{ 0 }, Y{ VY }; H < N; ++H, ++Y &= vm->Plane.Hb)
+		for (auto H{ 0 }, Y{ VY }; H < N; ++H, ++Y &= Display->Trait.Hb)
 		{
-			if (true) { drawByte(VX + 0, Y, P, vm->mrw(IR++)); }
-			if (wide) { drawByte(VX + 8, Y, P, vm->mrw(IR++)); }
-			if (!vm->Quirk.wrapSprite && Y == vm->Plane.Hb) { break; }
+			if (true) { drawByte(Mem, Display, VX + 0, Y, P, Mem->read_idx(I++)); }
+			if (wide) { drawByte(Mem, Display, VX + 8, Y, P, Mem->read_idx(I++)); }
+			if (!vm->Quirk.wrapSprite && Y == Display->Trait.Hb) { break; }
 		}
 	}
 }

@@ -7,14 +7,15 @@
 #pragma once
 
 #include <SDL3/SDL.h>
-#include <cstddef>
+
+#include "../Types.hpp"
 
 class BasicAudioSpec final {
-public:
-	static constexpr Sint32 outFrequency{ 48'000 };
-	float  bytesLeft{};
-	Sint16 volume{};
-	Sint16 amplitude{};
+	static constexpr
+	u32 outFrequency{ 48'000 };
+
+	s16 volume{};
+	s16 amplitude{};
 
 private:
 	SDL_AudioSpec     audiospec{};
@@ -25,8 +26,13 @@ public:
 	explicit BasicAudioSpec();
 	~BasicAudioSpec();
 
-	void pushAudioData(const void*, std::size_t);
+	void pushAudioData(const void*, usz);
 
-	void setVolume(Sint32);
-	void changeVolume(Sint32);
+	s32   getFrequency()  const;
+	s16   getAmplitude()  const;
+	s16   getVolume()     const;
+	float getVolumeNorm() const;
+
+	void setVolume(s32);
+	void changeVolume(s32);
 };

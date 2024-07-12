@@ -6,10 +6,9 @@
 
 #pragma once
 
-#include <cstddef>
-#include <cstdint>
 #include <memory>
 
+#include "../Types.hpp"
 #include "InstructionSets/Interface.hpp" // this should be removed eventually
 #include "Enums.hpp"
 
@@ -17,13 +16,21 @@ class HomeDirManager;
 class BasicVideoSpec;
 class BasicAudioSpec;
 
+
+class InterfaceTest {
+
+
+public:
+
+};
+
+
 class Well512;
 class HexInput;
 class ProgramControl;
 class MemoryBanks;
 class SoundCores;
-class Registers;
-class DisplayColors;
+class DisplayTraits;
 
 class VM_Guest final {
 	FunctionsForMegachip SetGigachip{ this };
@@ -51,60 +58,7 @@ public:
 	std::unique_ptr<MemoryBanks>    Mem;
 	std::unique_ptr<ProgramControl> Program;
 	std::unique_ptr<SoundCores>     Sound;
-	std::unique_ptr<Registers>      Reg;
-	std::unique_ptr<DisplayColors>  Color;
-
-	bool _isSystemPaused{};
-	bool _isDisplayReady{};
-
-	[[nodiscard]] bool isSystemPaused() const;
-	[[nodiscard]] bool isDisplayReady() const;
-	VM_Guest& isSystemPaused(bool);
-	VM_Guest& isDisplayReady(bool);
-
-	struct BitPlaneProperties final {
-		std::int32_t W{},  H{};
-		std::int32_t Wb{}, Hb{};
-		std::int32_t S{};
-
-		std::int32_t selected{ 1 };
-		std::int32_t mask8X{ 0xFC };
-
-		using enum BrushType;
-		BrushType brush{ XOR };
-	} Plane;
-
-	struct TextureTraits final {
-		std::int32_t W{}, H{};
-
-		std::uint8_t collision{ 0xFF };
-		std::uint8_t rgbmod{};
-		bool         rotate{};
-		bool         flip_X{};
-		bool         flip_Y{};
-		bool         invert{};
-		bool         nodraw{};
-		bool         uneven{};
-
-		float   alpha{ 1.0f };
-
-		void setFlags(std::size_t);
-	} Trait;
-
-	struct BehaviorStates final {
-		bool chip8E_rom{};
-		bool chip8X_rom{};
-		bool chip8X_hires{};
-		bool chip_classic{};
-		bool xochip_color{};
-		bool chip8_legacy{};
-		bool schip_legacy{};
-		bool hires_2paged{};
-		bool hires_4paged{};
-		bool megachip_rom{};
-		bool gigachip_rom{};
-		bool mega_enabled{};
-	} State;
+	std::unique_ptr<DisplayTraits>  Display;
 
 	struct EmulationQuirks final {
 		bool clearVF{};
@@ -117,26 +71,57 @@ public:
 		bool wrapSprite{};
 	} Quirk;
 
+	struct BehaviorStates final {
+		bool chip8E_rom{};
+		bool chip8X_rom{};
+		bool megachip_rom{};
+		bool gigachip_rom{};
+
+		bool chip8_legacy{};
+		bool schip_legacy{};
+		bool hires_2paged{};
+		bool hires_4paged{};
+	} State;
+
+private:
+	bool _isSystemPaused{};
+
+public:
+	[[nodiscard]] bool isSystemPaused() const;
+	void isSystemPaused(bool);
+
+public:
 	// init functions
 	bool setupMachine();
-	bool romTypeCheck();
-	bool loadRomToRam(std::size_t, std::size_t);
+
+private:
 	void initPlatform();
-	void loadFontData();
-	void setupDisplay(Resolution, bool = false);
+	bool romTypeCheck();
+
+	bool romCopyToMemory(usz, usz) const;
+	void fontCopyToMemory() const;
+
+	void prepDisplayArea(Resolution, bool = false);
 	void renderToTexture();
 
+public:
 	// core functions
 	void cycle();
+
+private:
 	void instructionLoop();
 
-	template <std::size_t variant>
+	template <usz variant>
 	void instructionDecoder();
 
-	std::int32_t fetchIPF()       const;
-	double       fetchFramerate() const;
+	bool islegacyPlatform() const {
+		return State.chip8E_rom
+			|| State.chip8X_rom
+			|| State.schip_legacy
+			|| State.chip8_legacy;
+	}
 
-	std::uint8_t& mrw(std::size_t);
-	std::uint8_t& VX();
-	std::uint32_t NNNN();
+public:
+	s32    fetchIPF()       const;
+	double fetchFramerate() const;
 };

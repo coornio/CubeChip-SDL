@@ -18,9 +18,9 @@ public:
 	[[maybe_unused]] \
 	unsigned long long cycles{};
 
-	HomeDirManager* File;
-	BasicVideoSpec* Video;
-	BasicAudioSpec* Audio;
+	HomeDirManager* const HDM;
+	BasicVideoSpec* const BVS;
+	BasicAudioSpec* const BAS;
 
 	explicit VM_Host(
 		HomeDirManager*,
@@ -30,6 +30,6 @@ public:
 
 	[[nodiscard]] bool isReady() const;
 	[[nodiscard]] bool doBench() const;
-	VM_Host& isReady(bool);
-	VM_Host& doBench(bool);
+	void isReady(bool);
+	void doBench(bool);
 };

@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <filesystem>
 
@@ -14,20 +15,20 @@
 class HomeDirManager final : public BasicHome {
 public:
 	std::filesystem::path permRegs{};
-	std::string path{};
-	std::string file{};
-	std::string name{};
-	std::string type{};
-	std::string sha1{};
-	std::size_t hash{};
-	std::size_t size{};
+	std::string   path{};
+	std::string   file{};
+	std::string   name{};
+	std::string   type{};
+	std::string   sha1{};
+	std::uint64_t hash{};
+	std::uint64_t size{};
 
 	HomeDirManager(const char*);
 
 	void reset();
 	void addDirectory();
 	bool verifyFile(
-		bool (*)(std::size_t, std::size_t, std::string_view),
-		const char* = nullptr
+		bool (*)(std::uint64_t, std::uint64_t, std::string_view),
+		const char*
 	);
 };

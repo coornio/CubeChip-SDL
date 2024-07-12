@@ -31,7 +31,7 @@ BasicVideoSpec::~BasicVideoSpec() {
 	SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }
 
-void BasicVideoSpec::createWindow(const Sint32 window_W, const Sint32 window_H) {
+void BasicVideoSpec::createWindow(const s32 window_W, const s32 window_H) {
 	quitWindow();
 
 	window = SDL_CreateWindow(nullptr, window_W, window_H, 0);
@@ -56,13 +56,11 @@ void BasicVideoSpec::createRenderer() {
 	}
 }
 
-void BasicVideoSpec::createTexture(Sint32 texture_W, Sint32 texture_H) {
+void BasicVideoSpec::createTexture(s32 texture_W, s32 texture_H) {
 	quitTexture();
 
-	if (!texture_W || !texture_H) { return; }
-
-	texture_W = std::max<Sint32>(std::abs(texture_W),  1);
-	texture_H = std::max<Sint32>(std::abs(texture_H), 1);
+	texture_W = std::max<s32>(std::abs(texture_W), 1);
+	texture_H = std::max<s32>(std::abs(texture_H), 1);
 
 	texture = SDL_CreateTexture(
 		renderer,
@@ -100,11 +98,20 @@ bool BasicVideoSpec::showErrorBox(std::string_view message, std::string_view tit
 	);
 }
 
-void BasicVideoSpec::AudioOutline(const Uint32 color_1, const Uint32 color_0) {
+void BasicVideoSpec::setAudioLineColor(const u32 color_1, const u32 color_0) {
 	PerimeterColor = {
-		static_cast<Uint8>(((enableBuzzGlow ? color_1 : color_0) >> 16)),
-		static_cast<Uint8>(((enableBuzzGlow ? color_1 : color_0) >>  8)),
-		static_cast<Uint8>( (enableBuzzGlow ? color_1 : color_0)       ),
+		static_cast<u8>(((enableBuzzGlow ? color_1 : color_0) >> 16)),
+		static_cast<u8>(((enableBuzzGlow ? color_1 : color_0) >>  8)),
+		static_cast<u8>( (enableBuzzGlow ? color_1 : color_0)       ),
+		SDL_ALPHA_OPAQUE
+	};
+}
+
+void BasicVideoSpec::setBackgroundColor(const u32 color) {
+	backFrameColor = {
+		static_cast<u8>(color >> 16),
+		static_cast<u8>(color >>  8),
+		static_cast<u8>(color),
 		SDL_ALPHA_OPAQUE
 	};
 }
@@ -116,31 +123,31 @@ void BasicVideoSpec::raiseWindow() {
 void BasicVideoSpec::resetWindow() {
 	SDL_SetWindowSize(window, 640, 480);
 	changeTitle();
-	createTexture();
+	quitTexture();
 	renderPresent();
 }
 
-void BasicVideoSpec::lockTexture() {
-	void* pixel_ptr{ pixels };
+u32* BasicVideoSpec::lockTexture() {
+	void* pixel_ptr{};
 	SDL_LockTexture(
 		texture, nullptr,
 		&pixel_ptr,
 		&ppitch
 	);
-	pixels = static_cast<Uint32*>(pixel_ptr);
+	return static_cast<u32*>(pixel_ptr);
 }
 void BasicVideoSpec::unlockTexture() {
 	SDL_UnlockTexture(texture);
 }
 
-void BasicVideoSpec::setTextureAlpha(const std::size_t alpha) {
-	SDL_SetTextureAlphaMod(texture, static_cast<Uint8>(alpha));
+void BasicVideoSpec::setTextureAlpha(const usz alpha) {
+	SDL_SetTextureAlphaMod(texture, static_cast<u8>(alpha));
 }
 
 void BasicVideoSpec::setAspectRatio(
-	const Sint32 texture_W,
-	const Sint32 texture_H,
-	const Sint32 padding_S
+	const s32 texture_W,
+	const s32 texture_H,
+	const s32 padding_S
 ) {
 	const auto padding_A{ std::abs(padding_S) };
 
@@ -169,14 +176,14 @@ void BasicVideoSpec::setAspectRatio(
 }
 
 void BasicVideoSpec::multiplyWindowDimensions() {
-	const auto window_W{ static_cast<Sint32>(frameFull.w) };
-	const auto window_H{ static_cast<Sint32>(frameFull.h) };
+	const auto window_W{ static_cast<s32>(frameFull.w) };
+	const auto window_H{ static_cast<s32>(frameFull.h) };
 
 	SDL_SetWindowMinimumSize(window, window_W, window_H);
 	SDL_SetWindowSize(window, window_W * frameMultiplier, window_H * frameMultiplier);
 }
 
-void BasicVideoSpec::changeFrameMultiplier(const Sint32 delta) {
+void BasicVideoSpec::changeFrameMultiplier(const s32 delta) {
 	frameMultiplier = std::clamp(frameMultiplier + delta, 1, 8);
 	multiplyWindowDimensions();
 }
@@ -193,14 +200,21 @@ void BasicVideoSpec::renderPresent() {
 		);
 		SDL_RenderFillRect(renderer, &frameFull);
 
-		SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_NONE);
+		SDL_SetRenderDrawColor(
+			renderer,
+			backFrameColor.r, backFrameColor.g,
+			backFrameColor.b, backFrameColor.a
+		);
+		SDL_RenderFillRect(renderer, &frameGame);
+
+		SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
 		SDL_RenderTexture(renderer, texture, nullptr, &frameGame);
 
 		if (enableScanLine) {
 			SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 			SDL_SetRenderDrawColor(renderer, 0, 0, 0, 32);
 
-			const auto drawLimit{ static_cast<Sint32>(frameFull.h) };
+			const auto drawLimit{ static_cast<s32>(frameFull.h) };
 			for (auto y{ 0 }; y < drawLimit; y += PerimeterWidth) {
 				SDL_RenderLine(
 					renderer,

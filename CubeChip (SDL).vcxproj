@@ -25,9 +25,9 @@
     <ClCompile Include="src\Assistants\FrameLimiter.cpp" />
     <ClCompile Include="src\Assistants\SHA1.cpp" />
     <ClCompile Include="src\CubeChip.cpp" />
-    <ClCompile Include="src\GuestClass\FileTypes.cpp" />
+    <ClCompile Include="src\GuestClass\RomCheck.cpp" />
     <ClCompile Include="src\GuestClass\HexInput.cpp" />
-    <ClCompile Include="src\GuestClass\DisplayColors.cpp" />
+    <ClCompile Include="src\GuestClass\DisplayTraits.cpp" />
     <ClCompile Include="src\GuestClass\InstructionSets\_Classic8.cpp" />
     <ClCompile Include="src\GuestClass\InstructionSets\_Gigachip.cpp" />
     <ClCompile Include="src\GuestClass\InstructionSets\_LegacySC.cpp" />
@@ -39,7 +39,6 @@
     <ClCompile Include="src\GuestClass\SoundCores.cpp" />
     <ClCompile Include="src\GuestClass\GuestFunctions.cpp" />
     <ClCompile Include="src\GuestClass\Init.cpp" />
-    <ClCompile Include="src\GuestClass\Registers.cpp" />
     <ClCompile Include="src\HostClass\BasicAudioSpec.cpp" />
     <ClCompile Include="src\HostClass\BasicVideoSpec.cpp" />
     <ClCompile Include="src\HostClass\HostFunctions.cpp" />
@@ -56,21 +55,21 @@
     <ClInclude Include="src\Assistants\Map2D.hpp" />
     <ClInclude Include="src\Assistants\Well512.hpp" />
     <ClInclude Include="src\Concepts.hpp" />
-    <ClInclude Include="src\GuestClass\DisplayColors.hpp" />
+    <ClInclude Include="src\GuestClass\DisplayTraits.hpp" />
     <ClInclude Include="src\GuestClass\Enums.hpp" />
-    <ClInclude Include="src\GuestClass\FileTypes.hpp" />
+    <ClInclude Include="src\GuestClass\RomCheck.hpp" />
     <ClInclude Include="src\GuestClass\Guest.hpp" />
     <ClInclude Include="src\GuestClass\HexInput.hpp" />
     <ClInclude Include="src\GuestClass\InstructionSets\Interface.hpp" />
     <ClInclude Include="src\GuestClass\MemoryBanks.hpp" />
     <ClInclude Include="src\GuestClass\ProgramControl.hpp" />
-    <ClInclude Include="src\GuestClass\Registers.hpp" />
     <ClInclude Include="src\GuestClass\SoundCores.hpp" />
     <ClInclude Include="src\HostClass\BasicAudioSpec.hpp" />
     <ClInclude Include="src\HostClass\BasicVideoSpec.hpp" />
     <ClInclude Include="src\HostClass\HomeDirManager.hpp" />
     <ClInclude Include="src\HostClass\Host.hpp" />
     <ClInclude Include="src\Includes.hpp" />
+    <ClInclude Include="src\Types.hpp" />
     <ClInclude Include="src\_nlohmann\json.hpp" />
     <ClInclude Include="src\_nlohmann\json_fwd.hpp" />
   </ItemGroup>
@@ -136,11 +135,11 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LibraryPath>C:\VSlibs\SDL3-3.1.2\lib\x86;$(LibraryPath)</LibraryPath>
-    <IncludePath>C:\VSlibs\SDL3-3.1.2\include\SDL3;$(IncludePath)</IncludePath>
+    <IncludePath>C:\VSlibs\SDL3-3.1.2\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LibraryPath>C:\VSlibs\SDL3-3.1.2\lib\x86;$(LibraryPath)</LibraryPath>
-    <IncludePath>C:\VSlibs\SDL3-3.1.2\include\SDL3;$(IncludePath)</IncludePath>
+    <IncludePath>C:\VSlibs\SDL3-3.1.2\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -206,7 +205,7 @@
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
