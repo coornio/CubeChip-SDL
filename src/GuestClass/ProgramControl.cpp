@@ -12,7 +12,6 @@
 #include "InstructionSets/Interface.hpp"
 #include "HexInput.hpp"
 #include "ProgramControl.hpp"
-#include "MemoryBanks.hpp"
 
 using namespace blogger;
 
@@ -20,7 +19,7 @@ ProgramControl::ProgramControl(FncSetInterface*& set)
 	: fncSet{ set }
 {}
 
-std::string ProgramControl::hexOpcode(const std::uint32_t opcode) const {
+std::string ProgramControl::hexOpcode(const u32 opcode) const {
 	std::stringstream out;
 	out << std::setfill('0') << std::setw(4)
 		<< std::uppercase    << std::hex
@@ -29,9 +28,9 @@ std::string ProgramControl::hexOpcode(const std::uint32_t opcode) const {
 }
 
 void ProgramControl::init(
-	std::uint32_t& pc_offset,
-	const std::uint32_t _counter,
-	const std::int32_t  _ipf
+	      u32& pc_offset,
+	const u32  _counter,
+	const s32  _ipf
 ) {
 	pc_offset = _counter;
 	ipf       = _ipf;
@@ -39,7 +38,7 @@ void ProgramControl::init(
 	interrupt = Interrupt::NONE;
 }
 
-void ProgramControl::setSpeed(const std::int32_t _ipf) {
+void ProgramControl::setSpeed(const s32 _ipf) {
 	if (_ipf) ipf = _ipf;
 	boost = (ipf < 50) ? (ipf >> 1) : 0;
 }
@@ -54,7 +53,7 @@ void ProgramControl::setInterrupt(const bool cond, const Interrupt type) {
 	ipf *= -1;
 }
 
-void ProgramControl::requestHalt(const std::uint32_t opcode) {
+void ProgramControl::requestHalt(const u32 opcode) {
 	if (opcode & 0xF000) {
 		blog.stdLogOut("Unknown instruction detected: " + hexOpcode(opcode));
 	} else {
@@ -69,7 +68,7 @@ void ProgramControl::handleTimersDec(bool& beepFx0A) {
 	if (!timerSound) beepFx0A = false;
 }
 
-void ProgramControl::handleInterrupt(HexInput* Input, std::uint8_t& regVX, bool& beepFx0A) {
+void ProgramControl::handleInterrupt(bool& beepFx0A, HexInput* Input, u8& regVX) {
 	switch (interrupt) {
 
 		case Interrupt::ONCE: // resumes emulation after a single frame pause

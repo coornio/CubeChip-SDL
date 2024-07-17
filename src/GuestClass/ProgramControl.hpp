@@ -10,6 +10,7 @@
 #include <string>
 
 #include "Enums.hpp"
+#include "../Types.hpp"
 
 class HexInput;
 struct FncSetInterface;
@@ -18,25 +19,25 @@ class ProgramControl final {
 	FncSetInterface*& fncSet;
 
 public:
-	std::int32_t ipf{}, boost{};
+	s32 ipf{}, boost{};
 	double framerate{};
 
 	using enum Interrupt;
 	Interrupt interrupt{ NONE };
 
-	std::uint8_t timerDelay{};
-	std::uint8_t timerSound{};
+	u8 timerDelay{};
+	u8 timerSound{};
 
 	explicit ProgramControl(FncSetInterface*&);
-	std::string hexOpcode(std::uint32_t) const;
+	std::string hexOpcode(u32) const;
 
-	void init(std::uint32_t&, std::uint32_t, std::int32_t);
-	void setSpeed(std::int32_t);
+	void init(u32&, u32, s32);
+	void setSpeed(s32);
 	void setFncSet(FncSetInterface*);
 
-	void requestHalt(std::uint32_t);
+	void requestHalt(u32);
 	void setInterrupt(bool, Interrupt);
 
 	void handleTimersDec(bool&);
-	void handleInterrupt(HexInput*, std::uint8_t&, bool&);
+	void handleInterrupt(bool&, HexInput*, u8&);
 };

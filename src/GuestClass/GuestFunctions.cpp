@@ -50,7 +50,7 @@ void VM_Guest::processFrame() {
 
 	Input->refresh();
 	Program->handleTimersDec(Sound->beepFx0A);
-	Program->handleInterrupt(Input.get(), Mem->VX(), Sound->beepFx0A);
+	Program->handleInterrupt(Sound->beepFx0A, Input.get(), Mem->VX());
 
 	instructionLoop();
 
@@ -117,14 +117,12 @@ void VM_Guest::instructionLoop() {
 						Program->setInterrupt(true, Interrupt::STOP);
 						break;
 					case 0xE:							// 00EE - return from subroutine
-						//Mem->routineReturn();
 						Program->setInterrupt(Mem->routineReturn(), Interrupt::STOP);
 						break;
 					[[unlikely]] default: Program->requestHalt(Mem->opcode);
 				} break;
 				case 0x00F0: switch (N) {
 					case 0x0:							// 00F0 - return from subroutine *CHIP-8X MPD*
-						//Mem->routineReturn();
 						Program->setInterrupt(Mem->routineReturn(), Interrupt::STOP);
 						break;
 					case 0x1:							// 00F1 - set DRAW mode to ADD *HWCHIP64*
@@ -255,7 +253,6 @@ void VM_Guest::instructionLoop() {
 				Program->setInterrupt(Mem->jumpInstruction(NNN), Interrupt::STOP);
 				break;
 			case 0x2:									// 2NNN - call subroutine
-				//Mem->routineCall(NNN);
 				Program->setInterrupt(Mem->routineCall(NNN), Interrupt::STOP);
 				break;
 			case 0x3:									// 3XNN - skip next instruction if VX == NN
@@ -484,7 +481,6 @@ void VM_Guest::instructionLoop() {
 					Mem->counter = Mem->NNNN();
 					break;
 				case 0x200:								// F200 - call long subroutine *HWCHIP64*
-					//Mem->routineCall(Mem->NNNN());
 					Program->setInterrupt(Mem->routineCall(Mem->NNNN()), Interrupt::STOP);
 					break;
 				case 0x300:								// F300 - long jump to NEXT NNNN + V0 *HWCHIP64*
