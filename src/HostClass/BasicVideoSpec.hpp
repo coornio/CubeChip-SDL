@@ -23,10 +23,13 @@ class BasicVideoSpec {
 
 	SDL_FRect frameGame{};
 	SDL_FRect frameFull{};
-	SDL_Color backFrameColor{};
-	SDL_Color PerimeterColor{};
+	
+	// 0: background
+	// 1: outline unlit
+	// 2: outline lit (audio)
+	u32 frameColor[3]{};
 
-	s32 PerimeterWidth{};
+	s32 perimeterWidth{};
 	s32 frameMultiplier{ 2 };
 	s32 ppitch{};
 
@@ -57,9 +60,9 @@ public:
 	void renderPresent();
 
 	void setTextureAlpha(usz);
-	void setAudioLineColor(u32, u32);
-	void setBackgroundColor(u32);
 	void setAspectRatio(s32, s32, s32);
+
+	u32* getFrameColor() { return frameColor; }
 
 private:
 	void multiplyWindowDimensions();

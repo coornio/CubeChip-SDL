@@ -6,15 +6,13 @@
 
 #include <cmath>
 
-#include "../HostClass/BasicVideoSpec.hpp"
-
 #include "DisplayTraits.hpp"
 
-DisplayTraits::DisplayTraits(BasicVideoSpec* BVS) {
+DisplayTraits::DisplayTraits(u32* const pColors) {
 	initBitColors();
 	initHexColors();
 
-	BVS->setBackgroundColor(Color.bit[0]);
+	Color.setBackgroundTo(pColors, Color.bit[0]);
 }
 
 void DisplayTraits::initBitColors() {
@@ -50,8 +48,16 @@ void DisplayTraits::Colors::setBit332(const usz idx, const usz color) {
 				   | map2b[color      & 0x3];      // blue
 }
 
-void DisplayTraits::Colors::cycleBackground(BasicVideoSpec* BVS) {
-	BVS->setBackgroundColor(BackColors[bgindex++ & 0x3]);
+void DisplayTraits::Colors::setBackgroundTo(u32* const pColors) const {
+	if (pColors) { *pColors = bit[0]; }
+}
+
+void DisplayTraits::Colors::setBackgroundTo(u32* const pColors, const u32 color) const {
+	if (pColors) { *pColors = color; }
+}
+
+void DisplayTraits::Colors::cycleBackground(u32* const pColors) {
+	setBackgroundTo(pColors, BackColors[bgindex++ & 0x3]);
 }
 
 u32 DisplayTraits::Colors::getFore8X(const s32 idx) const {

@@ -7,6 +7,7 @@
 #include "../Assistants/Well512.hpp"
 
 #include "../HostClass/BasicVideoSpec.hpp"
+#include "../HostClass/BasicVideoSpec.hpp"
 
 #include "Guest.hpp"
 #include "HexInput.hpp"
@@ -21,9 +22,9 @@
 
 VM_Guest::~VM_Guest() = default;
 VM_Guest::VM_Guest(
-	HomeDirManager* hdm_ptr,
-	BasicVideoSpec* bvs_ptr,
-	BasicAudioSpec* bas_ptr
+	HomeDirManager* const hdm_ptr,
+	BasicVideoSpec* const bvs_ptr,
+	BasicAudioSpec* const bas_ptr
 )
 	: HDM{ hdm_ptr }
 	, BVS{ bvs_ptr }
@@ -34,7 +35,7 @@ VM_Guest::VM_Guest(
 	Mem     = std::make_unique<MemoryBanks>();
 	Program = std::make_unique<ProgramControl>(currFncSet);
 	Sound   = std::make_unique<SoundCores>(BAS);
-	Display = std::make_unique<DisplayTraits>(BVS);
+	Display = std::make_unique<DisplayTraits>(BVS->getFrameColor());
 }
 
 bool VM_Guest::isSystemPaused() const { return _isSystemPaused && Program->ipf; }
@@ -51,7 +52,8 @@ void VM_Guest::cycle() {
 	instructionLoop();
 
 	Sound->renderAudio(
-		BVS, BAS,
+		BAS,
+		BVS->getFrameColor(),
 		Display->Color.buzz,
 		Program->framerate,
 		Program->timerSound
@@ -166,7 +168,7 @@ void VM_Guest::instructionLoop() {
 									Mem->flushBuffers(FlushType::DISPLAY);
 									prepDisplayArea(Resolution::LO);
 									BVS->setTextureAlpha(0xFF);
-									BVS->setBackgroundColor(Display->Color.bit[0]);
+									Display->Color.setBackgroundTo(BVS->getFrameColor());
 									break;
 								case 0x11:				// 0011 - enable mega mode *MEGACHIP*
 									Program->setInterrupt(true, Interrupt::ONCE);
@@ -178,7 +180,7 @@ void VM_Guest::instructionLoop() {
 									Mem->flushBuffers(FlushType::DISCARD);
 									prepDisplayArea(Resolution::MC);
 									BVS->setTextureAlpha(0xFF);
-									BVS->setBackgroundColor(0xFF000000);
+									Display->Color.setBackgroundTo(BVS->getFrameColor(), 0);
 									break;
 								[[unlikely]] default: Program->requestHalt(Mem->opcode);
 							} break;
@@ -238,7 +240,7 @@ void VM_Guest::instructionLoop() {
 							break;
 						case 0x2A0:						// 02A0 - cycle background color *CHIP-8X*
 						case 0x2F0:						// 02F0 - cycle background color *CHIP-8X MPD*
-							Display->Color.cycleBackground(BVS);
+							Display->Color.cycleBackground(BVS->getFrameColor());
 							break;
 						[[unlikely]] default: Program->requestHalt(Mem->opcode);
 					}

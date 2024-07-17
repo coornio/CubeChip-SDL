@@ -11,14 +11,12 @@
 #include "Enums.hpp"
 #include "../Types.hpp"
 
-class BasicVideoSpec;
-
 class DisplayTraits final {
 	void initBitColors();
 	void initHexColors();
 
 public:
-	explicit DisplayTraits(BasicVideoSpec*);
+	explicit DisplayTraits(u32* const);
 
 	struct Traits{
 		friend class DisplayTraits;
@@ -72,7 +70,9 @@ public:
 		u32 bgindex{}; // background color cycle index
 
 		void setBit332(usz, usz);
-		void cycleBackground(BasicVideoSpec*);
+		void setBackgroundTo(u32* const) const;
+		void setBackgroundTo(u32* const, const u32) const;
+		void cycleBackground(u32* const);
 		u32  getFore8X(s32) const;
 	} Color;
 

@@ -241,7 +241,7 @@ void VM_Guest::initPlatform() {
 	}
 
 	if (State.chip8X_rom) {
-		Display->Color.cycleBackground(BVS);
+		Display->Color.cycleBackground(BVS->getFrameColor());
 		Mem->color8xBuffer.resize(true, Display->Trait.H, Display->Trait.W >> 3);
 		Mem->color8xBuffer.at_raw(0, 0) = Display->Color.getFore8X(2);
 

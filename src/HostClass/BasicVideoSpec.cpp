@@ -98,24 +98,6 @@ bool BasicVideoSpec::showErrorBox(std::string_view message, std::string_view tit
 	);
 }
 
-void BasicVideoSpec::setAudioLineColor(const u32 color_1, const u32 color_0) {
-	PerimeterColor = {
-		static_cast<u8>(((enableBuzzGlow ? color_1 : color_0) >> 16)),
-		static_cast<u8>(((enableBuzzGlow ? color_1 : color_0) >>  8)),
-		static_cast<u8>( (enableBuzzGlow ? color_1 : color_0)       ),
-		SDL_ALPHA_OPAQUE
-	};
-}
-
-void BasicVideoSpec::setBackgroundColor(const u32 color) {
-	backFrameColor = {
-		static_cast<u8>(color >> 16),
-		static_cast<u8>(color >>  8),
-		static_cast<u8>(color),
-		SDL_ALPHA_OPAQUE
-	};
-}
-
 void BasicVideoSpec::raiseWindow() {
 	SDL_RaiseWindow(window);
 }
@@ -151,7 +133,7 @@ void BasicVideoSpec::setAspectRatio(
 ) {
 	const auto padding_A{ std::abs(padding_S) };
 
-	PerimeterWidth = padding_A;
+	perimeterWidth = padding_A;
 	enableScanLine = padding_A == padding_S;
 
 	frameGame = {
@@ -161,15 +143,15 @@ void BasicVideoSpec::setAspectRatio(
 		static_cast<float>(texture_H)
 	};
 
-	frameFull.w = texture_W + 2.0f * PerimeterWidth;
-	frameFull.h = texture_H + 2.0f * PerimeterWidth;
+	frameFull.w = texture_W + 2.0f * perimeterWidth;
+	frameFull.h = texture_H + 2.0f * perimeterWidth;
 
 	multiplyWindowDimensions();
 
 	SDL_SetRenderLogicalPresentation(
 		renderer,
-		texture_W + PerimeterWidth * 2,
-		texture_H + PerimeterWidth * 2,
+		texture_W + perimeterWidth * 2,
+		texture_H + perimeterWidth * 2,
 		SDL_LOGICAL_PRESENTATION_INTEGER_SCALE,
 		SDL_SCALEMODE_NEAREST
 	);
@@ -195,15 +177,17 @@ void BasicVideoSpec::renderPresent() {
 	if (texture) {
 		SDL_SetRenderDrawColor(
 			renderer,
-			PerimeterColor.r, PerimeterColor.g,
-			PerimeterColor.b, PerimeterColor.a
+			static_cast<u8>(frameColor[1 + enableBuzzGlow] >> 16),
+			static_cast<u8>(frameColor[1 + enableBuzzGlow] >>  8),
+			static_cast<u8>(frameColor[1 + enableBuzzGlow]), 255
 		);
 		SDL_RenderFillRect(renderer, &frameFull);
 
 		SDL_SetRenderDrawColor(
 			renderer,
-			backFrameColor.r, backFrameColor.g,
-			backFrameColor.b, backFrameColor.a
+			static_cast<u8>(frameColor[0] >> 16),
+			static_cast<u8>(frameColor[0] >>  8),
+			static_cast<u8>(frameColor[0]), 255
 		);
 		SDL_RenderFillRect(renderer, &frameGame);
 
@@ -215,7 +199,7 @@ void BasicVideoSpec::renderPresent() {
 			SDL_SetRenderDrawColor(renderer, 0, 0, 0, 32);
 
 			const auto drawLimit{ static_cast<s32>(frameFull.h) };
-			for (auto y{ 0 }; y < drawLimit; y += PerimeterWidth) {
+			for (auto y{ 0 }; y < drawLimit; y += perimeterWidth) {
 				SDL_RenderLine(
 					renderer,
 					frameFull.x, static_cast<float>(y),
