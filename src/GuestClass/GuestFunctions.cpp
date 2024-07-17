@@ -6,6 +6,7 @@
 
 #include "../Assistants/Well512.hpp"
 
+#include "../HostClass/HomeDirManager.hpp"
 #include "../HostClass/BasicVideoSpec.hpp"
 #include "../HostClass/BasicVideoSpec.hpp"
 
@@ -570,12 +571,12 @@ void VM_Guest::instructionLoop() {
 					case 0x75:							// FX75 - store V0..VX to the P flags *XOCHIP*
 						if (State.schip_legacy)
 							[[unlikely]] { X = std::min(X, 7); }
-						Program->setInterrupt(!Mem->writePermRegs(HDM, X + 1), Interrupt::STOP);
+						Program->setInterrupt(Mem->writePermRegs(HDM->permRegs / HDM->sha1, X + 1), Interrupt::STOP);
 						break;
 					case 0x85:							// FX85 - load V0..VX from the P flags *XOCHIP*
 						if (State.schip_legacy)
 							[[unlikely]] { X = std::min(X, 7); }
-						Program->setInterrupt(!Mem->readPermRegs(HDM, X + 1), Interrupt::STOP);
+						Program->setInterrupt(Mem->readPermRegs(HDM->permRegs / HDM->sha1, X + 1), Interrupt::STOP);
 						break;
 					case 0xE3:							// FXE3 - wait for port 3 input, load into VX *CHIP-8E*
 						Program->setInterrupt(true, Interrupt::ONCE);

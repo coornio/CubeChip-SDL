@@ -9,13 +9,12 @@
 #include <span>
 #include <array>
 #include <vector>
+#include <filesystem>
 
 #include "../Assistants/Map2D.hpp"
 #include "../Types.hpp"
 
 #include "Enums.hpp"
-
-class HomeDirManager;
 
 class MemoryBanks final {
 
@@ -126,8 +125,8 @@ public:
 
 	void protectPages();
 
-	bool readPermRegs(HomeDirManager*, usz);
-	bool writePermRegs(HomeDirManager*, usz);
+	bool readPermRegs(std::filesystem::path, usz);
+	bool writePermRegs(std::filesystem::path, usz);
 
 	//u8& VX();
 
