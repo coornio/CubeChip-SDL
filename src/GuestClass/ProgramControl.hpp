@@ -23,7 +23,7 @@ public:
 	double framerate{};
 
 	using enum Interrupt;
-	Interrupt interrupt{ NONE };
+	Interrupt interrupt{ CLEAR };
 
 	u8 timerDelay{};
 	u8 timerSound{};
@@ -35,8 +35,9 @@ public:
 	void setSpeed(s32);
 	void setFncSet(FncSetInterface*);
 
-	void requestHalt(u32);
-	void setInterrupt(bool, Interrupt);
+	void setInterrupt(Interrupt);
+	void triggerError(std::string_view);
+	void triggerOpcodeError(u32);
 
 	void handleTimersDec(bool&);
 	void handleInterrupt(bool&, HexInput*, u8&);

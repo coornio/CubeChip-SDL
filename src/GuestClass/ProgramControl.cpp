@@ -35,7 +35,7 @@ void ProgramControl::init(
 	pc_offset = _counter;
 	ipf       = _ipf;
 	framerate = 60.0;
-	interrupt = Interrupt::NONE;
+	interrupt = Interrupt::CLEAR;
 }
 
 void ProgramControl::setSpeed(const s32 _ipf) {
@@ -47,19 +47,23 @@ void ProgramControl::setFncSet(FncSetInterface* _fncSet) {
 	fncSet = _fncSet;
 }
 
-void ProgramControl::setInterrupt(const bool cond, const Interrupt type) {
-	if (!cond) { return; }
+void ProgramControl::setInterrupt(const Interrupt type) {
 	interrupt = type;
-	ipf *= -1;
+	ipf = -std::abs(ipf);
 }
 
-void ProgramControl::requestHalt(const u32 opcode) {
+void ProgramControl::triggerError(std::string_view msg) {
+	blog.stdLogOut("Error: "s + msg.data());
+	setInterrupt(Interrupt::ERROR);
+}
+
+void ProgramControl::triggerOpcodeError(const u32 opcode) {
 	if (opcode & 0xF000) {
 		blog.stdLogOut("Unknown instruction detected: " + hexOpcode(opcode));
 	} else {
 		blog.stdLogOut("ML routines are unsupported: " + hexOpcode(opcode));
 	}
-	setInterrupt(true, Interrupt::STOP);
+	setInterrupt(Interrupt::ERROR);
 }
 
 void ProgramControl::handleTimersDec(bool& beepFx0A) {
@@ -71,28 +75,36 @@ void ProgramControl::handleTimersDec(bool& beepFx0A) {
 void ProgramControl::handleInterrupt(bool& beepFx0A, HexInput* Input, u8& regVX) {
 	switch (interrupt) {
 
-		case Interrupt::ONCE: // resumes emulation after a single frame pause
+		case Interrupt::FRAME: // resumes emulation after a single frame pause
 			ipf = std::abs(ipf);
 			return;
 
-		case Interrupt::STOP: // stops emulation when sound timer reaches 0
-			if (!timerSound) { ipf = 0; }
+		case Interrupt::SOUND: // stops emulation when sound timer reaches 0
+			if (!timerSound) {
+				interrupt = Interrupt::FINAL;
+				ipf       = 0;
+			}
 			return;
 
-		case Interrupt::WAIT: // pauses emulation while delay timer is not 0
+		case Interrupt::DELAY: // pauses emulation while delay timer is not 0
 			if (!timerDelay) {
-				interrupt = Interrupt::NONE;
+				interrupt = Interrupt::CLEAR;
 				ipf       = std::abs(ipf);
 			}
 			return;
 
-		case Interrupt::FX0A: // resumes emulation when key press event for Fx0A
+		case Interrupt::INPUT: // resumes emulation when key press event for Fx0A
 			if (Input->keyPressed(regVX)) {
-				interrupt  = Interrupt::NONE;
+				interrupt  = Interrupt::CLEAR;
 				ipf        = std::abs(ipf);
 				timerSound = 2;
 				beepFx0A   = true;
 			}
+			return;
+
+		case Interrupt::FINAL:
+		case Interrupt::ERROR:
+			ipf = 0;
 			return;
 	}
 }

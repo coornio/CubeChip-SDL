@@ -16,12 +16,13 @@ enum class Resolution {
 };
 
 enum class Interrupt {
-	NONE,
-	ONCE,
-	STOP,
-	WAIT,
-	FX0A,
-	HALT,
+	CLEAR, // no interrupt
+	FRAME, // single-frame
+	SOUND, // wait for sound and stop
+	DELAY, // wait for delay and proceed
+	INPUT, // wait for input and proceed
+	FINAL, // end state, all is well
+	ERROR, // end state, error occured
 };
 
 enum class BrushType {
