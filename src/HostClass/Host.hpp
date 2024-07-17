@@ -15,9 +15,6 @@ class VM_Host final {
 	bool _doBench{};
 
 public:
-	[[maybe_unused]] \
-	unsigned long long cycles{};
-
 	HomeDirManager* const HDM;
 	BasicVideoSpec* const BVS;
 	BasicAudioSpec* const BAS;

@@ -38,13 +38,15 @@ VM_Guest::VM_Guest(
 	Display = std::make_unique<DisplayTraits>(BVS->getFrameColor());
 }
 
-bool VM_Guest::isSystemPaused() const { return _isSystemPaused && Program->ipf; }
-void VM_Guest::isSystemPaused(const bool state) { _isSystemPaused = state; }
+bool VM_Guest::isSystemPaused() const { return mSystemPaused || Program->ipf == 0; }
+void VM_Guest::isSystemPaused(const bool state) { mSystemPaused = state; }
 
 s32    VM_Guest::fetchIPF()       const { return Program->ipf; }
 double VM_Guest::fetchFramerate() const { return Program->framerate; }
 
-void VM_Guest::cycle() {
+void VM_Guest::processFrame() {
+	if (isSystemPaused()) { return; }
+
 	Input->refresh();
 	Program->handleTimersDec(Sound->beepFx0A);
 	Program->handleInterrupt(Input.get(), Mem->VX(), Sound->beepFx0A);
@@ -62,11 +64,13 @@ void VM_Guest::cycle() {
 	if (!Display->isManualRefresh()) {
 		renderToTexture();
 	}
+
+	++mTotalFrames;
 }
 
 void VM_Guest::instructionLoop() {
 
-	for (auto inst{ 0 }; inst < Program->ipf; ++inst) {
+	for (auto inst{ 0 }; ++inst <= Program->ipf; ++mTotalCycles) {
 		auto HI = Mem->read(Mem->counter++);
 		auto LO = Mem->read(Mem->counter++);
 		Mem->opcode = HI << 8 | LO;

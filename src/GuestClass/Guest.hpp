@@ -43,9 +43,9 @@ class VM_Guest final {
 
 public:
 	explicit VM_Guest(
-		HomeDirManager*,
-		BasicVideoSpec*,
-		BasicAudioSpec*
+		HomeDirManager* const,
+		BasicVideoSpec* const,
+		BasicAudioSpec* const
 	);
 	~VM_Guest();
 
@@ -84,11 +84,16 @@ public:
 	} State;
 
 private:
-	bool _isSystemPaused{};
+	bool mSystemPaused{};
+	u64  mTotalFrames{};
+	u64  mTotalCycles{};
 
 public:
 	[[nodiscard]] bool isSystemPaused() const;
 	void isSystemPaused(bool);
+
+	auto getTotalFrames() const { return mTotalFrames; }
+	auto getTotalCycles() const { return mTotalCycles; }
 
 public:
 	// init functions
@@ -106,7 +111,7 @@ private:
 
 public:
 	// core functions
-	void cycle();
+	void processFrame();
 
 private:
 	void instructionLoop();

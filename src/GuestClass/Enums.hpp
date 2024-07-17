@@ -21,6 +21,7 @@ enum class Interrupt {
 	STOP,
 	WAIT,
 	FX0A,
+	HALT,
 };
 
 enum class BrushType {

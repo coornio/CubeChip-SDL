@@ -17,7 +17,7 @@ int32_t SDL_main(int32_t argc, char* argv[]) {
 
 	atexit(SDL_Quit);
 
-	#ifdef _DEBUG
+#ifdef _DEBUG
 	{
 		SDL_Version compiled{}; SDL_VERSION(&compiled);
 		SDL_Version linked{};   SDL_GetVersion(&linked);
@@ -25,7 +25,7 @@ int32_t SDL_main(int32_t argc, char* argv[]) {
 		printf("Compiled with SDL version %d.%d.%d\n", compiled.major, compiled.minor, compiled.patch);
 		printf("Linked with SDL version %d.%d.%d\n", linked.major, linked.minor, linked.patch);
 	}
-	#endif
+#endif
 
 	SDL_SetHint(SDL_HINT_WINDOWS_RAW_KEYBOARD, "0");
 	SDL_SetHint(SDL_HINT_RENDER_DRIVER, "direct3d");
@@ -73,28 +73,28 @@ reset_all:
 	while (true) {
 		while (SDL_PollEvent(&Event)) {
 			switch (Event.type) {
-				case SDL_EVENT_QUIT:
-					return EXIT_SUCCESS;
+			case SDL_EVENT_QUIT:
+				return EXIT_SUCCESS;
 
-				case SDL_EVENT_DROP_FILE:
-					BVS->raiseWindow();
-					if (HDM->verifyFile(RomFile::validate, Event.drop.data)) {
-						Host.isReady(true);
-						goto reset_all;
-					} else {
-						blog.stdLogOut("File drop denied: "s + RomFile::error);
-						break;
-					}
-
-				case SDL_EVENT_WINDOW_MINIMIZED:
-					if (!Guest) { break; }
-					Guest->isSystemPaused(true);
+			case SDL_EVENT_DROP_FILE:
+				BVS->raiseWindow();
+				if (HDM->verifyFile(RomFile::validate, Event.drop.data)) {
+					Host.isReady(true);
+					goto reset_all;
+				} else {
+					blog.stdLogOut("File drop denied: "s + RomFile::error);
 					break;
+				}
 
-				case SDL_EVENT_WINDOW_RESTORED:
-					if (!Guest) { break; }
-					Guest->isSystemPaused(false);
-					break;
+			case SDL_EVENT_WINDOW_MINIMIZED:
+				if (!Guest) { break; }
+				Guest->isSystemPaused(true);
+				break;
+
+			case SDL_EVENT_WINDOW_RESTORED:
+				if (!Guest) { break; }
+				Guest->isSystemPaused(false);
+				break;
 			}
 		}
 
@@ -137,16 +137,18 @@ reset_all:
 				using namespace std::chrono;
 
 				std::cout << "\33[2;1H" << std::dec << std::setfill(' ') << std::setprecision(6)
-					<< "\ncycle: " << Host.cycles++
-					<< "\nipf:   " << std::abs(Guest->fetchIPF())
+					<< "\nframe: " << Guest->getTotalFrames() << "   "
+					<< "\ncycle: " << Guest->getTotalCycles() << "   "
+					<< "\nipf:   " << std::abs(Guest->fetchIPF()) << "   "
 					<< (Frame.paced() ? "\n\n > keeping up pace."s : "\n\n > cannot keep up!!"s)
 					<< "\n\nelapsed since last: " << Frame.elapsed() << std::endl;
 
 				auto start = high_resolution_clock::now();
-				if (!Guest->isSystemPaused()) {
-					Guest->cycle();
-				}
+
+				Guest->processFrame();
+
 				auto end = high_resolution_clock::now();
+
 				auto duration = end - start;
 				auto ms = duration_cast<std::chrono::milliseconds>(duration);
 				auto mu = duration_cast<std::chrono::microseconds>(duration - ms);
@@ -154,10 +156,7 @@ reset_all:
 				std::cout
 					<< "\33[1;13H" << std::setw(4) << ms.count()
 					<< "\33[1;23H" << std::setw(3) << mu.count();
-			}
-			else if (!Guest->isSystemPaused()) {
-				Guest->cycle();
-			}
+			} else { Guest->processFrame(); }
 		} else {
 			if (kb.isPressed(KEY(ESCAPE))) {
 				return EXIT_SUCCESS;

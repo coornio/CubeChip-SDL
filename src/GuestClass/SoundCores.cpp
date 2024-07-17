@@ -8,7 +8,6 @@
 #include <algorithm>
 
 #include "../HostClass/BasicAudioSpec.hpp"
-#include "../HostClass/BasicVideoSpec.hpp"
 
 #include "SoundCores.hpp"
 
@@ -23,30 +22,30 @@ SoundCores::SoundCores(BasicAudioSpec* BAS)
 {}
 
 void SoundCores::renderAudio(
-	BasicVideoSpec* BVS,
-	BasicAudioSpec* BAS,
-	const u32*      color,
-	const double    framerate,
-	const bool      buzzer
+	BasicAudioSpec*  BAS,
+	      u32* const colorDst,
+	const u32* const colorSrc,
+	const double     framerate,
+	const bool       buzzer
 ) {
 	const auto samplesPerFrame{ std::ceil(BAS->getFrequency() / framerate) };
 	std::vector<s16> audioBuffer(static_cast<u32>(samplesPerFrame));
 
 	if (beepFx0A) {
 		C8.render(audioBuffer, BAS->getAmplitude(), &wavePhase);
-		BVS->setAudioLineColor(color[1], color[0]);
+		colorDst[2] = colorSrc[1]; colorDst[1] = colorSrc[0];
 	} else if (MC.isEnabled()) {
 		MC.render(audioBuffer, BAS->getVolume());
-		BVS->setAudioLineColor(0x202020, 0x202020);
+		colorDst[2] = colorDst[1] = 0xFF202020;
 	} else if (!buzzer) {
 		wavePhase = 0.0f;
-		BVS->setAudioLineColor(color[0], color[0]);
+		colorDst[2] = colorDst[1] = colorSrc[0];
 	} else if (XO.isEnabled()) {
 		XO.render(audioBuffer, BAS->getAmplitude(), &wavePhase);
-		BVS->setAudioLineColor(color[0], color[0]);
+		colorDst[2] = colorDst[1] = colorSrc[0];
 	} else {
 		C8.render(audioBuffer, BAS->getAmplitude(), &wavePhase);
-		BVS->setAudioLineColor(color[1], color[0]);
+		colorDst[2] = colorSrc[1]; colorDst[1] = colorSrc[0];
 	}
 
 	BAS->pushAudioData(audioBuffer.data(), audioBuffer.size());

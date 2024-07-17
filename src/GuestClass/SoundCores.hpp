@@ -13,7 +13,6 @@
 #include "../Types.hpp"
 
 class BasicAudioSpec;
-class BasicVideoSpec;
 
 class SoundCores final {
 	float wavePhase{};
@@ -22,7 +21,7 @@ public:
 	bool  beepFx0A{};
 
 	explicit SoundCores(BasicAudioSpec*);
-	void renderAudio(BasicVideoSpec*, BasicAudioSpec*, const u32*, double, bool);
+	void renderAudio(BasicAudioSpec*, u32*, const u32*, double, bool);
 
 	/*------------------------------------------------------------------*/
 
