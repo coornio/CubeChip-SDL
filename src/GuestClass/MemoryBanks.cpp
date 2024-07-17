@@ -104,15 +104,12 @@ void MemoryBanks::protectPages() {
 	pageGuard = (3 - (vRegister[0] - 1 & 0x3)) << 5;
 }
 
-bool MemoryBanks::readPermRegs(HomeDirManager* HDM, const usz X) {
-	static const std::filesystem::path sha1{
-		HDM->permRegs / HDM->sha1
-	};
+bool MemoryBanks::readPermRegs(std::filesystem::path sha1, const usz X) {
 
 	if (std::filesystem::exists(sha1)) {
 		if (!std::filesystem::is_regular_file(sha1)) {
 			blog.stdLogOut("SHA1 file is malformed: " + sha1.string());
-			return false;
+			return true;
 		}
 
 		std::ifstream in(sha1, std::ios::binary);
@@ -129,23 +126,20 @@ bool MemoryBanks::readPermRegs(HomeDirManager* HDM, const usz X) {
 			}
 		} else {
 			blog.stdLogOut("Could not open SHA1 file to read: " + sha1.string());
-			return false;
+			return true;
 		}
 	} else {
 		std::fill_n(vRegister, X, u8());
 	}
-	return true;
+	return false;
 }
 
-bool MemoryBanks::writePermRegs(HomeDirManager* HDM, const usz X) {
-	static const std::filesystem::path sha1{
-		HDM->permRegs / HDM->sha1
-	};
+bool MemoryBanks::writePermRegs(std::filesystem::path sha1, const usz X) {
 
 	if (std::filesystem::exists(sha1)) {
 		if (!std::filesystem::is_regular_file(sha1)) {
 			blog.stdLogOut("SHA1 file is malformed: " + sha1.string());
-			return false;
+			return true;
 		}
 
 		char tempV[16]{};
@@ -160,7 +154,7 @@ bool MemoryBanks::writePermRegs(HomeDirManager* HDM, const usz X) {
 			in.close();
 		} else {
 			blog.stdLogOut("Could not open SHA1 file to read: " + sha1.string());
-			return false;
+			return true;
 		}
 
 		std::copy_n(vRegister, X, tempV);
@@ -171,7 +165,7 @@ bool MemoryBanks::writePermRegs(HomeDirManager* HDM, const usz X) {
 			out.close();
 		} else {
 			blog.stdLogOut("Could not open SHA1 file to write: " + sha1.string());
-			return false;
+			return true;
 		}
 	} else {
 		std::ofstream out(sha1, std::ios::binary);
@@ -184,10 +178,10 @@ bool MemoryBanks::writePermRegs(HomeDirManager* HDM, const usz X) {
 			out.close();
 		} else {
 			blog.stdLogOut("Could not open SHA1 file to write: " + sha1.string());
-			return false;
+			return true;
 		}
 	}
-	return true;
+	return false;
 }
 
 void MemoryBanks::skipInstruction() {
