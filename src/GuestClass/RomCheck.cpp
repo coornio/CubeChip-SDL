@@ -61,7 +61,7 @@ bool RomFile::validate(
 			return checkSize(0x200, 65'536);
 
 		default:
-			error = "unknown filetype / platform";
+			error = "unknown filetype or platform";
 			return false;
 	}
 };

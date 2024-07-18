@@ -20,44 +20,46 @@ HexInput::HexInput()
 	}
 {}
 
-void HexInput::reset() {
-	setup(defaultBinds);
+void HexInput::loadPresetBinds() {
+	loadCustomBinds(defaultBinds);
 }
 
-void HexInput::refresh() {
-	if (!currentBinds.size()) return;
-
-	keysPrev = keysCurr;
-	keysCurr = 0u;
-
-	for (const auto& mapping : currentBinds)
-		if (bic::kb.areAnyHeld(mapping.key, mapping.alt))
-			keysCurr |= 1u << mapping.idx;
-	keysLock &= ~(keysPrev ^ keysCurr);
-}
-
-void HexInput::setup(const std::vector<KeyInfo>& bindings) {
+void HexInput::loadCustomBinds(const std::vector<KeyInfo>& bindings) {
 	(currentBinds = bindings).resize(bindings.size());
 	keysPrev = keysCurr = keysLock = 0u;
 }
 
-bool HexInput::keyPressed(Uint8& ret) {
-	if (!currentBinds.size()) return false;
+void HexInput::clearLockStates() {
+	keysLock = keysPrev = 0u;
+}
 
-	const auto mask{ keysCurr & ~keysPrev & ~keysLock };
-	if (mask) {
-		ret = static_cast<Uint8>
-			(std::countr_zero(mask & ~(mask - 1u)));
-		keysLock |= mask;
-		return true;
+void HexInput::updateKeyStates() {
+	if (currentBinds.size()) {
+		keysPrev = keysCurr;
+		keysCurr = 0u;
+
+		for (const auto& mapping : currentBinds) {
+			if (bic::kb.areAnyHeld(mapping.key, mapping.alt)) {
+				keysCurr |= 1u << mapping.idx;
+			}
+		}
+		keysLock &= ~(keysPrev ^ keysCurr);
+	}
+}
+
+bool HexInput::keyPressed(Uint8& ret) {
+	if (currentBinds.size()) {
+		const auto mask{ keysCurr & ~keysPrev & ~keysLock };
+		if (mask) {
+			ret = static_cast<Uint8>
+				(std::countr_zero(mask & ~(mask - 1u)));
+			keysLock |= mask;
+			return true;
+		}
 	}
 	return false;
 }
 
 bool HexInput::keyPressed(const std::size_t index, const std::size_t offset) const {
 	return keysCurr & ~keysLock & 1u << ((index & 0xFu) + offset);
-}
-
-Uint32 HexInput::currKeys(const std::size_t index) const {
-	return keysLock >> index & 0x1u;
 }

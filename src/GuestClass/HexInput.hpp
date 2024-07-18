@@ -28,12 +28,12 @@ class HexInput final {
 public:
 	explicit HexInput();
 
-	void reset();
-	void refresh();
+	void loadPresetBinds();
+	void loadCustomBinds(const std::vector<KeyInfo>& bindings);
 
-	void setup(const std::vector<KeyInfo>& bindings);
+	void clearLockStates();
+	void updateKeyStates();
 
-	bool keyPressed(Uint8& vregister);
+	bool keyPressed(Uint8& ret);
 	bool keyPressed(std::size_t index, std::size_t offset) const;
-	Uint32 currKeys(std::size_t index) const;
 };

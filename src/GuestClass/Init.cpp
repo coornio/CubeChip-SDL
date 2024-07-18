@@ -201,7 +201,7 @@ void VM_Guest::initPlatform() {
 	//Quirk.waitScroll = true;
 	//Quirk.waitVblank = true;
 	//Quirk.wrapSprite = true;
-	Input->reset();
+	Input->loadPresetBinds();
 
 	// XXX - apply custom rom settings here
 
