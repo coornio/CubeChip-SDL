@@ -120,15 +120,15 @@ void VM_Guest::instructionLoop() {
 						Program->setInterrupt(Interrupt::SOUND);
 						break;
 					case 0xE:							// 00EE - return from subroutine
-						if (true) [[unlikely]]
-							{ Program->triggerError("Cannot return from empty stack!"); }
+						if (Mem->routineReturn()) [[unlikely]]
+							{ Program->triggerError("Error :: Cannot return from empty stack!"); }
 						break;
 					[[unlikely]] default: Program->triggerOpcodeError(Mem->opcode);
 				} break;
 				case 0x00F0: switch (N) {
 					case 0x0:							// 00F0 - return from subroutine *CHIP-8X MPD*
 						if (Mem->routineReturn()) [[unlikely]]
-							{ Program->triggerError("Cannot return from empty stack!"); }
+							{ Program->triggerError("Error :: Cannot return from empty stack!"); }
 						break;
 					case 0x1:							// 00F1 - set DRAW mode to ADD *HWCHIP64*
 						Display->Trait.paintBrush = BrushType::ADD;
@@ -212,7 +212,7 @@ void VM_Guest::instructionLoop() {
 								break;
 							case 0x6:					// 060N - start digital sound from RAM at I, repeat if N == 0 *MEGACHIP*
 								if (Sound->MC.initTrack(Mem->getSpan(), Mem->index_get(), N == 0)) [[unlikely]]
-									{ Program->triggerError("Audio track data goes beyond memory limits!"); }
+									{ Program->triggerError("Error :: Audio track data goes beyond memory limits!"); }
 								break;
 							case 0x7:					// 0700 - stop digital sound *MEGACHIP*
 								Sound->MC.reset();
@@ -261,7 +261,7 @@ void VM_Guest::instructionLoop() {
 				break;
 			case 0x2:									// 2NNN - call subroutine
 				if (Mem->routineCall(NNN)) [[unlikely]]
-					{ Program->triggerError("Cannot call with a full stack!"); }
+					{ Program->triggerError("Error :: Cannot call with a full stack!"); }
 				break;
 			case 0x3:									// 3XNN - skip next instruction if VX == NN
 				if (Mem->vRegister[X] == LO) { Mem->skipInstruction(); }
@@ -484,14 +484,14 @@ void VM_Guest::instructionLoop() {
 					break;
 				case 0x002:								// F002 - load audio pattern 0..15 from RAM at I..I+15 *XOCHIP*
 					if (Sound->XO.loadPattern(Mem->getSpan(), Mem->index_get())) [[unlikely]]
-						{ Program->triggerError("Audio pattern data goes beyond memory limits!"); }
+						{ Program->triggerError("Error :: Audio pattern data goes beyond memory limits!"); }
 					break;
 				case 0x100:								// F100 - long jump to NEXT NNNN *HWCHIP64*
 					Mem->counter = Mem->NNNN();
 					break;
 				case 0x200:								// F200 - call long subroutine *HWCHIP64*
 					if (Mem->routineCall(Mem->NNNN())) [[unlikely]]
-						{ Program->triggerError("Cannot call with a full stack!"); }
+						{ Program->triggerError("Error :: Cannot call with a full stack!"); }
 					break;
 				case 0x300:								// F300 - long jump to NEXT NNNN + V0 *HWCHIP64*
 					if (Mem->jumpInstruction(Mem->NNNN() + Mem->vRegister[0])) [[unlikely]]
@@ -579,13 +579,13 @@ void VM_Guest::instructionLoop() {
 						if (State.schip_legacy) [[unlikely]]
 							{ X = std::min(X, 7); }
 						if (Mem->writePermRegs(HDM->permRegs / HDM->sha1, X + 1)) [[unlikely]]
-							{ Program->triggerError("Failed writing to persistent registers!"); }
+							{ Program->triggerError("Error :: Failed writing to persistent registers!"); }
 						break;
 					case 0x85:							// FX85 - load V0..VX from the P flags *XOCHIP*
 						if (State.schip_legacy) [[unlikely]]
 							{ X = std::min(X, 7); }
 						if (Mem->readPermRegs(HDM->permRegs / HDM->sha1, X + 1)) [[unlikely]]
-							{ Program->triggerError("Failed reading from persistent registers!"); }
+							{ Program->triggerError("Error :: Failed reading from persistent registers!"); }
 						break;
 					case 0xE3:							// FXE3 - wait for port 3 input, load into VX *CHIP-8E*
 						Program->setInterrupt(Interrupt::FRAME);

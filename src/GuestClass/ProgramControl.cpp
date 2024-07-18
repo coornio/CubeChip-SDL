@@ -53,15 +53,15 @@ void ProgramControl::setInterrupt(const Interrupt type) {
 }
 
 void ProgramControl::triggerError(std::string_view msg) {
-	blog.stdLogOut("Error: "s + msg.data());
+	blog.stdLogOut(msg.data());
 	setInterrupt(Interrupt::ERROR);
 }
 
 void ProgramControl::triggerOpcodeError(const u32 opcode) {
 	if (opcode & 0xF000) {
-		blog.stdLogOut("Unknown instruction detected: " + hexOpcode(opcode));
+		blog.stdLogOut("Error :: Unknown instruction detected: " + hexOpcode(opcode));
 	} else {
-		blog.stdLogOut("ML routines are unsupported: " + hexOpcode(opcode));
+		blog.stdLogOut("Error :: ML routines are unsupported: " + hexOpcode(opcode));
 	}
 	setInterrupt(Interrupt::ERROR);
 }

@@ -20,5 +20,3 @@ using s64 = std::int64_t;
 using s32 = std::int32_t;
 using s16 = std::int16_t;
 using s8  = std::int8_t;
-
-using std::string_literals::operator""s;
