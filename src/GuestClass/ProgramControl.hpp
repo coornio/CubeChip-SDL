@@ -41,5 +41,5 @@ public:
 
 	void handleTimersDec(bool&);
 	void handleInterrupt();
-	void handleInterrupt(bool&, HexInput*, u8*, u32);
+	void handleInterrupt(bool&, HexInput*, u8*);
 };

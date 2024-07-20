@@ -47,15 +47,14 @@ double VM_Guest::fetchFramerate() const { return Program->framerate; }
 
 void VM_Guest::processFrame() {
 	if (isSystemPaused()) { return; }
-	else { ++mTotalFrames; }
 
-	Input->updateKeyStates();
+	Input->updateKeyStates(++mTotalFrames);
 	Program->handleTimersDec(Sound->beepFx0A);
 	Program->handleInterrupt();
 
 	instructionLoop();
 
-	Program->handleInterrupt(Sound->beepFx0A, Input.get(), Mem->VX(), mTotalFrames);
+	Program->handleInterrupt(Sound->beepFx0A, Input.get(), Mem->VX());
 
 	Sound->renderAudio(
 		BAS,

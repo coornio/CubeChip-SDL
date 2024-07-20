@@ -21,9 +21,8 @@ class HexInput final {
 	std::vector<KeyInfo> mCustomBinds;
 	std::vector<KeyInfo> mPresetBinds;
 
-	Uint32 mFrameStamp{};
-	//Uint32 mPressedKey{};
-	Uint32 mWaitFrames{};
+	Uint32 mTickLast{};
+	Uint32 mTickRate{};
 
 	Uint32 mKeysCurr{}; // bitfield of key states in current frame
 	Uint32 mKeysPrev{}; // bitfield of key states in previous frame
@@ -36,8 +35,8 @@ public:
 	void loadPresetBinds();
 	void loadCustomBinds(const std::vector<KeyInfo>& bindings);
 
-	void updateKeyStates();
+	void updateKeyStates(Uint32 counter);
 
-	bool keyPressed(Uint8* returnKey, Uint32 counter);
+	bool keyPressed(Uint8* returnKey);
 	bool keyPressed(std::size_t index, std::size_t offset) const;
 };

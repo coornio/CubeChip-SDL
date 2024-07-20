@@ -31,7 +31,7 @@ void HexInput::loadCustomBinds(const std::vector<KeyInfo>& bindings) {
 	mKeysPrev = mKeysCurr = mKeysLock = 0;
 }
 
-void HexInput::updateKeyStates() {
+void HexInput::updateKeyStates(const Uint32 counter) {
 	if (mCustomBinds.size()) {
 		mKeysPrev = mKeysCurr;
 		mKeysCurr = 0;
@@ -41,56 +41,30 @@ void HexInput::updateKeyStates() {
 				mKeysCurr |= 1 << mapping.idx;
 			}
 		}
-		// unlock key bits if they underwent state change
-		mKeysLock &= ~(mKeysPrev ^  mKeysCurr);
-		//mKeysLoop &= ~(mKeysPrev ^  mKeysCurr);
-		//mKeysLock = mKeysLock & ~(mKeysPrev & ~mKeysCurr);
 
-		const auto pressKeys{ mKeysCurr & ~mKeysPrev & ~mKeysLoop };
-		const auto validKeys{ pressKeys ?  pressKeys :  mKeysLoop };
+		mKeysLoop &= mKeysLock &= ~(mKeysPrev & ~mKeysCurr);
 
-		//mWaitFrames = pressKeys ? 16 : 3;
-		//mKeysLoop   = validKeys & ~(validKeys - 1);
-
-		//std::cout << std::bitset<32>(mKeysLoop) << std::endl;
+		if (mKeysLoop && counter > mTickLast + mTickRate + 1) {
+			mKeysPrev &= ~mKeysLoop;
+			mTickLast  =  counter;
+		}
 	}
 }
 
-bool HexInput::keyPressed(Uint8* returnKey, const Uint32 counter) {
+bool HexInput::keyPressed(Uint8* returnKey) {
 	if (!mCustomBinds.size()) { return false; }
 
-	if (mKeysLock & mKeysLoop) {
-		if (counter > mFrameStamp + mWaitFrames + 1) {
-			printf("\nframe counter passed the limit ");
-			mKeysPrev &= ~mKeysLoop;
-		} else {
-			printf("|");
-		}
-	} else {
-		printf(".");
-		mKeysLoop = 0;
-	}
-
 	const auto pressKeys{ mKeysCurr & ~mKeysPrev };
-	const auto validKeys{ pressKeys & ~mKeysLoop ?  pressKeys :  mKeysLoop };
+	const auto pressDiff{ pressKeys & ~mKeysLoop };
+	const auto validKeys{ pressDiff ? pressDiff : mKeysLoop };
 
-	//const auto pressedKeysY{ mKeysCurr & ~mKeysPrev };
-	//const auto lowOrderKeyY{ pressedKeysY & ~(pressedKeysY - 1) };
 	if (pressKeys) {
-		const bool differentKey{ validKeys != mKeysLoop };
-
-		mKeysLock  |= validKeys;
-		//mKeysLock |= mKeysLoop;
-		mFrameStamp = counter;
-
-		mWaitFrames = differentKey ? 16 : 3;
-		mKeysLoop = validKeys;
+		mKeysLock |= validKeys;
+		mTickRate  = validKeys != mKeysLoop ? 16 : 3;
+		mKeysLoop  = validKeys & ~(validKeys - 1);
 		*returnKey = static_cast<Uint8>(std::countr_zero(mKeysLoop));
-
-		return true;
-	} else {
-		return false;
 	}
+	return pressKeys;
 }
 
 bool HexInput::keyPressed(const std::size_t index, const std::size_t offset) const {

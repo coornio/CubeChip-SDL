@@ -98,13 +98,12 @@ void ProgramControl::handleInterrupt() {
 void ProgramControl::handleInterrupt(
 	bool& beepFx0A,
 	HexInput* Input,
-	u8* regVX,
-	const u32 counter
+	u8* regVX
 ) {
 	switch (interrupt) {
 
 	case Interrupt::INPUT: // resumes emulation when key press event for Fx0A
-		if (Input->keyPressed(regVX, counter)) {
+		if (Input->keyPressed(regVX)) {
 			interrupt  = Interrupt::CLEAR;
 			ipf        = std::abs(ipf);
 			timerSound = 2;
