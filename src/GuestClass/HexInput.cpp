@@ -44,14 +44,14 @@ void HexInput::updateKeyStates(const Uint32 counter) {
 
 		mKeysLoop &= mKeysLock &= ~(mKeysPrev & ~mKeysCurr);
 
-		if (mKeysLoop && counter > mTickLast + mTickRate + 1) {
+		if (counter > mTickLast + mTickRate + 1) {
 			mKeysPrev &= ~mKeysLoop;
 			mTickLast  =  counter;
 		}
 	}
 }
 
-bool HexInput::keyPressed(Uint8* returnKey) {
+bool HexInput::keyPressed(Uint8& returnKey) {
 	if (!mCustomBinds.size()) { return false; }
 
 	const auto pressKeys{ mKeysCurr & ~mKeysPrev };
@@ -62,7 +62,7 @@ bool HexInput::keyPressed(Uint8* returnKey) {
 		mKeysLock |= validKeys;
 		mTickRate  = validKeys != mKeysLoop ? 16 : 3;
 		mKeysLoop  = validKeys & ~(validKeys - 1);
-		*returnKey = static_cast<Uint8>(std::countr_zero(mKeysLoop));
+		returnKey  = static_cast<Uint8>(std::countr_zero(mKeysLoop));
 	}
 	return pressKeys;
 }

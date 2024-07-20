@@ -98,7 +98,7 @@ void ProgramControl::handleInterrupt() {
 void ProgramControl::handleInterrupt(
 	bool& beepFx0A,
 	HexInput* Input,
-	u8* regVX
+	u8& regVX
 ) {
 	switch (interrupt) {
 
