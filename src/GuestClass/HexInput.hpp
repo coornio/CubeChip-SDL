@@ -18,12 +18,17 @@ class HexInput final {
 
 	static constexpr auto _{ SDL_SCANCODE_UNKNOWN };
 
-	      std::vector<KeyInfo> currentBinds;
-	const std::vector<KeyInfo> defaultBinds;
+	std::vector<KeyInfo> mCustomBinds;
+	std::vector<KeyInfo> mPresetBinds;
 
-	Uint32 keysCurr{}; // bitfield of key states in current frame
-	Uint32 keysPrev{}; // bitfield of key states in previous frame
-	Uint32 keysLock{}; // bitfield of keys excluded from input checks
+	Uint32 mFrameStamp{};
+	//Uint32 mPressedKey{};
+	Uint32 mWaitFrames{};
+
+	Uint32 mKeysCurr{}; // bitfield of key states in current frame
+	Uint32 mKeysPrev{}; // bitfield of key states in previous frame
+	Uint32 mKeysLock{}; // bitfield of keys excluded from input checks
+	Uint32 mKeysLoop{}; // bitfield of keys repeating input on Fx0A
 
 public:
 	explicit HexInput();
@@ -31,9 +36,8 @@ public:
 	void loadPresetBinds();
 	void loadCustomBinds(const std::vector<KeyInfo>& bindings);
 
-	void clearLockStates();
 	void updateKeyStates();
 
-	bool keyPressed(Uint8& ret);
+	bool keyPressed(Uint8* returnKey, Uint32 counter);
 	bool keyPressed(std::size_t index, std::size_t offset) const;
 };

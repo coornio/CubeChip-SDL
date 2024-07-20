@@ -85,8 +85,11 @@ public:
 
 private:
 	bool mSystemPaused{};
-	u64  mTotalFrames{};
+	u32  mTotalFrames{};
 	u64  mTotalCycles{};
+
+	u32  mFramesToInputReset{};
+	u32  mFramesToInp{};
 
 public:
 	[[nodiscard]] bool isSystemPaused() const;

@@ -40,5 +40,6 @@ public:
 	void triggerOpcodeError(u32);
 
 	void handleTimersDec(bool&);
-	void handleInterrupt(bool&, HexInput*, u8&);
+	void handleInterrupt();
+	void handleInterrupt(bool&, HexInput*, u8*, u32);
 };

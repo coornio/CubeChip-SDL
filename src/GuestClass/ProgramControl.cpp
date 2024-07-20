@@ -72,7 +72,7 @@ void ProgramControl::handleTimersDec(bool& beepFx0A) {
 	if (!timerSound) beepFx0A = false;
 }
 
-void ProgramControl::handleInterrupt(bool& beepFx0A, HexInput* Input, u8& regVX) {
+void ProgramControl::handleInterrupt() {
 	switch (interrupt) {
 
 		case Interrupt::FRAME: // resumes emulation after a single frame pause
@@ -92,19 +92,29 @@ void ProgramControl::handleInterrupt(bool& beepFx0A, HexInput* Input, u8& regVX)
 				ipf       = std::abs(ipf);
 			}
 			return;
+	}
+}
 
-		case Interrupt::INPUT: // resumes emulation when key press event for Fx0A
-			if (Input->keyPressed(regVX)) {
-				interrupt  = Interrupt::CLEAR;
-				ipf        = std::abs(ipf);
-				timerSound = 2;
-				beepFx0A   = true;
-			}
-			return;
+void ProgramControl::handleInterrupt(
+	bool& beepFx0A,
+	HexInput* Input,
+	u8* regVX,
+	const u32 counter
+) {
+	switch (interrupt) {
 
-		case Interrupt::FINAL:
-		case Interrupt::ERROR:
-			ipf = 0;
-			return;
+	case Interrupt::INPUT: // resumes emulation when key press event for Fx0A
+		if (Input->keyPressed(regVX, counter)) {
+			interrupt  = Interrupt::CLEAR;
+			ipf        = std::abs(ipf);
+			timerSound = 2;
+			beepFx0A = true;
+		}
+		return;
+
+	case Interrupt::FINAL:
+	case Interrupt::ERROR:
+		ipf = 0;
+		return;
 	}
 }
