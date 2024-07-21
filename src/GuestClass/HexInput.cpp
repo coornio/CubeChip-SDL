@@ -5,8 +5,6 @@
 */
 
 #include <bit>
-#include <bitset>
-#include <iostream>
 
 #include "../Assistants/BasicInput.hpp"
 
@@ -31,23 +29,21 @@ void HexInput::loadCustomBinds(const std::vector<KeyInfo>& bindings) {
 	mKeysPrev = mKeysCurr = mKeysLock = 0;
 }
 
-void HexInput::updateKeyStates(const Uint32 counter) {
-	if (mCustomBinds.size()) {
-		mKeysPrev = mKeysCurr;
-		mKeysCurr = 0;
+void HexInput::updateKeyStates() {
+	if (!mCustomBinds.size()) { return; }
 
-		for (const auto& mapping : mCustomBinds) {
-			if (bic::kb.areAnyHeld(mapping.key, mapping.alt)) {
-				mKeysCurr |= 1 << mapping.idx;
-			}
+	mKeysPrev = mKeysCurr;
+	mKeysCurr = 0;
+
+	for (const auto& mapping : mCustomBinds) {
+		if (bic::kb.areAnyHeld(mapping.key, mapping.alt)) {
+			mKeysCurr |= 1 << mapping.idx;
 		}
+	}
 
-		mKeysLoop &= mKeysLock &= ~(mKeysPrev & ~mKeysCurr);
-
-		if (counter > mTickLast + mTickRate + 1) {
-			mKeysPrev &= ~mKeysLoop;
-			mTickLast  =  counter;
-		}
+	mKeysLoop &= mKeysLock &= ~(mKeysPrev & ~mKeysCurr);
+	if (++mTickCurr >= mTickPrev + mTickRate) {
+		mKeysPrev &= ~mKeysLoop;
 	}
 }
 
@@ -60,7 +56,8 @@ bool HexInput::keyPressed(Uint8& returnKey) {
 
 	if (pressKeys) {
 		mKeysLock |= validKeys;
-		mTickRate  = validKeys != mKeysLoop ? 16 : 3;
+		mTickPrev  = mTickCurr;
+		mTickRate  = validKeys != mKeysLoop ? 20 : 5;
 		mKeysLoop  = validKeys & ~(validKeys - 1);
 		returnKey  = static_cast<Uint8>(std::countr_zero(mKeysLoop));
 	}
