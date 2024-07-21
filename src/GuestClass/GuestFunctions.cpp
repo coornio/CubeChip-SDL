@@ -47,7 +47,6 @@ double VM_Guest::fetchFramerate() const { return Program->framerate; }
 
 void VM_Guest::processFrame() {
 	if (isSystemPaused()) { return; }
-	else { ++mTotalFrames; }
 
 	Input->updateKeyStates();
 	Program->handleTimersDec(Sound->beepFx0A);
@@ -55,7 +54,10 @@ void VM_Guest::processFrame() {
 
 	instructionLoop();
 
-	Program->handleInterrupt(Sound->beepFx0A, Input.get(), Mem->VX());
+	Program->handleInterrupt(
+		Sound->beepFx0A, Input.get(),
+		Mem->VX(), ++mTotalFrames
+	);
 
 	Sound->renderAudio(
 		BAS,
@@ -72,7 +74,8 @@ void VM_Guest::processFrame() {
 
 void VM_Guest::instructionLoop() {
 
-	for (auto inst{ 0 }; ++inst <= Program->ipf; ++mTotalCycles) {
+	auto cycleCount{ 0 };
+	for (; cycleCount < Program->ipf; ++cycleCount) {
 		auto HI = Mem->read(Mem->counter++);
 		auto LO = Mem->read(Mem->counter++);
 		Mem->opcode = HI << 8 | LO;
@@ -605,4 +608,5 @@ void VM_Guest::instructionLoop() {
 			} break;
 		}
 	}
+	mTotalCycles += cycleCount;
 }

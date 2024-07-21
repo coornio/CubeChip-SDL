@@ -77,7 +77,7 @@ public:
 	u8 vRegister[16]{};
 
 public:
-	auto& VX() { return vRegister[(opcode >> 8) & 0xF]; }
+	auto* const VX() { return &vRegister[(opcode >> 8) & 0xF]; }
 
 	//auto& regV(const usz pos)       { return vRegister[pos]; }
 	//auto  regV(const usz pos) const { return vRegister[pos]; }

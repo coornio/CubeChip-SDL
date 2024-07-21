@@ -41,25 +41,26 @@ void HexInput::updateKeyStates() {
 		}
 	}
 
-	mKeysLoop &= mKeysLock &= ~(mKeysPrev & ~mKeysCurr);
-	if (++mTickCurr >= mTickPrev + mTickRate) {
-		mKeysPrev &= ~mKeysLoop;
-	}
+	mKeysLoop &= mKeysLock &= ~(mKeysPrev ^ mKeysCurr);
 }
 
-bool HexInput::keyPressed(Uint8& returnKey) {
+bool HexInput::keyPressed(Uint8* const keyPress, const Uint32 tickCount) {
 	if (!mCustomBinds.size()) { return false; }
 
-	const auto pressKeys{ mKeysCurr & ~mKeysPrev };
-	const auto pressDiff{ pressKeys & ~mKeysLoop };
-	const auto validKeys{ pressDiff ? pressDiff : mKeysLoop };
+	if (tickCount >= mTickLast + mTickSpan) {
+		mKeysPrev &= ~mKeysLoop;
+	}
 
+		const auto pressKeys{ mKeysCurr & ~mKeysPrev };
 	if (pressKeys) {
+		const auto pressDiff{ pressKeys & ~mKeysLoop };
+		const auto validKeys{ pressDiff ? pressDiff : mKeysLoop };
+
 		mKeysLock |= validKeys;
-		mTickPrev  = mTickCurr;
-		mTickRate  = validKeys != mKeysLoop ? 20 : 5;
+		mTickLast  = tickCount;
+		mTickSpan  = validKeys != mKeysLoop ? 20 : 5;
 		mKeysLoop  = validKeys & ~(validKeys - 1);
-		returnKey  = static_cast<Uint8>(std::countr_zero(mKeysLoop));
+		*keyPress  = static_cast<Uint8>(std::countr_zero(mKeysLoop));
 	}
 	return pressKeys;
 }

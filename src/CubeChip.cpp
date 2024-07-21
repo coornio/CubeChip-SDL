@@ -73,28 +73,26 @@ reset_all:
 	while (true) {
 		while (SDL_PollEvent(&Event)) {
 			switch (Event.type) {
-			case SDL_EVENT_QUIT:
-				return EXIT_SUCCESS;
+				case SDL_EVENT_QUIT:
+					return EXIT_SUCCESS;
 
-			case SDL_EVENT_DROP_FILE:
-				BVS->raiseWindow();
-				if (HDM->verifyFile(RomFile::validate, Event.drop.data)) {
-					Host.isReady(true);
-					goto reset_all;
-				} else {
-					blog.stdLogOut("File drop denied: "s + RomFile::error);
+				case SDL_EVENT_DROP_FILE:
+					BVS->raiseWindow();
+					if (HDM->verifyFile(RomFile::validate, Event.drop.data)) {
+						Host.isReady(true);
+						goto reset_all;
+					} else {
+						blog.stdLogOut("File drop denied: "s + RomFile::error);
+						break;
+					}
+
+				case SDL_EVENT_WINDOW_MINIMIZED:
+					if (Guest) { Guest->isSystemPaused(true); }
 					break;
-				}
 
-			case SDL_EVENT_WINDOW_MINIMIZED:
-				if (!Guest) { break; }
-				Guest->isSystemPaused(true);
-				break;
-
-			case SDL_EVENT_WINDOW_RESTORED:
-				if (!Guest) { break; }
-				Guest->isSystemPaused(false);
-				break;
+				case SDL_EVENT_WINDOW_RESTORED:
+					if (Guest) { Guest->isSystemPaused(false); }
+					break;
 			}
 		}
 
