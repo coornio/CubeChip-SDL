@@ -7,6 +7,7 @@
 #pragma once
 
 #include <memory>
+#include <string>
 
 #include "../Types.hpp"
 #include "InstructionSets/Interface.hpp" // this should be removed eventually
@@ -24,10 +25,8 @@ public:
 
 };
 
-
 class Well512;
 class HexInput;
-class ProgramControl;
 class MemoryBanks;
 class SoundCores;
 class DisplayTraits;
@@ -41,24 +40,50 @@ class VM_Guest final {
 
 	FncSetInterface* currFncSet{ &SetClassic8 };
 
+	s32 mCyclesPerFrame{}, boost{};
+	double mFramerate{};
+
+	using enum Interrupt;
+	Interrupt mInterruptType{ CLEAR };
+
+	u8 mDelayTimer{};
+	u8 mSoundTimer{};
+
+	bool mSystemPaused{};
+	u32  mTotalFrames{};
+	u64  mTotalCycles{};
+
+	std::string hexOpcode(u32) const;
+
+	void initProgramParams(u32, s32);
+	void calculateBoostCPF(s32);
+	void changeFunctionSet(FncSetInterface*);
+
+	void setInterrupt(Interrupt);
+	void triggerError(std::string_view);
+	void triggerOpcodeError(u32);
+
+	void decrementTimers();
+	void handleInterrupt1();
+	void handleInterrupt2();
+
 public:
 	explicit VM_Guest(
-		HomeDirManager* const,
-		BasicVideoSpec* const,
-		BasicAudioSpec* const
+		HomeDirManager&,
+		BasicVideoSpec&,
+		BasicAudioSpec&
 	);
 	~VM_Guest();
 
-	HomeDirManager* const HDM;
-	BasicVideoSpec* const BVS;
-	BasicAudioSpec* const BAS;
+	HomeDirManager& HDM;
+	BasicVideoSpec& BVS;
+	BasicAudioSpec& BAS;
 
-	std::unique_ptr<HexInput>       Input;
-	std::unique_ptr<Well512>        Wrand;
-	std::unique_ptr<MemoryBanks>    Mem;
-	std::unique_ptr<ProgramControl> Program;
-	std::unique_ptr<SoundCores>     Sound;
-	std::unique_ptr<DisplayTraits>  Display;
+	std::unique_ptr<HexInput>      Input;
+	std::unique_ptr<Well512>       Wrand;
+	std::unique_ptr<MemoryBanks>   Mem;
+	std::unique_ptr<SoundCores>    Sound;
+	std::unique_ptr<DisplayTraits> Display;
 
 	struct EmulationQuirks final {
 		bool clearVF{};
@@ -83,24 +108,19 @@ public:
 		bool hires_4paged{};
 	} State;
 
-private:
-	bool mSystemPaused{};
-	u32  mTotalFrames{};
-	u64  mTotalCycles{};
-
-	u32  mFramesToInputReset{};
-	u32  mFramesToInp{};
-
 public:
-	[[nodiscard]] bool isSystemPaused() const;
+	[[nodiscard]]
+	bool isSystemPaused(void) const;
 	void isSystemPaused(bool);
 
 	auto getTotalFrames() const { return mTotalFrames; }
 	auto getTotalCycles() const { return mTotalCycles; }
 
-public:
 	// init functions
 	bool setupMachine();
+
+	// core functions
+	void processFrame();
 
 private:
 	void initPlatform();
@@ -112,11 +132,6 @@ private:
 	void prepDisplayArea(Resolution, bool = false);
 	void renderToTexture();
 
-public:
-	// core functions
-	void processFrame();
-
-private:
 	void instructionLoop();
 
 	template <usz variant>
@@ -130,6 +145,6 @@ private:
 	}
 
 public:
-	s32    fetchIPF()       const;
-	double fetchFramerate() const;
+	auto fetchCPF()       const { return mCyclesPerFrame; }
+	auto fetchFramerate() const { return mFramerate; }
 };

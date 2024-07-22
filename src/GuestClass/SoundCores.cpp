@@ -15,40 +15,40 @@
 /*  class  SoundCores                                               */
 /*------------------------------------------------------------------*/
 
-SoundCores::SoundCores(BasicAudioSpec* BAS)
-	: C8{ BAS->getFrequency() }
-	, XO{ BAS->getFrequency() }
-	, MC{ BAS->getFrequency() }
+SoundCores::SoundCores(BasicAudioSpec& BAS)
+	: C8{ BAS.getFrequency() }
+	, XO{ BAS.getFrequency() }
+	, MC{ BAS.getFrequency() }
 {}
 
 void SoundCores::renderAudio(
-	BasicAudioSpec*  BAS,
+	BasicAudioSpec&  BAS,
 	      u32* const colorDst,
 	const u32* const colorSrc,
 	const double     framerate,
 	const bool       buzzer
 ) {
-	const auto samplesPerFrame{ std::ceil(BAS->getFrequency() / framerate) };
+	const auto samplesPerFrame{ std::ceil(BAS.getFrequency() / framerate) };
 	std::vector<s16> audioBuffer(static_cast<u32>(samplesPerFrame));
 
 	if (beepFx0A) {
-		C8.render(audioBuffer, BAS->getAmplitude(), &wavePhase);
+		C8.render(audioBuffer, BAS.getAmplitude(), mWavePhase);
 		colorDst[2] = colorSrc[1]; colorDst[1] = colorSrc[0];
 	} else if (MC.isEnabled()) {
-		MC.render(audioBuffer, BAS->getVolume());
+		MC.render(audioBuffer, BAS.getVolume());
 		colorDst[2] = colorDst[1] = 0xFF202020;
 	} else if (!buzzer) {
-		wavePhase = 0.0f;
+		mWavePhase = 0.0f;
 		colorDst[2] = colorDst[1] = colorSrc[0];
 	} else if (XO.isEnabled()) {
-		XO.render(audioBuffer, BAS->getAmplitude(), &wavePhase);
+		XO.render(audioBuffer, BAS.getAmplitude(), mWavePhase);
 		colorDst[2] = colorDst[1] = colorSrc[0];
 	} else {
-		C8.render(audioBuffer, BAS->getAmplitude(), &wavePhase);
+		C8.render(audioBuffer, BAS.getAmplitude(), mWavePhase);
 		colorDst[2] = colorSrc[1]; colorDst[1] = colorSrc[0];
 	}
 
-	BAS->pushAudioData(audioBuffer.data(), audioBuffer.size());
+	BAS.pushAudioData(audioBuffer.data(), audioBuffer.size());
 }
 
 /*------------------------------------------------------------------*/
@@ -56,27 +56,27 @@ void SoundCores::renderAudio(
 /*------------------------------------------------------------------*/
 
 SoundCores::Classic::Classic(s32 frequency)
-	: freq{ frequency }
+	: mFreq{ frequency }
 {}
 
 void SoundCores::Classic::setTone(const u32 sp, const u32 pc) {
 	// sets a unique tone for each sound call
-	tone = (160.0f + 8.0f * ((pc >> 1) + sp + 1 & 0x3E)) / freq;
+	mTone = (160.0f + 8.0f * ((pc >> 1) + sp + 1 & 0x3E)) / mFreq;
 }
 
 void SoundCores::Classic::setTone(const u32 vx) {
 	// sets the tone for each 8X sound call
-	tone = (160.0f + ((0xFF - (vx ? vx : 0x7F)) >> 3 << 4)) / freq;
+	mTone = (160.0f + ((0xFF - (vx ? vx : 0x7F)) >> 3 << 4)) / mFreq;
 }
 
 void SoundCores::Classic::render(
 	std::span<s16> buffer,
 	const     s16  amplitude,
-	float*  const  wavePhase
+	        float& wavePhase
 ) const {
 	for (auto& sample : buffer) {
-		sample = *wavePhase > 0.5f ? amplitude : -amplitude;
-		*wavePhase = std::fmod(*wavePhase + tone, 1.0f);
+		sample = wavePhase > 0.5f ? amplitude : -amplitude;
+		wavePhase = std::fmod(wavePhase + mTone, 1.0f);
 	}
 }
 
@@ -85,13 +85,13 @@ void SoundCores::Classic::render(
 /*------------------------------------------------------------------*/
 
 SoundCores::XOchip::XOchip(s32 frequency)
-	: rate { 4000.0f / 128.0f / frequency }
-	, tone { rate }
+	: mRate{ 4000.0f / 128.0f / frequency }
+	, mTone{ mRate }
 {}
 
 void SoundCores::XOchip::setPitch(const usz pitch) {
-	tone = rate * std::pow(2.0f, (pitch - 64.0f) / 48.0f);
-	enabled = true;
+	mTone    = mRate * std::pow(2.0f, (pitch - 64.0f) / 48.0f);
+	mEnabled = true;
 }
 
 bool SoundCores::XOchip::loadPattern(
@@ -101,9 +101,9 @@ bool SoundCores::XOchip::loadPattern(
 	if (index + 16 >= mem.size()) {
 		return true;
 	} else {
-		enabled = true;
+		mEnabled = true;
 		for (auto idx{ 0 }; idx < 16; ++idx) {
-			pattern[idx] = mem[index + idx];
+			mPattern[idx] = mem[index + idx];
 		}
 		return false;
 	}
@@ -112,13 +112,13 @@ bool SoundCores::XOchip::loadPattern(
 void SoundCores::XOchip::render(
 	std::span<s16> buffer,
 	const     s16  amplitude,
-	float* const   wavePhase
+	        float& wavePhase
 ) const {
 	for (auto& sample : buffer) {
-		const auto step{ static_cast<s32>(std::clamp(*wavePhase * 128.0f, 0.0f, 127.0f)) };
+		const auto step{ static_cast<s32>(std::clamp(wavePhase * 128.0f, 0.0f, 127.0f)) };
 		const auto mask{ 1 << (7 ^ step & 7) };
-		sample = pattern[step >> 3] & mask ? amplitude : -amplitude;
-		*wavePhase = std::fmod(*wavePhase + tone, 1.0f);
+		sample = mPattern[step >> 3] & mask ? amplitude : -amplitude;
+		wavePhase = std::fmod(wavePhase + mTone, 1.0f);
 	}
 }
 

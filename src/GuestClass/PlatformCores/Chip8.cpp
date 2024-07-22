@@ -10,7 +10,6 @@
 
 #include "../Guest.hpp"
 #include "../HexInput.hpp"
-#include "../ProgramControl.hpp"
 #include "../MemoryBanks.hpp"
 #include "../SoundCores.hpp"
 #include "../DisplayTraits.hpp"
@@ -74,7 +73,7 @@ static constexpr std::size_t variation{};
 
 template <std::size_t variant>
 void VM_Guest::instructionDecoder() { /*
-	for (auto inst{ 0 }; inst < Program->ipf; ++inst) {
+	for (auto inst{ 0 }; inst < Program->mCyclesPerFrame; ++inst) {
 		auto HI = Mem->mrw(Program->counter++);
 		auto LO = Mem->mrw(Program->counter++);
 		Program->opcode = HI << 8 | LO;
@@ -202,19 +201,19 @@ void VM_Guest::instructionDecoder() { /*
 			} break;
 			case 0xF: switch (LO) {
 				case 0x07:								// FX07 - set VX = delay timer
-					Reg->V[X] = Program->timerDelay;
+					Reg->V[X] = Program->mDelayTimer;
 					break;
 				case 0x0A:								// FX0A - set VX = key, wait for keypress
 					Sound->C8.setTone(Reg->SP, Program->counter);
 					Program->setInterrupt(Interrupt::FX0A);
 					break;
 				case 0x15:								// FX15 - set delay timer = VX
-					Program->timerDelay = Reg->V[X];
+					Program->mDelayTimer = Reg->V[X];
 					break;
 				case 0x18:								// FX18 - set sound timer = VX
 					Sound->C8.setTone(Reg->SP, Program->counter);
 					Sound->beepFx0A = false;
-					Program->timerSound = Reg->V[X] + (Reg->V[X] == 1);
+					Program->mSoundTimer = Reg->V[X] + (Reg->V[X] == 1);
 					break;
 				case 0x1E:								// FX1E - set I = I + VX
 					Reg->I += Reg->V[X];

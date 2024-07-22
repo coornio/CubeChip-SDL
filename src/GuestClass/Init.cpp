@@ -18,7 +18,6 @@ using namespace blogger;
 #include "Guest.hpp"
 #include "RomCheck.hpp"
 #include "HexInput.hpp"
-#include "ProgramControl.hpp"
 #include "MemoryBanks.hpp"
 #include "DisplayTraits.hpp"
 
@@ -39,13 +38,13 @@ bool VM_Guest::romTypeCheck() {
 	* This place requires a database check, only after which would
 	* we fall back to deriving the platform specifics via extension
 	*/
-	switch (HDM->hash) {
+	switch (HDM.hash) {
 
 		case (RomExt::c2x):
 			if (!romCopyToMemory(4'096, 0x300))
 				return false;
-			Program->init(Mem->counter, 0x300, 30);
-			Program->setFncSet(&SetClassic8);
+			initProgramParams(0x300, 30);
+			changeFunctionSet(&SetClassic8);
 			State.chip8X_rom   = true;
 			State.chip8_legacy = true;
 			State.hires_2paged = true;
@@ -54,8 +53,8 @@ bool VM_Guest::romTypeCheck() {
 		case (RomExt::c4x):
 			if (!romCopyToMemory(4'096, 0x300))
 				return false;
-			Program->init(Mem->counter, 0x300, 30);
-			Program->setFncSet(&SetClassic8);
+			initProgramParams(0x300, 30);
+			changeFunctionSet(&SetClassic8);
 			State.chip8X_rom   = true;
 			State.chip8_legacy = true;
 			State.hires_4paged = true;
@@ -64,8 +63,8 @@ bool VM_Guest::romTypeCheck() {
 		case (RomExt::c8x):
 			if (!romCopyToMemory(4'096, 0x300))
 				return false;
-			Program->init(Mem->counter, 0x300, 30);
-			Program->setFncSet(&SetClassic8);
+			initProgramParams(0x300, 30);
+			changeFunctionSet(&SetClassic8);
 			State.chip8_legacy = true;
 			State.chip8X_rom   = true;
 			break;
@@ -73,8 +72,8 @@ bool VM_Guest::romTypeCheck() {
 		case (RomExt::c8e):
 			if (!romCopyToMemory(4'096, 0x200))
 				return false;
-			Program->init(Mem->counter, 0x200, 30);
-			Program->setFncSet(&SetClassic8);
+			initProgramParams(0x200, 30);
+			changeFunctionSet(&SetClassic8);
 			State.chip8_legacy = true;
 			State.chip8E_rom   = true;
 			break;
@@ -82,8 +81,8 @@ bool VM_Guest::romTypeCheck() {
 		case (RomExt::c2h):
 			if (!romCopyToMemory(4'096, 0x260))
 				return false;
-			Program->init(Mem->counter, 0x260, 30);
-			Program->setFncSet(&SetClassic8);
+			initProgramParams(0x260, 30);
+			changeFunctionSet(&SetClassic8);
 			State.chip8_legacy = true;
 			State.hires_2paged = true;
 			break;
@@ -91,8 +90,8 @@ bool VM_Guest::romTypeCheck() {
 		case (RomExt::c4h):
 			if (!romCopyToMemory(4'096, 0x244))
 				return false;
-			Program->init(Mem->counter, 0x244, 30);
-			Program->setFncSet(&SetClassic8);
+			initProgramParams(0x244, 30);
+			changeFunctionSet(&SetClassic8);
 			State.chip8_legacy = true;
 			State.hires_4paged = true;
 			break;
@@ -104,8 +103,8 @@ bool VM_Guest::romTypeCheck() {
 				blog.stdLogOut("Invalid TPD rom patch, aborting.");
 				return false;
 			}
-			Program->init(Mem->counter, 0x2C0, 30);
-			Program->setFncSet(&SetClassic8);
+			initProgramParams(0x2C0, 30);
+			changeFunctionSet(&SetClassic8);
 			State.chip8_legacy = true;
 			State.hires_2paged = true;
 			Quirk.idxRegNoInc  = true;
@@ -115,30 +114,30 @@ bool VM_Guest::romTypeCheck() {
 		case (RomExt::ch8):
 			if (!romCopyToMemory(4'096, 0x200))
 				return false;
-			Program->init(Mem->counter, 0x200, 11);
-			Program->setFncSet(&SetClassic8);
+			initProgramParams(0x200, 11);
+			changeFunctionSet(&SetClassic8);
 			break;
 
 		case (RomExt::sc8):
 			if (!romCopyToMemory(4'096, 0x200))
 				return false;
-			Program->init(Mem->counter, 0x200, 30);
-			Program->setFncSet(&SetClassic8);
+			initProgramParams(0x200, 30);
+			changeFunctionSet(&SetClassic8);
 			break;
 
 		case (RomExt::gc8):
 			if (!romCopyToMemory(16'777'216, 0x200))
 				return false;
-			Program->init(Mem->counter, 0x200, 10'000);
-			Program->setFncSet(&SetGigachip);
+			initProgramParams(0x200, 10'000);
+			changeFunctionSet(&SetGigachip);
 			State.gigachip_rom = true;
 			break;
 
 		case (RomExt::mc8):
 			if (!romCopyToMemory(16'777'216, 0x200))
 				return false;
-			Program->init(Mem->counter, 0x200, 3'000);
-			Program->setFncSet(&SetMegachip);
+			initProgramParams(0x200, 3'000);
+			changeFunctionSet(&SetMegachip);
 			State.megachip_rom = true;
 			Quirk.waitScroll   = true;
 			Quirk.idxRegNoInc  = true;
@@ -150,8 +149,8 @@ bool VM_Guest::romTypeCheck() {
 		case (RomExt::hw8):
 			if (!romCopyToMemory(65'536, 0x200))
 				return false;
-			Program->init(Mem->counter, 0x200, 200'000);
-			Program->setFncSet(&SetModernXO);
+			initProgramParams(0x200, 200'000);
+			changeFunctionSet(&SetModernXO);
 			Display->isPixelBitColor(true);
 			Quirk.wrapSprite = true;
 			break;
@@ -159,8 +158,8 @@ bool VM_Guest::romTypeCheck() {
 		case (RomExt::benchmark):
 			if (!romCopyToMemory(65'536, 0x200))
 				return false;
-			Program->init(Mem->counter, 0x200, 3'000'000);
-			Program->setFncSet(&SetClassic8);
+			initProgramParams(0x200, 3'000'000);
+			changeFunctionSet(&SetClassic8);
 			blog.stdLogOut("benchmarking.");
 			break;
 
@@ -174,8 +173,8 @@ bool VM_Guest::romTypeCheck() {
 bool VM_Guest::romCopyToMemory(const usz size, const usz offset) const {
 	Mem->resize(size);
 
-	std::basic_ifstream<char> ifs(HDM->path, std::ios::binary);
-	ifs.read(reinterpret_cast<char*>(Mem->getSpan().data() + offset), HDM->size);
+	std::basic_ifstream<char> ifs(HDM.path, std::ios::binary);
+	ifs.read(reinterpret_cast<char*>(Mem->getSpan().data() + offset), HDM.size);
 	if (ifs.fail()) {
 		blog.stdLogOut("Failed to copy rom data to memory, aborting.");
 		return false;
@@ -197,7 +196,7 @@ void VM_Guest::initPlatform() {
 	//State.schip_legacy = true;
 	//Display->isPixelBitColor(true);
 	//Display->isPixelTrailing(true);
-	Program->setSpeed(0);
+	calculateBoostCPF(0);
 	//Quirk.waitScroll = true;
 	//Quirk.waitVblank = true;
 	//Quirk.wrapSprite = true;
@@ -212,7 +211,7 @@ void VM_Guest::initPlatform() {
 	if (State.megachip_rom) {
 		Display->isPixelTrailing(false);
 		Display->isPixelBitColor(false);
-		Program->framerate = 60.0;
+		mFramerate = 60.0;
 		State.chip8_legacy = false;
 		State.schip_legacy = false;
 	}
@@ -222,8 +221,8 @@ void VM_Guest::initPlatform() {
 		Quirk.waitVblank = true;
 	}
 	if (State.schip_legacy) {
-		Program->setFncSet(&SetLegacySC);
-		Program->framerate = 64.0; // match HP48 framerate
+		changeFunctionSet(&SetLegacySC);
+		mFramerate = 64.0; // match HP48 framerate
 		Display->isPixelTrailing(true);
 		Quirk.shiftVX      = true;
 		Quirk.jmpRegX      = true;
@@ -241,7 +240,7 @@ void VM_Guest::initPlatform() {
 	}
 
 	if (State.chip8X_rom) {
-		Display->Color.cycleBackground(BVS->getFrameColor());
+		Display->Color.cycleBackground(BVS.getFrameColor());
 		Mem->color8xBuffer.resize(true, Display->Trait.H, Display->Trait.W >> 3);
 		Mem->color8xBuffer.at_raw(0, 0) = Display->Color.getFore8X(2);
 
@@ -266,16 +265,16 @@ void VM_Guest::prepDisplayArea(const Resolution mode, const bool forced) {
 	const auto H{ sizeH[select] }; Display->Trait.H = H; Display->Trait.Hb = H - 1;
 	
 	Display->Trait.S = W * H;
-	BVS->createTexture(W, H);
+	BVS.createTexture(W, H);
 
 	if (Display->isManualRefresh()) {
-		BVS->setAspectRatio(512, 384, -2);
+		BVS.setAspectRatio(512, 384, -2);
 		Mem->foregroundBuffer.resize(false, H, W);
 		Mem->backgroundBuffer.resize(false, H, W);
 		Mem->collisionPalette.resize(false, H, W);
 		Mem->megaPalette.resize(256);
 	} else {
-		BVS->setAspectRatio(512, 256, +2);
+		BVS.setAspectRatio(512, 256, +2);
 		Mem->displayBuffer[0].resize(!forced, H, W);
 		if (Display->isPixelBitColor() || Display->isPixelTrailing()) {
 			Mem->displayBuffer[1].resize(!forced, H, W);
@@ -285,9 +284,9 @@ void VM_Guest::prepDisplayArea(const Resolution mode, const bool forced) {
 	}
 
 	if (islegacyPlatform() && (forced || Quirk.waitVblank ^ lores)) {
-		//Program->ipf     += Program->boost *= -1;
+		//Program->mCyclesPerFrame     += Program->boost *= -1;
 		//Quirk.waitVblank  = lores;
-		//printf("ipf: %d\n", Program->ipf);
+		//printf("mCyclesPerFrame: %d\n", Program->mCyclesPerFrame);
 	}
 };
 
@@ -363,7 +362,7 @@ void VM_Guest::fontCopyToMemory() const {
 }
 
 void VM_Guest::renderToTexture() {
-	auto* pixels{ BVS->lockTexture() };
+	auto* pixels{ BVS.lockTexture() };
 
 	if (Display->isManualRefresh()) {
 		for (auto idx{ 0 }; idx < Display->Trait.S; ++idx) {
@@ -448,6 +447,6 @@ void VM_Guest::renderToTexture() {
 			}
 		}
 	}
-	BVS->unlockTexture();
+	BVS.unlockTexture();
 
 }

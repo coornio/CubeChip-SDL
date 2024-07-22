@@ -15,43 +15,43 @@
 class BasicAudioSpec;
 
 class SoundCores final {
-	float wavePhase{};
+	float mWavePhase{};
 
 public:
 	bool  beepFx0A{};
 
-	explicit SoundCores(BasicAudioSpec*);
-	void renderAudio(BasicAudioSpec*, u32*, const u32*, double, bool);
+	explicit SoundCores(BasicAudioSpec&);
+	void renderAudio(BasicAudioSpec&, u32*, const u32*, double, bool);
 
 	/*------------------------------------------------------------------*/
 
 	class Classic final {
-		const s32 freq;
-		float tone{};
+		const s32 mFreq;
+		float mTone{};
 
 	public:
 		explicit Classic(s32);
 
 		void setTone(u32, u32);
 		void setTone(u32);
-		void render(std::span<s16>, s16, float* const) const;
+		void render(std::span<s16>, s16, float&) const;
 	} C8;
 
 	/*------------------------------------------------------------------*/
 
 	class XOchip final {
-		bool enabled{};
-		const float rate;
-		u8    pattern[16]{};
-		float tone{};
+		bool mEnabled{};
+		const float mRate;
+		u8    mPattern[16]{};
+		float mTone{};
 
 	public:
 		explicit XOchip(s32);
-		bool isEnabled() const { return enabled; }
+		bool isEnabled() const { return mEnabled; }
 
 		void setPitch(usz);
 		bool loadPattern(const std::span<const u8>, const u32);
-		void render(std::span<s16>, s16, float* const) const;
+		void render(std::span<s16>, s16, float&) const;
 	} XO;
 
 	/*------------------------------------------------------------------*/

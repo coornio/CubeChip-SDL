@@ -4,6 +4,13 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+
+#include <sstream>
+#include <iomanip>
+
+#include "../Assistants/BasicLogger.hpp"
+using namespace blogger;
+
 #include "../Assistants/Well512.hpp"
 
 #include "../HostClass/HomeDirManager.hpp"
@@ -12,7 +19,6 @@
 
 #include "Guest.hpp"
 #include "HexInput.hpp"
-#include "ProgramControl.hpp"
 #include "MemoryBanks.hpp"
 #include "SoundCores.hpp"
 #include "DisplayTraits.hpp"
@@ -23,9 +29,9 @@
 
 VM_Guest::~VM_Guest() = default;
 VM_Guest::VM_Guest(
-	HomeDirManager* const hdm_ptr,
-	BasicVideoSpec* const bvs_ptr,
-	BasicAudioSpec* const bas_ptr
+	HomeDirManager& hdm_ptr,
+	BasicVideoSpec& bvs_ptr,
+	BasicAudioSpec& bas_ptr
 )
 	: HDM{ hdm_ptr }
 	, BVS{ bvs_ptr }
@@ -34,37 +40,31 @@ VM_Guest::VM_Guest(
 	Input   = std::make_unique<HexInput>();
 	Wrand   = std::make_unique<Well512>();
 	Mem     = std::make_unique<MemoryBanks>();
-	Program = std::make_unique<ProgramControl>(currFncSet);
 	Sound   = std::make_unique<SoundCores>(BAS);
-	Display = std::make_unique<DisplayTraits>(BVS->getFrameColor());
+	Display = std::make_unique<DisplayTraits>(BVS.getFrameColor());
 }
 
-bool VM_Guest::isSystemPaused() const { return mSystemPaused || Program->ipf == 0; }
+bool VM_Guest::isSystemPaused() const { return mSystemPaused || mCyclesPerFrame == 0; }
 void VM_Guest::isSystemPaused(const bool state) { mSystemPaused = state; }
-
-s32    VM_Guest::fetchIPF()       const { return Program->ipf; }
-double VM_Guest::fetchFramerate() const { return Program->framerate; }
 
 void VM_Guest::processFrame() {
 	if (isSystemPaused()) { return; }
+	else { ++mTotalFrames; }
 
 	Input->updateKeyStates();
-	Program->handleTimersDec(Sound->beepFx0A);
-	Program->handleInterrupt();
+	decrementTimers();
+	handleInterrupt1();
 
 	instructionLoop();
 
-	Program->handleInterrupt(
-		Sound->beepFx0A, Input.get(),
-		Mem->VX(), ++mTotalFrames
-	);
+	handleInterrupt2();
 
 	Sound->renderAudio(
 		BAS,
-		BVS->getFrameColor(),
+		BVS.getFrameColor(),
 		Display->Color.buzz,
-		Program->framerate,
-		Program->timerSound
+		mFramerate,
+		mSoundTimer
 	);
 
 	if (!Display->isManualRefresh()) {
@@ -75,7 +75,7 @@ void VM_Guest::processFrame() {
 void VM_Guest::instructionLoop() {
 
 	auto cycleCount{ 0 };
-	for (; cycleCount < Program->ipf; ++cycleCount) {
+	for (; cycleCount < mCyclesPerFrame; ++cycleCount) {
 		auto HI = Mem->read(Mem->counter++);
 		auto LO = Mem->read(Mem->counter++);
 		Mem->opcode = HI << 8 | LO;
@@ -93,13 +93,13 @@ void VM_Guest::instructionLoop() {
 				case 0x00B0:							// 00BN - scroll selected color plane N lines up *MEGACHIP*
 				case 0x00D0:							// 00DN - scroll selected color plane N lines up *XOCHIP*
 					if (Quirk.waitScroll) [[unlikely]]
-						{ Program->setInterrupt(Interrupt::FRAME); }
+						{ setInterrupt(Interrupt::FRAME); }
 					if (!N) [[unlikely]] { break; }
 					currFncSet->scrollUP(N);
 					break;
 				case 0x00C0:							// 00CN - scroll selected color plane N lines down *XOCHIP*
 					if (Quirk.waitScroll) [[unlikely]]
-						{ Program->setInterrupt(Interrupt::FRAME); }
+						{ setInterrupt(Interrupt::FRAME); }
 					if (!N) [[unlikely]] { break; }
 					currFncSet->scrollDN(N);
 					break;
@@ -108,12 +108,12 @@ void VM_Guest::instructionLoop() {
 						if (Display->isPixelBitColor()) {		// 00E0 - erase selected color plane *XOCHIP*
 							Mem->modifyViewport(BrushType::SUB, Display->Trait.maskPlane, true);
 						} else if (Display->isManualRefresh()) {// 00E0 - push (and then clear) framebuffer to screen *MEGACHIP*
-							Program->setInterrupt(Interrupt::FRAME);
+							setInterrupt(Interrupt::FRAME);
 							Mem->flushBuffers(FlushType::DISPLAY);
 							renderToTexture();
 						} else {						// 00E0 - erase whole display
 							if (Quirk.waitVblank) [[unlikely]]
-								{ Program->setInterrupt(Interrupt::FRAME); }
+								{ setInterrupt(Interrupt::FRAME); }
 							Mem->modifyViewport(BrushType::CLR);
 						}
 						break;
@@ -121,18 +121,18 @@ void VM_Guest::instructionLoop() {
 						Mem->modifyViewport(BrushType::XOR, Display->Trait.maskPlane, true);
 						break;
 					case 0xD:							// 00ED - stop signal *CHIP-8E*
-						Program->setInterrupt(Interrupt::SOUND);
+						setInterrupt(Interrupt::SOUND);
 						break;
 					case 0xE:							// 00EE - return from subroutine
 						if (Mem->routineReturn()) [[unlikely]]
-							{ Program->triggerError("Error :: Cannot return from empty stack!"); }
+							{ triggerError("Error :: Cannot return from empty stack!"); }
 						break;
-					[[unlikely]] default: Program->triggerOpcodeError(Mem->opcode);
+					[[unlikely]] default: triggerOpcodeError(Mem->opcode);
 				} break;
 				case 0x00F0: switch (N) {
 					case 0x0:							// 00F0 - return from subroutine *CHIP-8X MPD*
 						if (Mem->routineReturn()) [[unlikely]]
-							{ Program->triggerError("Error :: Cannot return from empty stack!"); }
+							{ triggerError("Error :: Cannot return from empty stack!"); }
 						break;
 					case 0x1:							// 00F1 - set DRAW mode to ADD *HWCHIP64*
 						Display->Trait.paintBrush = BrushType::ADD;
@@ -145,16 +145,16 @@ void VM_Guest::instructionLoop() {
 						break;
 					case 0xB:							// 00FB - scroll selected color plane 4 pixels right *XOCHIP*
 						if (Quirk.waitScroll) [[unlikely]]
-							{ Program->setInterrupt(Interrupt::FRAME); }
+							{ setInterrupt(Interrupt::FRAME); }
 						currFncSet->scrollRT(4);
 						break;
 					case 0xC:							// 00FC - scroll selected color plane 4 pixels left *XOCHIP*
 						if (Quirk.waitScroll) [[unlikely]]
-							{ Program->setInterrupt(Interrupt::FRAME); }
+							{ setInterrupt(Interrupt::FRAME); }
 						currFncSet->scrollLT(4);
 						break;
 					case 0xD:							// 00FD - stop signal *SCHIP*
-						Program->setInterrupt(Interrupt::SOUND);
+						setInterrupt(Interrupt::SOUND);
 						break;
 					case 0xE:							// 00FE - display == 64*32, erase the screen *XOCHIP*
 						if (!Display->isManualRefresh()) [[likely]] {
@@ -166,37 +166,37 @@ void VM_Guest::instructionLoop() {
 							prepDisplayArea(Resolution::HI, !State.schip_legacy);
 						}
 						break;
-					[[unlikely]] default: Program->triggerOpcodeError(Mem->opcode);
+					[[unlikely]] default: triggerOpcodeError(Mem->opcode);
 				} break;
 				default: {
 					if (State.megachip_rom || State.gigachip_rom) {
 						switch (X) {
 							case 0x0: switch (LO) {
 								case 0x10:				// 0010 - disable mega mode *MEGACHIP*
-									Program->setInterrupt(Interrupt::FRAME);
-									Program->setFncSet(&SetClassic8);
+									setInterrupt(Interrupt::FRAME);
+									changeFunctionSet(&SetClassic8);
 
 									Display->isManualRefresh(false);
 									Sound->MC.reset();
 
 									Mem->flushBuffers(FlushType::DISPLAY);
 									prepDisplayArea(Resolution::LO);
-									BVS->setTextureAlpha(0xFF);
-									Display->Color.setBackgroundTo(BVS->getFrameColor());
+									BVS.setTextureAlpha(0xFF);
+									Display->Color.setBackgroundTo(BVS.getFrameColor());
 									break;
 								case 0x11:				// 0011 - enable mega mode *MEGACHIP*
-									Program->setInterrupt(Interrupt::FRAME);
-									Program->setFncSet(&SetMegachip);
+									setInterrupt(Interrupt::FRAME);
+									changeFunctionSet(&SetMegachip);
 
 									Display->isManualRefresh(true);
 									Sound->MC.reset();
 
 									Mem->flushBuffers(FlushType::DISCARD);
 									prepDisplayArea(Resolution::MC);
-									BVS->setTextureAlpha(0xFF);
-									Display->Color.setBackgroundTo(BVS->getFrameColor(), 0);
+									BVS.setTextureAlpha(0xFF);
+									Display->Color.setBackgroundTo(BVS.getFrameColor(), 0);
 									break;
-								[[unlikely]] default: Program->triggerOpcodeError(Mem->opcode);
+								[[unlikely]] default: triggerOpcodeError(Mem->opcode);
 							} break;
 							case 0x1:					// 01NN - set I to NN'NNNN *MEGACHIP*
 								Mem->index_set((LO << 16) | Mem->NNNN());
@@ -212,11 +212,11 @@ void VM_Guest::instructionLoop() {
 								Display->Tex.H = LO ? LO : 256;
 								break;
 							case 0x5:					// 05NN - set screen brightness to NN *MEGACHIP*
-								BVS->setTextureAlpha(LO);
+								BVS.setTextureAlpha(LO);
 								break;
 							case 0x6:					// 060N - start digital sound from RAM at I, repeat if N == 0 *MEGACHIP*
 								if (Sound->MC.initTrack(Mem->getSpan(), Mem->index_get(), N == 0)) [[unlikely]]
-									{ Program->triggerError("Error :: Audio track data goes beyond memory limits!"); }
+									{ triggerError("Error :: Audio track data goes beyond memory limits!"); }
 								break;
 							case 0x7:					// 0700 - stop digital sound *MEGACHIP*
 								Sound->MC.reset();
@@ -234,12 +234,12 @@ void VM_Guest::instructionLoop() {
 							case 0x9:					// 09NN - set collision color to palette entry NN *MEGACHIP*
 								Display->Tex.collision = LO;
 								break;
-							[[unlikely]] default: Program->triggerOpcodeError(Mem->opcode);
+							[[unlikely]] default: triggerOpcodeError(Mem->opcode);
 						}
 					}
 					else switch (NNN) {
 						case 0x151:						// 0151 - stop signal if delay timer == 0 *CHIP-8E*
-							Program->setInterrupt(Interrupt::DELAY);
+							setInterrupt(Interrupt::DELAY);
 							break;
 						case 0x188:						// 0188 - skip next instruction *CHIP-8E*
 							Mem->skipInstruction();
@@ -253,19 +253,19 @@ void VM_Guest::instructionLoop() {
 							break;
 						case 0x2A0:						// 02A0 - cycle background color *CHIP-8X*
 						case 0x2F0:						// 02F0 - cycle background color *CHIP-8X MPD*
-							Display->Color.cycleBackground(BVS->getFrameColor());
+							Display->Color.cycleBackground(BVS.getFrameColor());
 							break;
-						[[unlikely]] default: Program->triggerOpcodeError(Mem->opcode);
+						[[unlikely]] default: triggerOpcodeError(Mem->opcode);
 					}
 				}
 			} break;
 			case 0x1:									// 1NNN - jump to NNN; stop if PC == NNN (inf loop)
 				if (Mem->jumpInstruction(NNN)) [[unlikely]]
-					{ Program->setInterrupt(Interrupt::SOUND); }
+					{ setInterrupt(Interrupt::SOUND); }
 				break;
 			case 0x2:									// 2NNN - call subroutine
 				if (Mem->routineCall(NNN)) [[unlikely]]
-					{ Program->triggerError("Error :: Cannot call with a full stack!"); }
+					{ triggerError("Error :: Cannot call with a full stack!"); }
 				break;
 			case 0x3:									// 3XNN - skip next instruction if VX == NN
 				if (Mem->vRegister[X] == LO) { Mem->skipInstruction(); }
@@ -295,7 +295,7 @@ void VM_Guest::instructionLoop() {
 								Mem->index_inc(1);
 							}
 						} else [[unlikely]] {
-							Program->setInterrupt(Interrupt::FRAME);
+							setInterrupt(Interrupt::FRAME);
 						}
 					} else {							// 5XY2 - store range of registers to memory *XOCHIP*
 						const auto dist{ std::abs(X - Y) + 1 };
@@ -316,7 +316,7 @@ void VM_Guest::instructionLoop() {
 							Mem->vRegister[Z] = Mem->read_idx();
 							Mem->index_inc(1);
 						} else [[unlikely]] {
-							Program->setInterrupt(Interrupt::FRAME);
+							setInterrupt(Interrupt::FRAME);
 						}
 					} else {							// 5XY3 - load range of registers from memory *XOCHIP*
 						const auto dist{ std::abs(X - Y) + 1 };
@@ -343,7 +343,7 @@ void VM_Guest::instructionLoop() {
 						}
 					}
 				} break;
-				[[unlikely]] default: Program->triggerOpcodeError(Mem->opcode);
+				[[unlikely]] default: triggerOpcodeError(Mem->opcode);
 			} break;
 			case 0x6:									// 6XNN - set VX = NN
 				Mem->vRegister[X] = LO;
@@ -417,13 +417,13 @@ void VM_Guest::instructionLoop() {
 						Mem->vRegister[0xF] = static_cast<u8>(remainder);
 					}
 				} break;
-				[[unlikely]] default: Program->triggerOpcodeError(Mem->opcode);
+				[[unlikely]] default: triggerOpcodeError(Mem->opcode);
 			} break;
 			case 0x9: switch (N) {
 				case 0x0:								// 9XY0 - skip next instruction if VX != VY
 					if (Mem->vRegister[X] != Mem->vRegister[Y]) Mem->skipInstruction();
 					break;
-				[[unlikely]] default: Program->triggerOpcodeError(Mem->opcode);
+				[[unlikely]] default: triggerOpcodeError(Mem->opcode);
 			} break;
 			case 0xA:									// ANNN - set I = NNN
 				Mem->index_set(NNN);
@@ -432,13 +432,13 @@ void VM_Guest::instructionLoop() {
 				if (State.chip8E_rom) switch (X) {
 					case 0xB:							// BBNN - jump to current PC - NN *CHIP-8E*
 						if (Mem->stepInstruction(-LO)) [[unlikely]]
-							{ Program->setInterrupt(Interrupt::SOUND); }
+							{ setInterrupt(Interrupt::SOUND); }
 						break;
 					case 0xF:							// BFNN - jump to current PC + NN *CHIP-8E*
 						if (Mem->stepInstruction(+LO)) [[unlikely]]
-							{ Program->setInterrupt(Interrupt::SOUND); }
+							{ setInterrupt(Interrupt::SOUND); }
 						break;
-					[[unlikely]] default: Program->triggerOpcodeError(Mem->opcode);
+					[[unlikely]] default: triggerOpcodeError(Mem->opcode);
 				}
 				else if (State.chip8X_rom) {			// BXYN - set foreground color *CHIP-8X*
 					if (N) {
@@ -455,7 +455,7 @@ void VM_Guest::instructionLoop() {
 				} else {								// BXNN - jump to NNN + V0 (else VX *SCHIP*)
 					const auto addr{ NNN + (Quirk.jmpRegX ? Mem->vRegister[X] : Mem->vRegister[0]) };
 					if (Mem->jumpInstruction(addr)) [[unlikely]]
-						{ Program->setInterrupt(Interrupt::SOUND); }
+						{ setInterrupt(Interrupt::SOUND); }
 				}
 			} break;
 			case 0xC:									// CXNN - set VX = rnd(256) & NN
@@ -463,7 +463,7 @@ void VM_Guest::instructionLoop() {
 				break;
 			case 0xD:									// DXYN - draw N sprite rows at VX and VY
 				if (Quirk.waitVblank) [[unlikely]]
-					{ Program->setInterrupt(Interrupt::FRAME); }
+					{ setInterrupt(Interrupt::FRAME); }
 				currFncSet->drawSprite(Mem.get(), Display.get(), X, Y, N);
 				break;
 			case 0xE: switch (LO) {
@@ -479,7 +479,7 @@ void VM_Guest::instructionLoop() {
 				case 0xF5:								// EXF5 - skip next instruction if key VX up (p2) *CHIP-8X*
 					if (!Input->keyPressed(Mem->vRegister[X], 16)) Mem->skipInstruction();
 					break;
-				[[unlikely]] default: Program->triggerOpcodeError(Mem->opcode);
+				[[unlikely]] default: triggerOpcodeError(Mem->opcode);
 			} break;
 			case 0xF: switch (NNN) {
 				case 0x000:								// F000 - set I = NEXT NNNN then skip instruction *XOCHIP*
@@ -488,18 +488,18 @@ void VM_Guest::instructionLoop() {
 					break;
 				case 0x002:								// F002 - load audio pattern 0..15 from RAM at I..I+15 *XOCHIP*
 					if (Sound->XO.loadPattern(Mem->getSpan(), Mem->index_get())) [[unlikely]]
-						{ Program->triggerError("Error :: Audio pattern data goes beyond memory limits!"); }
+						{ triggerError("Error :: Audio pattern data goes beyond memory limits!"); }
 					break;
 				case 0x100:								// F100 - long jump to NEXT NNNN *HWCHIP64*
 					Mem->counter = Mem->NNNN();
 					break;
 				case 0x200:								// F200 - call long subroutine *HWCHIP64*
 					if (Mem->routineCall(Mem->NNNN())) [[unlikely]]
-						{ Program->triggerError("Error :: Cannot call with a full stack!"); }
+						{ triggerError("Error :: Cannot call with a full stack!"); }
 					break;
 				case 0x300:								// F300 - long jump to NEXT NNNN + V0 *HWCHIP64*
 					if (Mem->jumpInstruction(Mem->NNNN() + Mem->vRegister[0])) [[unlikely]]
-						{ Program->setInterrupt(Interrupt::SOUND); }
+						{ setInterrupt(Interrupt::SOUND); }
 					break;
 				default: switch (LO) {
 					case 0x01:							// FX01 - set plane drawing to X *XOCHIP*
@@ -512,29 +512,28 @@ void VM_Guest::instructionLoop() {
 								| Mem->read_idx(1) <<  8
 								| Mem->read_idx(2);
 						} else [[unlikely]] {			// FX03 - output VX to port 3 *CHIP-8E*
-							Program->setInterrupt(Interrupt::FRAME);
+							setInterrupt(Interrupt::FRAME);
 						}
 						break;
 					case 0x07:							// FX07 - set VX = delay timer
-						Mem->vRegister[X] = Program->timerDelay;
+						Mem->vRegister[X] = mDelayTimer;
 						break;
 					case 0x0A:							// FX0A - set VX = key, wait for keypress
-						Sound->C8.setTone(Mem->stackPos(), Mem->counter);
-						Program->setInterrupt(Interrupt::INPUT);
+						setInterrupt(Interrupt::INPUT);
 						if (Display->isManualRefresh()) [[unlikely]] {
 							Mem->flushBuffers(FlushType::DISPLAY);
 							renderToTexture();
 						}
 						break;
 					case 0x15:							// FX15 - set delay timer = VX
-						Program->timerDelay = Mem->vRegister[X];
+						mDelayTimer = Mem->vRegister[X];
 						break;
 					case 0x18:							// FX18 - set sound timer = VX
 						if (!State.chip8X_rom) [[likely]] {
 							Sound->C8.setTone(Mem->stackPos(), Mem->counter);
 						}
 						Sound->beepFx0A = false;
-						Program->timerSound = Mem->vRegister[X] + (Mem->vRegister[X] == 1);
+						mSoundTimer = Mem->vRegister[X] + (Mem->vRegister[X] == 1);
 						break;
 					case 0x1B:							// FX1B - skip VX amount of bytes *CHIP-8E*
 						Mem->counter += Mem->vRegister[X];
@@ -560,8 +559,8 @@ void VM_Guest::instructionLoop() {
 						Sound->XO.setPitch(Mem->vRegister[X]);
 						break;
 					case 0x4F:							// FX4F - set delay timer = VX and wait *CHIP-8E*
-						Program->setInterrupt(Interrupt::DELAY);
-						Program->timerDelay = Mem->vRegister[X];
+						setInterrupt(Interrupt::DELAY);
+						mDelayTimer = Mem->vRegister[X];
 						break;
 					case 0x55:							// FX55 - store V0..VX to RAM at I..I+X
 						for (auto idx{ 0 }; idx <= X; ++idx) {
@@ -582,31 +581,126 @@ void VM_Guest::instructionLoop() {
 					case 0x75:							// FX75 - store V0..VX to the P flags *XOCHIP*
 						if (State.schip_legacy) [[unlikely]]
 							{ X = std::min(X, 7); }
-						if (Mem->writePermRegs(HDM->permRegs / HDM->sha1, X + 1)) [[unlikely]]
-							{ Program->triggerError("Error :: Failed writing to persistent registers!"); }
+						if (Mem->writePermRegs(HDM.permRegs / HDM.sha1, X + 1)) [[unlikely]]
+							{ triggerError("Error :: Failed writing to persistent registers!"); }
 						break;
 					case 0x85:							// FX85 - load V0..VX from the P flags *XOCHIP*
 						if (State.schip_legacy) [[unlikely]]
 							{ X = std::min(X, 7); }
-						if (Mem->readPermRegs(HDM->permRegs / HDM->sha1, X + 1)) [[unlikely]]
-							{ Program->triggerError("Error :: Failed reading from persistent registers!"); }
+						if (Mem->readPermRegs(HDM.permRegs / HDM.sha1, X + 1)) [[unlikely]]
+							{ triggerError("Error :: Failed reading from persistent registers!"); }
 						break;
 					case 0xE3:							// FXE3 - wait for port 3 input, load into VX *CHIP-8E*
-						Program->setInterrupt(Interrupt::FRAME);
+						setInterrupt(Interrupt::FRAME);
 						break;
 					case 0xE7:							// FXE7 - read port 3 input, load to VX *CHIP-8E*
-						Program->setInterrupt(Interrupt::FRAME);
+						setInterrupt(Interrupt::FRAME);
 						break;
 					case 0xF8:							// FXF8 - output VX to port (sound freq) *CHIP-8X*
 						Sound->C8.setTone(Mem->vRegister[X]);
 						break;
 					case 0xFB:							// FXFB - wait for port input, load to VX *CHIP-8X*
-						Program->setInterrupt(Interrupt::FRAME);
+						setInterrupt(Interrupt::FRAME);
 						break;
-					[[unlikely]] default: Program->triggerOpcodeError(Mem->opcode);
+					[[unlikely]] default: triggerOpcodeError(Mem->opcode);
 				} break;
 			} break;
 		}
 	}
 	mTotalCycles += cycleCount;
+}
+
+std::string VM_Guest::hexOpcode(const u32 opcode) const {
+	std::stringstream out;
+	out << std::setfill('0') << std::setw(4)
+		<< std::uppercase    << std::hex
+		<< opcode;
+	return out.str();
+}
+
+void VM_Guest::initProgramParams(
+	const u32  counter,
+	const s32  cpf
+) {
+	Mem->counter    = counter;
+	mCyclesPerFrame = cpf;
+	mFramerate      = 60.0;
+	mInterruptType  = Interrupt::CLEAR;
+}
+
+void VM_Guest::calculateBoostCPF(const s32 cpf) {
+	if (cpf) { mCyclesPerFrame = cpf; }
+	boost = (mCyclesPerFrame < 50) ? (mCyclesPerFrame >> 1) : 0;
+}
+
+void VM_Guest::changeFunctionSet(FncSetInterface* _fncSet) {
+	currFncSet = _fncSet;
+}
+
+void VM_Guest::setInterrupt(const Interrupt type) {
+	mInterruptType  = type;
+	mCyclesPerFrame = -std::abs(mCyclesPerFrame);
+}
+
+void VM_Guest::triggerError(std::string_view msg) {
+	blog.stdLogOut(msg.data());
+	setInterrupt(Interrupt::ERROR);
+}
+
+void VM_Guest::triggerOpcodeError(const u32 opcode) {
+	if (opcode & 0xF000) {
+		blog.stdLogOut("Error :: Unknown instruction detected: " + hexOpcode(opcode));
+	} else {
+		blog.stdLogOut("Error :: ML routines are unsupported: " + hexOpcode(opcode));
+	}
+	setInterrupt(Interrupt::ERROR);
+}
+
+void VM_Guest::decrementTimers() {
+	if ( mDelayTimer) { --mDelayTimer; }
+	if ( mSoundTimer) { --mSoundTimer; }
+	if (!mSoundTimer) { Sound->beepFx0A = false; }
+}
+
+void VM_Guest::handleInterrupt1() {
+	switch (mInterruptType) {
+
+	case Interrupt::FRAME: // resumes emulation after a single frame pause
+		mCyclesPerFrame = std::abs(mCyclesPerFrame);
+		return;
+
+	case Interrupt::SOUND: // stops emulation when sound timer reaches 0
+		if (!mSoundTimer) {
+			mInterruptType  = Interrupt::FINAL;
+			mCyclesPerFrame = 0;
+		}
+		return;
+
+	case Interrupt::DELAY: // pauses emulation while delay timer is not 0
+		if (!mDelayTimer) {
+			mInterruptType  = Interrupt::CLEAR;
+			mCyclesPerFrame = std::abs(mCyclesPerFrame);
+		}
+		return;
+	}
+}
+
+void VM_Guest::handleInterrupt2() {
+	switch (mInterruptType) {
+
+	case Interrupt::INPUT: // resumes emulation when key press event for Fx0A
+		if (Input->keyPressed(Mem->VX(), mTotalFrames)) {
+			mInterruptType  = Interrupt::CLEAR;
+			mCyclesPerFrame = std::abs(mCyclesPerFrame);
+			mSoundTimer     = 2;
+			Sound->beepFx0A = true;
+			Sound->C8.setTone(Mem->stackPos(), Mem->counter);
+		}
+		return;
+
+	case Interrupt::FINAL:
+	case Interrupt::ERROR:
+		mCyclesPerFrame = 0;
+		return;
+	}
 }

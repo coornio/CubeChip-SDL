@@ -7,7 +7,6 @@
 #include "Interface.hpp"
 #include "../Guest.hpp"
 #include "../DisplayTraits.hpp"
-#include "../ProgramControl.hpp"
 #include "../MemoryBanks.hpp"
 #include "../DisplayTraits.hpp"
 
