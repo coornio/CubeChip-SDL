@@ -461,16 +461,16 @@ void VM_Guest::instructionLoop() {
 				break;
 			case 0xE: switch (LO) {
 				case 0x9E:								// EX9E - skip next instruction if key VX down (p1)
-					if (Input.keyPressed(mRegisterV[X], 0)) skipInstruction();
+					if ( Input.keyHeld_P1(mRegisterV[X])) { skipInstruction(); }
 					break;
 				case 0xA1:								// EXA1 - skip next instruction if key VX up (p1)
-					if (!Input.keyPressed(mRegisterV[X], 0)) skipInstruction();
+					if (!Input.keyHeld_P1(mRegisterV[X])) { skipInstruction(); }
 					break;
 				case 0xF2:								// EXF2 - skip next instruction if key VX down (p2) *CHIP-8X*
-					if (Input.keyPressed(mRegisterV[X], 16)) skipInstruction();
+					if ( Input.keyHeld_P2(mRegisterV[X])) { skipInstruction(); }
 					break;
 				case 0xF5:								// EXF5 - skip next instruction if key VX up (p2) *CHIP-8X*
-					if (!Input.keyPressed(mRegisterV[X], 16)) skipInstruction();
+					if (!Input.keyHeld_P2(mRegisterV[X])) { skipInstruction(); }
 					break;
 				[[unlikely]] default: triggerOpcodeError(mInstruction);
 			} break;
@@ -876,14 +876,12 @@ bool VM_Guest::jumpInstruction(const u32 next) {
 	if (mProgCounter - 2 != next) [[likely]] {
 		mProgCounter = next;
 		return false;
-	}
-	return true;
+	} else { return true; }
 }
 
 bool VM_Guest::stepInstruction(const s32 step) {
 	if (step) [[likely]] {
 		mProgCounter += step - 2;
 		return false;
-	}
-	return true;
+	} else { return true; }
 }

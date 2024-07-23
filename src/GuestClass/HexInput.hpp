@@ -38,5 +38,6 @@ public:
 	void updateKeyStates();
 
 	bool keyPressed(Uint8& returnKey, Uint32 tickCount);
-	bool keyPressed(Uint32 index, Uint32 offset) const;
+	bool keyHeld_P1(Uint32 keyIndex) const;
+	bool keyHeld_P2(Uint32 keyIndex) const;
 };
