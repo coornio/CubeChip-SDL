@@ -23,9 +23,9 @@ class FrameLimiter final {
 	bool   skipLostFrame{}; // forces frameskip if timeOvershoot > timeFrequency
 	bool   lastFrameLost{}; // missed frame indicator when frameskip is enabled
 
-	double timeFrequency{}; // holds time (ms) per unit Hertz
-	double timeOvershoot{}; // holds time remainder (ms) from last successful check
-	double timeVariation{}; // holds time difference between last check and now
+	float  timeFrequency{}; // holds time (ms) per unit Hertz
+	float  timeOvershoot{}; // holds time remainder (ms) from last successful check
+	float  timeVariation{}; // holds time difference between last check and now
 	chrono timePastFrame{}; // holds timestamp of the last frame's check
 	uint64 validFrameCnt{}; // counter of successful frame checks performed
 
@@ -33,9 +33,9 @@ class FrameLimiter final {
 
 public:
 	FrameLimiter(
-		double framerate = 60.0, // 0.5 ... 1000 range
-		bool   firstpass = true, // skipFirstPass flag
-		bool   lostframe = true  // skipLostFrame flag
+		float  framerate = 60.0f, // 0.5 ... 1000 range
+		bool   firstpass = true,  // skipFirstPass flag
+		bool   lostframe = true   // skipLostFrame flag
 	) {
 		setLimiter(framerate, firstpass, lostframe);
 	}
@@ -47,7 +47,7 @@ public:
 	{}
 
 	void setLimiter(
-		double              framerate,
+		float               framerate,
 		std::optional<bool> firstpass = std::nullopt,
 		std::optional<bool> lostframe = std::nullopt
 	);
@@ -56,8 +56,8 @@ public:
 	bool   check(bool mode = SPINLOCK);
 
 	uint64 count()   const { return validFrameCnt; }
-	double elapsed() const { return timeVariation; }
-	double remains() const { return timeFrequency - timeVariation; }
-	double percent() const { return timeVariation / timeFrequency; }
+	float  elapsed() const { return timeVariation; }
+	float  remains() const { return timeFrequency - timeVariation; }
+	float  percent() const { return timeVariation / timeFrequency; }
 	bool   paced()   const { return timeOvershoot < timeFrequency && !lastFrameLost; }
 };

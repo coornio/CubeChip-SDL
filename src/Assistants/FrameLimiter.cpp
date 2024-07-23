@@ -7,11 +7,11 @@
 #include "FrameLimiter.hpp"
 
 void FrameLimiter::setLimiter(
-	const double              framerate,
+	const float               framerate,
 	const std::optional<bool> firstpass,
 	const std::optional<bool> lostframe
 ) {
-	timeFrequency = 1000.0 / std::clamp(framerate, 0.5, 1000.0);
+	timeFrequency = 1000.0f / std::clamp(framerate, 0.5f, 1000.0f);
 	if (firstpass) skipFirstPass = *firstpass;
 	if (lostframe) skipLostFrame = *lostframe;
 }
@@ -19,7 +19,7 @@ void FrameLimiter::setLimiter(
 bool FrameLimiter::check(const bool mode) {
 	if (isValidFrame()) return true;
 
-	if (mode == SLEEP && remains() >= 2.0) {
+	if (mode == SLEEP && remains() >= 2.0f) {
 		std::this_thread::sleep_for(millis(1));
 	}
 	return false;
@@ -41,7 +41,7 @@ bool FrameLimiter::isValidFrame() {
 	}
 
 	timeVariation = {
-		timeOvershoot + duration<double, std::milli>
+		timeOvershoot + duration<float, std::milli>
 		(timeAtCurrent - timePastFrame).count()
 	};
 
