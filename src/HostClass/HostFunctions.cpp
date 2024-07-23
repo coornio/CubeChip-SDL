@@ -88,6 +88,7 @@ bool VM_Host::eventLoopSDL(FrameLimiter& Frame, SDL_Event& Event) {
 				BVS->raiseWindow();
 				if (HDM->verifyFile(RomFile::validate, Event.drop.data)) {
 					isReady(true);
+					doBench(false);
 					prepareGuest(Frame);
 				} else {
 					blog.stdLogOut(std::string{ "File drop denied: " } + RomFile::error);
@@ -153,9 +154,9 @@ bool VM_Host::mainHostLoop(FrameLimiter& Frame, SDL_Event& Event) {
 				using namespace std::chrono;
 
 				std::cout << "\33[2;1H" << std::dec << std::setfill(' ') << std::setprecision(6)
-					<< "\nframes: " << Guest->getTotalFrames() << "   "
-					<< "\ncycles: " << Guest->getTotalCycles() << "   "
-					<< "\ncpf:    " << std::abs(Guest->fetchCPF()) << "   "
+					<< "\33[K\nframes: " << Guest->getTotalFrames()
+					<< "\33[K\ncycles: " << Guest->getTotalCycles()
+					<< "\33[K\ncpf:    " << std::abs(Guest->fetchCPF())
 					<< (Frame.paced() ? "\n\n > keeping up pace." : "\n\n > cannot keep up!!")
 					<< "\n\nelapsed since last: " << Frame.elapsed() << std::endl;
 
@@ -171,7 +172,8 @@ bool VM_Host::mainHostLoop(FrameLimiter& Frame, SDL_Event& Event) {
 
 				std::cout
 					<< "\33[1;13H" << std::setw(4) << ms.count()
-					<< "\33[1;23H" << std::setw(3) << mu.count();
+					<< "\33[1;23H" << std::setw(3) << mu.count()
+					<< "\33[1;1H";
 			} else { Guest->processFrame(); }
 		} else {
 			if (kb.isPressed(KEY(ESCAPE))) {
