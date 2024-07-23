@@ -88,10 +88,10 @@ u32 FunctionsForGigachip::blendPixel(
 	}
 
 	if (!blendType) {
-		return static_cast<std::uint8_t>(std::round(src.A * 255.0f)) << 24
-			 | static_cast<std::uint8_t>(std::round(src.R * 255.0f)) << 16
-			 | static_cast<std::uint8_t>(std::round(src.G * 255.0f)) <<  8
-			 | static_cast<std::uint8_t>(std::round(src.B * 255.0f));
+		return static_cast<u8>(std::round(src.A * 255.0f)) << 24
+			 | static_cast<u8>(std::round(src.R * 255.0f)) << 16
+			 | static_cast<u8>(std::round(src.G * 255.0f)) <<  8
+			 | static_cast<u8>(std::round(src.B * 255.0f));
 	}
 	else {
 		return applyBlend(blendType);
@@ -114,10 +114,10 @@ u32 FunctionsForGigachip::applyBlend(float (*blend)(const float, const float)) c
 		B = dW * dst.B + sW * B;
 	}
 
-	return static_cast<std::uint8_t>(std::roundf(A * 255.0f)) << 24
-		 | static_cast<std::uint8_t>(std::roundf(R * 255.0f)) << 16
-		 | static_cast<std::uint8_t>(std::roundf(G * 255.0f)) <<  8
-		 | static_cast<std::uint8_t>(std::roundf(B * 255.0f));
+	return static_cast<u8>(std::roundf(A * 255.0f)) << 24
+		 | static_cast<u8>(std::roundf(R * 255.0f)) << 16
+		 | static_cast<u8>(std::roundf(G * 255.0f)) <<  8
+		 | static_cast<u8>(std::roundf(B * 255.0f));
 }
 
 void FunctionsForGigachip::drawSprite(

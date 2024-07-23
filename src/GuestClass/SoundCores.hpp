@@ -15,35 +15,35 @@
 class BasicAudioSpec;
 
 class SoundCores final {
-	float mWavePhase{};
+	f32 mWavePhase{};
 
 public:
 	bool  beepFx0A{};
 
 	explicit SoundCores(BasicAudioSpec&);
-	void renderAudio(BasicAudioSpec&, u32*, const u32*, double, bool);
+	void renderAudio(BasicAudioSpec&, u32*, const u32*, f32, bool);
 
 	/*------------------------------------------------------------------*/
 
 	class Classic final {
 		const s32 mFreq;
-		float mTone{};
+		f32 mTone{};
 
 	public:
 		explicit Classic(s32);
 
 		void setTone(u32, u32);
 		void setTone(u32);
-		void render(std::span<s16>, s16, float&) const;
+		void render(std::span<s16>, s16, f32&) const;
 	} C8;
 
 	/*------------------------------------------------------------------*/
 
 	class XOchip final {
 		bool mEnabled{};
-		const float mRate;
-		u8    mPattern[16]{};
-		float mTone{};
+		const f32 mRate;
+		u8   mPattern[16]{};
+		f32  mTone{};
 
 	public:
 		explicit XOchip(s32);
@@ -51,18 +51,18 @@ public:
 
 		void setPitch(usz);
 		bool loadPattern(const std::span<const u8>, const u32);
-		void render(std::span<s16>, s16, float&) const;
+		void render(std::span<s16>, s16, f32&) const;
 	} XO;
 
 	/*------------------------------------------------------------------*/
 
 	class MegaChip final {
-		const float mFreq;
-		      s32   mLen{};
-		const u8*   pMem{};
+		const f32  mFreq;
+		      s32  mLen{};
+		const u8*  pMem{};
 
-		long double mInc{};
-		long double mPos{};
+		f64 mInc{};
+		f64 mPos{};
 
 	public:
 		explicit MegaChip(s32);

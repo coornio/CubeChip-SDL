@@ -4,7 +4,6 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include <array>
 #include <fstream>
 #include <cstddef>
 #include <cstdint>
@@ -157,7 +156,7 @@ bool VM_Guest::romTypeCheck() {
 		case (RomExt::benchmark):
 			if (!romCopyToMemory(65'536, 0x200))
 				return false;
-			initProgramParams(0x200, 3'000'000);
+			initProgramParams(0x200, 3'100'000);
 			changeFunctionSet(&SetClassic8);
 			blog.stdLogOut("benchmarking.");
 			break;
@@ -290,7 +289,7 @@ void VM_Guest::prepDisplayArea(const Resolution mode, const bool forced) {
 };
 
 void VM_Guest::fontCopyToMemory() {
-	static constexpr std::uint8_t FONT_DATA[]{
+	static constexpr u8 FONT_DATA[]{
 		0x60, 0xA0, 0xA0, 0xA0, 0xC0, // 0
 		0x40, 0xC0, 0x40, 0x40, 0xE0, // 1
 		0xC0, 0x20, 0x40, 0x80, 0xE0, // 2
@@ -327,7 +326,7 @@ void VM_Guest::fontCopyToMemory() {
 		0xFE, 0x66, 0x62, 0x64, 0x7C, 0x64, 0x60, 0x60, 0xF0, 0x00, // F
 	};
 
-	static constexpr std::uint8_t MEGA_FONT_DATA[]{
+	static constexpr u8 MEGA_FONT_DATA[]{
 		0x3C, 0x7E, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0x7E, 0x3C, // 0
 		0x18, 0x38, 0x58, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x3C, // 1
 		0x3E, 0x7F, 0xC3, 0x06, 0x0C, 0x18, 0x30, 0x60, 0xFF, 0xFF, // 2

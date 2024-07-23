@@ -38,5 +38,5 @@ public:
 	void updateKeyStates();
 
 	bool keyPressed(Uint8& returnKey, Uint32 tickCount);
-	bool keyPressed(std::size_t index, std::size_t offset) const;
+	bool keyPressed(Uint32 index, Uint32 offset) const;
 };

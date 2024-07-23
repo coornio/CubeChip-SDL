@@ -106,9 +106,9 @@ uint32_t FunctionsForMegachip::applyBlend(
 	}
 
 	return 0xFF000000
-		| static_cast<std::uint8_t>(std::roundf(R * 255.0f)) << 16
-		| static_cast<std::uint8_t>(std::roundf(G * 255.0f)) <<  8
-		| static_cast<std::uint8_t>(std::roundf(B * 255.0f));
+		| static_cast<u8>(std::roundf(R * 255.0f)) << 16
+		| static_cast<u8>(std::roundf(G * 255.0f)) <<  8
+		| static_cast<u8>(std::roundf(B * 255.0f));
 }
 
 void FunctionsForMegachip::drawSprite(

@@ -9,6 +9,9 @@
 #include <cstdint>
 #include <cstddef>
 
+using f64 = long double;
+using f32 = float;
+
 using usz = std::size_t;
 using u64 = std::uint64_t;
 using u32 = std::uint32_t;

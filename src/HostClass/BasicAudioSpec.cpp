@@ -36,10 +36,10 @@ void BasicAudioSpec::pushAudioData(const void* const data, const usz length) {
 	SDL_PutAudioStreamData(stream, data, static_cast<s32>(length * 2));
 }
 
-s32   BasicAudioSpec::getFrequency()  const { return outFrequency; }
-s16   BasicAudioSpec::getAmplitude()  const { return amplitude; }
-s16   BasicAudioSpec::getVolume()     const { return volume; }
-float BasicAudioSpec::getVolumeNorm() const { return volume / VOL_FMAX; }
+s32  BasicAudioSpec::getFrequency()  const { return outFrequency; }
+s16  BasicAudioSpec::getAmplitude()  const { return amplitude; }
+s16  BasicAudioSpec::getVolume()     const { return volume; }
+f32  BasicAudioSpec::getVolumeNorm() const { return volume / VOL_FMAX; }
 
 void BasicAudioSpec::setVolume(const s32 value) {
 	volume    = static_cast<s16>(std::clamp(value, VOL_MIN, VOL_MAX));

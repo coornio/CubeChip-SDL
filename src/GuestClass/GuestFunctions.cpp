@@ -288,12 +288,10 @@ void VM_Guest::instructionLoop() {
 					if (State.chip8E_rom) [[unlikely]] {
 						if (X < Y) {
 							for (auto Z{ X }; Z <= Y; ++Z) {
-								writeMemoryI(mRegisterV[Z]);
-								++mRegisterI;
+								writeMemory(mRegisterV[Z], mRegisterI++);
 							}
-						} else [[unlikely]] {
-							setInterrupt(Interrupt::FRAME);
-						}
+						} else [[unlikely]]
+							{ setInterrupt(Interrupt::FRAME); }
 					} else {							// 5XY2 - store range of registers to memory *XOCHIP*
 						const auto dist{ std::abs(X - Y) + 1 };
 						if (X < Y) {
@@ -311,12 +309,10 @@ void VM_Guest::instructionLoop() {
 					if (State.chip8E_rom) [[unlikely]] {
 						if (X < Y) {
 							for (auto Z{ X }; Z <= Y; ++Z) {
-								mRegisterV[Z] = readMemoryI();
-								++mRegisterI;
+								mRegisterV[Z] = readMemory(mRegisterI++);
 							}
-						} else [[unlikely]] {
-							setInterrupt(Interrupt::FRAME);
-						}
+						} else [[unlikely]]
+							{ setInterrupt(Interrupt::FRAME); }
 					} else {							// 5XY3 - load range of registers from memory *XOCHIP*
 						const auto dist{ std::abs(X - Y) + 1 };
 						if (X < Y) {
@@ -345,7 +341,7 @@ void VM_Guest::instructionLoop() {
 				[[unlikely]] default: triggerOpcodeError(mInstruction);
 			} break;
 			case 0x6:									// 6XNN - set VX = NN
-				mRegisterV[X] = LO;
+				mRegisterV[X]  = LO;
 				break;
 			case 0x7:									// 7XNN - set VX = VX + NN
 				mRegisterV[X] += LO;

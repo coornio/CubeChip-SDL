@@ -65,6 +65,6 @@ bool HexInput::keyPressed(Uint8& returnKey, const Uint32 tickCount) {
 	return pressKeys;
 }
 
-bool HexInput::keyPressed(const std::size_t index, const std::size_t offset) const {
+bool HexInput::keyPressed(const Uint32 index, const Uint32 offset) const {
 	return mKeysCurr & ~mKeysLock & 1 << ((index & 0xF) + offset);
 }

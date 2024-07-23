@@ -137,10 +137,10 @@ void BasicVideoSpec::setAspectRatio(
 	enableScanLine = padding_A == padding_S;
 
 	frameGame = {
-		static_cast<float>(padding_A),
-		static_cast<float>(padding_A),
-		static_cast<float>(texture_W),
-		static_cast<float>(texture_H)
+		static_cast<f32>(padding_A),
+		static_cast<f32>(padding_A),
+		static_cast<f32>(texture_W),
+		static_cast<f32>(texture_H)
 	};
 
 	frameFull.w = texture_W + 2.0f * perimeterWidth;
@@ -202,8 +202,8 @@ void BasicVideoSpec::renderPresent() {
 			for (auto y{ 0 }; y < drawLimit; y += perimeterWidth) {
 				SDL_RenderLine(
 					renderer,
-					frameFull.x, static_cast<float>(y),
-					frameFull.w, static_cast<float>(y)
+					frameFull.x, static_cast<f32>(y),
+					frameFull.w, static_cast<f32>(y)
 				);
 			}
 		}

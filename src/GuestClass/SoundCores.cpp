@@ -8,6 +8,7 @@
 #include <algorithm>
 
 #include "../HostClass/BasicAudioSpec.hpp"
+#include "../Types.hpp"
 
 #include "SoundCores.hpp"
 
@@ -25,11 +26,10 @@ void SoundCores::renderAudio(
 	BasicAudioSpec&  BAS,
 	      u32* const colorDst,
 	const u32* const colorSrc,
-	const double     framerate,
+	const f32        framerate,
 	const bool       buzzer
 ) {
-	const auto samplesPerFrame{ std::ceil(BAS.getFrequency() / framerate) };
-	std::vector<s16> audioBuffer(static_cast<u32>(samplesPerFrame));
+	std::vector<s16> audioBuffer(static_cast<usz>(BAS.getFrequency() / framerate));
 
 	if (beepFx0A) {
 		C8.render(audioBuffer, BAS.getAmplitude(), mWavePhase);
@@ -72,7 +72,7 @@ void SoundCores::Classic::setTone(const u32 vx) {
 void SoundCores::Classic::render(
 	std::span<s16> buffer,
 	const     s16  amplitude,
-	        float& wavePhase
+	          f32& wavePhase
 ) const {
 	for (auto& sample : buffer) {
 		sample = wavePhase > 0.5f ? amplitude : -amplitude;
@@ -112,7 +112,7 @@ bool SoundCores::XOchip::loadPattern(
 void SoundCores::XOchip::render(
 	std::span<s16> buffer,
 	const     s16  amplitude,
-	        float& wavePhase
+	          f32& wavePhase
 ) const {
 	for (auto& sample : buffer) {
 		const auto step{ static_cast<s32>(std::clamp(wavePhase * 128.0f, 0.0f, 127.0f)) };
@@ -127,7 +127,7 @@ void SoundCores::XOchip::render(
 /*------------------------------------------------------------------*/
 
 SoundCores::MegaChip::MegaChip(s32 frequency)
-	: mFreq{ static_cast<float>(frequency) }
+	: mFreq{ static_cast<f32>(frequency) }
 {}
 
 void SoundCores::MegaChip::reset() {
