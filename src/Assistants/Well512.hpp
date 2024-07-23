@@ -8,42 +8,39 @@
 
 #include <chrono>
 #include <cstdint>
-#include <array>
 
 class Well512 {
-	std::array<std::uint32_t, 16> state{};
-	std::uint32_t index{};
+	using result_type = std::uint32_t;
+	result_type mState[16];
+	result_type mIndex{};
 
 public:
-	using result_type = std::uint32_t;
-	static constexpr result_type min() { return 0x00000000u; }
-	static constexpr result_type max() { return 0xFFFFFFFFu; }
+	static constexpr result_type min() { return 0x00000000; }
+	static constexpr result_type max() { return 0xFFFFFFFF; }
 
 	Well512() {
 		using chrono = std::chrono::high_resolution_clock;
-		auto seed = chrono::now().time_since_epoch().count();
-		for (auto& element : state) {
-			element = static_cast<std::uint32_t>(seed >>= 1);
+		const auto seed{ chrono::now().time_since_epoch().count() };
+		for (auto i{ 0 }; i < 16; ++i) {
+			mState[i] = static_cast<result_type>(seed >> i);
 		}
 	}
 
 	result_type get() {
-		std::uint32_t a{}, b{}, c{}, d{};
+		result_type a, b, c, d;
 
-		a = state[index];
-		c = state[(index + 13u) & 15u];
-		b = a ^ c ^ (a << 16u) ^ (c << 15u);
-		c = state[(index + 9u) & 15u];
-		c = c ^ (c >> 11u);
-		a = state[index] = b ^ c;
-		d = a ^ ((a << 5u) & 0xDA442D24u);
-		index = (index + 15u) & 15u;
-		a = state[index];
-		state[index] = a ^ b ^ d ^ (a << 2u) ^ (b << 18u) ^ (c << 28u);
-		return state[index];
+		a = mState[mIndex];
+		c = mState[mIndex + 13 & 15];
+		b = a ^ c ^ (a << 16) ^ (c << 15);
+		c = mState[mIndex + 9 & 15];
+		c = c ^ (c >> 11);
+		a = mState[mIndex] = b ^ c;
+		d = a ^ (a << 5 & 0xDA442D24);
+		mIndex = mIndex + 15 & 15;
+		a = mState[mIndex];
+		mState[mIndex] = a ^ b ^ d ^ a << 2 ^ b << 18 ^ c << 28;
+		return mState[mIndex];
 	}
 
-	result_type operator()() {
-		return get();
-	}
+	result_type operator()() { return get(); }
 };
