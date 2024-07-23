@@ -7,49 +7,48 @@
 #include "Interface.hpp"
 #include "../Guest.hpp"
 #include "../DisplayTraits.hpp"
-#include "../MemoryBanks.hpp"
 
 /*------------------------------------------------------------------*/
 /*  class  FncSetInterface -> FunctionsForModernXO                  */
 /*------------------------------------------------------------------*/
 
-FunctionsForModernXO::FunctionsForModernXO(VM_Guest* parent) noexcept
+FunctionsForModernXO::FunctionsForModernXO(VM_Guest& parent) noexcept
 	: vm{ parent }
 {}
 
-void FunctionsForModernXO::scrollUP(const std::int32_t N) {
-	if (!vm->Display->Trait.maskPlane) { return; }
+void FunctionsForModernXO::scrollUP(const s32 N) {
+	if (!vm.Display->Trait.maskPlane) { return; }
 
 	for (auto P{ 0 }; P < 4; ++P) {
-		if (vm->Display->Trait.maskPlane & (1 << P)) {
-			vm->Mem->displayBuffer[P].shift(-N, 0);
+		if (vm.Display->Trait.maskPlane & (1 << P)) {
+			vm.displayBuffer[P].shift(-N, 0);
 		}
 	}
 }
-void FunctionsForModernXO::scrollDN(const std::int32_t N) {
-	if (!vm->Display->Trait.maskPlane) { return; }
+void FunctionsForModernXO::scrollDN(const s32 N) {
+	if (!vm.Display->Trait.maskPlane) { return; }
 
 	for (auto P{ 0 }; P < 4; ++P) {
-		if (vm->Display->Trait.maskPlane & (1 << P)) {
-			vm->Mem->displayBuffer[P].shift(+N, 0);
+		if (vm.Display->Trait.maskPlane & (1 << P)) {
+			vm.displayBuffer[P].shift(+N, 0);
 		}
 	}
 }
-void FunctionsForModernXO::scrollLT(const std::int32_t) {
-	if (!vm->Display->Trait.maskPlane) { return; }
+void FunctionsForModernXO::scrollLT(const s32) {
+	if (!vm.Display->Trait.maskPlane) { return; }
 
 	for (auto P{ 0 }; P < 4; ++P) {
-		if (vm->Display->Trait.maskPlane & (1 << P)) {
-			vm->Mem->displayBuffer[P].shift(0, -4);
+		if (vm.Display->Trait.maskPlane & (1 << P)) {
+			vm.displayBuffer[P].shift(0, -4);
 		}
 	}
 }
-void FunctionsForModernXO::scrollRT(const std::int32_t) {
-	if (!vm->Display->Trait.maskPlane) { return; }
+void FunctionsForModernXO::scrollRT(const s32) {
+	if (!vm.Display->Trait.maskPlane) { return; }
 
 	for (auto P{ 0 }; P < 4; ++P) {
-		if (vm->Display->Trait.maskPlane & (1 << P)) {
-			vm->Mem->displayBuffer[P].shift(0, +4);
+		if (vm.Display->Trait.maskPlane & (1 << P)) {
+			vm.displayBuffer[P].shift(0, +4);
 		}
 	}
 }
@@ -57,56 +56,54 @@ void FunctionsForModernXO::scrollRT(const std::int32_t) {
 /*------------------------------------------------------------------*/
 
 void FunctionsForModernXO::drawByte(
-	MemoryBanks* Mem, DisplayTraits* Display,
-	std::int32_t X, std::int32_t Y,
-	const std::int32_t P,
-	const std::size_t  DATA
+	s32 X, s32 Y,
+	const s32 P,
+	const usz  DATA
 ) {
 	if (!DATA) { return; }
-	if (vm->Quirk.wrapSprite) { X &= Display->Trait.Wb; }
-	else if (X >= Display->Trait.W) { return; }
+	if (vm.Quirk.wrapSprite) { X &= vm.Display->Trait.Wb; }
+	else if (X >= vm.Display->Trait.W) { return; }
 
-	for (auto B{ 0 }; B++ < 8; ++X &= Display->Trait.Wb)
+	for (auto B{ 0 }; B++ < 8; ++X &= vm.Display->Trait.Wb)
 	{
 		if (DATA >> (8 - B) & 0x1) {
-			auto& pixel{ Mem->displayBuffer[P].at_raw(Y, X) };
-			if (pixel) { Mem->vRegister[0xF] = 1; }
+			auto& pixel{ vm.displayBuffer[P].at_raw(Y, X) };
+			if (pixel) { vm.mRegisterV[0xF] = 1; }
 
-			switch (Display->Trait.paintBrush) {
+			switch (vm.Display->Trait.paintBrush) {
 				case BrushType::XOR: pixel ^=  1; break;
 				case BrushType::SUB: pixel &= ~1; break;
 				case BrushType::ADD: pixel |=  1; break;
 			}
 		}
-		if (!vm->Quirk.wrapSprite && X == Display->Trait.Wb) { return; }
+		if (!vm.Quirk.wrapSprite && X == vm.Display->Trait.Wb) { return; }
 	}
 }
 
 void FunctionsForModernXO::drawSprite(
-	MemoryBanks* Mem, DisplayTraits* Display,
-	std::int32_t _X, std::int32_t _Y, std::int32_t N
+	s32 _X, s32 _Y, s32 N
 ) {
-	std::int32_t VX{ Mem->vRegister[_X] };
-	std::int32_t VY{ Mem->vRegister[_Y] };
+	s32 VX{ vm.mRegisterV[_X] };
+	s32 VY{ vm.mRegisterV[_Y] };
 
-	Mem->vRegister[0xF] = 0;
-	if (!Display->Trait.maskPlane) { return; }
+	vm.mRegisterV[0xF] = 0;
+	if (!vm.Display->Trait.maskPlane) { return; }
 
-	VX &= Display->Trait.Wb;
-	VY &= Display->Trait.Hb;
+	VX &= vm.Display->Trait.Wb;
+	VY &= vm.Display->Trait.Hb;
 
 	const bool wide{ N == 0 };
 	if (wide) { N = 16; }
 
 	for (auto P{ 0 }, I{ 0 }; P < 4; ++P)
 	{
-		if (!(Display->Trait.maskPlane & (1 << P))) { continue; }
+		if (!(vm.Display->Trait.maskPlane & (1 << P))) { continue; }
 
-		for (auto H{ 0 }, Y{ VY }; H < N; ++H, ++Y &= Display->Trait.Hb)
+		for (auto H{ 0 }, Y{ VY }; H < N; ++H, ++Y &= vm.Display->Trait.Hb)
 		{
-			if (true) { drawByte(Mem, Display, VX + 0, Y, P, Mem->read_idx(I++)); }
-			if (wide) { drawByte(Mem, Display, VX + 8, Y, P, Mem->read_idx(I++)); }
-			if (!vm->Quirk.wrapSprite && Y == Display->Trait.Hb) { break; }
+			if (true) { drawByte(VX + 0, Y, P, vm.readMemoryI(I++)); }
+			if (wide) { drawByte(VX + 8, Y, P, vm.readMemoryI(I++)); }
+			if (!vm.Quirk.wrapSprite && Y == vm.Display->Trait.Hb) { break; }
 		}
 	}
 }

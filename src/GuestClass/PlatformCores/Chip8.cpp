@@ -10,7 +10,6 @@
 
 #include "../Guest.hpp"
 #include "../HexInput.hpp"
-#include "../MemoryBanks.hpp"
 #include "../SoundCores.hpp"
 #include "../DisplayTraits.hpp"
 

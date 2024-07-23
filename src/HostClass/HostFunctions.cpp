@@ -61,7 +61,7 @@ void VM_Host::prepareGuest(FrameLimiter& Frame) {
 			Frame.setLimiter(Guest->fetchFramerate());
 			BVS->changeTitle(HDM->file.c_str());
 		} else {
-			Frame.setLimiter(30.0);
+			Frame.setLimiter(30.0f);
 			isReady(false);
 			HDM->reset();
 		}

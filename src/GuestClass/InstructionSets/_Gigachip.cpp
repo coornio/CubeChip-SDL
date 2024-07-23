@@ -9,13 +9,12 @@
 #include "Interface.hpp"
 #include "../Guest.hpp"
 #include "../DisplayTraits.hpp"
-#include "../MemoryBanks.hpp"
 
 /*------------------------------------------------------------------*/
 /*  class  FncSetInterface -> FunctionsForGigachip                  */
 /*------------------------------------------------------------------*/
 
-FunctionsForGigachip::FunctionsForGigachip(VM_Guest* parent) noexcept
+FunctionsForGigachip::FunctionsForGigachip(VM_Guest& parent) noexcept
 	: vm{ parent }
 {
 	chooseBlend(Blend::NORMAL);
@@ -23,30 +22,30 @@ FunctionsForGigachip::FunctionsForGigachip(VM_Guest* parent) noexcept
 
 /*------------------------------------------------------------------*/
 
-void FunctionsForGigachip::scrollUP(const std::int32_t N) {
-	vm->Mem->foregroundBuffer.rotate(-N, 0);
+void FunctionsForGigachip::scrollUP(const s32 N) {
+	vm.foregroundBuffer.rotate(-N, 0);
 }
-void FunctionsForGigachip::scrollDN(const std::int32_t N) {
-	vm->Mem->foregroundBuffer.rotate(+N, 0);
+void FunctionsForGigachip::scrollDN(const s32 N) {
+	vm.foregroundBuffer.rotate(+N, 0);
 }
-void FunctionsForGigachip::scrollLT(const std::int32_t N) {
-	vm->Mem->foregroundBuffer.rotate(0, -N);
+void FunctionsForGigachip::scrollLT(const s32 N) {
+	vm.foregroundBuffer.rotate(0, -N);
 }
-void FunctionsForGigachip::scrollRT(const std::int32_t N) {
-	vm->Mem->foregroundBuffer.rotate(0, +N);
+void FunctionsForGigachip::scrollRT(const s32 N) {
+	vm.foregroundBuffer.rotate(0, +N);
 }
 
 /*------------------------------------------------------------------*/
 
-uint32_t FunctionsForGigachip::blendPixel(
-	std::uint32_t  colorSrc,
-	std::uint32_t& colorDst
+u32 FunctionsForGigachip::blendPixel(
+	u32  colorSrc,
+	u32& colorDst
 ) {
 	static constexpr float minF{ 1.0f / 255.0f };
 
-	src.A = (colorSrc >> 24) * minF * vm->Display->Tex.alpha;
+	src.A = (colorSrc >> 24) * minF * vm.Display->Tex.alpha;
 	if (src.A < minF) [[unlikely]] { return colorDst; }
-	if (vm->Display->Tex.invert) { colorSrc ^= 0x00FFFFFF; }
+	if (vm.Display->Tex.invert) { colorSrc ^= 0x00FFFFFF; }
 	src.R = (colorSrc >> 16 & 0xFF) * minF;
 	src.G = (colorSrc >>  8 & 0xFF) * minF;
 	src.B = (colorSrc       & 0xFF) * minF;
@@ -56,7 +55,7 @@ uint32_t FunctionsForGigachip::blendPixel(
 	dst.G = (colorDst >>  8 & 0xFF) * minF;
 	dst.B = (colorDst       & 0xFF) * minF;
 
-	switch (vm->Display->Tex.rgbmod) {
+	switch (vm.Display->Tex.rgbmod) {
 		case Trait::BRG:
 			std::swap(src.R, src.G);
 			std::swap(src.R, src.B);
@@ -99,7 +98,7 @@ uint32_t FunctionsForGigachip::blendPixel(
 	}
 }
 
-uint32_t FunctionsForGigachip::applyBlend(float (*blend)(const float, const float)) const {
+u32 FunctionsForGigachip::applyBlend(float (*blend)(const float, const float)) const {
 	float A{ 1.0f };
 	float R{ blend(src.R, dst.R) };
 	float G{ blend(src.G, dst.G) };
@@ -122,32 +121,31 @@ uint32_t FunctionsForGigachip::applyBlend(float (*blend)(const float, const floa
 }
 
 void FunctionsForGigachip::drawSprite(
-	MemoryBanks* Mem, DisplayTraits* Display,
-	std::int32_t _X, std::int32_t _Y, std::int32_t N
+	s32 _X, s32 _Y, s32 N
 ) {
-	std::int32_t VX{ Mem->vRegister[_X] };
-	std::int32_t VY{ Mem->vRegister[_Y] };
-	Mem->vRegister[0xF] = 0;
+	s32 VX{ vm.mRegisterV[_X] };
+	s32 VY{ vm.mRegisterV[_Y] };
+	vm.mRegisterV[0xF] = 0;
 
-	const auto currW{ vm->Display->Tex.W }; auto tempW{ currW };
-	const auto currH{ vm->Display->Tex.H }; auto tempH{ currH };
+	const auto currW{ vm.Display->Tex.W }; auto tempW{ currW };
+	const auto currH{ vm.Display->Tex.H }; auto tempH{ currH };
 
-	bool flipX{ vm->Display->Tex.flip_X };
-	bool flipY{ vm->Display->Tex.flip_Y };
+	bool flipX{ vm.Display->Tex.flip_X };
+	bool flipY{ vm.Display->Tex.flip_Y };
 
-	vm->Display->Tex.alpha = (N ^ 0xF) / 15.0f;
+	vm.Display->Tex.alpha = (N ^ 0xF) / 15.0f;
 
-	if (vm->Display->Tex.uneven) {
+	if (vm.Display->Tex.uneven) {
 		std::swap(tempW, tempH);
 		std::swap(flipX, flipY);
 	}
 
 	auto memY{ 0 }, memX{ 0 }; // position vars for RAM access
 
-	for (auto H{ 0 }, Y{ VY }; H < tempH; ++H, ++Y %= Display->Trait.H) {
-		for (auto W{ 0 }, X{ VX }; W < tempW; ++W, ++X &= Display->Trait.Wb) {
+	for (auto H{ 0 }, Y{ VY }; H < tempH; ++H, ++Y %= vm.Display->Trait.H) {
+		for (auto W{ 0 }, X{ VX }; W < tempW; ++W, ++X &= vm.Display->Trait.Wb) {
 
-			if (vm->Display->Tex.rotate) {
+			if (vm.Display->Tex.rotate) {
 				memX = H; memY = tempW - W - 1;
 			} else {
 				memX = W; memY = H;
@@ -156,30 +154,30 @@ void FunctionsForGigachip::drawSprite(
 			if (flipX) { memX = currW - memX - 1; }
 			if (flipY) { memY = currH - memY - 1; }
 
-			const auto sourceColorIdx{ vm->Mem->read_idx((memY * currW) + memX) };
+			const auto sourceColorIdx{ vm.readMemoryI((memY * currW) + memX) };
 			if (sourceColorIdx) {
-				auto& collideCoord{ vm->Mem->collisionPalette.at_raw(Y, X) };
-				auto& backbufCoord{ vm->Mem->backgroundBuffer.at_raw(Y, X) };
+				auto& collideCoord{ vm.collisionPalette.at_raw(Y, X) };
+				auto& backbufCoord{ vm.backgroundBuffer.at_raw(Y, X) };
 
-				if (collideCoord == vm->Display->Tex.collision)
-					[[unlikely]] { Mem->vRegister[0xF] = 1; }
+				if (collideCoord == vm.Display->Tex.collision)
+					[[unlikely]] { vm.mRegisterV[0xF] = 1; }
 
 				collideCoord = sourceColorIdx;
-				if (!vm->Display->Tex.nodraw) {
+				if (!vm.Display->Tex.nodraw) {
 					backbufCoord = blendPixel(
-						vm->Mem->megaPalette[sourceColorIdx],
+						vm.megaPalette[sourceColorIdx],
 						backbufCoord
 					);
 				}
 			}
-			if (!vm->Quirk.wrapSprite && X == Display->Trait.Wb) { break; }
+			if (!vm.Quirk.wrapSprite && X == vm.Display->Trait.Wb) { break; }
 		}
-		if (!vm->Quirk.wrapSprite && Y == Display->Trait.Hb) { break; }
+		if (!vm.Quirk.wrapSprite && Y == vm.Display->Trait.Hb) { break; }
 	}
 }
 
 void FunctionsForGigachip::chooseBlend(
-	const std::size_t N
+	const usz N
 ) {
 	switch (N) {
 

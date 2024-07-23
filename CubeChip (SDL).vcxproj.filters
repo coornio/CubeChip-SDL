@@ -48,9 +48,6 @@
     <ClCompile Include="src\CubeChip.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\GuestClass\MemoryBanks.cpp">
-      <Filter>Source Files\VM Guest</Filter>
-    </ClCompile>
     <ClCompile Include="src\GuestClass\DisplayTraits.cpp">
       <Filter>Source Files\VM Guest</Filter>
     </ClCompile>
@@ -159,9 +156,6 @@
       <Filter>Header Files\VM Guest</Filter>
     </ClInclude>
     <ClInclude Include="src\GuestClass\HexInput.hpp">
-      <Filter>Header Files\VM Guest</Filter>
-    </ClInclude>
-    <ClInclude Include="src\GuestClass\MemoryBanks.hpp">
       <Filter>Header Files\VM Guest</Filter>
     </ClInclude>
     <ClInclude Include="src\GuestClass\SoundCores.hpp">

@@ -44,7 +44,7 @@ void HexInput::updateKeyStates() {
 	mKeysLoop &= mKeysLock &= ~(mKeysPrev ^ mKeysCurr);
 }
 
-bool HexInput::keyPressed(Uint8* const keyPress, const Uint32 tickCount) {
+bool HexInput::keyPressed(Uint8& returnKey, const Uint32 tickCount) {
 	if (!mCustomBinds.size()) { return false; }
 
 	if (tickCount >= mTickLast + mTickSpan) {
@@ -60,7 +60,7 @@ bool HexInput::keyPressed(Uint8* const keyPress, const Uint32 tickCount) {
 		mTickLast  = tickCount;
 		mTickSpan  = validKeys != mKeysLoop ? 20 : 5;
 		mKeysLoop  = validKeys & ~(validKeys - 1);
-		*keyPress  = static_cast<Uint8>(std::countr_zero(mKeysLoop));
+		returnKey  = static_cast<Uint8>(std::countr_zero(mKeysLoop));
 	}
 	return pressKeys;
 }

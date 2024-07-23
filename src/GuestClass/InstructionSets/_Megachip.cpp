@@ -10,49 +10,48 @@
 
 #include "Interface.hpp"
 #include "../Guest.hpp"
-#include "../MemoryBanks.hpp"
 #include "../DisplayTraits.hpp"
 
 /*------------------------------------------------------------------*/
 /*  class  FncSetInterface -> FunctionsForMegachip                  */
 /*------------------------------------------------------------------*/
 
-FunctionsForMegachip::FunctionsForMegachip(VM_Guest* parent) noexcept
+FunctionsForMegachip::FunctionsForMegachip(VM_Guest& parent) noexcept
 	: vm{ parent }
 {
 	chooseBlend(Blend::NORMAL);
 }
 
-void FunctionsForMegachip::scrollUP(const std::int32_t N) {
-	vm->Mem->foregroundBuffer.shift(-N, 0);
+void FunctionsForMegachip::scrollUP(const s32 N) {
+	vm.foregroundBuffer.shift(-N, 0);
 	blendToDisplay(
-		vm->Mem->foregroundBuffer.data(),
-		vm->Mem->backgroundBuffer.data(),
-		vm->Display->Trait.S
+		vm.foregroundBuffer.data(),
+		vm.backgroundBuffer.data(),
+		vm.Display->Trait.S
 	);
 }
-void FunctionsForMegachip::scrollDN(const std::int32_t N) {
-	vm->Mem->foregroundBuffer.shift(+N, 0);
+void FunctionsForMegachip::scrollDN(const s32 N) {
+	vm.foregroundBuffer.shift(+N, 0);
 	blendToDisplay(
-		vm->Mem->foregroundBuffer.data(),
-		vm->Mem->backgroundBuffer.data(),
-		vm->Display->Trait.S
+		vm.foregroundBuffer.data(),
+		vm.backgroundBuffer.data(),
+		vm.Display->Trait.S
 	);
 }
-void FunctionsForMegachip::scrollLT(const std::int32_t N) {
-	vm->Mem->foregroundBuffer.shift(0, -N);
+void FunctionsForMegachip::scrollLT(const s32 N) {
+	vm.foregroundBuffer.shift(0, -N);
 	blendToDisplay(
-		vm->Mem->foregroundBuffer.data(),
-		vm->Mem->backgroundBuffer.data(),
-		vm->Display->Trait.S
+		vm.foregroundBuffer.data(),
+		vm.backgroundBuffer.data(),
+		vm.Display->Trait.S
 	);
 }
-void FunctionsForMegachip::scrollRT(const std::int32_t N) {
-	vm->Mem->foregroundBuffer.shift(0, +N);
+void FunctionsForMegachip::scrollRT(const s32 N) {
+	vm.foregroundBuffer.shift(0, +N);
 	blendToDisplay(
-		vm->Mem->foregroundBuffer.data(),
-		vm->Mem->backgroundBuffer.data(),
-		vm->Display->Trait.S
+		vm.foregroundBuffer.data(),
+		vm.backgroundBuffer.data(),
+		vm.Display->Trait.S
 	);
 }
 
@@ -61,22 +60,22 @@ void FunctionsForMegachip::scrollRT(const std::int32_t N) {
 template <typename T>
 void FunctionsForMegachip::blendToDisplay(
 	const T* const src, const T* const dst,
-	const std::size_t size
+	const usz size
 ) {
-	auto* pixels{ vm->BVS.lockTexture() };
-	for (std::size_t idx{ 0 }; idx < size; ++idx) {
+	auto* pixels{ vm.BVS.lockTexture() };
+	for (usz idx{ 0 }; idx < size; ++idx) {
 		pixels[idx] = blendPixel(src[idx], dst[idx]);
 	}
-	vm->BVS.unlockTexture();
+	vm.BVS.unlockTexture();
 }
 
 uint32_t FunctionsForMegachip::blendPixel(
-	const std::uint32_t colorSrc,
-	const std::uint32_t colorDst
+	const u32 colorSrc,
+	const u32 colorDst
 )  noexcept {
 	static constexpr float minF{ 1.0f / 255.0f };
 
-	src.A = (colorSrc >> 24) * minF * vm->Display->Tex.alpha;
+	src.A = (colorSrc >> 24) * minF * vm.Display->Tex.alpha;
 	if (src.A < minF) [[unlikely]] { return colorDst; }
 	src.R = ((colorSrc >> 16) & 0xFF) * minF;
 	src.G = ((colorSrc >>  8) & 0xFF) * minF;
@@ -113,72 +112,71 @@ uint32_t FunctionsForMegachip::applyBlend(
 }
 
 void FunctionsForMegachip::drawSprite(
-	MemoryBanks* Mem, DisplayTraits* Display,
-	std::int32_t _X, std::int32_t _Y, std::int32_t FR
+	s32 _X, s32 _Y, s32 FR
 ) {
-	std::int32_t VX{ Mem->vRegister[_X] };
-	std::int32_t VY{ Mem->vRegister[_Y] };
+	s32 VX{ vm.mRegisterV[_X] };
+	s32 VY{ vm.mRegisterV[_Y] };
 
-	Mem->vRegister[0xF] = 0;
-	if (!vm->Quirk.wrapSprite && VY >= Display->Trait.H) { return; }
-	if (vm->Mem->index_get() >= 0xF0) [[likely]] { goto paintTexture; }
+	vm.mRegisterV[0xF] = 0;
+	if (!vm.Quirk.wrapSprite && VY >= vm.Display->Trait.H) { return; }
+	if (vm.mRegisterI >= 0xF0) [[likely]] { goto paintTexture; }
 
-	for (auto H{ 0 }, Y{ VY }; H < FR; ++H, ++Y &= Display->Trait.Wb)
+	for (auto H{ 0 }, Y{ VY }; H < FR; ++H, ++Y &= vm.Display->Trait.Wb)
 	{
-		if (vm->Quirk.wrapSprite && Y >= Display->Trait.H) { continue; }
-		const auto bytePixel{ Mem->read_idx(H) };
+		if (vm.Quirk.wrapSprite && Y >= vm.Display->Trait.H) { continue; }
+		const auto bytePixel{ vm.readMemoryI(H) };
 
-		for (auto W{ 7 }, X{ VX }; W >= 0; --W, ++X &= Display->Trait.Wb)
+		for (auto W{ 7 }, X{ VX }; W >= 0; --W, ++X &= vm.Display->Trait.Wb)
 		{
 			if (bytePixel >> W & 0x1)
 			{
-				auto& collideCoord{ Mem->collisionPalette.at_raw(Y, X) };
-				auto& backbufCoord{ Mem->backgroundBuffer.at_raw(Y, X) };
+				auto& collideCoord{ vm.collisionPalette.at_raw(Y, X) };
+				auto& backbufCoord{ vm.backgroundBuffer.at_raw(Y, X) };
 
 				if (collideCoord) [[unlikely]] {
 					collideCoord = 0;
 					backbufCoord = 0;
-					Mem->vRegister[0xF] = 1;
+					vm.mRegisterV[0xF] = 1;
 				} else {
 					collideCoord = 254;
-					backbufCoord = Display->Color.hex[H];
+					backbufCoord = vm.Display->Color.hex[H];
 				}
 			}
-			if (!vm->Quirk.wrapSprite && X == Display->Trait.Wb) { break; }
+			if (!vm.Quirk.wrapSprite && X == vm.Display->Trait.Wb) { break; }
 		}
-		if (!vm->Quirk.wrapSprite && Y == Display->Trait.Hb) { break; }
+		if (!vm.Quirk.wrapSprite && Y == vm.Display->Trait.Hb) { break; }
 	}
 	return;
 
 paintTexture:
-	for (auto H{ 0 }, Y{ VY }; H < Display->Tex.H; ++H, ++Y &= Display->Trait.Wb)
+	for (auto H{ 0 }, Y{ VY }; H < vm.Display->Tex.H; ++H, ++Y &= vm.Display->Trait.Wb)
 	{
-		if (vm->Quirk.wrapSprite && Y >= Display->Trait.H) { continue; }
-		auto I = H * Display->Tex.W;
+		if (vm.Quirk.wrapSprite && Y >= vm.Display->Trait.H) { continue; }
+		auto I = H * vm.Display->Tex.W;
 
-		for (auto W{ 0 }, X{ VX }; W < Display->Tex.W; ++W, ++X &= Display->Trait.Wb)
+		for (auto W{ 0 }, X{ VX }; W < vm.Display->Tex.W; ++W, ++X &= vm.Display->Trait.Wb)
 		{
-			if (const auto sourceColorIdx{ Mem->read_idx(I++) }; sourceColorIdx)
+			if (const auto sourceColorIdx{ vm.readMemoryI(I++) }; sourceColorIdx)
 			{
-				auto& collideCoord{ Mem->collisionPalette.at_raw(Y, X) };
-				auto& backbufCoord{ Mem->backgroundBuffer.at_raw(Y, X) };
+				auto& collideCoord{ vm.collisionPalette.at_raw(Y, X) };
+				auto& backbufCoord{ vm.backgroundBuffer.at_raw(Y, X) };
 
-				if (collideCoord == Display->Tex.collision)
-					[[unlikely]] { Mem->vRegister[0xF] = 1; }
+				if (collideCoord == vm.Display->Tex.collision)
+					[[unlikely]] { vm.mRegisterV[0xF] = 1; }
 
 				collideCoord = sourceColorIdx;
 				backbufCoord = blendPixel(
-					Mem->megaPalette[sourceColorIdx],
+					vm.megaPalette[sourceColorIdx],
 					backbufCoord
 				);
 			}
-			if (!vm->Quirk.wrapSprite && X == Display->Trait.Wb) { break; }
+			if (!vm.Quirk.wrapSprite && X == vm.Display->Trait.Wb) { break; }
 		}
-		if (!vm->Quirk.wrapSprite && Y == Display->Trait.Hb) { break; }
+		if (!vm.Quirk.wrapSprite && Y == vm.Display->Trait.Hb) { break; }
 	}
 }
 
-void FunctionsForMegachip::chooseBlend(const std::size_t N) noexcept {
+void FunctionsForMegachip::chooseBlend(const usz N) noexcept {
 	switch (N) {
 
 		case Blend::LINEAR_DODGE:

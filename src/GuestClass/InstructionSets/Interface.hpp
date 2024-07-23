@@ -9,33 +9,30 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "../../Types.hpp"
+
 class VM_Guest;
-class MemoryBanks;
-class DisplayTraits;
 
 /*------------------------------------------------------------------*/
 /*  interface class  FncSetInterface                                */
 /*------------------------------------------------------------------*/
 
 struct FncSetInterface {
-	virtual void scrollUP(std::int32_t) = 0;
-	virtual void scrollDN(std::int32_t) = 0;
-	virtual void scrollLT(std::int32_t) = 0;
-	virtual void scrollRT(std::int32_t) = 0;
+	virtual void scrollUP(s32) = 0;
+	virtual void scrollDN(s32) = 0;
+	virtual void scrollLT(s32) = 0;
+	virtual void scrollRT(s32) = 0;
 
 	virtual void drawSprite(
-		MemoryBanks*, DisplayTraits*,
-		std::int32_t, std::int32_t, std::int32_t
+		s32, s32, s32
 	) = 0;
 
 	virtual void drawLoresColor(
-		MemoryBanks*, DisplayTraits*,
-		std::int32_t, std::int32_t, std::int32_t
+		s32, s32, s32
 	) = 0;
 
 	virtual void drawHiresColor(
-		MemoryBanks*, DisplayTraits*,
-		std::int32_t, std::int32_t, std::int32_t, std::int32_t
+		s32, s32, s32, s32
 	) = 0;
 
 	virtual ~FncSetInterface() noexcept {};
@@ -46,15 +43,15 @@ struct FncSetInterface {
 /*------------------------------------------------------------------*/
 
 class FunctionsForGigachip final : public FncSetInterface {
-	VM_Guest* vm;
+	VM_Guest& vm;
 
 	struct SrcColor { float A{}, R{}, G{}, B{}; } src;
 	struct DstColor { float A{}, R{}, G{}, B{}; } dst;
 
 	float (*blendType)(float, float) {};
 
-	std::uint32_t blendPixel(std::uint32_t, std::uint32_t&);
-	std::uint32_t applyBlend(float (*)(float, float)) const;
+	u32 blendPixel(u32, u32&);
+	u32 applyBlend(float (*)(float, float)) const;
 
 	enum Trait {
 		RGB, BRG, GBR,
@@ -71,29 +68,26 @@ class FunctionsForGigachip final : public FncSetInterface {
 		OVERWRITE,
 	};
 
-	void scrollUP(std::int32_t) override;
-	void scrollDN(std::int32_t) override;
-	void scrollLT(std::int32_t) override;
-	void scrollRT(std::int32_t) override;
+	void scrollUP(s32) override;
+	void scrollDN(s32) override;
+	void scrollLT(s32) override;
+	void scrollRT(s32) override;
 
 	void drawSprite(
-		MemoryBanks*, DisplayTraits*,
-		std::int32_t, std::int32_t, std::int32_t
+		s32, s32, s32
 	) override;
 
 	void drawLoresColor(
-		MemoryBanks*, DisplayTraits*,
-		std::int32_t, std::int32_t, std::int32_t
+		s32, s32, s32
 	) override {};
 
 	void drawHiresColor(
-		MemoryBanks*, DisplayTraits*,
-		std::int32_t, std::int32_t, std::int32_t, std::int32_t
+		s32, s32, s32, s32
 	) override {};
 
 public:
-	void chooseBlend(std::size_t);
-	explicit FunctionsForGigachip(VM_Guest*) noexcept;
+	void chooseBlend(usz);
+	explicit FunctionsForGigachip(VM_Guest&) noexcept;
 };
 
 /*------------------------------------------------------------------*/
@@ -101,18 +95,18 @@ public:
 /*------------------------------------------------------------------*/
 
 class FunctionsForMegachip final : public FncSetInterface {
-	VM_Guest* vm;
+	VM_Guest& vm;
 
 	struct SrcColor { float A{}, R{}, G{}, B{}; } src;
 	struct DstColor { float A{}, R{}, G{}, B{}; } dst;
 
 	float (*blendType)(float, float) noexcept {};
 
-	std::uint32_t blendPixel(std::uint32_t, std::uint32_t) noexcept;
-	std::uint32_t applyBlend(float (*)(float, float)) const noexcept;
+	u32 blendPixel(u32, u32) noexcept;
+	u32 applyBlend(float (*)(float, float)) const noexcept;
 
 	template <typename T>
-	void blendToDisplay(const T*, const T*, std::size_t);
+	void blendToDisplay(const T*, const T*, usz);
 
 	enum Blend {
 		NORMAL       = 0,
@@ -120,29 +114,26 @@ class FunctionsForMegachip final : public FncSetInterface {
 		MULTIPLY     = 5,
 	};
 
-	void scrollUP(std::int32_t) override;
-	void scrollDN(std::int32_t) override;
-	void scrollLT(std::int32_t) override;
-	void scrollRT(std::int32_t) override;
+	void scrollUP(s32) override;
+	void scrollDN(s32) override;
+	void scrollLT(s32) override;
+	void scrollRT(s32) override;
 
 	void drawSprite(
-		MemoryBanks*, DisplayTraits*,
-		std::int32_t, std::int32_t, std::int32_t
+		s32, s32, s32
 	) override;
 
 	void drawLoresColor(
-		MemoryBanks*, DisplayTraits*,
-		std::int32_t, std::int32_t, std::int32_t
+		s32, s32, s32
 	) override {};
 
 	void drawHiresColor(
-		MemoryBanks*, DisplayTraits*,
-		std::int32_t, std::int32_t, std::int32_t, std::int32_t
+		s32, s32, s32, s32
 	) override {};
 
 public:
-	void chooseBlend(std::size_t) noexcept;
-	explicit FunctionsForMegachip(VM_Guest*) noexcept;
+	void chooseBlend(usz) noexcept;
+	explicit FunctionsForMegachip(VM_Guest&) noexcept;
 };
 
 /*------------------------------------------------------------------*/
@@ -150,35 +141,31 @@ public:
 /*------------------------------------------------------------------*/
 
 class FunctionsForModernXO final : public FncSetInterface {
-	VM_Guest* vm;
+	VM_Guest& vm;
 
 	void drawByte(
-		MemoryBanks*, DisplayTraits*,
-		std::int32_t, std::int32_t, std::int32_t, std::size_t
+		s32, s32, s32, usz
 	);
 
-	void scrollUP(std::int32_t) override;
-	void scrollDN(std::int32_t) override;
-	void scrollLT(std::int32_t) override;
-	void scrollRT(std::int32_t) override;
+	void scrollUP(s32) override;
+	void scrollDN(s32) override;
+	void scrollLT(s32) override;
+	void scrollRT(s32) override;
 
 	void drawSprite(
-		MemoryBanks*, DisplayTraits*,
-		std::int32_t, std::int32_t, std::int32_t
+		s32, s32, s32
 	) override;
 
 	void drawLoresColor(
-		MemoryBanks*, DisplayTraits*,
-		std::int32_t, std::int32_t, std::int32_t
+		s32, s32, s32
 	) override {};
 
 	void drawHiresColor(
-		MemoryBanks*, DisplayTraits*,
-		std::int32_t, std::int32_t, std::int32_t, std::int32_t
+		s32, s32, s32, s32
 	) override {};
 
 public:
-	explicit FunctionsForModernXO(VM_Guest*) noexcept;
+	explicit FunctionsForModernXO(VM_Guest&) noexcept;
 };
 
 /*------------------------------------------------------------------*/
@@ -186,40 +173,35 @@ public:
 /*------------------------------------------------------------------*/
 
 class FunctionsForLegacySC final : public FncSetInterface {
-	VM_Guest* vm;
+	VM_Guest& vm;
 
 	void drawByte(
-		MemoryBanks*, DisplayTraits*,
-		std::int32_t, std::int32_t, std::size_t, bool&
+		s32, s32, usz, bool&
 	);
 	void drawShort(
-		MemoryBanks*, DisplayTraits*,
-		std::int32_t, std::int32_t, std::size_t
+		s32, s32, usz
 	);
-	std::size_t bitBloat(std::size_t);
+	usz bitBloat(usz);
 
-	void scrollUP(std::int32_t) override;
-	void scrollDN(std::int32_t) override;
-	void scrollLT(std::int32_t) override;
-	void scrollRT(std::int32_t) override;
+	void scrollUP(s32) override;
+	void scrollDN(s32) override;
+	void scrollLT(s32) override;
+	void scrollRT(s32) override;
 
 	void drawSprite(
-		MemoryBanks*, DisplayTraits*,
-		std::int32_t, std::int32_t, std::int32_t
+		s32, s32, s32
 	) override;
 
 	void drawLoresColor(
-		MemoryBanks*, DisplayTraits*,
-		std::int32_t, std::int32_t, std::int32_t
+		s32, s32, s32
 	) override;
 
 	void drawHiresColor(
-		MemoryBanks*, DisplayTraits*,
-		std::int32_t, std::int32_t, std::int32_t, std::int32_t
+		s32, s32, s32, s32
 	) override;
 
 public:
-	explicit FunctionsForLegacySC(VM_Guest*) noexcept;
+	explicit FunctionsForLegacySC(VM_Guest&) noexcept;
 };
 
 /*------------------------------------------------------------------*/
@@ -227,33 +209,29 @@ public:
 /*------------------------------------------------------------------*/
 
 class FunctionsForClassic8 final : public FncSetInterface {
-	VM_Guest* vm;
+	VM_Guest& vm;
 
 	void drawByte(
-		MemoryBanks*, DisplayTraits*,
-		std::int32_t, std::int32_t, std::size_t
+		s32, s32, usz
 	);
 
-	void scrollUP(std::int32_t) override;
-	void scrollDN(std::int32_t) override;
-	void scrollLT(std::int32_t) override;
-	void scrollRT(std::int32_t) override;
+	void scrollUP(s32) override;
+	void scrollDN(s32) override;
+	void scrollLT(s32) override;
+	void scrollRT(s32) override;
 
 	void drawSprite(
-		MemoryBanks*, DisplayTraits*,
-		std::int32_t, std::int32_t, std::int32_t
+		s32, s32, s32
 	) override;
 
 	void drawLoresColor(
-		MemoryBanks*, DisplayTraits*,
-		std::int32_t, std::int32_t, std::int32_t
+		s32, s32, s32
 	) override;
 
 	void drawHiresColor(
-		MemoryBanks*, DisplayTraits*,
-		std::int32_t, std::int32_t, std::int32_t, std::int32_t
+		s32, s32, s32, s32
 	) override;
 
 public:
-	explicit FunctionsForClassic8(VM_Guest*) noexcept;
+	explicit FunctionsForClassic8(VM_Guest&) noexcept;
 };

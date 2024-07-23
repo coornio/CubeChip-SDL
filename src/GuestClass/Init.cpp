@@ -18,7 +18,6 @@ using namespace blogger;
 #include "Guest.hpp"
 #include "RomCheck.hpp"
 #include "HexInput.hpp"
-#include "MemoryBanks.hpp"
 #include "DisplayTraits.hpp"
 
 bool VM_Guest::setupMachine() {
@@ -99,7 +98,7 @@ bool VM_Guest::romTypeCheck() {
 		case (RomExt::c8h):
 			if (!romCopyToMemory(4'096, 0x200))
 				return false;
-			if (Mem->read(0x200) != 0x12 || Mem->read(0x201) != 0x60) {
+			if (readMemory(0x200) != 0x12 || readMemory(0x201) != 0x60) {
 				blog.stdLogOut("Invalid TPD rom patch, aborting.");
 				return false;
 			}
@@ -170,11 +169,11 @@ bool VM_Guest::romTypeCheck() {
 	return true;
 }
 
-bool VM_Guest::romCopyToMemory(const usz size, const usz offset) const {
-	Mem->resize(size);
+bool VM_Guest::romCopyToMemory(const usz size, const usz offset) {
+	setMemorySize(size);
 
 	std::basic_ifstream<char> ifs(HDM.path, std::ios::binary);
-	ifs.read(reinterpret_cast<char*>(Mem->getSpan().data() + offset), HDM.size);
+	ifs.read(reinterpret_cast<char*>(getMemorySpan().data() + offset), HDM.size);
 	if (ifs.fail()) {
 		blog.stdLogOut("Failed to copy rom data to memory, aborting.");
 		return false;
@@ -200,7 +199,7 @@ void VM_Guest::initPlatform() {
 	//Quirk.waitScroll = true;
 	//Quirk.waitVblank = true;
 	//Quirk.wrapSprite = true;
-	Input->loadPresetBinds();
+	Input.loadPresetBinds();
 
 	// XXX - apply custom rom settings here
 
@@ -211,7 +210,7 @@ void VM_Guest::initPlatform() {
 	if (State.megachip_rom) {
 		Display->isPixelTrailing(false);
 		Display->isPixelBitColor(false);
-		mFramerate = 60.0;
+		mFramerate = 60.0f;
 		State.chip8_legacy = false;
 		State.schip_legacy = false;
 	}
@@ -222,7 +221,7 @@ void VM_Guest::initPlatform() {
 	}
 	if (State.schip_legacy) {
 		changeFunctionSet(&SetLegacySC);
-		mFramerate = 64.0; // match HP48 framerate
+		mFramerate = 64.0f; // match HP48 framerate
 		Display->isPixelTrailing(true);
 		Quirk.shiftVX      = true;
 		Quirk.jmpRegX      = true;
@@ -241,15 +240,15 @@ void VM_Guest::initPlatform() {
 
 	if (State.chip8X_rom) {
 		Display->Color.cycleBackground(BVS.getFrameColor());
-		Mem->color8xBuffer.resize(true, Display->Trait.H, Display->Trait.W >> 3);
-		Mem->color8xBuffer.at_raw(0, 0) = Display->Color.getFore8X(2);
+		color8xBuffer.resize(true, Display->Trait.H, Display->Trait.W >> 3);
+		color8xBuffer.at_raw(0, 0) = Display->Color.getFore8X(2);
 
 		if (!State.schip_legacy) return;
 
-		Mem->color8xBuffer.at_raw(4, 1) =
-		Mem->color8xBuffer.at_raw(4, 0) =
-		Mem->color8xBuffer.at_raw(0, 1) =
-		Mem->color8xBuffer.at_raw(0, 0);
+		color8xBuffer.at_raw(4, 1) =
+		color8xBuffer.at_raw(4, 0) =
+		color8xBuffer.at_raw(0, 1) =
+		color8xBuffer.at_raw(0, 0);
 	}
 }
 
@@ -269,17 +268,17 @@ void VM_Guest::prepDisplayArea(const Resolution mode, const bool forced) {
 
 	if (Display->isManualRefresh()) {
 		BVS.setAspectRatio(512, 384, -2);
-		Mem->foregroundBuffer.resize(false, H, W);
-		Mem->backgroundBuffer.resize(false, H, W);
-		Mem->collisionPalette.resize(false, H, W);
-		Mem->megaPalette.resize(256);
+		foregroundBuffer.resize(false, H, W);
+		backgroundBuffer.resize(false, H, W);
+		collisionPalette.resize(false, H, W);
+		megaPalette.resize(256);
 	} else {
 		BVS.setAspectRatio(512, 256, +2);
-		Mem->displayBuffer[0].resize(!forced, H, W);
+		displayBuffer[0].resize(!forced, H, W);
 		if (Display->isPixelBitColor() || Display->isPixelTrailing()) {
-			Mem->displayBuffer[1].resize(!forced, H, W);
-			Mem->displayBuffer[2].resize(!forced, H, W);
-			Mem->displayBuffer[3].resize(!forced, H, W);
+			displayBuffer[1].resize(!forced, H, W);
+			displayBuffer[2].resize(!forced, H, W);
+			displayBuffer[3].resize(!forced, H, W);
 		}
 	}
 
@@ -290,7 +289,7 @@ void VM_Guest::prepDisplayArea(const Resolution mode, const bool forced) {
 	}
 };
 
-void VM_Guest::fontCopyToMemory() const {
+void VM_Guest::fontCopyToMemory() {
 	static constexpr std::uint8_t FONT_DATA[]{
 		0x60, 0xA0, 0xA0, 0xA0, 0xC0, // 0
 		0x40, 0xC0, 0x40, 0x40, 0xE0, // 1
@@ -350,14 +349,14 @@ void VM_Guest::fontCopyToMemory() const {
 	// copy the FONT at the desired offset, and omit A-F superchip sprites if needed
 	std::copy_n(
 		FONT_DATA, State.schip_legacy ? 180 : 240,
-		Mem->getSpan().data()
+		getMemorySpan().data()
 	);
 
 	if (!State.megachip_rom) return;
 
 	std::copy_n(
 		MEGA_FONT_DATA, 160,
-		Mem->getSpan().data() + 240
+		getMemorySpan().data() + 240
 	);
 }
 
@@ -366,15 +365,15 @@ void VM_Guest::renderToTexture() {
 
 	if (Display->isManualRefresh()) {
 		for (auto idx{ 0 }; idx < Display->Trait.S; ++idx) {
-			pixels[idx] = Mem->foregroundBuffer.at_raw(idx);
+			pixels[idx] = foregroundBuffer.at_raw(idx);
 		}
 	} else if (Display->isPixelBitColor()) {
 		for (auto idx{ 0 }; idx < Display->Trait.S; ++idx) {
 			pixels[idx] = (0xFF << 24 | Display->Color.bit[
-				Mem->displayBuffer[0].at_raw(idx) << 0 |
-				Mem->displayBuffer[1].at_raw(idx) << 1 |
-				Mem->displayBuffer[2].at_raw(idx) << 2 |
-				Mem->displayBuffer[3].at_raw(idx) << 3
+				displayBuffer[0].at_raw(idx) << 0 |
+				displayBuffer[1].at_raw(idx) << 1 |
+				displayBuffer[2].at_raw(idx) << 2 |
+				displayBuffer[3].at_raw(idx) << 3
 			]);
 		}
 	} else if (State.chip8X_rom) {
@@ -383,66 +382,66 @@ void VM_Guest::renderToTexture() {
 				const auto Y = idx / Display->Trait.W & Display->Trait.mask8X;
 				const auto X = idx % Display->Trait.W >> 3; // 8px color zones
 
-				if (Mem->displayBuffer[0].at_raw(idx)) {
-					pixels[idx] = (0xFF << 24 | Mem->color8xBuffer.at_raw(Y, X));
+				if (displayBuffer[0].at_raw(idx)) {
+					pixels[idx] = (0xFF << 24 | color8xBuffer.at_raw(Y, X));
 					continue;
 				}
-				if (Mem->displayBuffer[1].at_raw(idx)) {
-					pixels[idx] = (0xE8 << 24 | Mem->color8xBuffer.at_raw(Y, X));
+				if (displayBuffer[1].at_raw(idx)) {
+					pixels[idx] = (0xE8 << 24 | color8xBuffer.at_raw(Y, X));
 					continue;
 				}
-				if (Mem->displayBuffer[2].at_raw(idx)) {
-					pixels[idx] = (0x7B << 24 | Mem->color8xBuffer.at_raw(Y, X));
+				if (displayBuffer[2].at_raw(idx)) {
+					pixels[idx] = (0x7B << 24 | color8xBuffer.at_raw(Y, X));
 					continue;
 				}
-				if (Mem->displayBuffer[3].at_raw(idx)) {
-					pixels[idx] = (0x38 << 24 | Mem->color8xBuffer.at_raw(Y, X));
+				if (displayBuffer[3].at_raw(idx)) {
+					pixels[idx] = (0x38 << 24 | color8xBuffer.at_raw(Y, X));
 					continue;
 				} else {
 					pixels[idx] = 0;
 				}
 			}
-			Mem->displayBuffer[3].copyLinear(Mem->displayBuffer[2]);
-			Mem->displayBuffer[2].copyLinear(Mem->displayBuffer[1]);
-			Mem->displayBuffer[1].copyLinear(Mem->displayBuffer[0]);
+			displayBuffer[3].copyLinear(displayBuffer[2]);
+			displayBuffer[2].copyLinear(displayBuffer[1]);
+			displayBuffer[1].copyLinear(displayBuffer[0]);
 		} else {
 			for (auto idx{ 0 }; idx < Display->Trait.S; ++idx) {
 				const auto Y = idx / Display->Trait.W & Display->Trait.mask8X;
 				const auto X = idx % Display->Trait.W >> 3; // 8px color zones
 
-				pixels[idx] = (0xFF << 24 | (Mem->displayBuffer[0].at_raw(idx)
-					? Mem->color8xBuffer.at_raw(Y, X) : 0));
+				pixels[idx] = (0xFF << 24 | (displayBuffer[0].at_raw(idx)
+					? color8xBuffer.at_raw(Y, X) : 0));
 			}
 		}
 	} else {
 		if (Display->isPixelTrailing()) {
 			for (auto idx{ 0 }; idx < Display->Trait.S; ++idx) {
-				if (Mem->displayBuffer[0].at_raw(idx)) {
+				if (displayBuffer[0].at_raw(idx)) {
 					pixels[idx] = (0xFF << 24 | Display->Color.bit[1]);
 					continue;
 				}
-				if (Mem->displayBuffer[1].at_raw(idx)) {
+				if (displayBuffer[1].at_raw(idx)) {
 					pixels[idx] = (0xE8 << 24 | Display->Color.bit[1]);
 					continue;
 				}
-				if (Mem->displayBuffer[2].at_raw(idx)) {
+				if (displayBuffer[2].at_raw(idx)) {
 					pixels[idx] = (0x7B << 24 | Display->Color.bit[1]);
 					continue;
 				}
-				if (Mem->displayBuffer[3].at_raw(idx)) {
+				if (displayBuffer[3].at_raw(idx)) {
 					pixels[idx] = (0x38 << 24 | Display->Color.bit[1]);
 					continue;
 				} else {
 					pixels[idx] = 0;
 				}
 			}
-			Mem->displayBuffer[3].copyLinear(Mem->displayBuffer[2]);
-			Mem->displayBuffer[2].copyLinear(Mem->displayBuffer[1]);
-			Mem->displayBuffer[1].copyLinear(Mem->displayBuffer[0]);
+			displayBuffer[3].copyLinear(displayBuffer[2]);
+			displayBuffer[2].copyLinear(displayBuffer[1]);
+			displayBuffer[1].copyLinear(displayBuffer[0]);
 		} else {
 			for (auto idx{ 0 }; idx < Display->Trait.S; ++idx) {
 				pixels[idx] = (0xFF << 24 | Display->Color.bit[
-					Mem->displayBuffer[0].at_raw(idx)
+					displayBuffer[0].at_raw(idx)
 				]);
 			}
 		}

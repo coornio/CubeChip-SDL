@@ -7,33 +7,31 @@
 #include "Interface.hpp"
 #include "../Guest.hpp"
 #include "../DisplayTraits.hpp"
-#include "../MemoryBanks.hpp"
-#include "../DisplayTraits.hpp"
 
 /*------------------------------------------------------------------*/
 /*  class  FncSetInterface -> FunctionsForLegacySC                  */
 /*------------------------------------------------------------------*/
 
-FunctionsForLegacySC::FunctionsForLegacySC(VM_Guest* parent) noexcept
+FunctionsForLegacySC::FunctionsForLegacySC(VM_Guest& parent) noexcept
 	: vm{ parent }
 {}
 
-void FunctionsForLegacySC::scrollUP(const std::int32_t N) {
-	vm->Mem->displayBuffer[0].shift(-N, 0);
+void FunctionsForLegacySC::scrollUP(const s32 N) {
+	vm.displayBuffer[0].shift(-N, 0);
 }
-void FunctionsForLegacySC::scrollDN(const std::int32_t N) {
-	vm->Mem->displayBuffer[0].shift(+N, 0);
+void FunctionsForLegacySC::scrollDN(const s32 N) {
+	vm.displayBuffer[0].shift(+N, 0);
 }
-void FunctionsForLegacySC::scrollLT(const std::int32_t) {
-	vm->Mem->displayBuffer[0].shift(0, -4);
+void FunctionsForLegacySC::scrollLT(const s32) {
+	vm.displayBuffer[0].shift(0, -4);
 }
-void FunctionsForLegacySC::scrollRT(const std::int32_t) {
-	vm->Mem->displayBuffer[0].shift(0, +4);
+void FunctionsForLegacySC::scrollRT(const s32) {
+	vm.displayBuffer[0].shift(0, +4);
 }
 
 /*------------------------------------------------------------------*/
 
-std::size_t FunctionsForLegacySC::bitBloat(std::size_t byte) {
+usz FunctionsForLegacySC::bitBloat(usz byte) {
 	if (!byte) { return 0; }
 	byte = (byte << 4 | byte) & 0x0F0F;
 	byte = (byte << 2 | byte) & 0x3333;
@@ -42,98 +40,94 @@ std::size_t FunctionsForLegacySC::bitBloat(std::size_t byte) {
 }
 
 void FunctionsForLegacySC::drawByte(
-	MemoryBanks* Mem, DisplayTraits* Display,
-	std::int32_t X, std::int32_t Y,
-	const std::size_t DATA, bool& HIT
+	s32 X, s32 Y,
+	const usz DATA, bool& HIT
 ) {
-	if (!DATA || X >= Display->Trait.W) { return; }
+	if (!DATA || X >= vm.Display->Trait.W) { return; }
 
-	for (auto B{ 0 }; B++ < 8; ++X &= Display->Trait.Wb)
+	for (auto B{ 0 }; B++ < 8; ++X &= vm.Display->Trait.Wb)
 	{
 		if (DATA >> (8 - B) & 0x1) {
-			auto& pixel{ Mem->displayBuffer[0].at_raw(Y, X) };
+			auto& pixel{ vm.displayBuffer[0].at_raw(Y, X) };
 			if (pixel) { HIT = true; }
 			pixel ^= 1;
 		}
-		if (!vm->Quirk.wrapSprite && X == Display->Trait.Wb) { return; }
+		if (!vm.Quirk.wrapSprite && X == vm.Display->Trait.Wb) { return; }
 	}
 }
 
 void FunctionsForLegacySC::drawShort(
-	MemoryBanks* Mem, DisplayTraits* Display,
-	std::int32_t X, std::int32_t Y,
-	const std::size_t DATA
+	s32 X, s32 Y,
+	const usz DATA
 ) {
 	if (!DATA) { return; }
 
-	for (auto B{ 0 }; B++ < 16; ++X &= Display->Trait.Wb)
+	for (auto B{ 0 }; B++ < 16; ++X &= vm.Display->Trait.Wb)
 	{
-		auto& pixel0{ Mem->displayBuffer[0].at_raw(Y + 0, X) };
-		auto& pixel1{ Mem->displayBuffer[0].at_raw(Y + 1, X) };
+		auto& pixel0{ vm.displayBuffer[0].at_raw(Y + 0, X) };
+		auto& pixel1{ vm.displayBuffer[0].at_raw(Y + 1, X) };
 
 		if (DATA >> (16 - B) & 0x1) {
-			if (pixel0) { Mem->vRegister[0xF] = 1; }
+			if (pixel0) { vm.mRegisterV[0xF] = 1; }
 			pixel1 = pixel0 ^= 1;
 		} else {
 			pixel1 = pixel0;
 		}
-		if (!vm->Quirk.wrapSprite && X == Display->Trait.Wb) { return; }
+		if (!vm.Quirk.wrapSprite && X == vm.Display->Trait.Wb) { return; }
 	}
 }
 
 void FunctionsForLegacySC::drawSprite(
-	MemoryBanks* Mem, DisplayTraits* Display,
-	std::int32_t X, std::int32_t Y, std::int32_t N
+	s32 X, s32 Y, s32 N
 ) {
-	auto VX{ Mem->vRegister[X] };
-	auto VY{ Mem->vRegister[Y] };
+	auto VX{ vm.mRegisterV[X] };
+	auto VY{ vm.mRegisterV[Y] };
 
-	Mem->vRegister[0xF] = 0;
+	vm.mRegisterV[0xF] = 0;
 	const bool wide{ N == 0 };
 	if (wide) { N = 16; }
 
-	if (vm->Display->isLoresExtended()) {
-		VX = VX * 2 & Display->Trait.Wb;
-		VY = VY * 2 & Display->Trait.Hb;
+	if (vm.Display->isLoresExtended()) {
+		VX = VX * 2 & vm.Display->Trait.Wb;
+		VY = VY * 2 & vm.Display->Trait.Hb;
 
-		for (auto H{ 0 }, I{ 0 }; H < N; ++H, (VY += 2) &= Display->Trait.Hb)
+		for (auto H{ 0 }, I{ 0 }; H < N; ++H, (VY += 2) &= vm.Display->Trait.Hb)
 		{
-			drawShort(Mem, Display, VX, VY, bitBloat(Mem->read_idx(I++)));
-			if (!vm->Quirk.wrapSprite && VY == Display->Trait.H - 2) { break; }
+			drawShort(VX, VY, bitBloat(vm.readMemoryI(I++)));
+			if (!vm.Quirk.wrapSprite && VY == vm.Display->Trait.H - 2) { break; }
 		}
 	} else {
-		VX &= Display->Trait.Wb;
-		VY &= Display->Trait.Hb;
+		VX &= vm.Display->Trait.Wb;
+		VY &= vm.Display->Trait.Hb;
 
-		for (auto H{ 0 }, I{ 0 }; H < N; ++H, ++VY &= Display->Trait.Hb)
+		for (auto H{ 0 }, I{ 0 }; H < N; ++H, ++VY &= vm.Display->Trait.Hb)
 		{
 			bool ltHit{}, rtHit{};
-			if (true) { drawByte(Mem, Display, VX + 0, VY, Mem->read_idx(I++), ltHit); }
-			if (wide) { drawByte(Mem, Display, VX + 8, VY, Mem->read_idx(I++), rtHit); }
-			Mem->vRegister[0xF] += ltHit || rtHit;
-			if (!vm->Quirk.wrapSprite && VY == Display->Trait.Hb) { break; }
+			if (true) { drawByte(VX + 0, VY, vm.readMemoryI(I++), ltHit); }
+			if (wide) { drawByte(VX + 8, VY, vm.readMemoryI(I++), rtHit); }
+			vm.mRegisterV[0xF] += ltHit || rtHit;
+			if (!vm.Quirk.wrapSprite && VY == vm.Display->Trait.Hb) { break; }
 		}
 	}
 }
 
 void FunctionsForLegacySC::drawLoresColor(
-	MemoryBanks* Mem, DisplayTraits* Display,
-	const std::int32_t VX,
-	const std::int32_t VY,
-	const std::int32_t idx
+	const s32 VX,
+	const s32 VY,
+	const s32 idx
 ) {
-	if (Display->isLoresExtended()) {
+	if (vm.Display->isLoresExtended()) {
 		const auto H{ (VY & 0x77) << 0 }, maxH{ (H >> 4) + 1 };
 		const auto W{ (VX & 0x77) << 1 }, maxW{ (W >> 4) + 2 };
 
 		for (auto Y{ 0 }; Y < maxH; ++Y) {
 			for (auto X{ 0 }; X < maxW; ++X) {
-				Mem->color8xBuffer.at_wrap(((H + Y) << 3) + 0, W + X) =
-				Mem->color8xBuffer.at_wrap(((H + Y) << 3) + 1, W + X) =
-					Display->Color.getFore8X(idx);
+				vm.color8xBuffer.at_wrap(((H + Y) << 3) + 0, W + X) =
+				vm.color8xBuffer.at_wrap(((H + Y) << 3) + 1, W + X) =
+					vm.Display->Color.getFore8X(idx);
 			}
 		}
-		Display->Trait.mask8X = 0xFC;
+		vm.Display->Trait.mask8X = 0xFC;
 	}
 	else {
 		const auto H{ VY & 0x77 }, maxH{ (H >> 4) + 1 };
@@ -141,33 +135,32 @@ void FunctionsForLegacySC::drawLoresColor(
 
 		for (auto Y{ 0 }; Y < maxH; ++Y) {
 			for (auto X{ 0 }; X < maxW; ++X) {
-				Mem->color8xBuffer.at_wrap(((H + Y) << 2), W + X) =
-					Display->Color.getFore8X(idx);
+				vm.color8xBuffer.at_wrap(((H + Y) << 2), W + X) =
+					vm.Display->Color.getFore8X(idx);
 			}
 		}
-		Display->Trait.mask8X = 0xF8;
+		vm.Display->Trait.mask8X = 0xF8;
 	}
 }
 
 void FunctionsForLegacySC::drawHiresColor(
-	MemoryBanks* Mem, DisplayTraits* Display,
-	const std::int32_t VX,
-	const std::int32_t VY,
-	const std::int32_t idx,
-	const std::int32_t N
+	const s32 VX,
+	const s32 VY,
+	const s32 idx,
+	const s32 N
 ) {
-	if (Display->isLoresExtended()) {
+	if (vm.Display->isLoresExtended()) {
 		for (auto R{ 0 }, Y{ VY << 1 }, X{ VX << 1 >> 3 }; R < (N << 1); ++R) {
-			Mem->color8xBuffer.at_wrap(Y + R, X + 0) =
-			Mem->color8xBuffer.at_wrap(Y + R, X + 1) =
-				Display->Color.getFore8X(idx);
+			vm.color8xBuffer.at_wrap(Y + R, X + 0) =
+			vm.color8xBuffer.at_wrap(Y + R, X + 1) =
+				vm.Display->Color.getFore8X(idx);
 		}
 	}
 	else {
 		for (auto R{ 0 }, Y{ VY }, X{ VX >> 3 }; R < N; ++R) {
-			Mem->color8xBuffer.at_wrap(Y + R, X) =
-				Display->Color.getFore8X(idx);
+			vm.color8xBuffer.at_wrap(Y + R, X) =
+				vm.Display->Color.getFore8X(idx);
 		}
 	}
-	Display->Trait.mask8X = 0xFF;
+	vm.Display->Trait.mask8X = 0xFF;
 }
