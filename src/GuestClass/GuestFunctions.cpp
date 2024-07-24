@@ -4,7 +4,6 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-
 #include <sstream>
 #include <iomanip>
 #include <utility>
@@ -12,8 +11,6 @@
 
 #include "../Assistants/BasicLogger.hpp"
 using namespace blogger;
-
-#include "../Assistants/Well512.hpp"
 
 #include "../HostClass/HomeDirManager.hpp"
 #include "../HostClass/BasicVideoSpec.hpp"
@@ -78,8 +75,8 @@ void VM_Guest::instructionLoop() {
 		auto LO = readMemory(mProgCounter++);
 		mInstruction = HI << 8 | LO;
 
-		//std::cout << std::hex << "\n@ PC: 0x" << mProgCounter - 2 << ", @ OP: 0x";
-		//std::cout << std::setfill('0') << std::setw(4) << std::hex << mInstruction;
+		//std::cout << "  @ PC: 0x" << std::setfill('0') << std::setw(4) << std::hex << mProgCounter - 2;
+		//std::cout << ", @ OP: 0x" << std::setfill('0') << std::setw(4) << std::hex << mInstruction << std::endl;
 
 		const auto X{ HI & 0xF };
 		const auto Y{ LO >>  4 };
@@ -646,43 +643,43 @@ void VM_Guest::decrementTimers() {
 void VM_Guest::handleInterrupt1() {
 	switch (mInterruptType) {
 
-	case Interrupt::FRAME: // resumes emulation after a single frame pause
-		mCyclesPerFrame = std::abs(mCyclesPerFrame);
-		return;
-
-	case Interrupt::SOUND: // stops emulation when sound timer reaches 0
-		if (!mSoundTimer) {
-			mInterruptType  = Interrupt::FINAL;
-			mCyclesPerFrame = 0;
-		}
-		return;
-
-	case Interrupt::DELAY: // pauses emulation while delay timer is not 0
-		if (!mDelayTimer) {
-			mInterruptType  = Interrupt::CLEAR;
+		case Interrupt::FRAME: // resumes emulation after a single frame pause
 			mCyclesPerFrame = std::abs(mCyclesPerFrame);
-		}
-		return;
+			return;
+
+		case Interrupt::SOUND: // stops emulation when sound timer reaches 0
+			if (!mSoundTimer) {
+				mInterruptType  = Interrupt::FINAL;
+				mCyclesPerFrame = 0;
+			}
+			return;
+
+		case Interrupt::DELAY: // pauses emulation while delay timer is not 0
+			if (!mDelayTimer) {
+				mInterruptType  = Interrupt::CLEAR;
+				mCyclesPerFrame = std::abs(mCyclesPerFrame);
+			}
+			return;
 	}
 }
 
 void VM_Guest::handleInterrupt2() {
 	switch (mInterruptType) {
 
-	case Interrupt::INPUT: // resumes emulation when key press event for Fx0A
-		if (Input.keyPressed(VX(), mTotalFrames)) {
-			mInterruptType  = Interrupt::CLEAR;
-			mCyclesPerFrame = std::abs(mCyclesPerFrame);
-			mSoundTimer     = 2;
-			Sound->beepFx0A = true;
-			Sound->C8.setTone(peekStackHead(), mProgCounter);
-		}
-		return;
+		case Interrupt::INPUT: // resumes emulation when key press event for Fx0A
+			if (Input.keyPressed(VX(), mTotalFrames)) {
+				mInterruptType  = Interrupt::CLEAR;
+				mCyclesPerFrame = std::abs(mCyclesPerFrame);
+				mSoundTimer     = 2;
+				Sound->beepFx0A = true;
+				Sound->C8.setTone(peekStackHead(), mProgCounter);
+			}
+			return;
 
-	case Interrupt::FINAL:
-	case Interrupt::ERROR:
-		mCyclesPerFrame = 0;
-		return;
+		case Interrupt::FINAL:
+		case Interrupt::ERROR:
+			mCyclesPerFrame = 0;
+			return;
 	}
 }
 
@@ -696,18 +693,18 @@ void VM_Guest::modifyViewport(const BrushType type, const bool xochip) {
 		if (!(Display->Trait.maskPlane & (1 << P))) { continue; }
 
 		switch (type) {
-		case BrushType::CLR:
-			displayBuffer[P].wipeAll();
-			break;
-		case BrushType::XOR:
-			for (auto& px : displayBuffer[P].span()) { px ^= 1; }
-			break;
-		case BrushType::SUB:
-			for (auto& px : displayBuffer[P].span()) { px &= ~1; }
-			break;
-		case BrushType::ADD:
-			for (auto& px : displayBuffer[P].span()) { px |= 1; }
-			break;
+			case BrushType::CLR:
+				displayBuffer[P].wipeAll();
+				break;
+			case BrushType::XOR:
+				for (auto& px : displayBuffer[P].span()) { px ^= 1; }
+				break;
+			case BrushType::SUB:
+				for (auto& px : displayBuffer[P].span()) { px &= ~1; }
+				break;
+			case BrushType::ADD:
+				for (auto& px : displayBuffer[P].span()) { px |= 1; }
+				break;
 		}
 	}
 }
@@ -750,24 +747,20 @@ bool VM_Guest::routineCall(const u32 addr) {
 	mStackBank[mStackTop++ & 0xF] = mProgCounter;
 	mProgCounter = addr;
 	return false;
-	/*
-	if (mStackTop < &*mStackBank.end()) {
-		*mStackTop++ = mProgCounter;
-		mProgCounter = addr;
-		return false;
-	} else { return true; }
-	*/
+	//if (mStackTop < mStackBank + 16) {
+	//	*mStackTop++ = mProgCounter;
+	//	mProgCounter = addr;
+	//	return false;
+	//} else { return true; }
 }
 
 bool VM_Guest::routineReturn() {
 	mProgCounter = mStackBank[--mStackTop & 0xF];
 	return false;
-	/*
-	if (mStackTop >= &*mStackBank.begin()) {
-		mProgCounter = *(--mStackTop);
-		return false;
-	} else { return true; }
-	*/
+	//if (mStackTop > mStackBank) {
+	//	mProgCounter = *(--mStackTop);
+	//	return false;
+	//} else { return true; }
 }
 
 void VM_Guest::protectPages() {
@@ -858,17 +851,17 @@ bool VM_Guest::writePermRegs(const usz X) {
 
 void VM_Guest::skipInstruction() {
 	switch (readMemory(mProgCounter + 0)) {
-	case 0x01:
-		mProgCounter += 4;
-		break;
+		case 0x01:
+			mProgCounter += 4;
+			break;
 
-	case 0xF0: case 0xF1:
-	case 0xF2: case 0xF3:
-		mProgCounter += (readMemory(mProgCounter + 1)) ? 2 : 4;
-		break;
+		case 0xF0: case 0xF1:
+		case 0xF2: case 0xF3:
+			mProgCounter += (readMemory(mProgCounter + 1)) ? 2 : 4;
+			break;
 
-	default:
-		mProgCounter += 2;
+		default:
+			mProgCounter += 2;
 	}
 }
 

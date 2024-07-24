@@ -81,21 +81,28 @@ class VM_Guest final {
 	} State;
 
 	// Basic VM variables
-	s32 mCyclesPerFrame{};
-	s32 boost{};
-	float mFramerate{};
-	bool  mSystemPaused{};
+	u64  mTotalCycles{};
+	u32  mTotalFrames{};
+
+	s32  mCyclesPerFrame{};
+	s32  boost{};
+	f32  mFramerate{};
+
+	using enum Interrupt;
+	Interrupt mInterruptType{ CLEAR };
+
+	bool mSystemPaused{};
+	/*
 	bool _fontDraw{};
 
 	[[nodiscard]]
 	bool fontDraw() const { return _fontDraw; }
 	void fontDraw(bool state) { _fontDraw = state; }
 
-	u32  mTotalFrames{};
-	u64  mTotalCycles{};
-
-	using enum Interrupt;
-	Interrupt mInterruptType{ CLEAR };
+	[[maybe_unused]] std::array<u8,  80> fontS{};
+	[[maybe_unused]] std::array<u8, 160> fontL{};
+	[[maybe_unused]] std::array<u8, 160> fontM{};
+	*/
 
 	// Platform variables
 	u8 mDelayTimer{};
@@ -104,17 +111,19 @@ class VM_Guest final {
 	u32 mInstruction{};
 	u32 mProgCounter{};
 
-	std::vector<u8>     mMemoryBank{};
-	std::array<u32, 16> mStackBank{};
+	std::vector<u8>
+		 mMemoryBank{};
 
+	u32  mStackBank[16]{};
 	u8   mRegisterV[16]{};
-	u32  mRegisterI{};
-
+	
+	//u32* mStackTop{ mStackBank };
 	u32  mStackTop{};
+	u32  mRegisterI{};
 	s32  pageGuard{};
 
 	// Platform video buffers
-	std::vector<u32> megaPalette{};
+	std::vector<u32> megaPalette;
 
 	Map2D<u32> foregroundBuffer;
 	Map2D<u32> backgroundBuffer;
@@ -125,36 +134,27 @@ class VM_Guest final {
 
 	bool in_range(const usz pos) const noexcept { return pos < mMemoryBank.size(); }
 
-	void setMemorySize(const usz val)     { mMemoryBank.resize(val); }
-	auto getMemorySpan() -> std::span<u8> { return mMemoryBank; }
-	auto peekStackHead() const            { return mStackTop; }
+	void setMemorySize(const usz val) { mMemoryBank.resize(val); }
+	auto getMemorySpan()              { return std::span(mMemoryBank); }
+	auto peekStackHead() const        { return mStackTop; }
 
 
 
-	[[maybe_unused]] std::array<u8,  80> fontS{};
-	[[maybe_unused]] std::array<u8, 160> fontL{};
-	[[maybe_unused]] std::array<u8, 160> fontM{};
 
 	// Write memory at given index using given value
 	void writeMemory(const usz value, const usz pos) {
 		//mMemoryBank[pos & mMemoryBank.size() - 1] = static_cast<u8>(value);
-		if (in_range(pos)) {
-			mMemoryBank[pos] = static_cast<u8>(value);
-		}
+		if (in_range(pos)) { mMemoryBank[pos] = static_cast<u8>(value); }
 	}
 	// Write memory at saved index using given value
 	void writeMemoryI(const usz value, const usz pos) {
 		//mMemoryBank[mRegisterI + pos & mMemoryBank.size() - 1] = static_cast<u8>(value);
-		if (in_range(mRegisterI + pos)) {
-			mMemoryBank[mRegisterI + pos] = static_cast<u8>(value);
-		}
+		if (in_range(mRegisterI + pos)) { mMemoryBank[mRegisterI + pos] = static_cast<u8>(value); }
 	}
 	// Write memory at saved index using given value
 	void writeMemoryI(const usz value) {
 		//mMemoryBank[mRegisterI & mMemoryBank.size() - 1] = static_cast<u8>(value);
-		if (in_range(mRegisterI)) {
-			mMemoryBank[mRegisterI] = static_cast<u8>(value);
-		}
+		if (in_range(mRegisterI)) { mMemoryBank[mRegisterI] = static_cast<u8>(value); }
 	}
 
 	// Read memory at given index

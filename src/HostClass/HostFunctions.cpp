@@ -29,7 +29,10 @@ using namespace bic;
 /*  class  VM_Host                                                  */
 /*------------------------------------------------------------------*/
 
-VM_Host::VM_Host(const char* const filename) try
+VM_Host::~VM_Host() = default;
+VM_Host::VM_Host(
+	const char* const filename
+) try
 	: HDM  { std::make_unique<HomeDirManager>("CubeChip_SDL") }
 	, BVS  { std::make_unique<BasicVideoSpec>() }
 	, BAS  { std::make_unique<BasicAudioSpec>() }
@@ -38,10 +41,6 @@ VM_Host::VM_Host(const char* const filename) try
 		isReady(HDM->verifyFile(RomFile::validate, filename));
 	}
 } catch (...) { _initFailure = true; }
-
-VM_Host::~VM_Host() = default;
-
-
 
 bool VM_Host::isReady() const { return _isReady; }
 bool VM_Host::doBench() const { return _doBench; }
