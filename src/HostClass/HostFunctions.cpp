@@ -31,16 +31,19 @@ using namespace bic;
 
 VM_Host::~VM_Host() = default;
 VM_Host::VM_Host(
-	const char* const filename
-) try
-	: HDM  { std::make_unique<HomeDirManager>("CubeChip_SDL") }
-	, BVS  { std::make_unique<BasicVideoSpec>() }
-	, BAS  { std::make_unique<BasicAudioSpec>() }
+	const char* const filename,
+	HomeDirManager&   ref_HDM,
+	BasicVideoSpec&   ref_BVS,
+	BasicAudioSpec&   ref_BAS
+)
+	: HDM{ ref_HDM }
+	, BVS{ ref_BVS }
+	, BAS{ ref_BAS }
 {
 	if (filename) {
-		isReady(HDM->verifyFile(RomFile::validate, filename));
+		isReady(HDM.verifyFile(RomFile::validate, filename));
 	}
-} catch (...) { _initFailure = true; }
+}
 
 bool VM_Host::isReady() const { return _isReady; }
 bool VM_Host::doBench() const { return _doBench; }
@@ -54,15 +57,15 @@ void VM_Host::prepareGuest(FrameLimiter& Frame) {
 	bic::mb.updateCopy();
 
 	if (isReady()) {
-		Guest = std::make_unique<VM_Guest>(*HDM, *BVS, *BAS);
+		Guest = std::make_unique<VM_Guest>(HDM, BVS, BAS);
 
 		if (Guest->setupMachine()) {
 			Frame.setLimiter(Guest->fetchFramerate());
-			BVS->changeTitle(HDM->file.c_str());
+			BVS.changeTitle(HDM.file.c_str());
 		} else {
 			Frame.setLimiter(30.0f);
 			isReady(false);
-			HDM->reset();
+			HDM.reset();
 		}
 	}
 }
@@ -84,8 +87,8 @@ bool VM_Host::eventLoopSDL(FrameLimiter& Frame, SDL_Event& Event) {
 				return EXIT_SUCCESS;
 
 			case SDL_EVENT_DROP_FILE:
-				BVS->raiseWindow();
-				if (HDM->verifyFile(RomFile::validate, Event.drop.data)) {
+				BVS.raiseWindow();
+				if (HDM.verifyFile(RomFile::validate, Event.drop.data)) {
 					isReady(true);
 					doBench(false);
 					prepareGuest(Frame);
@@ -118,17 +121,17 @@ bool VM_Host::mainHostLoop(FrameLimiter& Frame, SDL_Event& Event) {
 		)) { continue; }
 
 		if (kb.isPressed(KEY(RIGHT))) {
-			BAS->changeVolume(+15);
+			BAS.changeVolume(+15);
 		}
 		if (kb.isPressed(KEY(LEFT))) {
-			BAS->changeVolume(-15);
+			BAS.changeVolume(-15);
 		}
 
 		if (isReady()) {
 			if (kb.isPressed(KEY(ESCAPE))) {
 				isReady(false);
 				doBench(false);
-				BVS->resetWindow();
+				BVS.resetWindow();
 				prepareGuest(Frame);
 				continue;
 			}
@@ -143,10 +146,10 @@ bool VM_Host::mainHostLoop(FrameLimiter& Frame, SDL_Event& Event) {
 			}
 
 			if (kb.isPressed(KEY(PAGEDOWN))) {
-				BVS->changeFrameMultiplier(-1);
+				BVS.changeFrameMultiplier(-1);
 			}
 			if (kb.isPressed(KEY(PAGEUP))) {
-				BVS->changeFrameMultiplier(+1);
+				BVS.changeFrameMultiplier(+1);
 			}
 
 			if (doBench()) {
@@ -180,7 +183,7 @@ bool VM_Host::mainHostLoop(FrameLimiter& Frame, SDL_Event& Event) {
 			}
 		}
 
-		BVS->renderPresent();
+		BVS.renderPresent();
 
 		kb.updateCopy();
 		mb.updateCopy();
