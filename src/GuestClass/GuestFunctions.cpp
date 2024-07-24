@@ -14,11 +14,10 @@ using namespace blogger;
 
 #include "../HostClass/HomeDirManager.hpp"
 #include "../HostClass/BasicVideoSpec.hpp"
-#include "../HostClass/BasicVideoSpec.hpp"
+#include "../HostClass/BasicAudioSpec.hpp"
 
 #include "Guest.hpp"
 #include "HexInput.hpp"
-#include "SoundCores.hpp"
 #include "DisplayTraits.hpp"
 
 /*------------------------------------------------------------------*/
@@ -27,45 +26,20 @@ using namespace blogger;
 
 VM_Guest::~VM_Guest() = default;
 VM_Guest::VM_Guest(
-	HomeDirManager& hdm_ptr,
-	BasicVideoSpec& bvs_ptr,
+	HomeDirManager& ref_HDM,
+	BasicVideoSpec& ref_BVS,
 	BasicAudioSpec& bas_ptr
 )
-	: HDM{ hdm_ptr }
-	, BVS{ bvs_ptr }
+	: HDM{ ref_HDM }
+	, BVS{ ref_BVS }
 	, BAS{ bas_ptr }
+	, XO{ BAS.getFrequency()}
 {
-	Sound   = std::make_unique<SoundCores>(BAS);
 	Display = std::make_unique<DisplayTraits>(BVS.getFrameColor());
 }
 
 bool VM_Guest::isSystemPaused() const { return mSystemPaused || mCyclesPerFrame == 0; }
 void VM_Guest::isSystemPaused(const bool state) { mSystemPaused = state; }
-
-void VM_Guest::processFrame() {
-	if (isSystemPaused()) { return; }
-	else { ++mTotalFrames; }
-
-	Input.updateKeyStates();
-	decrementTimers();
-	handleInterrupt1();
-
-	instructionLoop();
-
-	handleInterrupt2();
-
-	Sound->renderAudio(
-		BAS,
-		BVS.getFrameColor(),
-		Display->Color.buzz,
-		mFramerate,
-		mSoundTimer
-	);
-
-	if (!Display->isManualRefresh()) {
-		renderToTexture();
-	}
-}
 
 void VM_Guest::instructionLoop() {
 
@@ -99,20 +73,22 @@ void VM_Guest::instructionLoop() {
 					break;
 				case 0x00E0: switch (N) {
 					case 0x0:
-						if (Display->isPixelBitColor()) {		// 00E0 - erase selected color plane *XOCHIP*
-							modifyViewport(BrushType::SUB, true);
-						} else if (Display->isManualRefresh()) {// 00E0 - push (and then clear) framebuffer to screen *MEGACHIP*
+						if (Display->isManualRefresh()) {// 00E0 - push (and then clear) framebuffer to screen *MEGACHIP*
 							setInterrupt(Interrupt::FRAME);
 							flushBuffers(FlushType::DISPLAY);
 							renderToTexture();
-						} else {						// 00E0 - erase whole display
+						} else {						// 00E0 - erase whole display (or plane *XO-CHIP*)
 							if (Quirk.waitVblank) [[unlikely]]
 								{ setInterrupt(Interrupt::FRAME); }
-							modifyViewport(BrushType::CLR, false);
+							if (Display->isPixelBitColor()) {
+								modifyDisplay_XO();
+							} else {
+								modifyDisplay_C8();
+							}
 						}
 						break;
 					case 0x1:							// 00E1 - invert selected color plane *HWCHIP64*
-						modifyViewport(BrushType::XOR, true);
+						modifyDisplay_HW();
 						break;
 					case 0xD:							// 00ED - stop signal *CHIP-8E*
 						setInterrupt(Interrupt::SOUND);
@@ -171,7 +147,7 @@ void VM_Guest::instructionLoop() {
 									changeFunctionSet(&SetClassic8);
 
 									Display->isManualRefresh(false);
-									Sound->MC.reset();
+									resetAudioTrack();
 
 									flushBuffers(FlushType::DISPLAY);
 									prepDisplayArea(Resolution::LO);
@@ -183,7 +159,7 @@ void VM_Guest::instructionLoop() {
 									changeFunctionSet(&SetMegachip);
 
 									Display->isManualRefresh(true);
-									Sound->MC.reset();
+									resetAudioTrack();
 
 									flushBuffers(FlushType::DISCARD);
 									prepDisplayArea(Resolution::MC);
@@ -197,7 +173,7 @@ void VM_Guest::instructionLoop() {
 								mProgCounter += 2;
 								break;
 							case 0x2:					// 02NN - load NN palette colors from RAM at I *MEGACHIP*
-								loadPalette(LO);
+								loadMegaPalette(LO);
 								break;
 							case 0x3:					// 03NN - set sprite width to NN *MEGACHIP*
 								Display->Tex.W = LO ? LO : 256;
@@ -209,11 +185,10 @@ void VM_Guest::instructionLoop() {
 								BVS.setTextureAlpha(LO);
 								break;
 							case 0x6:					// 060N - start digital sound from RAM at I, repeat if N == 0 *MEGACHIP*
-								if (Sound->MC.initTrack(getMemorySpan(), mRegisterI, N == 0)) [[unlikely]]
-									{ triggerError("Error :: Audio track data goes beyond memory limits!"); }
+								startAudioTrack(N == 0);
 								break;
 							case 0x7:					// 0700 - stop digital sound *MEGACHIP*
-								Sound->MC.reset();
+								resetAudioTrack();
 								break;
 							case 0x8:					// 08YN - set trait flags to VY (Y > 0), blend mode to N *GIGACHIP*
 								if (State.gigachip_rom) {
@@ -254,7 +229,7 @@ void VM_Guest::instructionLoop() {
 				}
 			} break;
 			case 0x1:									// 1NNN - jump to NNN; stop if PC == NNN (inf loop)
-				if (jumpInstruction(NNN())) [[unlikely]]
+				if (jumpInstruction_C8(NNN())) [[unlikely]]
 					{ setInterrupt(Interrupt::SOUND); }
 				break;
 			case 0x2:									// 2NNN - call subroutine
@@ -423,11 +398,11 @@ void VM_Guest::instructionLoop() {
 			case 0xB: {
 				if (State.chip8E_rom) switch (X) {
 					case 0xB:							// BBNN - jump to current PC - NN *CHIP-8E*
-						if (stepInstruction(-LO)) [[unlikely]]
+						if (jumpInstruction_8E(-LO)) [[unlikely]]
 							{ setInterrupt(Interrupt::SOUND); }
 						break;
 					case 0xF:							// BFNN - jump to current PC + NN *CHIP-8E*
-						if (stepInstruction(+LO)) [[unlikely]]
+						if (jumpInstruction_8E(+LO)) [[unlikely]]
 							{ setInterrupt(Interrupt::SOUND); }
 						break;
 					[[unlikely]] default: triggerOpcodeError(mInstruction);
@@ -444,7 +419,7 @@ void VM_Guest::instructionLoop() {
 					}
 				} else {								// BXNN - jump to NNN + V0 (else VX *SCHIP*)
 					const auto addr{ NNN() + (Quirk.jmpRegX ? mRegisterV[X] : mRegisterV[0])};
-					if (jumpInstruction(addr)) [[unlikely]]
+					if (jumpInstruction_C8(addr)) [[unlikely]]
 						{ setInterrupt(Interrupt::SOUND); }
 				}
 			} break;
@@ -477,8 +452,7 @@ void VM_Guest::instructionLoop() {
 					mProgCounter += 2;
 					break;
 				case 0x002:								// F002 - load audio pattern 0..15 from RAM at I..I+15 *XOCHIP*
-					if (Sound->XO.loadPattern(getMemorySpan(), mRegisterI)) [[unlikely]]
-						{ triggerError("Error :: Audio pattern data goes beyond memory limits!"); }
+					fetchPattern_XO();
 					break;
 				case 0x100:								// F100 - long jump to NEXT NNNN *HWCHIP64*
 					mProgCounter = NNNN();
@@ -488,7 +462,7 @@ void VM_Guest::instructionLoop() {
 						{ triggerError("Error :: Cannot call with a full stack!"); }
 					break;
 				case 0x300:								// F300 - long jump to NEXT NNNN + V0 *HWCHIP64*
-					if (jumpInstruction(NNNN() + mRegisterV[0])) [[unlikely]]
+					if (jumpInstruction_C8(NNNN() + mRegisterV[0])) [[unlikely]]
 						{ setInterrupt(Interrupt::SOUND); }
 					break;
 				default: switch (LO) {
@@ -520,8 +494,8 @@ void VM_Guest::instructionLoop() {
 						break;
 					case 0x18:							// FX18 - set sound timer = VX
 						if (!State.chip8X_rom) [[likely]]
-							{ Sound->C8.setTone(peekStackHead(), mProgCounter); }
-						Sound->beepFx0A = false;
+							{ setAudioTone_C8(); }
+						mBuzzLight = false;
 						mSoundTimer = mRegisterV[X] + (mRegisterV[X] == 1);
 						break;
 					case 0x1B:							// FX1B - skip VX amount of bytes *CHIP-8E*
@@ -545,7 +519,7 @@ void VM_Guest::instructionLoop() {
 						writeMemoryI(mRegisterV[X] % 10,      2);
 						break;
 					case 0x3A:							// FX3A - set sound pitch = VX *XOCHIP*
-						Sound->XO.setPitch(mRegisterV[X]);
+						setAudioTone_XO(mRegisterV[X]);
 						break;
 					case 0x4F:							// FX4F - set delay timer = VX and wait *CHIP-8E*
 						setInterrupt(Interrupt::DELAY);
@@ -565,11 +539,11 @@ void VM_Guest::instructionLoop() {
 						break;
 					case 0x75:							// FX75 - store V0..VX to the P flags *XOCHIP*
 						if (writePermRegs((State.schip_legacy ? std::min(X, 7) : X) + 1)) [[unlikely]]
-							{ triggerError("Error :: Failed writing to persistent registers!"); }
+							{ triggerError("Error :: Failed writing persistent registers!"); }
 						break;
 					case 0x85:							// FX85 - load V0..VX from the P flags *XOCHIP*
 						if (readPermRegs((State.schip_legacy ? std::min(X, 7) : X) + 1)) [[unlikely]]
-							{ triggerError("Error :: Failed reading from persistent registers!"); }
+							{ triggerError("Error :: Failed reading persistent registers!"); }
 						break;
 					case 0xE3:							// FXE3 - wait for port 3 input, load into VX *CHIP-8E*
 						setInterrupt(Interrupt::FRAME);
@@ -578,7 +552,7 @@ void VM_Guest::instructionLoop() {
 						setInterrupt(Interrupt::FRAME);
 						break;
 					case 0xF8:							// FXF8 - output VX to port (sound freq) *CHIP-8X*
-						Sound->C8.setTone(mRegisterV[X]);
+						setAudioTone_8X(mRegisterV[X]);
 						break;
 					case 0xFB:							// FXFB - wait for port input, load to VX *CHIP-8X*
 						setInterrupt(Interrupt::FRAME);
@@ -634,13 +608,30 @@ void VM_Guest::triggerOpcodeError(const u32 opcode) {
 	setInterrupt(Interrupt::ERROR);
 }
 
-void VM_Guest::decrementTimers() {
+void VM_Guest::processFrame() {
+	if (isSystemPaused()) { return; }
+	else { ++mTotalFrames; }
+
+	Input.updateKeyStates();
+
 	if ( mDelayTimer) { --mDelayTimer; }
 	if ( mSoundTimer) { --mSoundTimer; }
-	if (!mSoundTimer) { Sound->beepFx0A = false; }
+	if (!mSoundTimer) { mBuzzLight = false; }
+
+	handleFrameWait();
+
+	instructionLoop();
+
+	handleInputWait();
+
+	renderAudioData();
+
+	if (!Display->isManualRefresh()) {
+		renderToTexture();
+	}
 }
 
-void VM_Guest::handleInterrupt1() {
+void VM_Guest::handleFrameWait() {
 	switch (mInterruptType) {
 
 		case Interrupt::FRAME: // resumes emulation after a single frame pause
@@ -663,16 +654,16 @@ void VM_Guest::handleInterrupt1() {
 	}
 }
 
-void VM_Guest::handleInterrupt2() {
+void VM_Guest::handleInputWait() {
 	switch (mInterruptType) {
 
 		case Interrupt::INPUT: // resumes emulation when key press event for Fx0A
 			if (Input.keyPressed(VX(), mTotalFrames)) {
-				mInterruptType  = Interrupt::CLEAR;
+				mInterruptType = Interrupt::CLEAR;
 				mCyclesPerFrame = std::abs(mCyclesPerFrame);
-				mSoundTimer     = 2;
-				Sound->beepFx0A = true;
-				Sound->C8.setTone(peekStackHead(), mProgCounter);
+				mSoundTimer = 2;
+				mBuzzLight  = true;
+				setAudioTone_C8();
 			}
 			return;
 
@@ -683,29 +674,21 @@ void VM_Guest::handleInterrupt2() {
 	}
 }
 
-void VM_Guest::modifyViewport(const BrushType type, const bool xochip) {
-	if (!xochip) {
-		displayBuffer[0].wipeAll();
-		return;
-	}
+void VM_Guest::modifyDisplay_C8() {
+	displayBuffer[0].wipeAll();
+}
 
+void VM_Guest::modifyDisplay_XO() {
 	for (auto P{ 0 }; P < 4; ++P) {
 		if (!(Display->Trait.maskPlane & (1 << P))) { continue; }
+		displayBuffer[P].wipeAll();
+	}
+}
 
-		switch (type) {
-			case BrushType::CLR:
-				displayBuffer[P].wipeAll();
-				break;
-			case BrushType::XOR:
-				for (auto& px : displayBuffer[P].span()) { px ^= 1; }
-				break;
-			case BrushType::SUB:
-				for (auto& px : displayBuffer[P].span()) { px &= ~1; }
-				break;
-			case BrushType::ADD:
-				for (auto& px : displayBuffer[P].span()) { px |= 1; }
-				break;
-		}
+void VM_Guest::modifyDisplay_HW() {
+	for (auto P{ 0 }; P < 4; ++P) {
+		if (!(Display->Trait.maskPlane & (1 << P))) { continue; }
+		for (auto& px : displayBuffer[P].span()) { px ^= 1; }
 	}
 }
 
@@ -726,7 +709,7 @@ void VM_Guest::flushBuffers(const FlushType option) {
 	}
 }
 
-void VM_Guest::loadPalette(const s32 count) {
+void VM_Guest::loadMegaPalette(const s32 count) {
 	auto index{ mRegisterI };
 	for (auto pos{ 0 }; pos < count; index += 4) {
 		megaPalette[++pos] = readMemory(index + 0) << 24
@@ -850,7 +833,7 @@ bool VM_Guest::writePermRegs(const usz X) {
 }
 
 void VM_Guest::skipInstruction() {
-	switch (readMemory(mProgCounter + 0)) {
+	switch (readMemory(mProgCounter)) {
 		case 0x01:
 			mProgCounter += 4;
 			break;
@@ -865,16 +848,162 @@ void VM_Guest::skipInstruction() {
 	}
 }
 
-bool VM_Guest::jumpInstruction(const u32 next) {
+void VM_Guest::skipInstruction_C8() {
+	mProgCounter += 4;
+}
+
+void VM_Guest::skipInstruction_MC() {
+	mProgCounter += readMemory(mProgCounter) == 0x1 ? 4 : 2;
+}
+
+void VM_Guest::skipInstruction_XO() {
+	mProgCounter += NNNN() == 0xF000 ? 4 : 2;
+}
+
+void VM_Guest::skipInstruction_HW() {
+	mProgCounter += 2;
+	switch (NNNN()) {
+		case 0xF000: case 0xF100:
+		case 0xF200: case 0xF300:
+			mProgCounter += 4;
+	}
+}
+
+bool VM_Guest::jumpInstruction_C8(const u32 next) {
 	if (mProgCounter - 2 != next) [[likely]] {
 		mProgCounter = next;
 		return false;
 	} else { return true; }
 }
 
-bool VM_Guest::stepInstruction(const s32 step) {
+bool VM_Guest::jumpInstruction_8E(const s32 step) {
 	if (step) [[likely]] {
 		mProgCounter += step - 2;
 		return false;
 	} else { return true; }
 }
+
+
+/*==================================================================*/
+	#pragma region AUDIO GENERATION
+/*==================================================================*/
+
+void VM_Guest::setAudioTone_C8() {
+	C8.mTone = (160.0f + 8.0f * (
+		(mProgCounter >> 1) + peekStackHead() + 1 & 0x3E)
+	) / BAS.getFrequency();
+}
+
+void VM_Guest::setAudioTone_8X(const u8 pitch) {
+	C8.mTone = (160.0f + (
+		(0xFF - (pitch ? pitch : 0x7F)) >> 3 << 4)
+	) / BAS.getFrequency();
+}
+
+void VM_Guest::renderAudio_C8(std::span<s16> buffer, const s16  amplitude) {
+	for (auto& sample_s16 : buffer) {
+		sample_s16 = mWavePhase > 0.5f ? amplitude : -amplitude;
+		mWavePhase = std::fmod(mWavePhase + C8.mTone, 1.0f);
+	}
+}
+
+/*==========================*/
+
+VM_Guest::Audio_XO::Audio_XO(const s32 frequency) {
+	mTone = mStep = 4000.0f / 128.0f / frequency;
+}
+
+void VM_Guest::setAudioTone_XO(const u8 pitch) {
+	mAudioIsXO = true;
+	XO.mTone = XO.mStep * std::pow(2.0f, (pitch - 64.0f) / 48.0f);
+}
+
+void VM_Guest::fetchPattern_XO() {
+	mAudioIsXO = true;
+	for (auto idx{ 0 }; idx < 16; ++idx) {
+		XO.mData[idx] = readMemoryI(idx);
+	}
+}
+
+void VM_Guest::renderAudio_XO(std::span<s16> buffer, const s16  amplitude) {
+	for (auto& sample_s16 : buffer) {
+		const auto step{ static_cast<s32>(std::clamp(mWavePhase * 128.0f, 0.0f, 127.0f)) };
+		const auto mask{ 1 << (7 ^ step & 7) };
+		sample_s16 = XO.mData[step >> 3] & mask ? amplitude : -amplitude;
+		mWavePhase = std::fmod(mWavePhase + XO.mTone, 1.0f);
+	}
+}
+
+/*==========================*/
+
+void VM_Guest::resetAudioTrack() {
+	mAudioIsMC   = false;
+	MC.mTrackPos = MC.mStepping =
+	MC.mTrackLen = MC.mMemPoint = 0;
+}
+
+void VM_Guest::startAudioTrack(const bool repeat) {
+
+	MC.mTrackLen = readMemoryI(2) << 16
+				 | readMemoryI(3) <<  8
+				 | readMemoryI(4);
+
+	if (!MC.mTrackLen) {
+		resetAudioTrack();
+		return;
+	}
+
+	mAudioIsMC   = true;
+	MC.mStepping = (readMemoryI(0) << 8 | readMemoryI(1)) * 1.0 / BAS.getFrequency();
+	MC.mTrackLen = repeat ? -MC.mTrackLen : MC.mTrackLen;
+	MC.mTrackPos = 0.0;
+	MC.mMemPoint = mRegisterI + 6;
+}
+
+void VM_Guest::renderAudio_MC(std::span<s16> buffer, s16 volume) {
+	for (auto& sample_s16 : buffer) {
+		sample_s16 = (readMemory(
+			MC.mMemPoint + static_cast<u32>(MC.mTrackPos)
+		) - 128) * volume;
+
+		if ((MC.mTrackPos += MC.mStepping) >= std::abs(MC.mTrackLen)) {
+			if (MC.mTrackLen < 0) {
+				MC.mTrackPos += MC.mTrackLen;
+			} else {
+				resetAudioTrack();
+				return;
+			}
+		}
+	}
+}
+
+/*==========================*/
+
+void VM_Guest::renderAudioData() {
+	std::vector<s16> audioBuffer(static_cast<usz>(BAS.getFrequency() / mFramerate));
+	auto* const colorDst{ BVS.getFrameColor() };
+	auto* const colorSrc{ Display->Color.buzz };
+
+	if (mBuzzLight) {
+		renderAudio_C8(audioBuffer, BAS.getAmplitude());
+		colorDst[2] = colorSrc[1]; colorDst[1] = colorSrc[0];
+	} else if (mAudioIsMC) {
+		renderAudio_MC(audioBuffer, BAS.getVolume());
+		colorDst[2] = colorDst[1] = 0xFF202020;
+	} else if (!mSoundTimer) {
+		mWavePhase = 0.0f;
+		colorDst[2] = colorDst[1] = colorSrc[0];
+	} else if (mAudioIsXO) {
+		renderAudio_XO(audioBuffer, BAS.getAmplitude());
+		colorDst[2] = colorDst[1] = colorSrc[0];
+	} else {
+		renderAudio_C8(audioBuffer, BAS.getAmplitude());
+		colorDst[2] = colorSrc[1]; colorDst[1] = colorSrc[0];
+	}
+
+	BAS.pushAudioData(audioBuffer.data(), audioBuffer.size());
+}
+
+/*==================================================================*/
+#pragma endregion
+/*==================================================================*/

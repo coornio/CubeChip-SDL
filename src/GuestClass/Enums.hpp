@@ -39,7 +39,7 @@ enum class FlushType {
 
 enum class Index {
 	MEMORY,
-	FONT_S,
-	FONT_L,
-	FONT_M,
+	LO_HEX,
+	HI_HEX,
+	MC_HEX,
 };

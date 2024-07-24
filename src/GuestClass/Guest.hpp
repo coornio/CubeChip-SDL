@@ -29,7 +29,6 @@ public:
 
 };
 
-class SoundCores;
 class DisplayTraits;
 
 class VM_Guest final {
@@ -54,7 +53,51 @@ class VM_Guest final {
 	HexInput Input;
 	Well512  Wrand;
 
-	std::unique_ptr<SoundCores>    Sound;
+/*==================================================================*/
+	#pragma region AUDIO GENERATION
+/*==================================================================*/
+
+	bool mBuzzLight{};
+	bool mAudioIsXO{};
+	bool mAudioIsMC{};
+	f32  mWavePhase{};
+
+	struct Audio_C8 final {
+		f32  mTone{};
+	} C8;
+	struct Audio_XO final {
+		explicit Audio_XO(s32);
+
+		f32  mStep{};
+		f32  mTone{};
+		u8   mData[16]{};
+	} XO;
+	struct Audio_MC final {
+		u32  mMemPoint{};
+		s32  mTrackLen{};
+		f64  mStepping{};
+		f64  mTrackPos{};
+	} MC;
+
+	void setAudioTone_C8();
+	void setAudioTone_8X(u8);
+
+	void setAudioTone_XO(u8);
+	void fetchPattern_XO();
+
+	void resetAudioTrack();
+	void startAudioTrack(bool);
+
+	void renderAudio_C8(std::span<s16>, s16);
+	void renderAudio_XO(std::span<s16>, s16);
+	void renderAudio_MC(std::span<s16>, s16);
+
+	void renderAudioData();
+
+/*==================================================================*/
+	#pragma endregion
+/*==================================================================*/
+
 	std::unique_ptr<DisplayTraits> Display;
 
 	struct EmulationQuirks final {
@@ -88,8 +131,7 @@ class VM_Guest final {
 	s32  boost{};
 	f32  mFramerate{};
 
-	using enum Interrupt;
-	Interrupt mInterruptType{ CLEAR };
+	Interrupt mInterruptType{};
 
 	bool mSystemPaused{};
 	/*
@@ -105,8 +147,8 @@ class VM_Guest final {
 	*/
 
 	// Platform variables
-	u8 mDelayTimer{};
-	u8 mSoundTimer{};
+	u8  mDelayTimer{};
+	u8  mSoundTimer{};
 
 	u32 mInstruction{};
 	u32 mProgCounter{};
@@ -173,6 +215,24 @@ class VM_Guest final {
 		//return mMemoryBank[mRegisterI & mMemoryBank.size() - 1];
 	}
 
+	bool stateRunning() const { return (
+		mInterruptType != Interrupt::FINAL &&
+		mInterruptType != Interrupt::ERROR
+	); }
+	bool stateStopped() const { return (
+		mInterruptType == Interrupt::FINAL ||
+		mInterruptType == Interrupt::ERROR
+	); }
+	bool stateWaitKey() const { return (
+		mInterruptType == Interrupt::INPUT
+	); }
+	bool stateWaiting() const { return (
+		mInterruptType == Interrupt::SOUND ||
+		mInterruptType == Interrupt::DELAY ||
+		mInterruptType == Interrupt::INPUT
+	); }
+
+
 private:
 	bool routineCall(u32);
 	bool routineReturn();
@@ -182,35 +242,40 @@ private:
 	bool readPermRegs(usz);
 	bool writePermRegs(usz);
 
-	void skipInstruction();
-	bool jumpInstruction(u32);
-	bool stepInstruction(s32);
+	void skipInstruction(); // to be deprecated
+	void skipInstruction_C8();
+	void skipInstruction_MC();
+	void skipInstruction_XO();
+	void skipInstruction_HW();
+	bool jumpInstruction_C8(u32);
+	bool jumpInstruction_8E(s32);
 
-	void modifyViewport(BrushType, bool);
+	void modifyDisplay_C8();
+	void modifyDisplay_XO();
+	void modifyDisplay_HW();
 
 	void flushBuffers(FlushType);
-	void loadPalette(s32);
+	void loadMegaPalette(s32);
 
 	void clearPages();
 
 	auto  NNNN() const { return readMemory(mProgCounter) << 8 | readMemory(mProgCounter + 1); }
 	auto  NNN()  const { return mInstruction & 0xFFF; }
 	auto  NN0()  const { return mInstruction & 0xFF0; }
-	auto& VX() { return mRegisterV[(mProgCounter >> 8) & 0xF]; }
+	auto& VX() { return mRegisterV[(mInstruction >> 8) & 0xF]; }
 
 	std::string hexOpcode(u32) const;
 
 	void initProgramParams(u32, s32);
 	void calculateBoostCPF(s32);
-	void changeFunctionSet(FncSetInterface*);
+	void changeFunctionSet(FncSetInterface*); // to be deprecated
 
 	void setInterrupt(Interrupt);
 	void triggerError(std::string_view);
 	void triggerOpcodeError(u32);
 
-	void decrementTimers();
-	void handleInterrupt1();
-	void handleInterrupt2();
+	void handleFrameWait();
+	void handleInputWait();
 
 public:
 	explicit VM_Guest(

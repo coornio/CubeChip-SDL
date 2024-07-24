@@ -33,8 +33,6 @@
     <ClCompile Include="src\GuestClass\InstructionSets\_LegacySC.cpp" />
     <ClCompile Include="src\GuestClass\InstructionSets\_Megachip.cpp" />
     <ClCompile Include="src\GuestClass\InstructionSets\_ModernXO.cpp" />
-    <ClCompile Include="src\GuestClass\PlatformCores\Chip8.cpp" />
-    <ClCompile Include="src\GuestClass\SoundCores.cpp" />
     <ClCompile Include="src\GuestClass\GuestFunctions.cpp" />
     <ClCompile Include="src\GuestClass\Init.cpp" />
     <ClCompile Include="src\HostClass\BasicAudioSpec.cpp" />
@@ -59,7 +57,6 @@
     <ClInclude Include="src\GuestClass\Guest.hpp" />
     <ClInclude Include="src\GuestClass\HexInput.hpp" />
     <ClInclude Include="src\GuestClass\InstructionSets\Interface.hpp" />
-    <ClInclude Include="src\GuestClass\SoundCores.hpp" />
     <ClInclude Include="src\HostClass\BasicAudioSpec.hpp" />
     <ClInclude Include="src\HostClass\BasicVideoSpec.hpp" />
     <ClInclude Include="src\HostClass\HomeDirManager.hpp" />
