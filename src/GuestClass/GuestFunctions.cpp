@@ -28,12 +28,11 @@ VM_Guest::~VM_Guest() = default;
 VM_Guest::VM_Guest(
 	HomeDirManager& ref_HDM,
 	BasicVideoSpec& ref_BVS,
-	BasicAudioSpec& bas_ptr
+	BasicAudioSpec& ref_BAS
 )
 	: HDM{ ref_HDM }
 	, BVS{ ref_BVS }
-	, BAS{ bas_ptr }
-	, XO{ BAS.getFrequency()}
+	, BAS{ ref_BAS }
 {
 	Display = std::make_unique<DisplayTraits>(BVS.getFrameColor());
 }
@@ -909,9 +908,10 @@ void VM_Guest::renderAudio_C8(std::span<s16> buffer, const s16  amplitude) {
 
 /*==========================*/
 
-VM_Guest::Audio_XO::Audio_XO(const s32 frequency) {
-	mTone = mStep = 4000.0f / 128.0f / frequency;
-}
+VM_Guest::Audio_XO::Audio_XO(const BasicAudioSpec& BAS)
+	: mStep{ 4000.0f / 128.0f / BAS.getFrequency() }
+	, mTone{ mStep }
+{}
 
 void VM_Guest::setAudioTone_XO(const u8 pitch) {
 	mAudioIsXO = true;
@@ -1005,5 +1005,53 @@ void VM_Guest::renderAudioData() {
 }
 
 /*==================================================================*/
-#pragma endregion
+	#pragma endregion
+/*==================================================================*/
+
+/*==================================================================*/
+	#pragma region CPU & MEMORY
+/*==================================================================*/
+
+bool VM_Guest::in_range(const usz pos) const noexcept { return pos < mMemoryBank.size(); }
+u32  VM_Guest::peekStackHead() const { return mStackTop; }
+
+u32  VM_Guest::NNNN() const { return readMemory(mProgCounter) << 8 | readMemory(mProgCounter + 1); }
+u32  VM_Guest::NNN()  const { return mInstruction & 0xFFF; }
+u32  VM_Guest::NN0()  const { return mInstruction & 0xFF0; }
+u8&  VM_Guest::VX()         { return mRegisterV[(mInstruction >> 8) & 0xF]; }
+
+// Write memory at given index using given value
+void VM_Guest::writeMemory(const usz value, const usz pos) {
+	//mMemoryBank[pos & mMemoryBank.size() - 1] = static_cast<u8>(value);
+	if (in_range(pos)) { mMemoryBank[pos] = static_cast<u8>(value); }
+}
+// Write memory at saved index using given value
+void VM_Guest::writeMemoryI(const usz value, const usz pos) {
+	//mMemoryBank[mRegisterI + pos & mMemoryBank.size() - 1] = static_cast<u8>(value);
+	if (in_range(mRegisterI + pos)) { mMemoryBank[mRegisterI + pos] = static_cast<u8>(value); }
+}
+// Write memory at saved index using given value
+void VM_Guest::writeMemoryI(const usz value) {
+	//mMemoryBank[mRegisterI & mMemoryBank.size() - 1] = static_cast<u8>(value);
+	if (in_range(mRegisterI)) { mMemoryBank[mRegisterI] = static_cast<u8>(value); }
+}
+
+// Read memory at given index
+u8 VM_Guest::readMemory(const usz pos) const {
+	return (in_range(pos)) ? mMemoryBank[pos] : 0;
+	//return mMemoryBank[pos & mMemoryBank.size() - 1];
+}
+// Read memory at saved index
+u8 VM_Guest::readMemoryI(const usz pos) const {
+	return (in_range(mRegisterI + pos)) ? mMemoryBank[mRegisterI + pos] : 0;
+	//return mMemoryBank[mRegisterI + pos & mMemoryBank.size() - 1];
+}
+// Read memory at saved index
+u8 VM_Guest::readMemoryI() const {
+	return (in_range(mRegisterI)) ? mMemoryBank[mRegisterI] : 0;
+	//return mMemoryBank[mRegisterI & mMemoryBank.size() - 1];
+}
+
+/*==================================================================*/
+	#pragma endregion
 /*==================================================================*/

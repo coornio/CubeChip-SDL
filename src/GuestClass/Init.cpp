@@ -156,7 +156,7 @@ bool VM_Guest::romTypeCheck() {
 		case (RomExt::benchmark):
 			if (!romCopyToMemory(65'536, 0x200))
 				return false;
-			initProgramParams(0x200, 3'100'000);
+			initProgramParams(0x200, 3'300'000);
 			changeFunctionSet(&SetClassic8);
 			blog.stdLogOut("benchmarking.");
 			break;
@@ -169,10 +169,10 @@ bool VM_Guest::romTypeCheck() {
 }
 
 bool VM_Guest::romCopyToMemory(const usz size, const usz offset) {
-	setMemorySize(size);
+	mMemoryBank.resize(size);
 
 	std::basic_ifstream<char> ifs(HDM.path, std::ios::binary);
-	ifs.read(reinterpret_cast<char*>(getMemorySpan().data() + offset), HDM.size);
+	ifs.read(reinterpret_cast<char*>(mMemoryBank.data() + offset), HDM.size);
 	if (ifs.fail()) {
 		blog.stdLogOut("Failed to copy rom data to memory, aborting.");
 		return false;
@@ -348,14 +348,14 @@ void VM_Guest::fontCopyToMemory() {
 	// copy the FONT at the desired offset, and omit A-F superchip sprites if needed
 	std::copy_n(
 		FONT_DATA, State.schip_legacy ? 180 : 240,
-		getMemorySpan().data()
+		mMemoryBank.data()
 	);
 
 	if (!State.megachip_rom) return;
 
 	std::copy_n(
 		MEGA_FONT_DATA, 160,
-		getMemorySpan().data() + 240
+		mMemoryBank.data() + 240
 	);
 }
 
