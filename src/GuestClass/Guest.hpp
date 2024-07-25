@@ -46,6 +46,51 @@ class VM_Guest final {
 	HexInput Input;
 	Well512  Wrand;
 
+/*==================================================================*/
+	#pragma region AUDIO GENERATION
+/*==================================================================*/
+
+	bool mBuzzLight{};
+	bool mAudioIsXO{};
+	bool mAudioIsMC{};
+	f32  mWavePhase{};
+
+	struct Audio_C8 final {
+		f32  mTone{};
+	} C8;
+	struct Audio_XO final {
+		explicit Audio_XO(const BasicAudioSpec&);
+
+		f32  mStep{};
+		f32  mTone{};
+		u8   mData[16]{};
+	} XO{ BAS };
+	struct Audio_MC final {
+		u32  mMemPoint{};
+		s32  mTrackLen{};
+		f64  mStepping{};
+		f64  mTrackPos{};
+	} MC;
+
+	void setAudioTone_C8();
+	void setAudioTone_8X(u8);
+
+	void setAudioTone_XO(u8);
+	void fetchPattern_XO();
+
+	void resetAudioTrack();
+	void startAudioTrack(bool);
+
+	void renderAudio_C8(std::span<s16>, s16);
+	void renderAudio_XO(std::span<s16>, s16);
+	void renderAudio_MC(std::span<s16>, s16);
+
+	void renderAudioData();
+
+/*==================================================================*/
+	#pragma endregion
+/*==================================================================*/
+
 	std::unique_ptr<DisplayTraits> Display;
 
 	struct EmulationQuirks final {
@@ -211,27 +256,45 @@ private:
 	Map2D<u8>  displayBuffer[4];
 	Map2D<u32> color8xBuffer;
 
-	bool in_range(usz pos) const noexcept;
-	u32  peekStackHead() const;
+	bool in_range(const usz pos) const noexcept { return pos < mMemoryBank.size(); }
+	auto peekStackHead() const { return mStackTop; }
 
-	u32  NNNN() const;
-	u32  NNN()  const;
-	u32  NN0()  const;
-	u8&  VX();
+	auto  NNNN() const { return readMemory(mProgCounter) << 8 | readMemory(mProgCounter + 1); }
+	auto  NNN()  const { return mInstruction & 0xFFF; }
+	auto  NN0()  const { return mInstruction & 0xFF0; }
+	auto& VX() { return mRegisterV[(mInstruction >> 8) & 0xF]; }
 
 	// Write memory at given index using given value
-	void writeMemory(usz value, usz pos);
+	void writeMemory(const usz value, const usz pos) {
+		//mMemoryBank[pos & mMemoryBank.size() - 1] = static_cast<u8>(value);
+		if (in_range(pos)) { mMemoryBank[pos] = static_cast<u8>(value); }
+	}
 	// Write memory at saved index using given value
-	void writeMemoryI(usz value, usz pos);
+	void writeMemoryI(const usz value, const usz pos) {
+		//mMemoryBank[mRegisterI + pos & mMemoryBank.size() - 1] = static_cast<u8>(value);
+		if (in_range(mRegisterI + pos)) { mMemoryBank[mRegisterI + pos] = static_cast<u8>(value); }
+	}
 	// Write memory at saved index using given value
-	void writeMemoryI(usz value);
+	void writeMemoryI(const usz value) {
+		//mMemoryBank[mRegisterI & mMemoryBank.size() - 1] = static_cast<u8>(value);
+		if (in_range(mRegisterI)) { mMemoryBank[mRegisterI] = static_cast<u8>(value); }
+	}
 
 	// Read memory at given index
-	u8   readMemory(usz pos) const;
+	auto readMemory(const usz pos) const -> u8 {
+		return (in_range(pos)) ? mMemoryBank[pos] : 0;
+		//return mMemoryBank[pos & mMemoryBank.size() - 1];
+	}
 	// Read memory at saved index
-	u8   readMemoryI(usz pos) const;
+	auto readMemoryI(const usz pos) const -> u8 {
+		return (in_range(mRegisterI + pos)) ? mMemoryBank[mRegisterI + pos] : 0;
+		//return mMemoryBank[mRegisterI + pos & mMemoryBank.size() - 1];
+	}
 	// Read memory at saved index
-	u8   readMemoryI() const;
+	auto readMemoryI() const -> u8 {
+		return (in_range(mRegisterI)) ? mMemoryBank[mRegisterI] : 0;
+		//return mMemoryBank[mRegisterI & mMemoryBank.size() - 1];
+	}
 
 /*==================================================================*/
 	#pragma endregion

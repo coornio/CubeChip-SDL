@@ -22,6 +22,7 @@ class VM_Host final {
 	HomeDirManager& HDM;
 	BasicVideoSpec& BVS;
 	BasicAudioSpec& BAS;
+	double _______pad{}; // lose performance without it?!
 
 	[[nodiscard]] bool isReady() const;
 	[[nodiscard]] bool doBench() const;
