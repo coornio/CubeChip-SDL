@@ -6,7 +6,7 @@
 
 #include <SDL3/SDL_main.h>
 #include <SDL3/SDL.h>
-#include <memory>
+#include <optional>
 
 #include "HostClass/HomeDirManager.hpp"
 #include "HostClass/BasicVideoSpec.hpp"
@@ -33,14 +33,14 @@ int SDL_main(int argc, char* argv[]) {
 	SDL_SetHint(SDL_HINT_RENDER_VSYNC, "0"); // until the UI is independent
 	SDL_SetHint(SDL_HINT_APP_NAME, "CubeChip");
 
-	std::unique_ptr<HomeDirManager> HDM;
-	std::unique_ptr<BasicVideoSpec> BVS;
-	std::unique_ptr<BasicAudioSpec> BAS;
+	std::optional<HomeDirManager> HDM;
+	std::optional<BasicVideoSpec> BVS;
+	std::optional<BasicAudioSpec> BAS;
 
 	try {
-		HDM   = std::make_unique<HomeDirManager>("CubeChip_SDL");
-		BVS   = std::make_unique<BasicVideoSpec>();
-		BAS   = std::make_unique<BasicAudioSpec>();
+		HDM.emplace("CubeChip_SDL");
+		BVS.emplace();
+		BAS.emplace();
 	} catch (...) { return EXIT_FAILURE; }
 
 	VM_Host Host(

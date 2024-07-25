@@ -51,13 +51,13 @@ bool VM_Host::doBench() const { return _doBench; }
 void VM_Host::isReady(const bool state) { _isReady = state; }
 void VM_Host::doBench(const bool state) { _doBench = state; }
 
-void VM_Host::prepareGuest(FrameLimiter& Frame) {
-	Guest = nullptr;
+void VM_Host::prepareGuest(std::optional<VM_Guest>& Guest, FrameLimiter& Frame) {
+	Guest.reset();
 	bic::kb.updateCopy();
 	bic::mb.updateCopy();
 
 	if (isReady()) {
-		Guest = std::make_unique<VM_Guest>(HDM, BVS, BAS);
+		Guest.emplace(HDM, BVS, BAS);
 
 		if (Guest->setupMachine()) {
 			Frame.setLimiter(Guest->fetchFramerate());
@@ -76,11 +76,13 @@ bool VM_Host::runHost() {
 
 	using namespace bic;
 
-	       prepareGuest(Frame);
-	return mainHostLoop(Frame, Event);
+	std::optional<VM_Guest> Guest;
+
+	       prepareGuest(Guest, Frame);
+	return mainHostLoop(Guest, Frame, Event);
 }
 
-bool VM_Host::eventLoopSDL(FrameLimiter& Frame, SDL_Event& Event) {
+bool VM_Host::eventLoopSDL(std::optional<VM_Guest>& Guest, FrameLimiter& Frame, SDL_Event& Event) {
 	while (SDL_PollEvent(&Event)) {
 		switch (Event.type) {
 			case SDL_EVENT_QUIT:
@@ -91,7 +93,7 @@ bool VM_Host::eventLoopSDL(FrameLimiter& Frame, SDL_Event& Event) {
 				if (HDM.verifyFile(RomFile::validate, Event.drop.data)) {
 					isReady(true);
 					doBench(false);
-					prepareGuest(Frame);
+					prepareGuest(Guest, Frame);
 				} else {
 					blog.stdLogOut(std::string{ "File drop denied: " } + RomFile::error);
 				}
@@ -109,9 +111,9 @@ bool VM_Host::eventLoopSDL(FrameLimiter& Frame, SDL_Event& Event) {
 	return false;
 }
 
-bool VM_Host::mainHostLoop(FrameLimiter& Frame, SDL_Event& Event) {
+bool VM_Host::mainHostLoop(std::optional<VM_Guest>& Guest, FrameLimiter& Frame, SDL_Event& Event) {
 	while (true) {
-		if (eventLoopSDL(Frame, Event)) {
+		if (eventLoopSDL(Guest, Frame, Event)) {
 			return EXIT_SUCCESS;
 		}
 
@@ -132,11 +134,11 @@ bool VM_Host::mainHostLoop(FrameLimiter& Frame, SDL_Event& Event) {
 				isReady(false);
 				doBench(false);
 				BVS.resetWindow();
-				prepareGuest(Frame);
+				prepareGuest(Guest, Frame);
 				continue;
 			}
 			if (kb.isPressed(KEY(BACKSPACE))) {
-				prepareGuest(Frame);
+				prepareGuest(Guest, Frame);
 				continue;
 			}
 			if (kb.isPressed(KEY(RSHIFT))) {

@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <memory>
+#include <optional>
 
 class HomeDirManager;
 class BasicVideoSpec;
@@ -23,16 +23,14 @@ class VM_Host final {
 	BasicVideoSpec& BVS;
 	BasicAudioSpec& BAS;
 
-	std::unique_ptr<VM_Guest> Guest;
-
 	[[nodiscard]] bool isReady() const;
 	[[nodiscard]] bool doBench() const;
 	void isReady(bool);
 	void doBench(bool);
 
-	void prepareGuest(FrameLimiter&);
-	bool mainHostLoop(FrameLimiter&, SDL_Event&);
-	bool eventLoopSDL(FrameLimiter&, SDL_Event&);
+	void prepareGuest(std::optional<VM_Guest>&, FrameLimiter&);
+	bool mainHostLoop(std::optional<VM_Guest>&, FrameLimiter&, SDL_Event&);
+	bool eventLoopSDL(std::optional<VM_Guest>&, FrameLimiter&, SDL_Event&);
 
 public:
 	explicit VM_Host(
