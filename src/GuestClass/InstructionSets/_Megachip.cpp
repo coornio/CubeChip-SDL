@@ -10,7 +10,6 @@
 
 #include "Interface.hpp"
 #include "../Guest.hpp"
-#include "../DisplayTraits.hpp"
 
 /*------------------------------------------------------------------*/
 /*  class  FncSetInterface -> FunctionsForMegachip                  */
@@ -27,7 +26,7 @@ void FunctionsForMegachip::scrollUP(const s32 N) {
 	blendToDisplay(
 		vm.foregroundBuffer.data(),
 		vm.backgroundBuffer.data(),
-		vm.Display->Trait.S
+		vm.Trait.S
 	);
 }
 void FunctionsForMegachip::scrollDN(const s32 N) {
@@ -35,7 +34,7 @@ void FunctionsForMegachip::scrollDN(const s32 N) {
 	blendToDisplay(
 		vm.foregroundBuffer.data(),
 		vm.backgroundBuffer.data(),
-		vm.Display->Trait.S
+		vm.Trait.S
 	);
 }
 void FunctionsForMegachip::scrollLT(const s32 N) {
@@ -43,7 +42,7 @@ void FunctionsForMegachip::scrollLT(const s32 N) {
 	blendToDisplay(
 		vm.foregroundBuffer.data(),
 		vm.backgroundBuffer.data(),
-		vm.Display->Trait.S
+		vm.Trait.S
 	);
 }
 void FunctionsForMegachip::scrollRT(const s32 N) {
@@ -51,7 +50,7 @@ void FunctionsForMegachip::scrollRT(const s32 N) {
 	blendToDisplay(
 		vm.foregroundBuffer.data(),
 		vm.backgroundBuffer.data(),
-		vm.Display->Trait.S
+		vm.Trait.S
 	);
 }
 
@@ -75,7 +74,7 @@ uint32_t FunctionsForMegachip::blendPixel(
 )  noexcept {
 	static constexpr float minF{ 1.0f / 255.0f };
 
-	src.A = (colorSrc >> 24) * minF * vm.Display->Tex.alpha;
+	src.A = (colorSrc >> 24) * minF * vm.Texture.alpha;
 	if (src.A < minF) [[unlikely]] { return colorDst; }
 	src.R = ((colorSrc >> 16) & 0xFF) * minF;
 	src.G = ((colorSrc >>  8) & 0xFF) * minF;
@@ -118,15 +117,15 @@ void FunctionsForMegachip::drawSprite(
 	s32 VY{ vm.mRegisterV[_Y] };
 
 	vm.mRegisterV[0xF] = 0;
-	if (!vm.Quirk.wrapSprite && VY >= vm.Display->Trait.H) { return; }
+	if (!vm.Quirk.wrapSprite && VY >= vm.Trait.H) { return; }
 	if (vm.mRegisterI >= 0xF0) [[likely]] { goto paintTexture; }
 
-	for (auto H{ 0 }, Y{ VY }; H < FR; ++H, ++Y &= vm.Display->Trait.Wb)
+	for (auto H{ 0 }, Y{ VY }; H < FR; ++H, ++Y &= vm.Trait.Wb)
 	{
-		if (vm.Quirk.wrapSprite && Y >= vm.Display->Trait.H) { continue; }
+		if (vm.Quirk.wrapSprite && Y >= vm.Trait.H) { continue; }
 		const auto bytePixel{ vm.readMemoryI(H) };
 
-		for (auto W{ 7 }, X{ VX }; W >= 0; --W, ++X &= vm.Display->Trait.Wb)
+		for (auto W{ 7 }, X{ VX }; W >= 0; --W, ++X &= vm.Trait.Wb)
 		{
 			if (bytePixel >> W & 0x1)
 			{
@@ -139,29 +138,29 @@ void FunctionsForMegachip::drawSprite(
 					vm.mRegisterV[0xF] = 1;
 				} else {
 					collideCoord = 254;
-					backbufCoord = vm.Display->Color.hex[H];
+					backbufCoord = vm.Color.hex[H];
 				}
 			}
-			if (!vm.Quirk.wrapSprite && X == vm.Display->Trait.Wb) { break; }
+			if (!vm.Quirk.wrapSprite && X == vm.Trait.Wb) { break; }
 		}
-		if (!vm.Quirk.wrapSprite && Y == vm.Display->Trait.Hb) { break; }
+		if (!vm.Quirk.wrapSprite && Y == vm.Trait.Hb) { break; }
 	}
 	return;
 
 paintTexture:
-	for (auto H{ 0 }, Y{ VY }; H < vm.Display->Tex.H; ++H, ++Y &= vm.Display->Trait.Wb)
+	for (auto H{ 0 }, Y{ VY }; H < vm.Texture.H; ++H, ++Y &= vm.Trait.Wb)
 	{
-		if (vm.Quirk.wrapSprite && Y >= vm.Display->Trait.H) { continue; }
-		auto I = H * vm.Display->Tex.W;
+		if (vm.Quirk.wrapSprite && Y >= vm.Trait.H) { continue; }
+		auto I = H * vm.Texture.W;
 
-		for (auto W{ 0 }, X{ VX }; W < vm.Display->Tex.W; ++W, ++X &= vm.Display->Trait.Wb)
+		for (auto W{ 0 }, X{ VX }; W < vm.Texture.W; ++W, ++X &= vm.Trait.Wb)
 		{
 			if (const auto sourceColorIdx{ vm.readMemoryI(I++) }; sourceColorIdx)
 			{
 				auto& collideCoord{ vm.collisionPalette.at_raw(Y, X) };
 				auto& backbufCoord{ vm.backgroundBuffer.at_raw(Y, X) };
 
-				if (collideCoord == vm.Display->Tex.collision)
+				if (collideCoord == vm.Texture.collision)
 					[[unlikely]] { vm.mRegisterV[0xF] = 1; }
 
 				collideCoord = sourceColorIdx;
@@ -170,9 +169,9 @@ paintTexture:
 					backbufCoord
 				);
 			}
-			if (!vm.Quirk.wrapSprite && X == vm.Display->Trait.Wb) { break; }
+			if (!vm.Quirk.wrapSprite && X == vm.Trait.Wb) { break; }
 		}
-		if (!vm.Quirk.wrapSprite && Y == vm.Display->Trait.Hb) { break; }
+		if (!vm.Quirk.wrapSprite && Y == vm.Trait.Hb) { break; }
 	}
 }
 

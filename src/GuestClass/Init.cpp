@@ -17,7 +17,6 @@ using namespace blogger;
 #include "Guest.hpp"
 #include "RomCheck.hpp"
 #include "HexInput.hpp"
-#include "DisplayTraits.hpp"
 
 bool VM_Guest::setupMachine() {
 	if (!romTypeCheck()) {
@@ -149,7 +148,7 @@ bool VM_Guest::romTypeCheck() {
 				return false;
 			initProgramParams(0x200, 200'000);
 			changeFunctionSet(&SetModernXO);
-			Display->isPixelBitColor(true);
+			isPixelBitColor(true);
 			Quirk.wrapSprite = true;
 			break;
 
@@ -203,25 +202,25 @@ void VM_Guest::initPlatform() {
 	// XXX - apply custom rom settings here
 
 	if (State.hires_2paged || State.hires_4paged) {
-		Display->isPixelBitColor(false);
+		isPixelBitColor(false);
 		State.schip_legacy = false;
 	}
 	if (State.megachip_rom) {
-		Display->isPixelTrailing(false);
-		Display->isPixelBitColor(false);
+		isPixelTrailing(false);
+		isPixelBitColor(false);
 		mFramerate = 60.0f;
 		State.chip8_legacy = false;
 		State.schip_legacy = false;
 	}
 	if (State.chip8_legacy) {
-		Display->isPixelTrailing(true);
+		isPixelTrailing(true);
 		Quirk.clearVF    = true;
 		Quirk.waitVblank = true;
 	}
 	if (State.schip_legacy) {
 		changeFunctionSet(&SetLegacySC);
 		mFramerate = 64.0f; // match HP48 framerate
-		Display->isPixelTrailing(true);
+		isPixelTrailing(true);
 		Quirk.shiftVX      = true;
 		Quirk.jmpRegX      = true;
 		Quirk.idxRegNoInc  = true;
@@ -238,9 +237,9 @@ void VM_Guest::initPlatform() {
 	}
 
 	if (State.chip8X_rom) {
-		Display->Color.cycleBackground(BVS.getFrameColor());
-		color8xBuffer.resize(true, Display->Trait.H, Display->Trait.W >> 3);
-		color8xBuffer.at_raw(0, 0) = Display->Color.getFore8X(2);
+		cycleBackgroundColor(BVS.getFrameColor());
+		color8xBuffer.resize(true, Trait.H, Trait.W >> 3);
+		color8xBuffer.at_raw(0, 0) = getForegroundColor8X(2);
 
 		if (!State.schip_legacy) return;
 
@@ -257,15 +256,15 @@ void VM_Guest::prepDisplayArea(const Resolution mode, const bool forced) {
 	static constexpr std::int32_t sizeH[]{ 0,  64,  32,  64, 128, 192 };
 
 	const auto select{ State.schip_legacy ? 1 : std::to_underlying(mode) };
-	const auto lores{ mode == Resolution::LO }; Display->isLoresExtended(lores);
+	const auto lores{ mode == Resolution::LO }; isLoresExtended(lores);
 
-	const auto W{ sizeW[select] }; Display->Trait.W = W; Display->Trait.Wb = W - 1;
-	const auto H{ sizeH[select] }; Display->Trait.H = H; Display->Trait.Hb = H - 1;
+	const auto W{ sizeW[select] }; Trait.W = W; Trait.Wb = W - 1;
+	const auto H{ sizeH[select] }; Trait.H = H; Trait.Hb = H - 1;
 	
-	Display->Trait.S = W * H;
+	Trait.S = W * H;
 	BVS.createTexture(W, H);
 
-	if (Display->isManualRefresh()) {
+	if (isManualRefresh()) {
 		BVS.setAspectRatio(512, 384, -2);
 		foregroundBuffer.resize(false, H, W);
 		backgroundBuffer.resize(false, H, W);
@@ -274,7 +273,7 @@ void VM_Guest::prepDisplayArea(const Resolution mode, const bool forced) {
 	} else {
 		BVS.setAspectRatio(512, 256, +2);
 		displayBuffer[0].resize(!forced, H, W);
-		if (Display->isPixelBitColor() || Display->isPixelTrailing()) {
+		if (isPixelBitColor() || isPixelTrailing()) {
 			displayBuffer[1].resize(!forced, H, W);
 			displayBuffer[2].resize(!forced, H, W);
 			displayBuffer[3].resize(!forced, H, W);
@@ -360,15 +359,16 @@ void VM_Guest::fontCopyToMemory() {
 }
 
 void VM_Guest::renderToTexture() {
+	*BVS.getFrameColor() = Color.bit[0];
 	auto* pixels{ BVS.lockTexture() };
 
-	if (Display->isManualRefresh()) {
-		for (auto idx{ 0 }; idx < Display->Trait.S; ++idx) {
+	if (isManualRefresh()) {
+		for (auto idx{ 0 }; idx < Trait.S; ++idx) {
 			pixels[idx] = foregroundBuffer.at_raw(idx);
 		}
-	} else if (Display->isPixelBitColor()) {
-		for (auto idx{ 0 }; idx < Display->Trait.S; ++idx) {
-			pixels[idx] = (0xFF << 24 | Display->Color.bit[
+	} else if (isPixelBitColor()) {
+		for (auto idx{ 0 }; idx < Trait.S; ++idx) {
+			pixels[idx] = (0xFF << 24 | Color.bit[
 				displayBuffer[0].at_raw(idx) << 0 |
 				displayBuffer[1].at_raw(idx) << 1 |
 				displayBuffer[2].at_raw(idx) << 2 |
@@ -376,10 +376,10 @@ void VM_Guest::renderToTexture() {
 			]);
 		}
 	} else if (State.chip8X_rom) {
-		if (Display->isPixelTrailing()) {
-			for (auto idx{ 0 }; idx < Display->Trait.S; ++idx) {
-				const auto Y = idx / Display->Trait.W & Display->Trait.mask8X;
-				const auto X = idx % Display->Trait.W >> 3; // 8px color zones
+		if (isPixelTrailing()) {
+			for (auto idx{ 0 }; idx < Trait.S; ++idx) {
+				const auto Y = idx / Trait.W & Trait.mask8X;
+				const auto X = idx % Trait.W >> 3; // 8px color zones
 
 				if (displayBuffer[0].at_raw(idx)) {
 					pixels[idx] = (0xFF << 24 | color8xBuffer.at_raw(Y, X));
@@ -404,31 +404,31 @@ void VM_Guest::renderToTexture() {
 			displayBuffer[2].copyLinear(displayBuffer[1]);
 			displayBuffer[1].copyLinear(displayBuffer[0]);
 		} else {
-			for (auto idx{ 0 }; idx < Display->Trait.S; ++idx) {
-				const auto Y = idx / Display->Trait.W & Display->Trait.mask8X;
-				const auto X = idx % Display->Trait.W >> 3; // 8px color zones
+			for (auto idx{ 0 }; idx < Trait.S; ++idx) {
+				const auto Y = idx / Trait.W & Trait.mask8X;
+				const auto X = idx % Trait.W >> 3; // 8px color zones
 
 				pixels[idx] = (0xFF << 24 | (displayBuffer[0].at_raw(idx)
 					? color8xBuffer.at_raw(Y, X) : 0));
 			}
 		}
 	} else {
-		if (Display->isPixelTrailing()) {
-			for (auto idx{ 0 }; idx < Display->Trait.S; ++idx) {
+		if (isPixelTrailing()) {
+			for (auto idx{ 0 }; idx < Trait.S; ++idx) {
 				if (displayBuffer[0].at_raw(idx)) {
-					pixels[idx] = (0xFF << 24 | Display->Color.bit[1]);
+					pixels[idx] = (0xFF << 24 | Color.bit[1]);
 					continue;
 				}
 				if (displayBuffer[1].at_raw(idx)) {
-					pixels[idx] = (0xE8 << 24 | Display->Color.bit[1]);
+					pixels[idx] = (0xE8 << 24 | Color.bit[1]);
 					continue;
 				}
 				if (displayBuffer[2].at_raw(idx)) {
-					pixels[idx] = (0x7B << 24 | Display->Color.bit[1]);
+					pixels[idx] = (0x7B << 24 | Color.bit[1]);
 					continue;
 				}
 				if (displayBuffer[3].at_raw(idx)) {
-					pixels[idx] = (0x38 << 24 | Display->Color.bit[1]);
+					pixels[idx] = (0x38 << 24 | Color.bit[1]);
 					continue;
 				} else {
 					pixels[idx] = 0;
@@ -438,8 +438,8 @@ void VM_Guest::renderToTexture() {
 			displayBuffer[2].copyLinear(displayBuffer[1]);
 			displayBuffer[1].copyLinear(displayBuffer[0]);
 		} else {
-			for (auto idx{ 0 }; idx < Display->Trait.S; ++idx) {
-				pixels[idx] = (0xFF << 24 | Display->Color.bit[
+			for (auto idx{ 0 }; idx < Trait.S; ++idx) {
+				pixels[idx] = (0xFF << 24 | Color.bit[
 					displayBuffer[0].at_raw(idx)
 				]);
 			}

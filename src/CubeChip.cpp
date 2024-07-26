@@ -33,9 +33,9 @@ int SDL_main(int argc, char* argv[]) {
 	SDL_SetHint(SDL_HINT_RENDER_VSYNC, "0"); // until the UI is independent
 	SDL_SetHint(SDL_HINT_APP_NAME, "CubeChip");
 
-	std::optional<HomeDirManager> HDM;
-	std::optional<BasicVideoSpec> BVS;
-	std::optional<BasicAudioSpec> BAS;
+	alignas(64) std::optional<HomeDirManager> HDM;
+	alignas(64) std::optional<BasicVideoSpec> BVS;
+	alignas(64) std::optional<BasicAudioSpec> BAS;
 
 	try {
 		HDM.emplace("CubeChip_SDL");

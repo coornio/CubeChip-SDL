@@ -51,6 +51,19 @@ bool VM_Host::doBench() const { return _doBench; }
 void VM_Host::isReady(const bool state) { _isReady = state; }
 void VM_Host::doBench(const bool state) { _doBench = state; }
 
+
+bool VM_Host::runHost() {
+	FrameLimiter Frame;
+	SDL_Event    Event;
+
+	std::optional<VM_Guest> Guest;
+
+	using namespace bic;
+
+	prepareGuest(Guest, Frame);
+	return mainHostLoop(Guest, Frame, Event);
+}
+
 void VM_Host::prepareGuest(std::optional<VM_Guest>& Guest, FrameLimiter& Frame) {
 	Guest.reset();
 	bic::kb.updateCopy();
@@ -68,18 +81,6 @@ void VM_Host::prepareGuest(std::optional<VM_Guest>& Guest, FrameLimiter& Frame) 
 			HDM.reset();
 		}
 	}
-}
-
-bool VM_Host::runHost() {
-	SDL_Event    Event;
-	FrameLimiter Frame;
-
-	using namespace bic;
-
-	std::optional<VM_Guest> Guest;
-
-	       prepareGuest(Guest, Frame);
-	return mainHostLoop(Guest, Frame, Event);
 }
 
 bool VM_Host::eventLoopSDL(std::optional<VM_Guest>& Guest, FrameLimiter& Frame, SDL_Event& Event) {

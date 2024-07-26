@@ -8,7 +8,6 @@
 
 #include "Interface.hpp"
 #include "../Guest.hpp"
-#include "../DisplayTraits.hpp"
 
 /*------------------------------------------------------------------*/
 /*  class  FncSetInterface -> FunctionsForGigachip                  */
@@ -43,9 +42,9 @@ u32 FunctionsForGigachip::blendPixel(
 ) {
 	static constexpr float minF{ 1.0f / 255.0f };
 
-	src.A = (colorSrc >> 24) * minF * vm.Display->Tex.alpha;
+	src.A = (colorSrc >> 24) * minF * vm.Texture.alpha;
 	if (src.A < minF) [[unlikely]] { return colorDst; }
-	if (vm.Display->Tex.invert) { colorSrc ^= 0x00FFFFFF; }
+	if (vm.Texture.invert) { colorSrc ^= 0x00FFFFFF; }
 	src.R = (colorSrc >> 16 & 0xFF) * minF;
 	src.G = (colorSrc >>  8 & 0xFF) * minF;
 	src.B = (colorSrc       & 0xFF) * minF;
@@ -55,7 +54,7 @@ u32 FunctionsForGigachip::blendPixel(
 	dst.G = (colorDst >>  8 & 0xFF) * minF;
 	dst.B = (colorDst       & 0xFF) * minF;
 
-	switch (vm.Display->Tex.rgbmod) {
+	switch (vm.Texture.rgbmod) {
 		case Trait::BRG:
 			std::swap(src.R, src.G);
 			std::swap(src.R, src.B);
@@ -127,25 +126,25 @@ void FunctionsForGigachip::drawSprite(
 	s32 VY{ vm.mRegisterV[_Y] };
 	vm.mRegisterV[0xF] = 0;
 
-	const auto currW{ vm.Display->Tex.W }; auto tempW{ currW };
-	const auto currH{ vm.Display->Tex.H }; auto tempH{ currH };
+	const auto currW{ vm.Texture.W }; auto tempW{ currW };
+	const auto currH{ vm.Texture.H }; auto tempH{ currH };
 
-	bool flipX{ vm.Display->Tex.flip_X };
-	bool flipY{ vm.Display->Tex.flip_Y };
+	bool flipX{ vm.Texture.flip_X };
+	bool flipY{ vm.Texture.flip_Y };
 
-	vm.Display->Tex.alpha = (N ^ 0xF) / 15.0f;
+	vm.Texture.alpha = (N ^ 0xF) / 15.0f;
 
-	if (vm.Display->Tex.uneven) {
+	if (vm.Texture.uneven) {
 		std::swap(tempW, tempH);
 		std::swap(flipX, flipY);
 	}
 
 	auto memY{ 0 }, memX{ 0 }; // position vars for RAM access
 
-	for (auto H{ 0 }, Y{ VY }; H < tempH; ++H, ++Y %= vm.Display->Trait.H) {
-		for (auto W{ 0 }, X{ VX }; W < tempW; ++W, ++X &= vm.Display->Trait.Wb) {
+	for (auto H{ 0 }, Y{ VY }; H < tempH; ++H, ++Y %= vm.Trait.H) {
+		for (auto W{ 0 }, X{ VX }; W < tempW; ++W, ++X &= vm.Trait.Wb) {
 
-			if (vm.Display->Tex.rotate) {
+			if (vm.Texture.rotate) {
 				memX = H; memY = tempW - W - 1;
 			} else {
 				memX = W; memY = H;
@@ -159,20 +158,20 @@ void FunctionsForGigachip::drawSprite(
 				auto& collideCoord{ vm.collisionPalette.at_raw(Y, X) };
 				auto& backbufCoord{ vm.backgroundBuffer.at_raw(Y, X) };
 
-				if (collideCoord == vm.Display->Tex.collision)
+				if (collideCoord == vm.Texture.collision)
 					[[unlikely]] { vm.mRegisterV[0xF] = 1; }
 
 				collideCoord = sourceColorIdx;
-				if (!vm.Display->Tex.nodraw) {
+				if (!vm.Texture.nodraw) {
 					backbufCoord = blendPixel(
 						vm.megaPalette[sourceColorIdx],
 						backbufCoord
 					);
 				}
 			}
-			if (!vm.Quirk.wrapSprite && X == vm.Display->Trait.Wb) { break; }
+			if (!vm.Quirk.wrapSprite && X == vm.Trait.Wb) { break; }
 		}
-		if (!vm.Quirk.wrapSprite && Y == vm.Display->Trait.Hb) { break; }
+		if (!vm.Quirk.wrapSprite && Y == vm.Trait.Hb) { break; }
 	}
 }
 

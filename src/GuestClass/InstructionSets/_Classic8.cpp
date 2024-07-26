@@ -8,7 +8,6 @@
 
 #include "Interface.hpp"
 #include "../Guest.hpp"
-#include "../DisplayTraits.hpp"
 
 /*------------------------------------------------------------------*/
 /*  class  FncSetInterface -> FunctionsForClassic8                  */
@@ -38,16 +37,16 @@ void FunctionsForClassic8::drawByte(
 	const usz DATA
 ) {
 	if (!DATA) { return; }
-	if (vm.Quirk.wrapSprite) { X &= vm.Display->Trait.Wb; }
-	else if (X >= vm.Display->Trait.W) { return; }
+	if (vm.Quirk.wrapSprite) { X &= vm.Trait.Wb; }
+	else if (X >= vm.Trait.W) { return; }
 
-	for (auto B{ 0 }; B++ < 8; ++X &= vm.Display->Trait.Wb) {
+	for (auto B{ 0 }; B++ < 8; ++X &= vm.Trait.Wb) {
 		if (DATA >> (8 - B) & 0x1) {
 			auto& elem{ vm.displayBuffer[0].at_raw(Y, X) };
 			if (elem) { vm.mRegisterV[0xF] = 1; }
 			elem ^= 1;
 		}
-		if (!vm.Quirk.wrapSprite && X == vm.Display->Trait.Wb) { return; }
+		if (!vm.Quirk.wrapSprite && X == vm.Trait.Wb) { return; }
 	}
 }
 
@@ -56,19 +55,19 @@ void FunctionsForClassic8::drawSprite(
 	s32 Y,
 	s32 N
 ) {
-	X = vm.mRegisterV[X] & vm.Display->Trait.Wb;
-	Y = vm.mRegisterV[Y] & vm.Display->Trait.Hb;
+	X = vm.mRegisterV[X] & vm.Trait.Wb;
+	Y = vm.mRegisterV[Y] & vm.Trait.Hb;
 
 	vm.mRegisterV[0xF] = 0;
 
 	const bool wide{ N == 0 };
 	if (wide) { N = 16; }
 
-	for (auto H{ 0 }, I{ 0 }; H < N; ++H, ++Y &= vm.Display->Trait.Hb)
+	for (auto H{ 0 }, I{ 0 }; H < N; ++H, ++Y &= vm.Trait.Hb)
 	{
 		if (true) { drawByte(X + 0, Y, vm.readMemoryI(I++)); }
 		if (wide) { drawByte(X + 8, Y, vm.readMemoryI(I++)); }
-		if (!vm.Quirk.wrapSprite && Y == vm.Display->Trait.Hb) { break; }
+		if (!vm.Quirk.wrapSprite && Y == vm.Trait.Hb) { break; }
 	}
 }
 
@@ -80,10 +79,10 @@ void FunctionsForClassic8::drawLoresColor(
 	for (auto Y{ 0 }, maxH{ VY >> 4 }; Y <= maxH; ++Y) {
 		for (auto X{ 0 }, maxW{ VX >> 4 }; X <= maxW; ++X) {
 			vm.color8xBuffer.at_wrap((VY + Y) << 2, VX + X) = 
-				vm.Display->Color.getFore8X(idx);
+				vm.getForegroundColor8X(idx);
 		}
 	}
-	vm.Display->Trait.mask8X = 0xFC;
+	vm.Trait.mask8X = 0xFC;
 }
 
 void FunctionsForClassic8::drawHiresColor(
@@ -94,7 +93,7 @@ void FunctionsForClassic8::drawHiresColor(
 ) {
 	for (auto Y{ VY }, X{ VX >> 3 }; Y < VY + N; ++Y) {
 		vm.color8xBuffer.at_wrap(Y, X) =
-			vm.Display->Color.getFore8X(idx);
+			vm.getForegroundColor8X(idx);
 	}
-	vm.Display->Trait.mask8X = 0xFF;
+	vm.Trait.mask8X = 0xFF;
 }

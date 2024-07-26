@@ -27,7 +27,6 @@
     <ClCompile Include="src\CubeChip.cpp" />
     <ClCompile Include="src\GuestClass\RomCheck.cpp" />
     <ClCompile Include="src\GuestClass\HexInput.cpp" />
-    <ClCompile Include="src\GuestClass\DisplayTraits.cpp" />
     <ClCompile Include="src\GuestClass\InstructionSets\_Classic8.cpp" />
     <ClCompile Include="src\GuestClass\InstructionSets\_Gigachip.cpp" />
     <ClCompile Include="src\GuestClass\InstructionSets\_LegacySC.cpp" />
@@ -51,7 +50,6 @@
     <ClInclude Include="src\Assistants\Map2D.hpp" />
     <ClInclude Include="src\Assistants\Well512.hpp" />
     <ClInclude Include="src\Concepts.hpp" />
-    <ClInclude Include="src\GuestClass\DisplayTraits.hpp" />
     <ClInclude Include="src\GuestClass\Enums.hpp" />
     <ClInclude Include="src\GuestClass\RomCheck.hpp" />
     <ClInclude Include="src\GuestClass\Guest.hpp" />

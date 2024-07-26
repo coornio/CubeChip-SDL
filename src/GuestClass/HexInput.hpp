@@ -16,10 +16,7 @@ class HexInput final {
 		SDL_Scancode alt; // alternative option
 	};
 
-	static constexpr auto _{ SDL_SCANCODE_UNKNOWN };
-
 	std::vector<KeyInfo> mCustomBinds;
-	std::vector<KeyInfo> mPresetBinds;
 
 	Uint32 mTickLast{};
 	Uint32 mTickSpan{};
@@ -33,7 +30,7 @@ public:
 	explicit HexInput();
 
 	void loadPresetBinds();
-	void loadCustomBinds(const std::vector<KeyInfo>& bindings);
+	void loadCustomBinds(std::vector<KeyInfo>&& bindings);
 
 	void updateKeyStates();
 
