@@ -18,7 +18,6 @@ using namespace blogger;
 
 #include "Guest.hpp"
 #include "HexInput.hpp"
-#include "DisplayTraits.hpp"
 
 /*------------------------------------------------------------------*/
 /*  class  VM_Guest                                                 */
@@ -34,7 +33,8 @@ VM_Guest::VM_Guest(
 	, BVS{ ref_BVS }
 	, BAS{ ref_BAS }
 {
-	Display = std::make_unique<DisplayTraits>(BVS.getFrameColor());
+	_initBitColors();
+	_initHexColors();
 }
 
 bool VM_Guest::isSystemPaused() const { return mSystemPaused || mCyclesPerFrame == 0; }
@@ -72,14 +72,14 @@ void VM_Guest::instructionLoop() {
 					break;
 				case 0x00E0: switch (N) {
 					case 0x0:
-						if (Display->isManualRefresh()) {// 00E0 - push (and then clear) framebuffer to screen *MEGACHIP*
+						if (isManualRefresh()) {		// 00E0 - push (and then clear) framebuffer to screen *MEGACHIP*
 							setInterrupt(Interrupt::FRAME);
 							flushBuffers(FlushType::DISPLAY);
 							renderToTexture();
 						} else {						// 00E0 - erase whole display (or plane *XO-CHIP*)
 							if (Quirk.waitVblank) [[unlikely]]
 								{ setInterrupt(Interrupt::FRAME); }
-							if (Display->isPixelBitColor()) {
+							if (isPixelBitColor()) {
 								modifyDisplay_XO();
 							} else {
 								modifyDisplay_C8();
@@ -104,13 +104,13 @@ void VM_Guest::instructionLoop() {
 							{ triggerError("Error :: Cannot return from empty stack!"); }
 						break;
 					case 0x1:							// 00F1 - set DRAW mode to ADD *HWCHIP64*
-						Display->Trait.paintBrush = BrushType::ADD;
+						Trait.paintBrush = BrushType::ADD;
 						break;
 					case 0x2:							// 00F2 - set DRAW mode to SUB *HWCHIP64*
-						Display->Trait.paintBrush = BrushType::SUB;
+						Trait.paintBrush = BrushType::SUB;
 						break;
 					case 0x3:							// 00F3 - set DRAW mode to XOR *HWCHIP64*
-						Display->Trait.paintBrush = BrushType::XOR;
+						Trait.paintBrush = BrushType::XOR;
 						break;
 					case 0xB:							// 00FB - scroll selected color plane 4 pixels right *XOCHIP*
 						if (Quirk.waitScroll) [[unlikely]]
@@ -126,12 +126,12 @@ void VM_Guest::instructionLoop() {
 						setInterrupt(Interrupt::SOUND);
 						break;
 					case 0xE:							// 00FE - display == 64*32, erase the screen *XOCHIP*
-						if (!Display->isManualRefresh()) [[likely]] {
+						if (!isManualRefresh()) [[likely]] {
 							prepDisplayArea(Resolution::LO, !State.schip_legacy);
 						}
 						break;
 					case 0xF:							// 00FF - display == 128*64, erase the screen *XOCHIP*
-						if (!Display->isManualRefresh()) [[likely]] {
+						if (!isManualRefresh()) [[likely]] {
 							prepDisplayArea(Resolution::HI, !State.schip_legacy);
 						}
 						break;
@@ -145,25 +145,25 @@ void VM_Guest::instructionLoop() {
 									setInterrupt(Interrupt::FRAME);
 									changeFunctionSet(&SetClassic8);
 
-									Display->isManualRefresh(false);
+									isManualRefresh(false);
 									resetAudioTrack();
 
 									flushBuffers(FlushType::DISPLAY);
 									prepDisplayArea(Resolution::LO);
 									BVS.setTextureAlpha(0xFF);
-									Display->Color.setBackgroundTo(BVS.getFrameColor());
+									setBackgroundColorTo(BVS.getFrameColor());
 									break;
 								case 0x11:				// 0011 - enable mega mode *MEGACHIP*
 									setInterrupt(Interrupt::FRAME);
 									changeFunctionSet(&SetMegachip);
 
-									Display->isManualRefresh(true);
+									isManualRefresh(true);
 									resetAudioTrack();
 
 									flushBuffers(FlushType::DISCARD);
 									prepDisplayArea(Resolution::MC);
 									BVS.setTextureAlpha(0xFF);
-									Display->Color.setBackgroundTo(BVS.getFrameColor(), 0);
+									setBackgroundColorTo(BVS.getFrameColor(), 0);
 									break;
 								[[unlikely]] default: triggerOpcodeError(mInstruction);
 							} break;
@@ -175,10 +175,10 @@ void VM_Guest::instructionLoop() {
 								loadMegaPalette(LO);
 								break;
 							case 0x3:					// 03NN - set sprite width to NN *MEGACHIP*
-								Display->Tex.W = LO ? LO : 256;
+								Texture.W = LO ? LO : 256;
 								break;
 							case 0x4:					// 04NN - set sprite height to NN *MEGACHIP*
-								Display->Tex.H = LO ? LO : 256;
+								Texture.H = LO ? LO : 256;
 								break;
 							case 0x5:					// 05NN - set screen brightness to NN *MEGACHIP*
 								BVS.setTextureAlpha(LO);
@@ -191,16 +191,16 @@ void VM_Guest::instructionLoop() {
 								break;
 							case 0x8:					// 08YN - set trait flags to VY (Y > 0), blend mode to N *GIGACHIP*
 								if (State.gigachip_rom) {
-									Display->Tex.setFlags(mRegisterV[Y]);
+									setTextureFlags(mRegisterV[Y]);
 									SetGigachip.chooseBlend(N);
 								} else {				// 080N - set blend mode to N *MEGACHIP*
 									static constexpr float alpha[]{ 1.0f, 0.25f, 0.50f, 0.75f };
-									Display->Tex.alpha = alpha[N > 3 ? 0 : N];
+									Texture.alpha = alpha[N > 3 ? 0 : N];
 									SetMegachip.chooseBlend(N);
 								}
 								break;
 							case 0x9:					// 09NN - set collision color to palette entry NN *MEGACHIP*
-								Display->Tex.collision = LO;
+								Texture.collision = LO;
 								break;
 							[[unlikely]] default: triggerOpcodeError(mInstruction);
 						}
@@ -221,7 +221,7 @@ void VM_Guest::instructionLoop() {
 							break;
 						case 0x2A0:						// 02A0 - cycle background color *CHIP-8X*
 						case 0x2F0:						// 02F0 - cycle background color *CHIP-8X MPD*
-							Display->Color.cycleBackground(BVS.getFrameColor());
+							cycleBackgroundColor(BVS.getFrameColor());
 							break;
 						[[unlikely]] default: triggerOpcodeError(mInstruction);
 					}
@@ -249,7 +249,7 @@ void VM_Guest::instructionLoop() {
 					if (!State.chip8X_rom) {
 						if (mRegisterV[X] > mRegisterV[Y]) { skipInstruction(); }
 					} else {							// 5XY1 - add nibbles of VX,VY and modulo 8 to VX *CHIP-8X*
-						const auto mask{ Display->isLoresExtended() ? 0x77 : 0xFF};
+						const auto mask{ isLoresExtended() ? 0x77 : 0xFF};
 						const auto lenX{ (mRegisterV[X] & 0xF0) + (mRegisterV[Y] & 0xF0) };
 						const auto lenY{ (mRegisterV[X] + mRegisterV[Y]) & 0xF };
 						mRegisterV[X] = static_cast<u8>((lenX | lenY) & mask);
@@ -301,11 +301,11 @@ void VM_Guest::instructionLoop() {
 					const auto dist{ std::abs(X - Y) + 1 };
 					if (X < Y) {
 						for (auto Z{ 0 }; Z < dist; ++Z) {
-							Display->Color.setBit332(X + Z, readMemoryI(Z));
+							setColorBit332(X + Z, readMemoryI(Z));
 						}
 					} else {
 						for (auto Z{ 0 }; Z < dist; ++Z) {
-							Display->Color.setBit332(X - Z, readMemoryI(Z));
+							setColorBit332(X - Z, readMemoryI(Z));
 						}
 					}
 				} break;
@@ -466,11 +466,11 @@ void VM_Guest::instructionLoop() {
 					break;
 				default: switch (LO) {
 					case 0x01:							// FX01 - set plane drawing to X *XOCHIP*
-						Display->Trait.maskPlane = X;
+						Trait.maskPlane = X;
 						break;
 					case 0x03:							// FX03 - load 24bit color X from RAM at I, I+1, I+2 *HWCHIP64*
 						if (!State.chip8E_rom) {
-							Display->Color.bit[X] = 0xFF000000
+							Color.bit[X] = 0xFF000000
 								| readMemoryI(0) << 16
 								| readMemoryI(1) <<  8
 								| readMemoryI(2);
@@ -483,7 +483,7 @@ void VM_Guest::instructionLoop() {
 						break;
 					case 0x0A:							// FX0A - set VX = key, wait for keypress
 						setInterrupt(Interrupt::INPUT);
-						if (Display->isManualRefresh()) [[unlikely]] {
+						if (isManualRefresh()) [[unlikely]] {
 							flushBuffers(FlushType::DISPLAY);
 							renderToTexture();
 						}
@@ -625,7 +625,7 @@ void VM_Guest::processFrame() {
 
 	renderAudioData();
 
-	if (!Display->isManualRefresh()) {
+	if (!isManualRefresh()) {
 		renderToTexture();
 	}
 }
@@ -679,14 +679,14 @@ void VM_Guest::modifyDisplay_C8() {
 
 void VM_Guest::modifyDisplay_XO() {
 	for (auto P{ 0 }; P < 4; ++P) {
-		if (!(Display->Trait.maskPlane & (1 << P))) { continue; }
+		if (!(Trait.maskPlane & (1 << P))) { continue; }
 		displayBuffer[P].wipeAll();
 	}
 }
 
 void VM_Guest::modifyDisplay_HW() {
 	for (auto P{ 0 }; P < 4; ++P) {
-		if (!(Display->Trait.maskPlane & (1 << P))) { continue; }
+		if (!(Trait.maskPlane & (1 << P))) { continue; }
 		for (auto& px : displayBuffer[P].span()) { px ^= 1; }
 	}
 }
@@ -719,8 +719,8 @@ void VM_Guest::loadMegaPalette(const s32 count) {
 }
 
 void VM_Guest::clearPages() {
-	auto row{ pageGuard };
-	while (row < Display->Trait.H) {
+	auto row{ Trait.pageGuard };
+	while (row < Trait.H) {
 		displayBuffer[0][row++].wipeAll();
 	}
 }
@@ -746,7 +746,7 @@ bool VM_Guest::routineReturn() {
 }
 
 void VM_Guest::protectPages() {
-	pageGuard = (3 - (mRegisterV[0] - 1 & 0x3)) << 5;
+	Trait.pageGuard = (3 - (mRegisterV[0] - 1 & 0x3)) << 5;
 }
 
 bool VM_Guest::readPermRegs(const usz X) {
@@ -982,7 +982,7 @@ void VM_Guest::renderAudio_MC(std::span<s16> buffer, s16 volume) {
 void VM_Guest::renderAudioData() {
 	std::vector<s16> audioBuffer(static_cast<usz>(BAS.getFrequency() / mFramerate));
 	auto* const colorDst{ BVS.getFrameColor() };
-	auto* const colorSrc{ Display->Color.buzz };
+	auto* const colorSrc{ Color.buzz };
 
 	if (mBuzzLight) {
 		renderAudio_C8(audioBuffer, BAS.getAmplitude());

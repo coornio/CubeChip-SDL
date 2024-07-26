@@ -10,22 +10,22 @@
 
 #include "HexInput.hpp"
 
-HexInput::HexInput()
-	: mCustomBinds(32)
-	, mPresetBinds{
+HexInput::HexInput() {
+	loadPresetBinds();
+}
+
+void HexInput::loadPresetBinds() {
+	static constexpr auto _{ SDL_SCANCODE_UNKNOWN };
+	loadCustomBinds({
 		{0x1, KEY(1), _}, {0x2, KEY(2), _}, {0x3, KEY(3), _}, {0xC, KEY(4), _},
 		{0x4, KEY(Q), _}, {0x5, KEY(W), _}, {0x6, KEY(E), _}, {0xD, KEY(R), _},
 		{0x7, KEY(A), _}, {0x8, KEY(S), _}, {0x9, KEY(D), _}, {0xE, KEY(F), _},
 		{0xA, KEY(Z), _}, {0x0, KEY(X), _}, {0xB, KEY(C), _}, {0xF, KEY(V), _},
-	}
-{}
-
-void HexInput::loadPresetBinds() {
-	loadCustomBinds(mPresetBinds);
+	});
 }
 
-void HexInput::loadCustomBinds(const std::vector<KeyInfo>& bindings) {
-	(mCustomBinds = bindings).resize(bindings.size());
+void HexInput::loadCustomBinds(std::vector<KeyInfo>&& binds) {
+	(mCustomBinds = binds).resize(binds.size());
 	mKeysPrev = mKeysCurr = mKeysLock = 0;
 }
 

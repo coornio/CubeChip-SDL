@@ -6,7 +6,6 @@
 
 #include "Interface.hpp"
 #include "../Guest.hpp"
-#include "../DisplayTraits.hpp"
 
 /*------------------------------------------------------------------*/
 /*  class  FncSetInterface -> FunctionsForLegacySC                  */
@@ -43,16 +42,16 @@ void FunctionsForLegacySC::drawByte(
 	s32 X, s32 Y,
 	const usz DATA, bool& HIT
 ) {
-	if (!DATA || X >= vm.Display->Trait.W) { return; }
+	if (!DATA || X >= vm.Trait.W) { return; }
 
-	for (auto B{ 0 }; B++ < 8; ++X &= vm.Display->Trait.Wb)
+	for (auto B{ 0 }; B++ < 8; ++X &= vm.Trait.Wb)
 	{
 		if (DATA >> (8 - B) & 0x1) {
 			auto& pixel{ vm.displayBuffer[0].at_raw(Y, X) };
 			if (pixel) { HIT = true; }
 			pixel ^= 1;
 		}
-		if (!vm.Quirk.wrapSprite && X == vm.Display->Trait.Wb) { return; }
+		if (!vm.Quirk.wrapSprite && X == vm.Trait.Wb) { return; }
 	}
 }
 
@@ -62,7 +61,7 @@ void FunctionsForLegacySC::drawShort(
 ) {
 	if (!DATA) { return; }
 
-	for (auto B{ 0 }; B++ < 16; ++X &= vm.Display->Trait.Wb)
+	for (auto B{ 0 }; B++ < 16; ++X &= vm.Trait.Wb)
 	{
 		auto& pixel0{ vm.displayBuffer[0].at_raw(Y + 0, X) };
 		auto& pixel1{ vm.displayBuffer[0].at_raw(Y + 1, X) };
@@ -73,7 +72,7 @@ void FunctionsForLegacySC::drawShort(
 		} else {
 			pixel1 = pixel0;
 		}
-		if (!vm.Quirk.wrapSprite && X == vm.Display->Trait.Wb) { return; }
+		if (!vm.Quirk.wrapSprite && X == vm.Trait.Wb) { return; }
 	}
 }
 
@@ -87,26 +86,26 @@ void FunctionsForLegacySC::drawSprite(
 	const bool wide{ N == 0 };
 	if (wide) { N = 16; }
 
-	if (vm.Display->isLoresExtended()) {
-		VX = VX * 2 & vm.Display->Trait.Wb;
-		VY = VY * 2 & vm.Display->Trait.Hb;
+	if (vm.isLoresExtended()) {
+		VX = VX * 2 & vm.Trait.Wb;
+		VY = VY * 2 & vm.Trait.Hb;
 
-		for (auto H{ 0 }, I{ 0 }; H < N; ++H, (VY += 2) &= vm.Display->Trait.Hb)
+		for (auto H{ 0 }, I{ 0 }; H < N; ++H, (VY += 2) &= vm.Trait.Hb)
 		{
 			drawShort(VX, VY, bitBloat(vm.readMemoryI(I++)));
-			if (!vm.Quirk.wrapSprite && VY == vm.Display->Trait.H - 2) { break; }
+			if (!vm.Quirk.wrapSprite && VY == vm.Trait.H - 2) { break; }
 		}
 	} else {
-		VX &= vm.Display->Trait.Wb;
-		VY &= vm.Display->Trait.Hb;
+		VX &= vm.Trait.Wb;
+		VY &= vm.Trait.Hb;
 
-		for (auto H{ 0 }, I{ 0 }; H < N; ++H, ++VY &= vm.Display->Trait.Hb)
+		for (auto H{ 0 }, I{ 0 }; H < N; ++H, ++VY &= vm.Trait.Hb)
 		{
 			bool ltHit{}, rtHit{};
 			if (true) { drawByte(VX + 0, VY, vm.readMemoryI(I++), ltHit); }
 			if (wide) { drawByte(VX + 8, VY, vm.readMemoryI(I++), rtHit); }
 			vm.mRegisterV[0xF] += ltHit || rtHit;
-			if (!vm.Quirk.wrapSprite && VY == vm.Display->Trait.Hb) { break; }
+			if (!vm.Quirk.wrapSprite && VY == vm.Trait.Hb) { break; }
 		}
 	}
 }
@@ -116,7 +115,7 @@ void FunctionsForLegacySC::drawLoresColor(
 	const s32 VY,
 	const s32 idx
 ) {
-	if (vm.Display->isLoresExtended()) {
+	if (vm.isLoresExtended()) {
 		const auto H{ (VY & 0x77) << 0 }, maxH{ (H >> 4) + 1 };
 		const auto W{ (VX & 0x77) << 1 }, maxW{ (W >> 4) + 2 };
 
@@ -124,10 +123,10 @@ void FunctionsForLegacySC::drawLoresColor(
 			for (auto X{ 0 }; X < maxW; ++X) {
 				vm.color8xBuffer.at_wrap(((H + Y) << 3) + 0, W + X) =
 				vm.color8xBuffer.at_wrap(((H + Y) << 3) + 1, W + X) =
-					vm.Display->Color.getFore8X(idx);
+					vm.getForegroundColor8X(idx);
 			}
 		}
-		vm.Display->Trait.mask8X = 0xFC;
+		vm.Trait.mask8X = 0xFC;
 	}
 	else {
 		const auto H{ VY & 0x77 }, maxH{ (H >> 4) + 1 };
@@ -136,10 +135,10 @@ void FunctionsForLegacySC::drawLoresColor(
 		for (auto Y{ 0 }; Y < maxH; ++Y) {
 			for (auto X{ 0 }; X < maxW; ++X) {
 				vm.color8xBuffer.at_wrap(((H + Y) << 2), W + X) =
-					vm.Display->Color.getFore8X(idx);
+					vm.getForegroundColor8X(idx);
 			}
 		}
-		vm.Display->Trait.mask8X = 0xF8;
+		vm.Trait.mask8X = 0xF8;
 	}
 }
 
@@ -149,18 +148,18 @@ void FunctionsForLegacySC::drawHiresColor(
 	const s32 idx,
 	const s32 N
 ) {
-	if (vm.Display->isLoresExtended()) {
+	if (vm.isLoresExtended()) {
 		for (auto R{ 0 }, Y{ VY << 1 }, X{ VX << 1 >> 3 }; R < (N << 1); ++R) {
 			vm.color8xBuffer.at_wrap(Y + R, X + 0) =
 			vm.color8xBuffer.at_wrap(Y + R, X + 1) =
-				vm.Display->Color.getFore8X(idx);
+				vm.getForegroundColor8X(idx);
 		}
 	}
 	else {
 		for (auto R{ 0 }, Y{ VY }, X{ VX >> 3 }; R < N; ++R) {
 			vm.color8xBuffer.at_wrap(Y + R, X) =
-				vm.Display->Color.getFore8X(idx);
+				vm.getForegroundColor8X(idx);
 		}
 	}
-	vm.Display->Trait.mask8X = 0xFF;
+	vm.Trait.mask8X = 0xFF;
 }

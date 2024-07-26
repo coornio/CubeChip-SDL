@@ -16,7 +16,7 @@
 
 #include "../Types.hpp"
 
-class BasicVideoSpec {
+class BasicVideoSpec final {
 	SDL_Window*   window{};
 	SDL_Renderer* renderer{};
 	SDL_Texture*  texture{};

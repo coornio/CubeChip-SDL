@@ -48,9 +48,6 @@
     <ClCompile Include="src\CubeChip.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\GuestClass\DisplayTraits.cpp">
-      <Filter>Source Files\VM Guest</Filter>
-    </ClCompile>
     <ClCompile Include="src\GuestClass\RomCheck.cpp">
       <Filter>Source Files\VM Guest</Filter>
     </ClCompile>
@@ -61,9 +58,6 @@
       <Filter>Source Files\VM Guest</Filter>
     </ClCompile>
     <ClCompile Include="src\GuestClass\Init.cpp">
-      <Filter>Source Files\VM Guest</Filter>
-    </ClCompile>
-    <ClCompile Include="src\GuestClass\SoundCores.cpp">
       <Filter>Source Files\VM Guest</Filter>
     </ClCompile>
     <ClCompile Include="src\GuestClass\InstructionSets\_Classic8.cpp">
@@ -108,9 +102,6 @@
     <ClCompile Include="src\Assistants\SHA1.cpp">
       <Filter>Source Files\Assistants</Filter>
     </ClCompile>
-    <ClCompile Include="src\GuestClass\PlatformCores\Chip8.cpp">
-      <Filter>Source Files\PlatformCores</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Includes.hpp">
@@ -149,16 +140,10 @@
     <ClInclude Include="src\GuestClass\RomCheck.hpp">
       <Filter>Header Files\VM Guest</Filter>
     </ClInclude>
-    <ClInclude Include="src\GuestClass\DisplayTraits.hpp">
-      <Filter>Header Files\VM Guest</Filter>
-    </ClInclude>
     <ClInclude Include="src\GuestClass\Guest.hpp">
       <Filter>Header Files\VM Guest</Filter>
     </ClInclude>
     <ClInclude Include="src\GuestClass\HexInput.hpp">
-      <Filter>Header Files\VM Guest</Filter>
-    </ClInclude>
-    <ClInclude Include="src\GuestClass\SoundCores.hpp">
       <Filter>Header Files\VM Guest</Filter>
     </ClInclude>
     <ClInclude Include="src\Assistants\SHA1.hpp">

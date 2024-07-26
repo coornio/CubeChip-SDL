@@ -15,14 +15,13 @@ class BasicAudioSpec;
 class FrameLimiter;
 class VM_Guest;
 
-class VM_Host final {
+class alignas(64) VM_Host final {
 	bool _isReady{};
 	bool _doBench{};
 
 	HomeDirManager& HDM;
 	BasicVideoSpec& BVS;
 	BasicAudioSpec& BAS;
-	double _______pad{}; // lose performance without it?!
 
 	[[nodiscard]] bool isReady() const;
 	[[nodiscard]] bool doBench() const;
