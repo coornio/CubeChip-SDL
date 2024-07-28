@@ -1156,8 +1156,8 @@ public:
 	Map2D& operator=(Map2D&&) = default;   // move assignment
 	Map2D& operator=(const Map2D& other) { // copy assignment
 		if (this != &other && size() == other.size()) {
-			std::copy(other.begin(), other.end(), begin());
-			mRows = other.mRows; mCols = other.mCols;
+			std::copy(other.mBegin(), other.mEnd(), mBegin());
+			mRows = other.lenY(); mCols = other.lenX();
 		}
 		return *this;
 	}
