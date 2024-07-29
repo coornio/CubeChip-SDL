@@ -281,31 +281,6 @@ private:
 	void isPixelTrailing(const bool state) { Trait._isPixelTrailing = state; }
 	void isPixelBitColor(const bool state) { Trait._isPixelBitColor = state; }
 
-	struct Video_Texture {
-		s32 W{}, H{};
-
-		u8   collision{ 0xFF };
-		u8   rgbmod{};
-		bool rotate{};
-		bool flip_X{};
-		bool flip_Y{};
-		bool invert{};
-		bool nodraw{};
-		bool uneven{};
-		f32  alpha{ 1.0f };
-		u32 __PADDING5[11]{};
-	} Texture;
-
-	void setTextureFlags(const usz bits) {
-		Texture.rotate = bits >> 0 & 0x1; // false: as-is | true: 90° clockwise
-		Texture.flip_X = bits >> 1 & 0x1; // flip on the X axis (rotation agnostic)
-		Texture.flip_Y = bits >> 2 & 0x1; // flip on the Y axis (rotation agnostic)
-		Texture.invert = bits >> 3 & 0x1; // invert RGB channels
-		Texture.rgbmod = bits >> 4 & 0x7; // RGB channel swaps | sepia/grayscale
-		Texture.nodraw = bits >> 7 * 0x1; // disable drawing, palette index only
-		Texture.uneven = Texture.rotate && (Texture.W != Texture.H);
-	}
-
 	struct Video_Colors {
 		static constexpr u32 BitColors[]{ // 0-1 classic8, 0-15 modernXO
 			0x0C1218, 0xE4DCD4, 0x8C8884, 0x403C38,
@@ -375,6 +350,31 @@ private:
 
 	auto getForegroundColor8X(const s32 idx) const {
 		return Color.ForeColors[idx & 0x7];
+	}
+
+	struct Video_Texture {
+		s32 W{}, H{};
+
+		u8   collision{ 0xFF };
+		u8   rgbmod{};
+		bool rotate{};
+		bool flip_X{};
+		bool flip_Y{};
+		bool invert{};
+		bool nodraw{};
+		bool uneven{};
+		f32  alpha{ 1.0f };
+		u32 __PADDING5[11]{};
+	} Texture;
+
+	void setTextureFlags(const usz bits) {
+		Texture.rotate = bits >> 0 & 0x1; // false: as-is | true: 90° clockwise
+		Texture.flip_X = bits >> 1 & 0x1; // flip on the X axis (rotation agnostic)
+		Texture.flip_Y = bits >> 2 & 0x1; // flip on the Y axis (rotation agnostic)
+		Texture.invert = bits >> 3 & 0x1; // invert RGB channels
+		Texture.rgbmod = bits >> 4 & 0x7; // RGB channel swaps | sepia/grayscale
+		Texture.nodraw = bits >> 7 * 0x1; // disable drawing, palette index only
+		Texture.uneven = Texture.rotate && (Texture.W != Texture.H);
 	}
 
 /*==================================================================*/

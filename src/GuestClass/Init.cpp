@@ -359,7 +359,6 @@ void VM_Guest::fontCopyToMemory() {
 }
 
 void VM_Guest::renderToTexture() {
-	*BVS.getFrameColor() = Color.bit[0];
 	auto* pixels{ BVS.lockTexture() };
 
 	if (isManualRefresh()) {
@@ -367,6 +366,7 @@ void VM_Guest::renderToTexture() {
 			pixels[idx] = foregroundBuffer.at_raw(idx);
 		}
 	} else if (isPixelBitColor()) {
+		*BVS.getFrameColor() = Color.bit[0];
 		for (auto idx{ 0 }; idx < Trait.S; ++idx) {
 			pixels[idx] = (0xFF << 24 | Color.bit[
 				displayBuffer[0].at_raw(idx) << 0 |
@@ -376,6 +376,7 @@ void VM_Guest::renderToTexture() {
 			]);
 		}
 	} else if (State.chip8X_rom) {
+		*BVS.getFrameColor() = Color.bit[0];
 		if (isPixelTrailing()) {
 			for (auto idx{ 0 }; idx < Trait.S; ++idx) {
 				const auto Y = idx / Trait.W & Trait.mask8X;
@@ -400,9 +401,9 @@ void VM_Guest::renderToTexture() {
 					pixels[idx] = 0;
 				}
 			}
-			displayBuffer[3].copyLinear(displayBuffer[2]);
-			displayBuffer[2].copyLinear(displayBuffer[1]);
-			displayBuffer[1].copyLinear(displayBuffer[0]);
+			displayBuffer[3] = displayBuffer[2];
+			displayBuffer[2] = displayBuffer[1];
+			displayBuffer[1] = displayBuffer[0];
 		} else {
 			for (auto idx{ 0 }; idx < Trait.S; ++idx) {
 				const auto Y = idx / Trait.W & Trait.mask8X;
@@ -413,6 +414,7 @@ void VM_Guest::renderToTexture() {
 			}
 		}
 	} else {
+		*BVS.getFrameColor() = Color.bit[0];
 		if (isPixelTrailing()) {
 			for (auto idx{ 0 }; idx < Trait.S; ++idx) {
 				if (displayBuffer[0].at_raw(idx)) {
@@ -434,9 +436,9 @@ void VM_Guest::renderToTexture() {
 					pixels[idx] = 0;
 				}
 			}
-			displayBuffer[3].copyLinear(displayBuffer[2]);
-			displayBuffer[2].copyLinear(displayBuffer[1]);
-			displayBuffer[1].copyLinear(displayBuffer[0]);
+			displayBuffer[3] = displayBuffer[2];
+			displayBuffer[2] = displayBuffer[1];
+			displayBuffer[1] = displayBuffer[0];
 		} else {
 			for (auto idx{ 0 }; idx < Trait.S; ++idx) {
 				pixels[idx] = (0xFF << 24 | Color.bit[
@@ -446,5 +448,4 @@ void VM_Guest::renderToTexture() {
 		}
 	}
 	BVS.unlockTexture();
-
 }
