@@ -6,31 +6,34 @@
 
 #pragma once
 
-#include <optional>
+#include <atomic>
+#include <thread>
+#include <stop_token>
 
 class HomeDirManager;
 class BasicVideoSpec;
 class BasicAudioSpec;
 
-class FrameLimiter;
-class VM_Guest;
+union SDL_Event;
 
 class alignas(64) VM_Host final {
-	bool _isReady{};
-	bool _doBench{};
+	std::atomic<bool> _isReadyToEmulate{};
+	std::atomic<bool> _testBenchmarking{};
 
 	HomeDirManager& HDM;
 	BasicVideoSpec& BVS;
 	BasicAudioSpec& BAS;
 
-	[[nodiscard]] bool isReady() const;
-	[[nodiscard]] bool doBench() const;
-	void isReady(bool);
-	void doBench(bool);
+	std::jthread workerGuest;
 
-	void prepareGuest(std::optional<VM_Guest>&, FrameLimiter&);
-	bool mainHostLoop(std::optional<VM_Guest>&, FrameLimiter&, SDL_Event&);
-	bool eventLoopSDL(std::optional<VM_Guest>&, FrameLimiter&, SDL_Event&);
+	[[nodiscard]] bool isReadyToEmulate() const;
+	[[nodiscard]] bool testBenchmarking() const;
+	void isReadyToEmulate(bool);
+	void testBenchmarking(bool);
+
+	void executeWorker(std::stop_token);
+	void disableWorker();
+	void prepareWorker();
 
 public:
 	explicit VM_Host(

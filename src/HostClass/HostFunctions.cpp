@@ -8,6 +8,9 @@
 
 #include <iostream>
 #include <iomanip>
+#include <optional>
+#include <thread>
+#include <atomic>
 #include <chrono>
 
 #include "HomeDirManager.hpp"
@@ -41,84 +44,35 @@ VM_Host::VM_Host(
 	, BAS{ ref_BAS }
 {
 	if (filename) {
-		isReady(HDM.verifyFile(RomFile::validate, filename));
+		isReadyToEmulate(HDM.verifyFile(RomFile::validate, filename));
 	}
 }
 
-bool VM_Host::isReady() const { return _isReady; }
-bool VM_Host::doBench() const { return _doBench; }
+bool VM_Host::isReadyToEmulate() const { return _isReadyToEmulate.load(std::memory_order_acquire); }
+bool VM_Host::testBenchmarking() const { return _testBenchmarking.load(std::memory_order_acquire); }
 
-void VM_Host::isReady(const bool state) { _isReady = state; }
-void VM_Host::doBench(const bool state) { _doBench = state; }
+void VM_Host::isReadyToEmulate(const bool state) { _isReadyToEmulate.store(state, std::memory_order_release); }
+void VM_Host::testBenchmarking(const bool state) { _testBenchmarking.store(state, std::memory_order_release); }
 
-
-bool VM_Host::runHost() {
+void VM_Host::executeWorker(std::stop_token stopToken) {
+	std::optional<VM_Guest> Guest{};
 	FrameLimiter Frame;
-	SDL_Event    Event;
 
-	std::optional<VM_Guest> Guest;
-
-	using namespace bic;
-
-	prepareGuest(Guest, Frame);
-	return mainHostLoop(Guest, Frame, Event);
-}
-
-void VM_Host::prepareGuest(std::optional<VM_Guest>& Guest, FrameLimiter& Frame) {
-	Guest.reset();
-	bic::kb.updateCopy();
-	bic::mb.updateCopy();
-
-	if (isReady()) {
+	if (isReadyToEmulate()) {
 		Guest.emplace(HDM, BVS, BAS);
 
 		if (Guest->setupMachine()) {
 			Frame.setLimiter(Guest->fetchFramerate());
 			BVS.changeTitle(HDM.file.c_str());
 		} else {
-			Frame.setLimiter(30.0f);
-			isReady(false);
+			isReadyToEmulate(false);
 			HDM.reset();
+			return;
 		}
 	}
-}
 
-bool VM_Host::eventLoopSDL(std::optional<VM_Guest>& Guest, FrameLimiter& Frame, SDL_Event& Event) {
-	while (SDL_PollEvent(&Event)) {
-		switch (Event.type) {
-			case SDL_EVENT_QUIT:
-				return EXIT_SUCCESS;
-
-			case SDL_EVENT_DROP_FILE:
-				BVS.raiseWindow();
-				if (HDM.verifyFile(RomFile::validate, Event.drop.data)) {
-					isReady(true);
-					doBench(false);
-					prepareGuest(Guest, Frame);
-				} else {
-					blog.stdLogOut(std::string{ "File drop denied: " } + RomFile::error);
-				}
-				break;
-
-			case SDL_EVENT_WINDOW_MINIMIZED:
-				if (Guest) { Guest->isSystemPaused(true); }
-				break;
-
-			case SDL_EVENT_WINDOW_RESTORED:
-				if (Guest) { Guest->isSystemPaused(false); }
-				break;
-		}
-	}
-	return false;
-}
-
-bool VM_Host::mainHostLoop(std::optional<VM_Guest>& Guest, FrameLimiter& Frame, SDL_Event& Event) {
-	while (true) {
-		if (eventLoopSDL(Guest, Frame, Event)) {
-			return EXIT_SUCCESS;
-		}
-
-		if (!Frame.check(doBench()
+	while (!stopToken.stop_requested()) {
+		if (!Frame.check(testBenchmarking()
 			? FrameLimiter::SPINLOCK
 			: FrameLimiter::SLEEP
 		)) { continue; }
@@ -130,20 +84,9 @@ bool VM_Host::mainHostLoop(std::optional<VM_Guest>& Guest, FrameLimiter& Frame, 
 			BAS.changeVolume(-15);
 		}
 
-		if (isReady()) {
-			if (kb.isPressed(KEY(ESCAPE))) {
-				isReady(false);
-				doBench(false);
-				BVS.resetWindow();
-				prepareGuest(Guest, Frame);
-				continue;
-			}
-			if (kb.isPressed(KEY(BACKSPACE))) {
-				prepareGuest(Guest, Frame);
-				continue;
-			}
+		if (isReadyToEmulate()) {
 			if (kb.isPressed(KEY(RSHIFT))) {
-				doBench(!doBench());
+				testBenchmarking(!testBenchmarking());
 				std::cout << "\33[1;1H\33[2J\33[?25l"
 					<< "Cycle time:      ms |     μs";
 			}
@@ -155,7 +98,7 @@ bool VM_Host::mainHostLoop(std::optional<VM_Guest>& Guest, FrameLimiter& Frame, 
 				BVS.changeFrameMultiplier(+1);
 			}
 
-			if (doBench()) {
+			if (testBenchmarking()) {
 				using namespace std::chrono;
 
 				std::cout << "\33[2;1H" << std::dec << std::setfill(' ') << std::setprecision(6)
@@ -180,8 +123,62 @@ bool VM_Host::mainHostLoop(std::optional<VM_Guest>& Guest, FrameLimiter& Frame, 
 					<< "\33[1;23H" << std::setw(3) << mu.count()
 					<< "\33[1;1H";
 			} else { Guest->processFrame(); }
+		}
+	}
+	printf("stop was requested and accepted!\n");
+}
+
+bool VM_Host::runHost() {
+	SDL_Event Event;
+
+	using namespace bic;
+
+	prepareWorker();
+
+	while (true) {
+		while (SDL_PollEvent(&Event)) {
+			switch (Event.type) {
+				case SDL_EVENT_QUIT:
+					disableWorker();
+					return EXIT_SUCCESS;
+
+				case SDL_EVENT_DROP_FILE:
+					BVS.raiseWindow();
+					if (HDM.verifyFile(RomFile::validate, Event.drop.data)) {
+						isReadyToEmulate(true);
+						testBenchmarking(false);
+						prepareWorker();
+					} else {
+						blog.stdLogOut(std::string{ "File drop denied: " } + RomFile::error);
+					}
+					break;
+
+				case SDL_EVENT_WINDOW_MINIMIZED:
+					//if (Guest) { Guest->isSystemPaused(true); }
+					break;
+
+				case SDL_EVENT_WINDOW_RESTORED:
+					//if (Guest) { Guest->isSystemPaused(false); }
+					break;
+			}
+		}
+
+		if (isReadyToEmulate()) {
+			if (kb.isPressed(KEY(ESCAPE))) {
+				printf("worker ESC key detected\n");
+				isReadyToEmulate(false);
+				testBenchmarking(false);
+				BVS.resetWindow();
+				prepareWorker();
+				continue;
+			}
+			if (kb.isPressed(KEY(BACKSPACE))) {
+				prepareWorker();
+				continue;
+			}
 		} else {
 			if (kb.isPressed(KEY(ESCAPE))) {
+				printf("attempting exit!\n");
 				return EXIT_SUCCESS;
 			}
 		}
@@ -191,4 +188,26 @@ bool VM_Host::mainHostLoop(std::optional<VM_Guest>& Guest, FrameLimiter& Frame, 
 		kb.updateCopy();
 		mb.updateCopy();
 	}
+}
+
+void VM_Host::disableWorker() {
+	printf("disableWorker() called\n");
+	if (workerGuest.joinable()) {
+		workerGuest.request_stop();
+		printf("worker STOP requested\n");
+		workerGuest.join();
+		printf("worker JOIN completed\n");
+	}
+}
+
+void VM_Host::prepareWorker() {
+
+	bic::kb.updateCopy();
+	bic::mb.updateCopy();
+
+	disableWorker();
+
+	workerGuest = std::jthread([this](std::stop_token stopToken) {
+		executeWorker(stopToken);
+	});
 }
