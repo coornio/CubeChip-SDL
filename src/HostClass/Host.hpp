@@ -27,9 +27,7 @@ class alignas(64) VM_Host final {
 	std::jthread workerGuest;
 
 	[[nodiscard]] bool isReadyToEmulate() const;
-	[[nodiscard]] bool testBenchmarking() const;
 	void isReadyToEmulate(bool);
-	void testBenchmarking(bool);
 
 	void executeWorker(std::stop_token);
 	void disableWorker();

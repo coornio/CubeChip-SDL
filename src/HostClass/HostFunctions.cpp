@@ -49,14 +49,12 @@ VM_Host::VM_Host(
 }
 
 bool VM_Host::isReadyToEmulate() const { return _isReadyToEmulate.load(std::memory_order_acquire); }
-bool VM_Host::testBenchmarking() const { return _testBenchmarking.load(std::memory_order_acquire); }
-
 void VM_Host::isReadyToEmulate(const bool state) { _isReadyToEmulate.store(state, std::memory_order_release); }
-void VM_Host::testBenchmarking(const bool state) { _testBenchmarking.store(state, std::memory_order_release); }
 
 void VM_Host::executeWorker(std::stop_token stopToken) {
 	std::optional<VM_Guest> Guest{};
 	FrameLimiter Frame;
+	bool doBenchmarking{};
 
 	if (isReadyToEmulate()) {
 		Guest.emplace(HDM, BVS, BAS);
@@ -72,7 +70,7 @@ void VM_Host::executeWorker(std::stop_token stopToken) {
 	}
 
 	while (!stopToken.stop_requested()) {
-		if (!Frame.check(testBenchmarking()
+		if (!Frame.check(doBenchmarking
 			? FrameLimiter::SPINLOCK
 			: FrameLimiter::SLEEP
 		)) { continue; }
@@ -86,7 +84,7 @@ void VM_Host::executeWorker(std::stop_token stopToken) {
 
 		if (isReadyToEmulate()) {
 			if (kb.isPressed(KEY(RSHIFT))) {
-				testBenchmarking(!testBenchmarking());
+				doBenchmarking = !doBenchmarking;
 				std::cout << "\33[1;1H\33[2J\33[?25l"
 					<< "Cycle time:      ms |     μs";
 			}
@@ -98,7 +96,7 @@ void VM_Host::executeWorker(std::stop_token stopToken) {
 				BVS.changeFrameMultiplier(+1);
 			}
 
-			if (testBenchmarking()) {
+			if (doBenchmarking) {
 				using namespace std::chrono;
 
 				std::cout << "\33[2;1H" << std::dec << std::setfill(' ') << std::setprecision(6)
@@ -146,7 +144,6 @@ bool VM_Host::runHost() {
 					BVS.raiseWindow();
 					if (HDM.verifyFile(RomFile::validate, Event.drop.data)) {
 						isReadyToEmulate(true);
-						testBenchmarking(false);
 						prepareWorker();
 					} else {
 						blog.stdLogOut(std::string{ "File drop denied: " } + RomFile::error);
@@ -167,7 +164,6 @@ bool VM_Host::runHost() {
 			if (kb.isPressed(KEY(ESCAPE))) {
 				printf("worker ESC key detected\n");
 				isReadyToEmulate(false);
-				testBenchmarking(false);
 				BVS.resetWindow();
 				prepareWorker();
 				continue;
