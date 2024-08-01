@@ -336,17 +336,9 @@ private:
 			| map2b[color & 0x3];           // blue
 	}
 
-	void setBackgroundColorTo(u32* const pColors) const {
-		if (pColors) { *pColors = Color.bit[0]; }
-	}
+	void setBackgroundColorTo(const u32 color) const;
 
-	void setBackgroundColorTo(u32* const pColors, const u32 color) const {
-		if (pColors) { *pColors = color; }
-	}
-
-	void cycleBackgroundColor(u32* const pColors) {
-		setBackgroundColorTo(pColors, Color.BackColors[Color.bgindex++ & 0x3]);
-	}
+	void cycleBackgroundColor();
 
 	auto getForegroundColor8X(const s32 idx) const {
 		return Color.ForeColors[idx & 0x7];

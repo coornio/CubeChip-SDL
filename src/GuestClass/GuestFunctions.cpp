@@ -163,7 +163,7 @@ void VM_Guest::instructionLoop() {
 									flushBuffers(FlushType::DISCARD);
 									prepDisplayArea(Resolution::MC);
 									BVS.setTextureAlpha(0xFF);
-									setBackgroundColorTo(BVS.getFrameColor(), 0);
+									setBackgroundColorTo(0);
 									break;
 								[[unlikely]] default: triggerOpcodeError(mInstruction);
 							} break;
@@ -221,7 +221,7 @@ void VM_Guest::instructionLoop() {
 							break;
 						case 0x2A0:						// 02A0 - cycle background color *CHIP-8X*
 						case 0x2F0:						// 02F0 - cycle background color *CHIP-8X MPD*
-							cycleBackgroundColor(BVS.getFrameColor());
+							cycleBackgroundColor();
 							break;
 						[[unlikely]] default: triggerOpcodeError(mInstruction);
 					}
@@ -725,6 +725,14 @@ void VM_Guest::clearPages() {
 	}
 }
 
+void VM_Guest::setBackgroundColorTo(const u32 color) const {
+	BVS.setFrameColor(color);
+}
+
+void VM_Guest::cycleBackgroundColor() {
+	BVS.setFrameColor(Color.BackColors[Color.bgindex++ & 0x3]);
+}
+
 bool VM_Guest::routineCall(const u32 addr) {
 	mStackBank[mStackTop++ & 0xF] = mProgCounter;
 	mProgCounter = addr;
@@ -981,24 +989,27 @@ void VM_Guest::renderAudio_MC(std::span<s16> buffer, s16 volume) {
 
 void VM_Guest::renderAudioData() {
 	std::vector<s16> audioBuffer(static_cast<usz>(BAS.getFrequency() / mFramerate));
-	auto* const colorDst{ BVS.getFrameColor() };
-	auto* const colorSrc{ Color.buzz };
 
 	if (mBuzzLight) {
 		renderAudio_C8(audioBuffer, BAS.getAmplitude());
-		colorDst[2] = colorSrc[1]; colorDst[1] = colorSrc[0];
+		BVS.setOutlineLitColor(Color.buzz[1]);
+		BVS.setOutlineUnlitColor(Color.buzz[0]);
 	} else if (mAudioIsMC) {
 		renderAudio_MC(audioBuffer, BAS.getVolume());
-		colorDst[2] = colorDst[1] = 0xFF202020;
+		BVS.setOutlineLitColor(0xFF202020);
+		BVS.setOutlineUnlitColor(0xFF202020);
 	} else if (!mSoundTimer) {
 		mWavePhase = 0.0f;
-		colorDst[2] = colorDst[1] = colorSrc[0];
+		BVS.setOutlineLitColor(Color.buzz[0]);
+		BVS.setOutlineUnlitColor(Color.buzz[0]);
 	} else if (mAudioIsXO) {
 		renderAudio_XO(audioBuffer, BAS.getAmplitude());
-		colorDst[2] = colorDst[1] = colorSrc[0];
+		BVS.setOutlineLitColor(Color.buzz[0]);
+		BVS.setOutlineUnlitColor(Color.buzz[0]);
 	} else {
 		renderAudio_C8(audioBuffer, BAS.getAmplitude());
-		colorDst[2] = colorSrc[1]; colorDst[1] = colorSrc[0];
+		BVS.setOutlineLitColor(Color.buzz[1]);
+		BVS.setOutlineUnlitColor(Color.buzz[0]);
 	}
 
 	BAS.pushAudioData(audioBuffer.data(), audioBuffer.size());

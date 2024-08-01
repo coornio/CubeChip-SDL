@@ -237,7 +237,7 @@ void VM_Guest::initPlatform() {
 	}
 
 	if (State.chip8X_rom) {
-		cycleBackgroundColor(BVS.getFrameColor());
+		cycleBackgroundColor();
 		color8xBuffer.resize(true, Trait.H, Trait.W >> 3);
 		color8xBuffer.at_raw(0, 0) = getForegroundColor8X(2);
 
@@ -258,11 +258,16 @@ void VM_Guest::prepDisplayArea(const Resolution mode, const bool forced) {
 	const auto select{ State.schip_legacy ? 1 : std::to_underlying(mode) };
 	const auto lores{ mode == Resolution::LO }; isLoresExtended(lores);
 
-	const auto W{ sizeW[select] }; Trait.W = W; Trait.Wb = W - 1;
-	const auto H{ sizeH[select] }; Trait.H = H; Trait.Hb = H - 1;
+	const auto W{ sizeW[select] };
+	const auto H{ sizeH[select] };
+
+	if (W != Trait.W || H != Trait.H) {
+		BVS.createTexture(W, H);
+	}
 	
+	Trait.W = W; Trait.Wb = W - 1;
+	Trait.H = H; Trait.Hb = H - 1;
 	Trait.S = W * H;
-	BVS.createTexture(W, H);
 
 	if (isManualRefresh()) {
 		BVS.setAspectRatio(512, 384, -2);
@@ -359,16 +364,16 @@ void VM_Guest::fontCopyToMemory() {
 }
 
 void VM_Guest::renderToTexture() {
-	auto* pixels{ BVS.lockTexture() };
+	std::vector<u32> pixelBuffer(Trait.S);
 
 	if (isManualRefresh()) {
 		for (auto idx{ 0 }; idx < Trait.S; ++idx) {
-			pixels[idx] = foregroundBuffer.at_raw(idx);
+			pixelBuffer[idx] = foregroundBuffer.at_raw(idx);
 		}
 	} else if (isPixelBitColor()) {
-		*BVS.getFrameColor() = Color.bit[0];
+		BVS.setFrameColor(Color.bit[0]);
 		for (auto idx{ 0 }; idx < Trait.S; ++idx) {
-			pixels[idx] = (0xFF << 24 | Color.bit[
+			pixelBuffer[idx] = (0xFF << 24 | Color.bit[
 				displayBuffer[0].at_raw(idx) << 0 |
 				displayBuffer[1].at_raw(idx) << 1 |
 				displayBuffer[2].at_raw(idx) << 2 |
@@ -376,29 +381,29 @@ void VM_Guest::renderToTexture() {
 			]);
 		}
 	} else if (State.chip8X_rom) {
-		*BVS.getFrameColor() = Color.bit[0];
+		BVS.setFrameColor(Color.bit[0]);
 		if (isPixelTrailing()) {
 			for (auto idx{ 0 }; idx < Trait.S; ++idx) {
 				const auto Y = idx / Trait.W & Trait.mask8X;
 				const auto X = idx % Trait.W >> 3; // 8px color zones
 
 				if (displayBuffer[0].at_raw(idx)) {
-					pixels[idx] = (0xFF << 24 | color8xBuffer.at_raw(Y, X));
+					pixelBuffer[idx] = (0xFF << 24 | color8xBuffer.at_raw(Y, X));
 					continue;
 				}
 				if (displayBuffer[1].at_raw(idx)) {
-					pixels[idx] = (0xE8 << 24 | color8xBuffer.at_raw(Y, X));
+					pixelBuffer[idx] = (0xE8 << 24 | color8xBuffer.at_raw(Y, X));
 					continue;
 				}
 				if (displayBuffer[2].at_raw(idx)) {
-					pixels[idx] = (0x7B << 24 | color8xBuffer.at_raw(Y, X));
+					pixelBuffer[idx] = (0x7B << 24 | color8xBuffer.at_raw(Y, X));
 					continue;
 				}
 				if (displayBuffer[3].at_raw(idx)) {
-					pixels[idx] = (0x38 << 24 | color8xBuffer.at_raw(Y, X));
+					pixelBuffer[idx] = (0x38 << 24 | color8xBuffer.at_raw(Y, X));
 					continue;
 				} else {
-					pixels[idx] = 0;
+					pixelBuffer[idx] = 0;
 				}
 			}
 			displayBuffer[3] = displayBuffer[2];
@@ -409,31 +414,31 @@ void VM_Guest::renderToTexture() {
 				const auto Y = idx / Trait.W & Trait.mask8X;
 				const auto X = idx % Trait.W >> 3; // 8px color zones
 
-				pixels[idx] = (0xFF << 24 | (displayBuffer[0].at_raw(idx)
+				pixelBuffer[idx] = (0xFF << 24 | (displayBuffer[0].at_raw(idx)
 					? color8xBuffer.at_raw(Y, X) : 0));
 			}
 		}
 	} else {
-		*BVS.getFrameColor() = Color.bit[0];
+		BVS.setFrameColor(Color.bit[0]);
 		if (isPixelTrailing()) {
 			for (auto idx{ 0 }; idx < Trait.S; ++idx) {
 				if (displayBuffer[0].at_raw(idx)) {
-					pixels[idx] = (0xFF << 24 | Color.bit[1]);
+					pixelBuffer[idx] = (0xFF << 24 | Color.bit[1]);
 					continue;
 				}
 				if (displayBuffer[1].at_raw(idx)) {
-					pixels[idx] = (0xE8 << 24 | Color.bit[1]);
+					pixelBuffer[idx] = (0xE8 << 24 | Color.bit[1]);
 					continue;
 				}
 				if (displayBuffer[2].at_raw(idx)) {
-					pixels[idx] = (0x7B << 24 | Color.bit[1]);
+					pixelBuffer[idx] = (0x7B << 24 | Color.bit[1]);
 					continue;
 				}
 				if (displayBuffer[3].at_raw(idx)) {
-					pixels[idx] = (0x38 << 24 | Color.bit[1]);
+					pixelBuffer[idx] = (0x38 << 24 | Color.bit[1]);
 					continue;
 				} else {
-					pixels[idx] = 0;
+					pixelBuffer[idx] = 0;
 				}
 			}
 			displayBuffer[3] = displayBuffer[2];
@@ -441,11 +446,11 @@ void VM_Guest::renderToTexture() {
 			displayBuffer[1] = displayBuffer[0];
 		} else {
 			for (auto idx{ 0 }; idx < Trait.S; ++idx) {
-				pixels[idx] = (0xFF << 24 | Color.bit[
+				pixelBuffer[idx] = (0xFF << 24 | Color.bit[
 					displayBuffer[0].at_raw(idx)
 				]);
 			}
 		}
 	}
-	BVS.unlockTexture();
+	BVS.updateTexture(pixelBuffer);
 }

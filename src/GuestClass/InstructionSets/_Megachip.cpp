@@ -5,6 +5,7 @@
 */
 
 #include <cmath>
+#include <vector>
 
 #include "../../HostClass/BasicVideoSpec.hpp"
 
@@ -23,52 +24,48 @@ FunctionsForMegachip::FunctionsForMegachip(VM_Guest& parent) noexcept
 
 void FunctionsForMegachip::scrollUP(const s32 N) {
 	vm.foregroundBuffer.shift(-N, 0);
-	blendToDisplay(
+	blendBuffersToTexture(
 		vm.foregroundBuffer.data(),
-		vm.backgroundBuffer.data(),
-		vm.Trait.S
+		vm.backgroundBuffer.data()
 	);
 }
 void FunctionsForMegachip::scrollDN(const s32 N) {
 	vm.foregroundBuffer.shift(+N, 0);
-	blendToDisplay(
+	blendBuffersToTexture(
 		vm.foregroundBuffer.data(),
-		vm.backgroundBuffer.data(),
-		vm.Trait.S
+		vm.backgroundBuffer.data()
 	);
 }
 void FunctionsForMegachip::scrollLT(const s32 N) {
 	vm.foregroundBuffer.shift(0, -N);
-	blendToDisplay(
+	blendBuffersToTexture(
 		vm.foregroundBuffer.data(),
-		vm.backgroundBuffer.data(),
-		vm.Trait.S
+		vm.backgroundBuffer.data()
 	);
 }
 void FunctionsForMegachip::scrollRT(const s32 N) {
 	vm.foregroundBuffer.shift(0, +N);
-	blendToDisplay(
+	blendBuffersToTexture(
 		vm.foregroundBuffer.data(),
-		vm.backgroundBuffer.data(),
-		vm.Trait.S
+		vm.backgroundBuffer.data()
 	);
 }
 
 /*------------------------------------------------------------------*/
 
-template <typename T>
-void FunctionsForMegachip::blendToDisplay(
-	const T* const src, const T* const dst,
-	const usz size
+void FunctionsForMegachip::blendBuffersToTexture(
+	const u32* srcColor, const u32* dstColor
 ) {
-	auto* pixels{ vm.BVS.lockTexture() };
-	for (usz idx{ 0 }; idx < size; ++idx) {
-		pixels[idx] = blendPixel(src[idx], dst[idx]);
+	std::vector<u32> pixelBuffer(0xC000);
+
+	for (auto& pixel : pixelBuffer) {
+		pixel = blendPixel(*srcColor++, *dstColor++);
 	}
-	vm.BVS.unlockTexture();
+
+	vm.BVS.updateTexture(pixelBuffer);
 }
 
-uint32_t FunctionsForMegachip::blendPixel(
+u32 FunctionsForMegachip::blendPixel(
 	const u32 colorSrc,
 	const u32 colorDst
 )  noexcept {
@@ -88,7 +85,7 @@ uint32_t FunctionsForMegachip::blendPixel(
 	return applyBlend(blendType);
 }
 
-uint32_t FunctionsForMegachip::applyBlend(
+u32 FunctionsForMegachip::applyBlend(
 	float (*blend)(const float, const float)
 ) const noexcept {
 	float R{ blend(src.R, dst.R) };

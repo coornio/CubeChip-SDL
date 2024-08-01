@@ -77,6 +77,23 @@ void BasicVideoSpec::createTexture(s32 texture_W, s32 texture_H) {
 	}
 }
 
+void BasicVideoSpec::updateTexture(const std::span<const u32> data) {
+	void* temp_ptr{};
+	SDL_LockTexture(
+		texture, nullptr,
+		&temp_ptr,
+		&ppitch
+	);
+
+	if (!temp_ptr) { return; }
+	auto* pixel_ptr{ static_cast<u32*>(temp_ptr) };
+
+	for (auto& pixel : data) {
+		*pixel_ptr++ = pixel;
+	}
+	SDL_UnlockTexture(texture);
+}
+
 void BasicVideoSpec::changeTitle(const char* name) {
 	static constexpr char emuVersion[]{ "[06.06.24]" };
 	std::string windowTitle{ "CubeChip :: " };
@@ -107,19 +124,6 @@ void BasicVideoSpec::resetWindow() {
 	changeTitle();
 	quitTexture();
 	renderPresent();
-}
-
-u32* BasicVideoSpec::lockTexture() {
-	void* pixel_ptr{};
-	SDL_LockTexture(
-		texture, nullptr,
-		&pixel_ptr,
-		&ppitch
-	);
-	return static_cast<u32*>(pixel_ptr);
-}
-void BasicVideoSpec::unlockTexture() {
-	SDL_UnlockTexture(texture);
 }
 
 void BasicVideoSpec::setTextureAlpha(const usz alpha) {

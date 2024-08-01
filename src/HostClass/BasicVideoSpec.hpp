@@ -11,6 +11,7 @@
 #include <SDL3/SDL.h>
 #pragma warning(pop)
 
+#include <span>
 #include <string>
 #include <utility>
 
@@ -21,21 +22,21 @@ class BasicVideoSpec final {
 	SDL_Renderer* renderer{};
 	SDL_Texture*  texture{};
 
+	s32  ppitch{};
+	bool enableBuzzGlow{};
+	bool enableScanLine{};
+
 	SDL_FRect frameGame{};
 	SDL_FRect frameFull{};
 	
 	// 0: background
 	// 1: outline unlit
 	// 2: outline lit (audio)
-	u32 frameColor[3]{};
+	u32  frameColor[3]{};
 
-	s32 perimeterWidth{};
-	s32 frameMultiplier{ 2 };
-	s32 ppitch{};
-
-	bool enableBuzzGlow{};
-	bool enableScanLine{};
-
+	s32  perimeterWidth{};
+	s32  frameMultiplier{ 2 };
+	
 public:
 	explicit BasicVideoSpec();
 	~BasicVideoSpec();
@@ -43,26 +44,30 @@ public:
 	static bool showErrorBoxSDL(std::string_view);
 	static bool showErrorBox(std::string_view, std::string_view);
 
+	u32  getFrameColor()        const { return frameColor[0]; }
+	u32  getOutlineLitColor()   const { return frameColor[1]; }
+	u32  getOutlineUnlitColor() const { return frameColor[2]; }
+
+	void setFrameColor(const u32 color) { frameColor[0] = color; }
+	void setOutlineLitColor(const u32 color) { frameColor[1] = color; }
+	void setOutlineUnlitColor(const u32 color) { frameColor[2] = color; }
+
 private:
 	void createWindow(s32, s32);
 	void createRenderer();
 
 public:
 	void createTexture(s32, s32);
+	void updateTexture(std::span<const u32>);
+
 	void changeTitle(const char* = nullptr);
 
 	void raiseWindow();
 	void resetWindow();
-
-	[[nodiscard]]
-	u32* lockTexture();
-	void unlockTexture();
 	void renderPresent();
 
 	void setTextureAlpha(usz);
 	void setAspectRatio(s32, s32, s32);
-
-	u32* getFrameColor() { return frameColor; }
 
 private:
 	void multiplyWindowDimensions();

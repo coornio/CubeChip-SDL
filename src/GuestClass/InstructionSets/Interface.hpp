@@ -105,8 +105,7 @@ class FunctionsForMegachip final : public FncSetInterface {
 	u32 blendPixel(u32, u32) noexcept;
 	u32 applyBlend(float (*)(float, float)) const noexcept;
 
-	template <typename T>
-	void blendToDisplay(const T*, const T*, usz);
+	void blendBuffersToTexture(const u32*, const u32*);
 
 	enum Blend {
 		NORMAL       = 0,
