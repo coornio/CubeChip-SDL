@@ -14,8 +14,6 @@ class HomeDirManager;
 class BasicVideoSpec;
 class BasicAudioSpec;
 
-union SDL_Event;
-
 class alignas(64) VM_Host final {
 	std::atomic<bool> _isReadyToEmulate{};
 	std::atomic<bool> _testBenchmarking{};
