@@ -30,7 +30,7 @@ int SDL_main(int argc, char* argv[]) {
 
 	SDL_SetHint(SDL_HINT_WINDOWS_RAW_KEYBOARD, "0");
 	SDL_SetHint(SDL_HINT_RENDER_DRIVER, "direct3d");
-	SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1"); // until the UI is independent
+	SDL_SetHint(SDL_HINT_RENDER_VSYNC, "0"); // until the UI is independent
 	SDL_SetHint(SDL_HINT_APP_NAME, "CubeChip");
 
 	alignas(64) std::optional<HomeDirManager> HDM;

@@ -75,7 +75,6 @@ void VM_Guest::instructionLoop() {
 						if (isManualRefresh()) {		// 00E0 - push (and then clear) framebuffer to screen *MEGACHIP*
 							setInterrupt(Interrupt::FRAME);
 							flushBuffers(FlushType::DISPLAY);
-							renderToTexture();
 						} else {						// 00E0 - erase whole display (or plane *XO-CHIP*)
 							if (Quirk.waitVblank) [[unlikely]]
 								{ setInterrupt(Interrupt::FRAME); }
@@ -485,7 +484,6 @@ void VM_Guest::instructionLoop() {
 						setInterrupt(Interrupt::INPUT);
 						if (isManualRefresh()) [[unlikely]] {
 							flushBuffers(FlushType::DISPLAY);
-							renderToTexture();
 						}
 						break;
 					case 0x15:							// FX15 - set delay timer = VX

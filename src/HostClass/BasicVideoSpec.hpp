@@ -11,7 +11,6 @@
 #include <SDL3/SDL.h>
 #pragma warning(pop)
 
-#include <span>
 #include <string>
 #include <utility>
 
@@ -36,7 +35,7 @@ class BasicVideoSpec final {
 
 	s32  perimeterWidth{};
 	s32  frameMultiplier{ 2 };
-	
+
 public:
 	explicit BasicVideoSpec();
 	~BasicVideoSpec();
@@ -58,13 +57,15 @@ private:
 
 public:
 	void createTexture(s32, s32);
-	void updateTexture(std::span<const u32>);
-
 	void changeTitle(const char* = nullptr);
 
 	void raiseWindow();
 	void resetWindow();
 	void renderPresent();
+
+	[[nodiscard]]
+	u32* lockTexture();
+	void unlockTexture();
 
 	void setTextureAlpha(usz);
 	void setAspectRatio(s32, s32, s32);
