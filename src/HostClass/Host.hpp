@@ -29,8 +29,7 @@ class alignas(64) VM_Host final {
 	void doBench(bool);
 
 	void prepareGuest(std::optional<VM_Guest>&, FrameLimiter&);
-	bool mainHostLoop(std::optional<VM_Guest>&, FrameLimiter&, SDL_Event&);
-	bool eventLoopSDL(std::optional<VM_Guest>&, FrameLimiter&, SDL_Event&);
+	bool eventLoopSDL(std::optional<VM_Guest>&, FrameLimiter&);
 
 public:
 	explicit VM_Host(

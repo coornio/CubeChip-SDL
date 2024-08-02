@@ -54,67 +54,15 @@ void VM_Host::doBench(const bool state) { _doBench = state; }
 
 bool VM_Host::runHost() {
 	FrameLimiter Frame;
-	SDL_Event    Event;
 
 	std::optional<VM_Guest> Guest;
 
 	using namespace bic;
 
 	prepareGuest(Guest, Frame);
-	return mainHostLoop(Guest, Frame, Event);
-}
 
-void VM_Host::prepareGuest(std::optional<VM_Guest>& Guest, FrameLimiter& Frame) {
-	Guest.reset();
-	bic::kb.updateCopy();
-	bic::mb.updateCopy();
-
-	if (isReady()) {
-		Guest.emplace(HDM, BVS, BAS);
-
-		if (Guest->setupMachine()) {
-			Frame.setLimiter(Guest->fetchFramerate());
-			BVS.changeTitle(HDM.file.c_str());
-		} else {
-			Frame.setLimiter(30.0f);
-			isReady(false);
-			HDM.reset();
-		}
-	}
-}
-
-bool VM_Host::eventLoopSDL(std::optional<VM_Guest>& Guest, FrameLimiter& Frame, SDL_Event& Event) {
-	while (SDL_PollEvent(&Event)) {
-		switch (Event.type) {
-			case SDL_EVENT_QUIT:
-				return EXIT_SUCCESS;
-
-			case SDL_EVENT_DROP_FILE:
-				BVS.raiseWindow();
-				if (HDM.verifyFile(RomFile::validate, Event.drop.data)) {
-					isReady(true);
-					doBench(false);
-					prepareGuest(Guest, Frame);
-				} else {
-					blog.stdLogOut(std::string{ "File drop denied: " } + RomFile::error);
-				}
-				break;
-
-			case SDL_EVENT_WINDOW_MINIMIZED:
-				if (Guest) { Guest->isSystemPaused(true); }
-				break;
-
-			case SDL_EVENT_WINDOW_RESTORED:
-				if (Guest) { Guest->isSystemPaused(false); }
-				break;
-		}
-	}
-	return false;
-}
-
-bool VM_Host::mainHostLoop(std::optional<VM_Guest>& Guest, FrameLimiter& Frame, SDL_Event& Event) {
 	while (true) {
-		if (eventLoopSDL(Guest, Frame, Event)) {
+		if (eventLoopSDL(Guest, Frame)) {
 			return EXIT_SUCCESS;
 		}
 
@@ -191,4 +139,54 @@ bool VM_Host::mainHostLoop(std::optional<VM_Guest>& Guest, FrameLimiter& Frame, 
 		kb.updateCopy();
 		mb.updateCopy();
 	}
+}
+
+void VM_Host::prepareGuest(std::optional<VM_Guest>& Guest, FrameLimiter& Frame) {
+	Guest.reset();
+	bic::kb.updateCopy();
+	bic::mb.updateCopy();
+
+	if (isReady()) {
+		Guest.emplace(HDM, BVS, BAS);
+
+		if (Guest->setupMachine()) {
+			Frame.setLimiter(Guest->fetchFramerate());
+			BVS.changeTitle(HDM.file.c_str());
+		} else {
+			Frame.setLimiter(30.0f);
+			isReady(false);
+			HDM.reset();
+		}
+	}
+}
+
+bool VM_Host::eventLoopSDL(std::optional<VM_Guest>& Guest, FrameLimiter& Frame) {
+	SDL_Event Event;
+
+	while (SDL_PollEvent(&Event)) {
+		switch (Event.type) {
+			case SDL_EVENT_QUIT:
+				return true;
+
+			case SDL_EVENT_DROP_FILE:
+				BVS.raiseWindow();
+				if (HDM.verifyFile(RomFile::validate, Event.drop.data)) {
+					isReady(true);
+					doBench(false);
+					prepareGuest(Guest, Frame);
+				} else {
+					blog.stdLogOut(std::string{ "File drop denied: " } + RomFile::error);
+				}
+				break;
+
+			case SDL_EVENT_WINDOW_MINIMIZED:
+				if (Guest) { Guest->isSystemPaused(true); }
+				break;
+
+			case SDL_EVENT_WINDOW_RESTORED:
+				if (Guest) { Guest->isSystemPaused(false); }
+				break;
+		}
+	}
+	return false;
 }
