@@ -5,6 +5,7 @@
 */
 
 #include <fstream>
+#include <execution>
 #include <cstddef>
 #include <cstdint>
 
@@ -260,9 +261,9 @@ void VM_Guest::prepDisplayArea(const Resolution mode, const bool forced) {
 
 	const auto W{ sizeW[select] };
 	const auto H{ sizeH[select] };
-	
+
 	if (W != Trait.W || H != Trait.H) {
-	BVS.createTexture(W, H);
+		BVS.createTexture(W, H);
 	}
 
 	Trait.W = W; Trait.Wb = W - 1;
@@ -364,13 +365,16 @@ void VM_Guest::fontCopyToMemory() {
 }
 
 void VM_Guest::renderToTexture() {
-	auto* pixels{ BVS.lockTexture() };
-
+	//auto pixelSpan{ std::span(BVS.lockTexture(), Trait.S) };
+	
 	if (isManualRefresh()) {
-		for (auto idx{ 0 }; idx < Trait.S; ++idx) {
-			pixels[idx] = foregroundBuffer.at_raw(idx);
-		}
-	} else if (isPixelBitColor()) {
+		std::copy_n(
+			std::execution::par_unseq,
+			foregroundBuffer.data(),
+			Trait.S, BVS.lockTexture());
+	}
+	else if (isPixelBitColor()) {
+		auto* pixels{ BVS.lockTexture() };
 		BVS.setFrameColor(Color.bit[0]);
 		for (auto idx{ 0 }; idx < Trait.S; ++idx) {
 			pixels[idx] = (0xFF << 24 | Color.bit[
@@ -380,7 +384,9 @@ void VM_Guest::renderToTexture() {
 				displayBuffer[3].at_raw(idx) << 3
 			]);
 		}
-	} else if (State.chip8X_rom) {
+	}
+	else if (State.chip8X_rom) {
+		auto* pixels{ BVS.lockTexture() };
 		BVS.setFrameColor(Color.bit[0]);
 		if (isPixelTrailing()) {
 			for (auto idx{ 0 }; idx < Trait.S; ++idx) {
@@ -418,7 +424,9 @@ void VM_Guest::renderToTexture() {
 					? color8xBuffer.at_raw(Y, X) : 0));
 			}
 		}
-	} else {
+	}
+	else {
+		auto* pixels{ BVS.lockTexture() };
 		BVS.setFrameColor(Color.bit[0]);
 		if (isPixelTrailing()) {
 			for (auto idx{ 0 }; idx < Trait.S; ++idx) {

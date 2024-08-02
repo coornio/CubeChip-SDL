@@ -5,6 +5,8 @@
 */
 
 #include <cmath>
+#include <algorithm>
+#include <execution>
 
 #include "../../HostClass/BasicVideoSpec.hpp"
 
@@ -23,81 +25,60 @@ FunctionsForMegachip::FunctionsForMegachip(VM_Guest& parent) noexcept
 
 void FunctionsForMegachip::scrollUP(const s32 N) {
 	vm.foregroundBuffer.shift(-N, 0);
-	blendToDisplay(
-		vm.foregroundBuffer.data(),
-		vm.backgroundBuffer.data(),
-		vm.Trait.S
+	blendBuffersToTexture(
+		vm.foregroundBuffer.span(),
+		vm.backgroundBuffer.span()
 	);
 }
 void FunctionsForMegachip::scrollDN(const s32 N) {
 	vm.foregroundBuffer.shift(+N, 0);
-	blendToDisplay(
-		vm.foregroundBuffer.data(),
-		vm.backgroundBuffer.data(),
-		vm.Trait.S
+	blendBuffersToTexture(
+		vm.foregroundBuffer.span(),
+		vm.backgroundBuffer.span()
 	);
 }
 void FunctionsForMegachip::scrollLT(const s32 N) {
 	vm.foregroundBuffer.shift(0, -N);
-	blendToDisplay(
-		vm.foregroundBuffer.data(),
-		vm.backgroundBuffer.data(),
-		vm.Trait.S
+	blendBuffersToTexture(
+		vm.foregroundBuffer.span(),
+		vm.backgroundBuffer.span()
 	);
 }
 void FunctionsForMegachip::scrollRT(const s32 N) {
 	vm.foregroundBuffer.shift(0, +N);
-	blendToDisplay(
-		vm.foregroundBuffer.data(),
-		vm.backgroundBuffer.data(),
-		vm.Trait.S
+	blendBuffersToTexture(
+		vm.foregroundBuffer.span(),
+		vm.backgroundBuffer.span()
 	);
 }
 
 /*------------------------------------------------------------------*/
 
-template <typename T>
-void FunctionsForMegachip::blendToDisplay(
-	const T* const src, const T* const dst,
-	const usz size
-) {
-	auto* pixels{ vm.BVS.lockTexture() };
-	for (usz idx{ 0 }; idx < size; ++idx) {
-		pixels[idx] = blendPixel(src[idx], dst[idx]);
-	}
-	vm.BVS.unlockTexture();
-}
+static u32 blendPixel(
+	const u32 srcPixel, const u32 dstPixel, const f32 alpha,
+	f32(*blend)(const f32, const f32)
+) noexcept {
+	static constexpr f32 minF{ 1.0f / 255.0f };
+	ColorF src, dst;
 
-uint32_t FunctionsForMegachip::blendPixel(
-	const u32 colorSrc,
-	const u32 colorDst
-)  noexcept {
-	static constexpr float minF{ 1.0f / 255.0f };
+	src.A =  (srcPixel >> 24) * alpha * minF;
+	if (src.A < minF) [[unlikely]] { return dstPixel; }
+	src.R = ((srcPixel >> 16) & 0xFF) * minF;
+	src.G = ((srcPixel >>  8) & 0xFF) * minF;
+	src.B =  (srcPixel        & 0xFF) * minF;
 
-	src.A = (colorSrc >> 24) * minF * vm.Texture.alpha;
-	if (src.A < minF) [[unlikely]] { return colorDst; }
-	src.R = ((colorSrc >> 16) & 0xFF) * minF;
-	src.G = ((colorSrc >>  8) & 0xFF) * minF;
-	src.B = ( colorSrc        & 0xFF) * minF;
+	dst.A =  (dstPixel >> 24)         * minF;
+	dst.R = ((dstPixel >> 16) & 0xFF) * minF;
+	dst.G = ((dstPixel >>  8) & 0xFF) * minF;
+	dst.B =  (dstPixel        & 0xFF) * minF;
 
-	dst.A = ( colorDst >> 24)         * minF;
-	dst.R = ((colorDst >> 16) & 0xFF) * minF;
-	dst.G = ((colorDst >>  8) & 0xFF) * minF;
-	dst.B = ( colorDst        & 0xFF) * minF;
-
-	return applyBlend(blendType);
-}
-
-uint32_t FunctionsForMegachip::applyBlend(
-	float (*blend)(const float, const float)
-) const noexcept {
-	float R{ blend(src.R, dst.R) };
-	float G{ blend(src.G, dst.G) };
-	float B{ blend(src.B, dst.B) };
+	auto R{ blend(src.R, dst.R) };
+	auto G{ blend(src.G, dst.G) };
+	auto B{ blend(src.B, dst.B) };
 
 	if (src.A < 1.0f) {
-		const float sW{ src.A / 1.0f };
-		const float dW{ 1.0f - sW };
+		const f32 sW{ src.A / 1.0f };
+		const f32 dW{ 1.0f - sW };
 
 		R = dW * dst.R + sW * R;
 		G = dW * dst.G + sW * G;
@@ -108,6 +89,22 @@ uint32_t FunctionsForMegachip::applyBlend(
 		| static_cast<u8>(std::roundf(R * 255.0f)) << 16
 		| static_cast<u8>(std::roundf(G * 255.0f)) <<  8
 		| static_cast<u8>(std::roundf(B * 255.0f));
+}
+
+void FunctionsForMegachip::blendBuffersToTexture(
+	const std::span<const u32> srcColors,
+	const std::span<const u32> dstColors
+) {
+	std::transform(
+		std::execution::par_unseq,
+		srcColors.begin(), srcColors.end(),
+		dstColors.begin(),
+		vm.BVS.lockTexture(),
+		[this](const u32 src, const u32 dst) {
+			return blendPixel(src, dst, vm.Texture.alpha, blendAlgo);
+		}
+	);
+	vm.BVS.unlockTexture();
 }
 
 void FunctionsForMegachip::drawSprite(
@@ -166,7 +163,8 @@ paintTexture:
 				collideCoord = sourceColorIdx;
 				backbufCoord = blendPixel(
 					vm.megaPalette[sourceColorIdx],
-					backbufCoord
+					backbufCoord, vm.Texture.alpha,
+					blendAlgo
 				);
 			}
 			if (!vm.Quirk.wrapSprite && X == vm.Trait.Wb) { break; }
@@ -179,20 +177,20 @@ void FunctionsForMegachip::chooseBlend(const usz N) noexcept {
 	switch (N) {
 
 		case Blend::LINEAR_DODGE:
-			blendType = [](const float src, const float dst) noexcept {
+			blendAlgo = [](const f32 src, const f32 dst) noexcept {
 				return std::min(src + dst, 1.0f);
 			};
 			break;
 
 		case Blend::MULTIPLY:
-			blendType = [](const float src, const float dst) noexcept {
+			blendAlgo = [](const f32 src, const f32 dst) noexcept {
 				return src * dst;
 			};
 			break;
 
 		default:
 		case Blend::NORMAL:
-			blendType = [](const float src, const float) noexcept {
+			blendAlgo = [](const f32 src, const f32) noexcept {
 				return src;
 			};
 			break;

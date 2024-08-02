@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <span>
 #include <cstddef>
 #include <cstdint>
 
@@ -94,19 +95,14 @@ public:
 /*  derived class  FunctionsForMegachip                             */
 /*------------------------------------------------------------------*/
 
+struct ColorF { f32 A, R, G, B; };
+
 class FunctionsForMegachip final : public FncSetInterface {
 	VM_Guest& vm;
 
-	struct SrcColor { float A{}, R{}, G{}, B{}; } src;
-	struct DstColor { float A{}, R{}, G{}, B{}; } dst;
+	f32 (*blendAlgo)(f32, f32) noexcept {};
 
-	float (*blendType)(float, float) noexcept {};
-
-	u32 blendPixel(u32, u32) noexcept;
-	u32 applyBlend(float (*)(float, float)) const noexcept;
-
-	template <typename T>
-	void blendToDisplay(const T*, const T*, usz);
+	void blendBuffersToTexture(std::span<const u32>, std::span<const u32>);
 
 	enum Blend {
 		NORMAL       = 0,
