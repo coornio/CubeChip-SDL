@@ -251,18 +251,23 @@ void VM_Guest::initPlatform() {
 }
 
 void VM_Guest::prepDisplayArea(const Resolution mode, const bool forced) {
-	//                                         HI   LO   TP   FP   MC
-	static constexpr std::int32_t sizeW[]{ 0, 128,  64,  64,  64, 256 };
-	static constexpr std::int32_t sizeH[]{ 0,  64,  32,  64, 128, 192 };
+	//                                HI   LO   TP   FP   MC
+	static constexpr s32 sizeW[]{ 0, 128,  64,  64,  64, 256 };
+	static constexpr s32 sizeH[]{ 0,  64,  32,  64, 128, 192 };
 
 	const auto select{ State.schip_legacy ? 1 : std::to_underlying(mode) };
 	const auto lores{ mode == Resolution::LO }; isLoresExtended(lores);
 
-	const auto W{ sizeW[select] }; Trait.W = W; Trait.Wb = W - 1;
-	const auto H{ sizeH[select] }; Trait.H = H; Trait.Hb = H - 1;
+	const auto W{ sizeW[select] };
+	const auto H{ sizeH[select] };
 	
-	Trait.S = W * H;
+	if (W != Trait.W || H != Trait.H) {
 	BVS.createTexture(W, H);
+	}
+
+	Trait.W = W; Trait.Wb = W - 1;
+	Trait.H = H; Trait.Hb = H - 1;
+	Trait.S = W * H;
 
 	if (isManualRefresh()) {
 		BVS.setAspectRatio(512, 384, -2);
