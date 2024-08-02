@@ -15,6 +15,8 @@ FunctionsForModernXO::FunctionsForModernXO(VM_Guest& parent) noexcept
 	: vm{ parent }
 {}
 
+/*------------------------------------------------------------------*/
+
 void FunctionsForModernXO::scrollUP(const s32 N) {
 	if (!vm.Trait.maskPlane) { return; }
 

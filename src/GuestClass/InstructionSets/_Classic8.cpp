@@ -17,6 +17,8 @@ FunctionsForClassic8::FunctionsForClassic8(VM_Guest& parent) noexcept
 	: vm{ parent }
 {}
 
+/*------------------------------------------------------------------*/
+
 void FunctionsForClassic8::scrollUP(const s32 N) {
 	vm.displayBuffer[0].shift(-N, 0);
 }

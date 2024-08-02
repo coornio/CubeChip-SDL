@@ -15,6 +15,8 @@ FunctionsForLegacySC::FunctionsForLegacySC(VM_Guest& parent) noexcept
 	: vm{ parent }
 {}
 
+/*------------------------------------------------------------------*/
+
 void FunctionsForLegacySC::scrollUP(const s32 N) {
 	vm.displayBuffer[0].shift(-N, 0);
 }

@@ -19,6 +19,8 @@ FunctionsForGigachip::FunctionsForGigachip(VM_Guest& parent) noexcept
 	chooseBlend(Blend::NORMAL);
 }
 
+struct ColorF { f32 A, R, G, B; };
+
 /*------------------------------------------------------------------*/
 
 void FunctionsForGigachip::scrollUP(const s32 N) {
@@ -36,87 +38,87 @@ void FunctionsForGigachip::scrollRT(const s32 N) {
 
 /*------------------------------------------------------------------*/
 
-u32 FunctionsForGigachip::blendPixel(
-	u32  colorSrc,
-	u32& colorDst
+static u32 blendPixel(
+	u32 srcPixel, const u32 dstPixel, const u8 rgbmod,
+	const f32 alpha, const bool inverted,
+	f32(*blend)(const f32, const f32)
 ) {
-	static constexpr float minF{ 1.0f / 255.0f };
+	static constexpr f32 minF{ 1.0f / 255.0f };
+	ColorF src, dst;
 
-	src.A = (colorSrc >> 24) * minF * vm.Texture.alpha;
-	if (src.A < minF) [[unlikely]] { return colorDst; }
-	if (vm.Texture.invert) { colorSrc ^= 0x00FFFFFF; }
-	src.R = (colorSrc >> 16 & 0xFF) * minF;
-	src.G = (colorSrc >>  8 & 0xFF) * minF;
-	src.B = (colorSrc       & 0xFF) * minF;
+	src.A =  (srcPixel >> 24) * alpha * minF;
+	if (src.A < minF) [[unlikely]] { return dstPixel; }
+	if (inverted) { srcPixel ^= 0x00FFFFFF; }
+	src.R = ((srcPixel >> 16) & 0xFF) * minF;
+	src.G = ((srcPixel >>  8) & 0xFF) * minF;
+	src.B =  (srcPixel        & 0xFF) * minF;
 
-	dst.A = (colorDst >> 24       ) * minF;
-	dst.R = (colorDst >> 16 & 0xFF) * minF;
-	dst.G = (colorDst >>  8 & 0xFF) * minF;
-	dst.B = (colorDst       & 0xFF) * minF;
+	dst.A =  (dstPixel >> 24)         * minF;
+	dst.R = ((dstPixel >> 16) & 0xFF) * minF;
+	dst.G = ((dstPixel >>  8) & 0xFF) * minF;
+	dst.B =  (dstPixel        & 0xFF) * minF;
 
-	switch (vm.Texture.rgbmod) {
-		case Trait::BRG:
+	using enum FunctionsForGigachip::Trait;
+
+	switch (rgbmod) {
+		case FunctionsForGigachip::Trait::BRG:
 			std::swap(src.R, src.G);
 			std::swap(src.R, src.B);
 			break;
-		case Trait::GBR:
+		case FunctionsForGigachip::Trait::GBR:
 			std::swap(src.R, src.G);
 			std::swap(src.G, src.B);
 			break;
-		case Trait::RBG:
+		case FunctionsForGigachip::Trait::RBG:
 			std::swap(src.G, src.B);
 			break;
-		case Trait::GRB:
+		case FunctionsForGigachip::Trait::GRB:
 			std::swap(src.R, src.G);
 			break;
-		case Trait::BGR:
+		case FunctionsForGigachip::Trait::BGR:
 			std::swap(src.R, src.B);
 			break;
-		case Trait::GRAY:
+		case FunctionsForGigachip::Trait::GRAY:
 			src.R = src.G = src.B =
 				src.R * 0.299f + src.G * 0.587f + src.B * 0.114f;
 			break;
-		case Trait::SEPIA: {
-			const float R{ src.R * 0.393f + src.G * 0.769f + src.B * 0.198f },
-						G{ src.R * 0.349f + src.G * 0.686f + src.B * 0.168f },
-						B{ src.R * 0.272f + src.G * 0.534f + src.B * 0.131f };
+		case FunctionsForGigachip::Trait::SEPIA: {
+			const f32 R{ src.R * 0.393f + src.G * 0.769f + src.B * 0.198f },
+					  G{ src.R * 0.349f + src.G * 0.686f + src.B * 0.168f },
+					  B{ src.R * 0.272f + src.G * 0.534f + src.B * 0.131f };
 			src.R = std::min(R, 1.0f);
 			src.G = std::min(G, 1.0f);
 			src.B = std::min(B, 1.0f);
 		} break;
 	}
 
-	if (!blendType) {
+	if (!blend) {
 		return static_cast<u8>(std::round(src.A * 255.0f)) << 24
 			 | static_cast<u8>(std::round(src.R * 255.0f)) << 16
 			 | static_cast<u8>(std::round(src.G * 255.0f)) <<  8
 			 | static_cast<u8>(std::round(src.B * 255.0f));
 	}
 	else {
-		return applyBlend(blendType);
+		f32 A{ 1.0f };
+		f32 R{ blend(src.R, dst.R) };
+		f32 G{ blend(src.G, dst.G) };
+		f32 B{ blend(src.B, dst.B) };
+
+		if (src.A < 1.0f) {
+			const f32 sW{ src.A / 1.0f };
+			const f32 dW{ 1.0f - sW };
+
+			A = dW * dst.A + src.A;
+			R = dW * dst.R + sW * R;
+			G = dW * dst.G + sW * G;
+			B = dW * dst.B + sW * B;
+		}
+
+		return static_cast<u8>(std::roundf(A * 255.0f)) << 24
+			 | static_cast<u8>(std::roundf(R * 255.0f)) << 16
+			 | static_cast<u8>(std::roundf(G * 255.0f)) <<  8
+			 | static_cast<u8>(std::roundf(B * 255.0f));
 	}
-}
-
-u32 FunctionsForGigachip::applyBlend(float (*blend)(const float, const float)) const {
-	float A{ 1.0f };
-	float R{ blend(src.R, dst.R) };
-	float G{ blend(src.G, dst.G) };
-	float B{ blend(src.B, dst.B) };
-
-	if (src.A < 1.0f) {
-		const float sW{ src.A / 1.0f };
-		const float dW{ 1.0f - sW };
-
-		A = dW * dst.A + src.A;
-		R = dW * dst.R + sW * R;
-		G = dW * dst.G + sW * G;
-		B = dW * dst.B + sW * B;
-	}
-
-	return static_cast<u8>(std::roundf(A * 255.0f)) << 24
-		 | static_cast<u8>(std::roundf(R * 255.0f)) << 16
-		 | static_cast<u8>(std::roundf(G * 255.0f)) <<  8
-		 | static_cast<u8>(std::roundf(B * 255.0f));
 }
 
 void FunctionsForGigachip::drawSprite(
@@ -165,7 +167,9 @@ void FunctionsForGigachip::drawSprite(
 				if (!vm.Texture.nodraw) {
 					backbufCoord = blendPixel(
 						vm.megaPalette[sourceColorIdx],
-						backbufCoord
+						backbufCoord, vm.Texture.rgbmod,
+						vm.Texture.alpha, vm.Texture.invert,
+						blendAlgo
 					);
 				}
 			}
@@ -181,7 +185,7 @@ void FunctionsForGigachip::chooseBlend(
 	switch (N) {
 
 		case Blend::NORMAL:
-			blendType = [](const float src, const float) {
+			blendAlgo = [](const f32 src, const f32) {
 				return src;
 			};
 			return;
@@ -189,25 +193,25 @@ void FunctionsForGigachip::chooseBlend(
 		/*------------------------ LIGHTENING MODES ------------------------*/
 
 		case Blend::LIGHTEN_ONLY:
-			blendType = [](const float src, const float dst) {
+			blendAlgo = [](const f32 src, const f32 dst) {
 				return std::max(src, dst);
 			};
 			return;
 
 		case Blend::SCREEN:
-			blendType = [](const float src, const float dst) {
+			blendAlgo = [](const f32 src, const f32 dst) {
 				return 1.0f - (1.0f - src) * (1.0f - dst);
 			};
 			return;
 
 		case Blend::COLOR_DODGE:
-			blendType = [](const float src, const float dst) {
+			blendAlgo = [](const f32 src, const f32 dst) {
 				return std::min(dst / (1.0f - src), 1.0f);
 			};
 			return;
 
 		case Blend::LINEAR_DODGE:
-			blendType = [](const float src, const float dst) {
+			blendAlgo = [](const f32 src, const f32 dst) {
 				return std::min(src + dst, 1.0f);
 			};
 			return;
@@ -215,26 +219,26 @@ void FunctionsForGigachip::chooseBlend(
 		/*------------------------ DARKENING MODES -------------------------*/
 
 		case Blend::DARKEN_ONLY:
-			blendType = [](const float src, const float dst) {
+			blendAlgo = [](const f32 src, const f32 dst) {
 				return std::min(src, dst);
 			};
 			return;
 
 		case Blend::MULTIPLY:
-			blendType = [](const float src, const float dst) {
+			blendAlgo = [](const f32 src, const f32 dst) {
 				return src * dst;
 			};
 			return;
 
 		case Blend::COLOR_BURN:
-			blendType = [](const float src, const float dst) {
+			blendAlgo = [](const f32 src, const f32 dst) {
 				if (!src) return 0.0f; // handle divide-by-zero
 				return std::max(1.0f - (1.0f - dst) / src, 0.0f);
 			};
 			return;
 
 		case Blend::LINEAR_BURN:
-			blendType = [](const float src, const float dst) {
+			blendAlgo = [](const f32 src, const f32 dst) {
 				return std::max(src + dst - 1.0f, 0.0f);
 			};
 			return;
@@ -242,45 +246,45 @@ void FunctionsForGigachip::chooseBlend(
 		/*-------------------------- OTHER MODES ---------------------------*/
 
 		case Blend::AVERAGE:
-			blendType = [](const float src, const float dst) {
+			blendAlgo = [](const f32 src, const f32 dst) {
 				return (src + dst) / 2.0f;
 			};
 			return;
 
 		case Blend::DIFFERENCE:
-			blendType = [](const float src, const float dst) {
+			blendAlgo = [](const f32 src, const f32 dst) {
 				return std::abs(src - dst);
 			};
 			return;
 
 		case Blend::NEGATION:
-			blendType = [](const float src, const float dst) {
+			blendAlgo = [](const f32 src, const f32 dst) {
 				return 1.0f - std::abs(1.0f - src - dst);
 			}; return;
 
 		case Blend::OVERLAY:
-			blendType = [](const float src, const float dst) {
+			blendAlgo = [](const f32 src, const f32 dst) {
 				if (src < 0.5f) return 2.0f * dst * src;
 				return 1.0f - 2.0f * (1.0f - dst) * (1.0f - src);
 			};
 			return;
 
 		case Blend::REFLECT:
-			blendType = [](const float src, const float dst) {
+			blendAlgo = [](const f32 src, const f32 dst) {
 				if (src == 1.0f) return 1.0f; // handle divide-by-zero
 				return std::min(dst * dst / (1.0f - src), 1.0f);
 			};
 			return;
 
 		case Blend::GLOW:
-			blendType = [](const float src, const float dst) {
+			blendAlgo = [](const f32 src, const f32 dst) {
 				if (dst == 1.0f) return 1.0f; // handle divide-by-zero
 				return std::min(src * src / (1.0f - dst), 1.0f);
 			};
 			return;
 
 		case Blend::OVERWRITE:
-			blendType = nullptr;
+			blendAlgo = nullptr;
 			return;
 	}
 }

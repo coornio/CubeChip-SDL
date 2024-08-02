@@ -23,6 +23,10 @@ FunctionsForMegachip::FunctionsForMegachip(VM_Guest& parent) noexcept
 	chooseBlend(Blend::NORMAL);
 }
 
+struct ColorF { f32 A, R, G, B; };
+
+/*------------------------------------------------------------------*/
+
 void FunctionsForMegachip::scrollUP(const s32 N) {
 	vm.foregroundBuffer.shift(-N, 0);
 	blendBuffersToTexture(

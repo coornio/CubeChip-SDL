@@ -31,9 +31,9 @@ class alignas(64) VM_Guest final {
 
 private:
 	FunctionsForGigachip SetGigachip{ *this }; friend class FunctionsForGigachip;
-	u32 __PADDING1[2]{};
+	u32 __PADDING1[10]{};
 	FunctionsForMegachip SetMegachip{ *this }; friend class FunctionsForMegachip;
-	u32 __PADDING2[2]{};
+	u32 __PADDING2[10]{};
 	FunctionsForModernXO SetModernXO{ *this }; friend class FunctionsForModernXO;
 	FunctionsForLegacySC SetLegacySC{ *this }; friend class FunctionsForLegacySC;
 	FunctionsForClassic8 SetClassic8{ *this }; friend class FunctionsForClassic8;

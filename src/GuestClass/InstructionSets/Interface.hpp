@@ -46,14 +46,9 @@ struct FncSetInterface {
 class FunctionsForGigachip final : public FncSetInterface {
 	VM_Guest& vm;
 
-	struct SrcColor { float A{}, R{}, G{}, B{}; } src;
-	struct DstColor { float A{}, R{}, G{}, B{}; } dst;
+	f32 (*blendAlgo)(f32, f32) {};
 
-	float (*blendType)(float, float) {};
-
-	u32 blendPixel(u32, u32&);
-	u32 applyBlend(float (*)(float, float)) const;
-
+public:
 	enum Trait {
 		RGB, BRG, GBR,
 		RBG, GRB, BGR,
@@ -69,6 +64,7 @@ class FunctionsForGigachip final : public FncSetInterface {
 		OVERWRITE,
 	};
 
+private:
 	void scrollUP(s32) override;
 	void scrollDN(s32) override;
 	void scrollLT(s32) override;
@@ -95,8 +91,6 @@ public:
 /*  derived class  FunctionsForMegachip                             */
 /*------------------------------------------------------------------*/
 
-struct ColorF { f32 A, R, G, B; };
-
 class FunctionsForMegachip final : public FncSetInterface {
 	VM_Guest& vm;
 
@@ -104,12 +98,14 @@ class FunctionsForMegachip final : public FncSetInterface {
 
 	void blendBuffersToTexture(std::span<const u32>, std::span<const u32>);
 
+public:
 	enum Blend {
 		NORMAL       = 0,
 		LINEAR_DODGE = 4,
 		MULTIPLY     = 5,
 	};
 
+private:
 	void scrollUP(s32) override;
 	void scrollDN(s32) override;
 	void scrollLT(s32) override;
