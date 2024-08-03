@@ -32,9 +32,9 @@ public:
 	void loadPresetBinds();
 	void loadCustomBinds(std::vector<KeyInfo>&& bindings);
 
-	void updateKeyStates();
+	void updateKeyStates() noexcept;
 
-	bool keyPressed(Uint8& returnKey, Uint32 tickCount);
-	bool keyHeld_P1(Uint32 keyIndex) const;
-	bool keyHeld_P2(Uint32 keyIndex) const;
+	bool keyPressed(Uint8& returnKey, Uint32 tickCount) noexcept;
+	bool keyHeld_P1(Uint32 keyIndex) const noexcept;
+	bool keyHeld_P2(Uint32 keyIndex) const noexcept;
 };

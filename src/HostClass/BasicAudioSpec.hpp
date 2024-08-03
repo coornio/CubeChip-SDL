@@ -28,11 +28,11 @@ public:
 
 	void pushAudioData(const void*, usz);
 
-	s32  getFrequency()  const;
-	s16  getAmplitude()  const;
-	s16  getVolume()     const;
-	f32  getVolumeNorm() const;
+	s32  getFrequency()  const noexcept { return outFrequency; }
+	s16  getAmplitude()  const noexcept { return amplitude; }
+	s16  getVolume()     const noexcept { return volume; }
+	f32  getVolumeNorm() const noexcept { return volume / 255.0f; }
 
-	void setVolume(s32);
-	void changeVolume(s32);
+	void setVolume(s32) noexcept;
+	void changeVolume(s32) noexcept;
 };

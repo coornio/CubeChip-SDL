@@ -171,7 +171,7 @@ void BasicVideoSpec::changeFrameMultiplier(const s32 delta) {
 }
 
 void BasicVideoSpec::renderPresent() {
-	SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	SDL_RenderClear(renderer);
 
 	if (texture) {
@@ -214,19 +214,19 @@ void BasicVideoSpec::renderPresent() {
 	SDL_RenderPresent(renderer);
 }
 
-void BasicVideoSpec::quitTexture() {
+void BasicVideoSpec::quitTexture() noexcept {
 	if (texture) {
 		SDL_DestroyTexture(texture);
 		texture = nullptr;
 	}
 }
-void BasicVideoSpec::quitRenderer() {
+void BasicVideoSpec::quitRenderer() noexcept {
 	if (renderer) {
 		SDL_DestroyRenderer(renderer);
 		renderer = nullptr;
 	}
 }
-void BasicVideoSpec::quitWindow() {
+void BasicVideoSpec::quitWindow() noexcept {
 	if (window) {
 		SDL_DestroyWindow(window);
 		window = nullptr;

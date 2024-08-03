@@ -43,13 +43,13 @@ public:
 	static bool showErrorBoxSDL(std::string_view);
 	static bool showErrorBox(std::string_view, std::string_view);
 
-	u32  getFrameColor()        const { return frameColor[0]; }
-	u32  getOutlineLitColor()   const { return frameColor[1]; }
-	u32  getOutlineUnlitColor() const { return frameColor[2]; }
+	u32  getFrameColor()        const noexcept { return frameColor[0]; }
+	u32  getOutlineLitColor()   const noexcept { return frameColor[1]; }
+	u32  getOutlineUnlitColor() const noexcept { return frameColor[2]; }
 
-	void setFrameColor(const u32 color) { frameColor[0] = color; }
-	void setOutlineLitColor(const u32 color) { frameColor[1] = color; }
-	void setOutlineUnlitColor(const u32 color) { frameColor[2] = color; }
+	void setFrameColor       (const u32 color) noexcept { frameColor[0] = color; }
+	void setOutlineLitColor  (const u32 color) noexcept { frameColor[1] = color; }
+	void setOutlineUnlitColor(const u32 color) noexcept { frameColor[2] = color; }
 
 private:
 	void createWindow(s32, s32);
@@ -77,7 +77,7 @@ public:
 	void changeFrameMultiplier(s32);
 
 private:
-	void quitWindow();
-	void quitRenderer();
-	void quitTexture();
+	void quitWindow() noexcept;
+	void quitRenderer() noexcept;
+	void quitTexture() noexcept;
 };

@@ -570,19 +570,19 @@ std::string VM_Guest::hexOpcode(const u32 opcode) const {
 	return out.str();
 }
 
-void VM_Guest::initProgramParams(const u32 counter, const s32 cpf) {
+void VM_Guest::initProgramParams(const u32 counter, const s32 cpf) noexcept {
 	mProgCounter    = counter;
 	mCyclesPerFrame = cpf;
 	mFramerate      = 60.0;
 	mInterruptType  = Interrupt::CLEAR;
 }
 
-void VM_Guest::calculateBoostCPF(const s32 cpf) {
+void VM_Guest::calculateBoostCPF(const s32 cpf) noexcept {
 	if (cpf) { mCyclesPerFrame = cpf; }
 	boost = (mCyclesPerFrame < 50) ? (mCyclesPerFrame >> 1) : 0;
 }
 
-void VM_Guest::changeFunctionSet(FncSetInterface* _fncSet) {
+void VM_Guest::changeFunctionSet(FncSetInterface* _fncSet) noexcept {
 	currFncSet = _fncSet;
 }
 
@@ -628,7 +628,7 @@ void VM_Guest::processFrame() {
 	}
 }
 
-void VM_Guest::handleFrameWait() {
+void VM_Guest::handleFrameWait() noexcept {
 	switch (mInterruptType) {
 
 		case Interrupt::FRAME: // resumes emulation after a single frame pause
@@ -651,7 +651,7 @@ void VM_Guest::handleFrameWait() {
 	}
 }
 
-void VM_Guest::handleInputWait() {
+void VM_Guest::handleInputWait() noexcept {
 	switch (mInterruptType) {
 
 		case Interrupt::INPUT: // resumes emulation when key press event for Fx0A
@@ -698,7 +698,7 @@ void VM_Guest::flushBuffers(const FlushType option) {
 			break;
 
 		case FlushType::DISPLAY:
-			foregroundBuffer.copyLinear(backgroundBuffer);
+			foregroundBuffer = backgroundBuffer;
 			backgroundBuffer.wipeAll();
 			collisionPalette.wipeAll();
 			renderToTexture();
@@ -706,7 +706,7 @@ void VM_Guest::flushBuffers(const FlushType option) {
 	}
 }
 
-void VM_Guest::loadMegaPalette(const s32 count) {
+void VM_Guest::loadMegaPalette(const s32 count) noexcept {
 	auto index{ mRegisterI };
 	for (auto pos{ 0 }; pos < count; index += 4) {
 		megaPalette[++pos] = readMemory(index + 0) << 24
@@ -723,15 +723,15 @@ void VM_Guest::clearPages() {
 	}
 }
 
-void VM_Guest::setBackgroundColorTo(const u32 color) const {
+void VM_Guest::setBackgroundColorTo(const u32 color) const noexcept {
 	BVS.setFrameColor(color);
 }
 
-void VM_Guest::cycleBackgroundColor() {
+void VM_Guest::cycleBackgroundColor() noexcept {
 	BVS.setFrameColor(Color.BackColors[Color.bgindex++ & 0x3]);
 }
 
-bool VM_Guest::routineCall(const u32 addr) {
+bool VM_Guest::routineCall(const u32 addr) noexcept {
 	mStackBank[mStackTop++ & 0xF] = mProgCounter;
 	mProgCounter = addr;
 	return false;
@@ -742,7 +742,7 @@ bool VM_Guest::routineCall(const u32 addr) {
 	//} else { return true; }
 }
 
-bool VM_Guest::routineReturn() {
+bool VM_Guest::routineReturn() noexcept {
 	mProgCounter = mStackBank[--mStackTop & 0xF];
 	return false;
 	//if (mStackTop > mStackBank) {
@@ -751,7 +751,7 @@ bool VM_Guest::routineReturn() {
 	//} else { return true; }
 }
 
-void VM_Guest::protectPages() {
+void VM_Guest::protectPages() noexcept {
 	Trait.pageGuard = (3 - (mRegisterV[0] - 1 & 0x3)) << 5;
 }
 
@@ -837,7 +837,7 @@ bool VM_Guest::writePermRegs(const usz X) {
 	return false;
 }
 
-void VM_Guest::skipInstruction() {
+void VM_Guest::skipInstruction() noexcept {
 	switch (readMemory(mProgCounter)) {
 		case 0x01:
 			mProgCounter += 4;
@@ -853,19 +853,19 @@ void VM_Guest::skipInstruction() {
 	}
 }
 
-void VM_Guest::skipInstruction_C8() {
-	mProgCounter += 4;
+void VM_Guest::skipInstruction_C8() noexcept {
+	mProgCounter += 2;
 }
 
-void VM_Guest::skipInstruction_MC() {
+void VM_Guest::skipInstruction_MC() noexcept {
 	mProgCounter += readMemory(mProgCounter) == 0x1 ? 4 : 2;
 }
 
-void VM_Guest::skipInstruction_XO() {
+void VM_Guest::skipInstruction_XO() noexcept {
 	mProgCounter += NNNN() == 0xF000 ? 4 : 2;
 }
 
-void VM_Guest::skipInstruction_HW() {
+void VM_Guest::skipInstruction_HW() noexcept {
 	mProgCounter += 2;
 	switch (NNNN()) {
 		case 0xF000: case 0xF100:
@@ -874,14 +874,14 @@ void VM_Guest::skipInstruction_HW() {
 	}
 }
 
-bool VM_Guest::jumpInstruction_C8(const u32 next) {
+bool VM_Guest::jumpInstruction_C8(const u32 next) noexcept {
 	if (mProgCounter - 2 != next) [[likely]] {
 		mProgCounter = next;
 		return false;
 	} else { return true; }
 }
 
-bool VM_Guest::jumpInstruction_8E(const s32 step) {
+bool VM_Guest::jumpInstruction_8E(const s32 step) noexcept {
 	if (step) [[likely]] {
 		mProgCounter += step - 2;
 		return false;
@@ -893,19 +893,19 @@ bool VM_Guest::jumpInstruction_8E(const s32 step) {
 	#pragma region AUDIO GENERATION
 /*==================================================================*/
 
-void VM_Guest::setAudioTone_C8() {
+void VM_Guest::setAudioTone_C8() noexcept {
 	C8.mTone = (160.0f + 8.0f * (
 		(mProgCounter >> 1) + peekStackHead() + 1 & 0x3E)
 	) / BAS.getFrequency();
 }
 
-void VM_Guest::setAudioTone_8X(const u8 pitch) {
+void VM_Guest::setAudioTone_8X(const u8 pitch) noexcept {
 	C8.mTone = (160.0f + (
 		(0xFF - (pitch ? pitch : 0x7F)) >> 3 << 4)
 	) / BAS.getFrequency();
 }
 
-void VM_Guest::renderAudio_C8(std::span<s16> buffer, const s16  amplitude) {
+void VM_Guest::renderAudio_C8(std::span<s16> buffer, const s16  amplitude) noexcept {
 	for (auto& sample_s16 : buffer) {
 		sample_s16 = mWavePhase > 0.5f ? amplitude : -amplitude;
 		mWavePhase = std::fmod(mWavePhase + C8.mTone, 1.0f);
@@ -914,24 +914,24 @@ void VM_Guest::renderAudio_C8(std::span<s16> buffer, const s16  amplitude) {
 
 /*==========================*/
 
-VM_Guest::Audio_XO::Audio_XO(const BasicAudioSpec& BAS)
+VM_Guest::Audio_XO::Audio_XO(const BasicAudioSpec& BAS) noexcept
 	: mStep{ 4000.0f / 128.0f / BAS.getFrequency() }
 	, mTone{ mStep }
 {}
 
-void VM_Guest::setAudioTone_XO(const u8 pitch) {
+void VM_Guest::setAudioTone_XO(const u8 pitch) noexcept {
 	mAudioIsXO = true;
 	XO.mTone = XO.mStep * std::pow(2.0f, (pitch - 64.0f) / 48.0f);
 }
 
-void VM_Guest::fetchPattern_XO() {
+void VM_Guest::fetchPattern_XO() noexcept {
 	mAudioIsXO = true;
 	for (auto idx{ 0 }; idx < 16; ++idx) {
 		XO.mData[idx] = readMemoryI(idx);
 	}
 }
 
-void VM_Guest::renderAudio_XO(std::span<s16> buffer, const s16  amplitude) {
+void VM_Guest::renderAudio_XO(std::span<s16> buffer, const s16  amplitude) noexcept {
 	for (auto& sample_s16 : buffer) {
 		const auto step{ static_cast<s32>(std::clamp(mWavePhase * 128.0f, 0.0f, 127.0f)) };
 		const auto mask{ 1 << (7 ^ step & 7) };
@@ -942,13 +942,13 @@ void VM_Guest::renderAudio_XO(std::span<s16> buffer, const s16  amplitude) {
 
 /*==========================*/
 
-void VM_Guest::resetAudioTrack() {
+void VM_Guest::resetAudioTrack() noexcept {
 	mAudioIsMC   = false;
 	MC.mTrackPos = MC.mStepping =
 	MC.mTrackLen = MC.mMemPoint = 0;
 }
 
-void VM_Guest::startAudioTrack(const bool repeat) {
+void VM_Guest::startAudioTrack(const bool repeat) noexcept {
 
 	MC.mTrackLen = readMemoryI(2) << 16
 				 | readMemoryI(3) <<  8
@@ -966,7 +966,7 @@ void VM_Guest::startAudioTrack(const bool repeat) {
 	MC.mMemPoint = mRegisterI + 6;
 }
 
-void VM_Guest::renderAudio_MC(std::span<s16> buffer, s16 volume) {
+void VM_Guest::renderAudio_MC(std::span<s16> buffer, s16 volume) noexcept {
 	for (auto& sample_s16 : buffer) {
 		sample_s16 = (readMemory(
 			MC.mMemPoint + static_cast<u32>(MC.mTrackPos)

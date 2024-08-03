@@ -352,6 +352,7 @@ void VM_Guest::fontCopyToMemory() {
 
 	// copy the FONT at the desired offset, and omit A-F superchip sprites if needed
 	std::copy_n(
+		std::execution::par_unseq,
 		FONT_DATA, State.schip_legacy ? 180 : 240,
 		mMemoryBank.data()
 	);
@@ -359,6 +360,7 @@ void VM_Guest::fontCopyToMemory() {
 	if (!State.megachip_rom) return;
 
 	std::copy_n(
+		std::execution::par_unseq,
 		MEGA_FONT_DATA, 160,
 		mMemoryBank.data() + 240
 	);

@@ -29,7 +29,7 @@ void HexInput::loadCustomBinds(std::vector<KeyInfo>&& binds) {
 	mKeysPrev = mKeysCurr = mKeysLock = 0;
 }
 
-void HexInput::updateKeyStates() {
+void HexInput::updateKeyStates() noexcept {
 	if (!mCustomBinds.size()) { return; }
 
 	mKeysPrev = mKeysCurr;
@@ -44,7 +44,7 @@ void HexInput::updateKeyStates() {
 	mKeysLoop &= mKeysLock &= ~(mKeysPrev ^ mKeysCurr);
 }
 
-bool HexInput::keyPressed(Uint8& returnKey, const Uint32 tickCount) {
+bool HexInput::keyPressed(Uint8& returnKey, const Uint32 tickCount) noexcept {
 	if (!mCustomBinds.size()) { return false; }
 
 	if (tickCount >= mTickLast + mTickSpan) {
@@ -65,10 +65,10 @@ bool HexInput::keyPressed(Uint8& returnKey, const Uint32 tickCount) {
 	return pressKeys;
 }
 
-bool HexInput::keyHeld_P1(const Uint32 keyIndex) const {
+bool HexInput::keyHeld_P1(const Uint32 keyIndex) const noexcept {
 	return mKeysCurr & ~mKeysLock & 0x01 << (keyIndex & 0xF);
 }
 
-bool HexInput::keyHeld_P2(const Uint32 keyIndex) const {
+bool HexInput::keyHeld_P2(const Uint32 keyIndex) const noexcept {
 	return mKeysCurr & ~mKeysLock & 0x10 << (keyIndex & 0xF);
 }
