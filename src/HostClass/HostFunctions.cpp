@@ -45,11 +45,11 @@ VM_Host::VM_Host(
 	}
 }
 
-bool VM_Host::isReady() const { return _isReady; }
-bool VM_Host::doBench() const { return _doBench; }
+bool VM_Host::isReady() const noexcept { return _isReady; }
+bool VM_Host::doBench() const noexcept { return _doBench; }
 
-void VM_Host::isReady(const bool state) { _isReady = state; }
-void VM_Host::doBench(const bool state) { _doBench = state; }
+void VM_Host::isReady(const bool state) noexcept { _isReady = state; }
+void VM_Host::doBench(const bool state) noexcept { _doBench = state; }
 
 
 bool VM_Host::runHost() {

@@ -25,7 +25,7 @@ public:
 
 	HomeDirManager(const char*);
 
-	void reset();
+	void reset() noexcept;
 	void addDirectory();
 	bool verifyFile(
 		bool (*)(std::uint64_t, std::uint64_t, std::string_view),

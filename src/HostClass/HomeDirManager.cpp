@@ -13,8 +13,8 @@
 
 using namespace blogger;
 
-inline static constexpr std::size_t cexprHash(const char* str, std::size_t v = 0) noexcept {
-	return (*str == 0) ? v : 31 * cexprHash(str + 1) + *str;
+inline static constexpr std::size_t cexprHash(const char* str) noexcept {
+	return (*str == '\0') ? 0 : cexprHash(str + 1) * 31 + *str;
 }
 
 HomeDirManager::HomeDirManager(const char* homeName) try
@@ -33,7 +33,7 @@ HomeDirManager::HomeDirManager(const char* homeName) try
 	throw;
 }
 
-void HomeDirManager::reset() {
+void HomeDirManager::reset() noexcept {
 	path = name = type = sha1 = {};
 	size = hash = 0;
 }
@@ -50,7 +50,7 @@ bool HomeDirManager::verifyFile(
 	bool (*validate)(std::uint64_t hash, std::uint64_t fsize, std::string_view sha1),
 	const char* filepath
 ) {
-	if (!filepath) return false;
+	if (!filepath) { return false; }
 	namespace fs = std::filesystem;
 
 	const fs::path fspath{ filepath };

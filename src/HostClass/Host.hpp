@@ -23,10 +23,10 @@ class alignas(64) VM_Host final {
 	BasicVideoSpec& BVS;
 	BasicAudioSpec& BAS;
 
-	[[nodiscard]] bool isReady() const;
-	[[nodiscard]] bool doBench() const;
-	void isReady(bool);
-	void doBench(bool);
+	[[nodiscard]] bool isReady() const noexcept;
+	[[nodiscard]] bool doBench() const noexcept;
+	void isReady(bool) noexcept;
+	void doBench(bool) noexcept;
 
 	void prepareGuest(std::optional<VM_Guest>&, FrameLimiter&);
 	bool eventLoopSDL(std::optional<VM_Guest>&, FrameLimiter&);
