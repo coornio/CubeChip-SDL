@@ -43,18 +43,12 @@ struct FncSetInterface {
 /*  derived class  FunctionsForGigachip                             */
 /*------------------------------------------------------------------*/
 
-class FunctionsForGigachip final : public FncSetInterface {
+class alignas(32) FunctionsForGigachip final : public FncSetInterface {
 	VM_Guest& vm;
 
-	f32 (*blendAlgo)(f32, f32) {};
+	f32(*blendAlgo)(f32, f32) noexcept {};
 
 public:
-	enum Trait {
-		RGB, BRG, GBR,
-		RBG, GRB, BGR,
-		GRAY, SEPIA,
-	};
-
 	enum Blend {
 		NORMAL,
 		LIGHTEN_ONLY, SCREEN,   COLOR_DODGE, LINEAR_DODGE,
@@ -83,7 +77,7 @@ private:
 	) override {};
 
 public:
-	void chooseBlend(usz);
+	void chooseBlend(usz) noexcept;
 	explicit FunctionsForGigachip(VM_Guest&) noexcept;
 };
 
@@ -91,10 +85,10 @@ public:
 /*  derived class  FunctionsForMegachip                             */
 /*------------------------------------------------------------------*/
 
-class FunctionsForMegachip final : public FncSetInterface {
+class alignas(32) FunctionsForMegachip final : public FncSetInterface {
 	VM_Guest& vm;
 
-	f32 (*blendAlgo)(f32, f32) noexcept {};
+	f32(*blendAlgo)(f32, f32) noexcept {};
 
 	void blendBuffersToTexture(std::span<const u32>, std::span<const u32>);
 

@@ -24,6 +24,7 @@ FunctionsForMegachip::FunctionsForMegachip(VM_Guest& parent) noexcept
 }
 
 struct ColorF { f32 A, R, G, B; };
+static constexpr f32 minF{ 1.0f / 255.0f };
 
 /*------------------------------------------------------------------*/
 
@@ -58,13 +59,12 @@ void FunctionsForMegachip::scrollRT(const s32 N) {
 
 /*------------------------------------------------------------------*/
 
-static u32 blendPixel(
+static inline u32 blendPixel(
 	const u32 srcPixel, const u32 dstPixel, const f32 alpha,
-	f32(*blend)(const f32, const f32)
+	f32(*blend)(const f32, const f32) noexcept
 ) noexcept {
-	static constexpr f32 minF{ 1.0f / 255.0f };
 	ColorF src, dst;
-
+	
 	src.A =  (srcPixel >> 24) * alpha * minF;
 	if (src.A < minF) [[unlikely]] { return dstPixel; }
 	src.R = ((srcPixel >> 16) & 0xFF) * minF;
