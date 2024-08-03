@@ -31,14 +31,11 @@ class alignas(64) VM_Guest final {
 
 private:
 	FunctionsForGigachip SetGigachip{ *this }; friend class FunctionsForGigachip;
-	u32 __PADDING1[10]{};
 	FunctionsForMegachip SetMegachip{ *this }; friend class FunctionsForMegachip;
-	u32 __PADDING2[10]{};
 	FunctionsForModernXO SetModernXO{ *this }; friend class FunctionsForModernXO;
 	FunctionsForLegacySC SetLegacySC{ *this }; friend class FunctionsForLegacySC;
 	FunctionsForClassic8 SetClassic8{ *this }; friend class FunctionsForClassic8;
 	FncSetInterface* currFncSet{ &SetClassic8 }; // whole segment to be deprecated
-	u32 __PADDING3[2]{};
 
 	HomeDirManager& HDM;
 	BasicVideoSpec& BVS;
@@ -211,7 +208,6 @@ private:
 	bool mAudioIsXO{};
 	bool mAudioIsMC{};
 
-	u32 __PADDING4[1]{};
 	f32  mWavePhase{};
 
 	struct Audio_C8 final {
@@ -356,7 +352,6 @@ private:
 		bool nodraw{};
 		bool uneven{};
 		f32  alpha{ 1.0f };
-		u32 __PADDING5[11]{};
 	} Texture;
 
 	void setTextureFlags(const usz bits) {

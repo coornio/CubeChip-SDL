@@ -365,13 +365,12 @@ void VM_Guest::fontCopyToMemory() {
 }
 
 void VM_Guest::renderToTexture() {
-	//auto pixelSpan{ std::span(BVS.lockTexture(), Trait.S) };
-	
 	if (isManualRefresh()) {
 		std::copy_n(
 			std::execution::par_unseq,
 			foregroundBuffer.data(),
-			Trait.S, BVS.lockTexture());
+			Trait.S, BVS.lockTexture()
+		);
 	}
 	else if (isPixelBitColor()) {
 		auto* pixels{ BVS.lockTexture() };
