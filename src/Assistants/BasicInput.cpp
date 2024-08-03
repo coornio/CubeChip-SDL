@@ -24,7 +24,7 @@ void BasicKeyboard::updateCopy() {
 		std::execution::par_unseq,
 		SDL_GetKeyboardState(nullptr),
 		SDL_NUM_SCANCODES,
-		oldState.begin()
+		oldState
 	);
 }
 

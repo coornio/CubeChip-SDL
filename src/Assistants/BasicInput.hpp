@@ -10,7 +10,6 @@
 #include <SDL3/SDL_scancode.h>
 #include <SDL3/SDL_mouse.h>
 
-#include <vector>
 #include <memory>
 
 #define KEY(i) SDL_SCANCODE_##i
@@ -28,11 +27,11 @@ enum BIC_Button {
 /*  singleton class  Keyboard                                       */
 /*------------------------------------------------------------------*/
 
-class BasicKeyboard final {
+class alignas(512) BasicKeyboard final {
 	static std::unique_ptr<BasicKeyboard> _self;
-	std::vector<Uint8> oldState;
+	Uint8 oldState[SDL_NUM_SCANCODES]{};
 
-	BasicKeyboard() : oldState(SDL_NUM_SCANCODES) {};
+	BasicKeyboard() {};
 	BasicKeyboard(const BasicKeyboard&) = delete;
 	BasicKeyboard& operator=(const BasicKeyboard&) = delete;
 	friend std::unique_ptr<BasicKeyboard> std::make_unique<BasicKeyboard>();
@@ -73,7 +72,7 @@ public:
 /*  singleton class  Mouse                                          */
 /*------------------------------------------------------------------*/
 
-class BasicMouse final {
+class alignas(8) BasicMouse final {
 	static std::unique_ptr<BasicMouse> _self;
 	Uint32 curState{}, oldState{};
 	float posX{}, posY{};
