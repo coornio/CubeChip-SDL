@@ -1670,7 +1670,7 @@ public:
 	#pragma endregion
 
 private:
-	#pragma region Raw Iterator begin/end
+	#pragma region Raw Iterators (private)
 	T* mBegin()  const noexcept { return pData.get(); }
 	T* mEnd()    const noexcept { return pData.get() + size(); }
 
@@ -1679,7 +1679,22 @@ private:
 	#pragma endregion
 
 public:
-	#pragma region Iterator begin/end
+	#pragma region Raw Iterators (public)
+	T* raw_begin() const noexcept { return mBegin(); }
+	T* raw_end()   const noexcept { return mEnd(); }
+
+	T* raw_rbegin() const noexcept { return mBeginR(); }
+	T* raw_rend()   const noexcept { return mEndR(); }
+
+	const T* raw_cbegin() const noexcept { return raw_begin(); }
+	const T* raw_cend()   const noexcept { return raw_end(); }
+
+	const T* raw_crbegin() const noexcept { return raw_rbegin(); }
+	const T* raw_crend()   const noexcept { return raw_rend(); }
+	#pragma endregion
+
+public:
+	#pragma region RowIterator Iterators
 	RowIterator begin() const noexcept { return RowIterator(mBegin(), mCols); }
 	RowIterator end()   const noexcept { return RowIterator(mEnd(), mCols); }
 
