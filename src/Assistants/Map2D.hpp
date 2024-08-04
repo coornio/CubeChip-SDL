@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <memory>
 #include <algorithm>
+#include <execution>
 #include <vector>
 #include <stdexcept>
 #include <utility>
@@ -464,9 +465,9 @@ class Map2D final {
 	std::unique_ptr<T[]> pData;
 
 public:
-	paramU size() const { return mRows * mCols; }
-	paramS lenX() const { return mCols; }
-	paramS lenY() const { return mRows; }
+	paramU size() const noexcept { return mRows * mCols; }
+	paramS lenX() const noexcept { return mCols; }
+	paramS lenY() const noexcept { return mRows; }
 
 	T& front() { return pData[0]; }
 	T& back()  { return pData[size() - 1]; }
@@ -582,7 +583,10 @@ private:
 		 * @return Self reference for method chaining.
 		 */
 		RowProxy& wipeAll() requires arithmetic<T> {
-			std::fill(begin(), end(), T());
+			std::fill(
+				std::execution::par_unseq,
+				begin(), end(), T()
+			);
 			return *this;
 		}
 		#pragma endregion
@@ -601,16 +605,22 @@ private:
 			const integral auto cols
 		) requires arithmetic<T> {
 			if (!colValidAbs(cols)) {
-				wipeAll();
+				return wipeAll();
+			}
+			if (cols == 0) {
+				return *this;
+			}
+			const auto _cols{ static_cast<paramS>(cols) };
+			if (_cols < 0) {
+				std::fill(
+					std::execution::par_unseq,
+					end() + _cols, end(), T()
+				);
 			} else {
-				const auto _cols{ static_cast<paramS>(cols) };
-				if (_cols) {
-					if (_cols < 0) {
-						std::fill(end() - std::abs(_cols), end(), T());
-					} else {
-						std::fill(begin(), begin() + std::abs(_cols), T());
-					}
-				}
+				std::fill(
+					std::execution::par_unseq,
+					begin(), begin() + _cols, T()
+				);
 			}
 			return *this;
 		}
@@ -628,13 +638,20 @@ private:
 		RowProxy& rotate(
 			const integral auto cols
 		) {
+			if (cols == 0) {
+				return *this;
+			}
 			const auto _cols{ static_cast<paramS>(cols) };
-			if (_cols) {
-				if (_cols < 0) {
-					std::rotate(begin(), begin() + std::abs(_cols) % mLength, end());
-				} else {
-					std::rotate(begin(), end() - std::abs(_cols) % mLength, end());
-				}
+			if (_cols < 0) {
+				std::rotate(
+					std::execution::par_unseq,
+					begin(), begin() + (-_cols % mLength), end()
+				);
+			} else {
+				std::rotate(
+					std::execution::par_unseq,
+					begin(), end() - (_cols % mLength), end()
+				);
 			}
 			return *this;
 		}
@@ -654,10 +671,32 @@ private:
 		RowProxy& shift(
 			const integral auto cols
 		) requires arithmetic<T> {
-			if (colValidAbs(cols)) {
-				rotate(cols);
+			if (cols == 0) {
+				return *this;
 			}
-			return wipe(cols);
+			const auto _cols{ static_cast<paramS>(cols) };
+			if (_cols < 0) {
+				std::fill(
+					std::execution::par_unseq,
+					std::shift_left(
+						std::execution::par_unseq,
+						begin(), end(), -_cols
+					),
+					end(),
+					T()
+				);
+			} else {
+				std::fill(
+					std::execution::par_unseq,
+					begin(),
+					std::shift_right(
+						std::execution::par_unseq,
+						begin(), end(), _cols
+					),
+					T()
+				);
+			}
+			return *this;
 		}
 		#pragma endregion
 		
@@ -667,7 +706,10 @@ private:
 		 * @return Self reference for method chaining.
 		 */
 		RowProxy& reverse() {
-			std::reverse(begin(), end());
+			std::reverse(
+				std::execution::par_unseq,
+				begin(), end()
+			);
 			return *this;
 		}
 		#pragma endregion
@@ -721,7 +763,10 @@ private:
 		RowProxy& operator=(
 			const arithmetic auto& value
 		) requires arithmetic<T> {
-			std::fill(begin(), end(), static_cast<T>(value));
+			std::fill(
+				std::execution::par_unseq,
+				begin(), end(), static_cast<T>(value)
+			);
 			return *this;
 		}
 		RowProxy& operator=(
@@ -729,21 +774,30 @@ private:
 		) requires arithmetic<T> {
 			if (this == &other) [[unlikely]] return *this;
 			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
-			std::copy(other.begin(), other.begin() + len, mBegin);
+			std::copy(
+				std::execution::par_unseq,
+				other.begin(), other.begin() + len, mBegin
+			);
 			return *this;
 		}
 		RowProxy& operator=(
 			MapRow<T>&& other
 		) requires arithmetic<T> {
 			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
-			std::move(other.begin(), other.begin() + len, mBegin);
+			std::move(
+				std::execution::par_unseq,
+				other.begin(), other.begin() + len, mBegin
+			);
 			return *this;
 		}
 		RowProxy& operator=(
 			const MapRow<T>& other
 		) requires arithmetic<T> {
 			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
-			std::copy(other.begin(), other.begin() + len, mBegin);
+			std::copy(
+				std::execution::par_unseq,
+				other.begin(), other.begin() + len, mBegin
+			);
 			return *this;
 		}
 		#pragma endregion
@@ -1148,7 +1202,10 @@ public:
 			other.mCols
 		}
 	{
-		std::copy(other.mBegin(), other.mEnd(), mBegin());
+		std::copy(
+			std::execution::par_unseq,
+			other.mBegin(), other.mEnd(), mBegin()
+		);
 	}
 	#pragma endregion
 
@@ -1156,7 +1213,10 @@ public:
 	Map2D& operator=(Map2D&&) = default;   // move assignment
 	Map2D& operator=(const Map2D& other) { // copy assignment
 		if (this != &other && size() == other.size()) {
-			std::copy(other.mBegin(), other.mEnd(), mBegin());
+			std::copy(
+				std::execution::par_unseq,
+				other.mBegin(), other.mEnd(), mBegin()
+			);
 			mRows = other.lenY(); mCols = other.lenX();
 		}
 		return *this;
@@ -1327,7 +1387,10 @@ public:
 		const Map2D& other
 	) requires arithmetic<T> {
 		const auto _len{ std::min(size(), other.size())};
-		std::copy_n(other.mBegin(), _len, mBegin());
+		std::copy_n(
+			std::execution::par_unseq,
+			other.mBegin(), _len, mBegin()
+		);
 		return *this;
 	}
 	#pragma endregion
@@ -1348,7 +1411,10 @@ public:
 		const integral auto len
 	) requires arithmetic<T> {
 		const auto _len{ static_cast<paramU>(std::abs(len)) };
-		std::copy_n(other, std::min(_len, size()), mBegin());
+		std::copy_n(
+			std::execution::par_unseq,
+			other, std::min(_len, size()), mBegin()
+		);
 		return *this;
 	}
 	#pragma endregion
@@ -1406,7 +1472,10 @@ private:
 		for (auto row{ 0 }; row < minRows; ++row) {
 			const auto srcIdx{ pData.get() + row * mCols };
 			const auto dstIdx{ pCopy.get() + row * cols };
-			std::move(srcIdx, srcIdx + minCols, dstIdx);
+			std::move(
+				std::execution::par_unseq,
+				srcIdx, srcIdx + minCols, dstIdx
+			);
 		}
 
 		mRows = rows;
@@ -1437,7 +1506,10 @@ public:
 	 * @return Self reference for method chaining.
 	 */
 	Map2D& wipeAll() requires arithmetic<T> {
-		std::fill(mBegin(), mEnd(), T());
+		std::fill(
+			std::execution::par_unseq,
+			mBegin(), mEnd(), T()
+		);
 		return *this;
 	}
 	#pragma endregion
@@ -1462,14 +1534,20 @@ public:
 		} else {
 			const auto _rows{ static_cast<paramS>(rows) };
 			const auto _cols{ static_cast<paramS>(cols) };
-			if (_rows) {
+			if (_rows != 0) {
 				if (_rows < 0) {
-					std::fill(mEnd() + _rows * mCols, mEnd(), T());
+					std::fill(
+						std::execution::par_unseq,
+						mEnd() + _rows * mCols, mEnd(), T()
+					);
 				} else {
-					std::fill(mBegin(), mBegin() + _rows * mCols, T());
+					std::fill(
+						std::execution::par_unseq,
+						mBegin(), mBegin() + _rows * mCols, T()
+					);
 				}
 			}
-			if (_cols) {
+			if (_cols != 0) {
 				for (auto& row : *this) {
 					row.wipe(_cols);
 				}
@@ -1497,9 +1575,15 @@ public:
 		const auto _cols{ static_cast<paramS>(cols) };
 		if (_rows % mRows) {
 			if (_rows < 0) {
-				std::rotate(mBegin(), mBegin() - _rows * mCols, mEnd());
+				std::rotate(
+					std::execution::par_unseq,
+					mBegin(), mBegin() - _rows * mCols, mEnd()
+				);
 			} else {
-				std::rotate(mBegin(), mEnd() - _rows * mCols, mEnd());
+				std::rotate(
+					std::execution::par_unseq,
+					mBegin(), mEnd() - _rows * mCols, mEnd()
+				);
 			}
 		}
 		if (_cols % mCols) {
@@ -1527,10 +1611,41 @@ public:
 		const integral auto rows,
 		const integral auto cols
 	) requires arithmetic<T> {
-		if (rowValidAbs(rows) && colValidAbs(cols)) {
-			rotate(rows, cols);
+		if (!rowValidAbs(rows) || !colValidAbs(cols)) {
+			wipeAll();
+		} else {
+			const auto _rows{ static_cast<paramS>(rows) };
+			const auto _cols{ static_cast<paramS>(cols) };
+			if (_rows != 0) {
+				if (_rows < 0) {
+					std::fill(
+						std::execution::par_unseq,
+						std::shift_left(
+							std::execution::par_unseq,
+							mBegin(), mEnd(), -_rows * mCols
+						),
+						mEnd(),
+						T()
+					);
+				} else {
+					std::fill(
+						std::execution::par_unseq,
+						mBegin(),
+						std::shift_right(
+							std::execution::par_unseq,
+							mBegin(), mEnd(), _rows * mCols
+						),
+						T()
+					);
+				}
+			}
+			if (_cols != 0) {
+				for (auto& row : *this) {
+					row.shift(_cols);
+				}
+			}
 		}
-		return wipe(rows, cols);
+		return *this;
 	}
 	#pragma endregion
 	
@@ -1540,7 +1655,10 @@ public:
 	 * @return Self reference for method chaining.
 	 */
 	Map2D& reverse() {
-		std::reverse(mBegin(), mEnd());
+		std::reverse(
+			std::execution::par_unseq,
+			mBegin(), mEnd()
+		);
 		return *this;
 	}
 	#pragma endregion
@@ -1565,7 +1683,10 @@ public:
 	 */
 	Map2D& reverseX() {
 		for (auto& row : *this) {
-			std::reverse(row.begin(), row.end());
+			std::reverse(
+				std::execution::par_unseq,
+				row.begin(), row.end()
+			);
 		}
 		return *this;
 	}
