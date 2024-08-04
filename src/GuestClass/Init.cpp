@@ -427,9 +427,9 @@ void VM_Guest::renderToTexture() {
 		}
 	}
 	else {
-		auto* pixels{ BVS.lockTexture() };
 		BVS.setFrameColor(Color.bit[0]);
 		if (isPixelTrailing()) {
+			auto* pixels{ BVS.lockTexture() };
 			for (auto idx{ 0 }; idx < Trait.S; ++idx) {
 				if (displayBuffer[0].at_raw(idx)) {
 					pixels[idx] = (0xFF << 24 | Color.bit[1]);
@@ -454,20 +454,15 @@ void VM_Guest::renderToTexture() {
 			displayBuffer[2] = displayBuffer[1];
 			displayBuffer[1] = displayBuffer[0];
 		} else {
-			const auto displaySpan{ displayBuffer[0].span() };
-
 			std::transform(
 				std::execution::par_unseq,
-				displayBuffer[0].raw_begin(), displayBuffer[0].raw_end(), pixels,
+				displayBuffer[0].raw_begin(),
+				displayBuffer[0].raw_end(),
+				BVS.lockTexture(),
 				[this](const u32 value) {
 					return 0xFF << 24 | Color.bit[value];
 				}
 			);
-			//for (auto idx{ 0 }; idx < Trait.S; ++idx) {
-			//	pixels[idx] = (0xFF << 24 | Color.bit[
-			//		displayBuffer[0].at_raw(idx)
-			//	]);
-			//}
 		}
 	}
 	BVS.unlockTexture();
