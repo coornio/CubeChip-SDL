@@ -37,8 +37,8 @@ VM_Guest::VM_Guest(
 	_initHexColors();
 }
 
-bool VM_Guest::isSystemPaused() const { return mSystemPaused || mCyclesPerFrame == 0; }
-void VM_Guest::isSystemPaused(const bool state) { mSystemPaused = state; }
+bool VM_Guest::isSystemStopped() const { return mSystemStopped || mCyclesPerFrame == 0; }
+void VM_Guest::isSystemStopped(const bool state) { mSystemStopped = state; }
 
 void VM_Guest::instructionLoop() {
 
@@ -606,7 +606,7 @@ void VM_Guest::triggerOpcodeError(const u32 opcode) {
 }
 
 void VM_Guest::processFrame() {
-	if (isSystemPaused()) { return; }
+	if (isSystemStopped()) { return; }
 	else { ++mTotalFrames; }
 
 	Input.updateKeyStates();
@@ -623,9 +623,9 @@ void VM_Guest::processFrame() {
 
 	renderAudioData();
 
-	if (!isManualRefresh()) {
-		renderToTexture();
-	}
+	if (isManualRefresh()) { return; }
+
+	renderToTexture();
 }
 
 void VM_Guest::handleFrameWait() noexcept {

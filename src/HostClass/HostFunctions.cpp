@@ -180,11 +180,11 @@ bool VM_Host::eventLoopSDL(std::optional<VM_Guest>& Guest, FrameLimiter& Frame) 
 				break;
 
 			case SDL_EVENT_WINDOW_MINIMIZED:
-				if (Guest) { Guest->isSystemPaused(true); }
+				if (Guest) { Guest->isSystemStopped(true); }
 				break;
 
 			case SDL_EVENT_WINDOW_RESTORED:
-				if (Guest) { Guest->isSystemPaused(false); }
+				if (Guest) { Guest->isSystemStopped(false); }
 				break;
 		}
 	}

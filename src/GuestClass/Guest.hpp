@@ -74,12 +74,12 @@ private:
 	using enum Interrupt;
 	Interrupt mInterruptType{ CLEAR };
 
-	bool mSystemPaused{};
+	bool mSystemStopped{};
 
 public:
 	[[nodiscard]]
-	bool isSystemPaused(void) const;
-	void isSystemPaused(bool);
+	bool isSystemStopped(void) const;
+	void isSystemStopped(bool);
 
 	bool islegacyPlatform() const {
 		return State.chip8E_rom
