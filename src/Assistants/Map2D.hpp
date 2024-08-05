@@ -556,8 +556,7 @@ private:
 		 * @return Vector of the same type.
 		 */
 		MapRow<T> clone() const requires arithmetic<T> {
-			MapRow<T> rowCopy(mBegin, mBegin + mLength);
-			return rowCopy;
+			return MapRow<T>(mBegin, mBegin + mLength);
 		}
 		#pragma endregion
 		
@@ -605,22 +604,22 @@ private:
 			const integral auto cols
 		) requires arithmetic<T> {
 			if (!colValidAbs(cols)) {
-				return wipeAll();
-			}
-			if (cols == 0) {
-				return *this;
-			}
-			const auto _cols{ static_cast<paramS>(cols) };
-			if (_cols < 0) {
-				std::fill(
-					std::execution::par_unseq,
-					end() + _cols, end(), T()
-				);
+				wipeAll();
 			} else {
-				std::fill(
-					std::execution::par_unseq,
-					begin(), begin() + _cols, T()
-				);
+				const auto _cols{ static_cast<paramS>(cols) };
+				if (_cols) {
+					if (_cols < 0) {
+						std::fill(
+							std::execution::par_unseq,
+							end() + _cols, end(), T()
+						);
+					} else {
+						std::fill(
+							std::execution::par_unseq,
+							begin(), begin() + _cols, T()
+						);
+					}
+				}
 			}
 			return *this;
 		}
@@ -638,20 +637,19 @@ private:
 		RowProxy& rotate(
 			const integral auto cols
 		) {
-			if (cols == 0) {
-				return *this;
-			}
 			const auto _cols{ static_cast<paramS>(cols) };
-			if (_cols < 0) {
-				std::rotate(
-					std::execution::par_unseq,
-					begin(), begin() + (-_cols % mLength), end()
-				);
-			} else {
-				std::rotate(
-					std::execution::par_unseq,
-					begin(), end() - (_cols % mLength), end()
-				);
+			if (_cols) {
+				if (_cols < 0) {
+					std::rotate(
+						std::execution::par_unseq,
+						begin(), begin() + std::abs(_cols) % mLength, end()
+					);
+				} else {
+					std::rotate(
+						std::execution::par_unseq,
+						begin(), end() - std::abs(_cols) % mLength, end()
+					);
+				}
 			}
 			return *this;
 		}
@@ -671,32 +669,10 @@ private:
 		RowProxy& shift(
 			const integral auto cols
 		) requires arithmetic<T> {
-			if (cols == 0) {
-				return *this;
+			if (colValidAbs(cols)) {
+				rotate(cols);
 			}
-			const auto _cols{ static_cast<paramS>(cols) };
-			if (_cols < 0) {
-				std::fill(
-					std::execution::par_unseq,
-					std::shift_left(
-						std::execution::par_unseq,
-						begin(), end(), -_cols
-					),
-					end(),
-					T()
-				);
-			} else {
-				std::fill(
-					std::execution::par_unseq,
-					begin(),
-					std::shift_right(
-						std::execution::par_unseq,
-						begin(), end(), _cols
-					),
-					T()
-				);
-			}
-			return *this;
+			return wipe(cols);
 		}
 		#pragma endregion
 		
@@ -1534,7 +1510,7 @@ public:
 		} else {
 			const auto _rows{ static_cast<paramS>(rows) };
 			const auto _cols{ static_cast<paramS>(cols) };
-			if (_rows != 0) {
+			if (_rows) {
 				if (_rows < 0) {
 					std::fill(
 						std::execution::par_unseq,
@@ -1547,7 +1523,7 @@ public:
 					);
 				}
 			}
-			if (_cols != 0) {
+			if (_cols) {
 				for (auto& row : *this) {
 					row.wipe(_cols);
 				}
@@ -1611,41 +1587,10 @@ public:
 		const integral auto rows,
 		const integral auto cols
 	) requires arithmetic<T> {
-		if (!rowValidAbs(rows) || !colValidAbs(cols)) {
-			wipeAll();
-		} else {
-			const auto _rows{ static_cast<paramS>(rows) };
-			const auto _cols{ static_cast<paramS>(cols) };
-			if (_rows != 0) {
-				if (_rows < 0) {
-					std::fill(
-						std::execution::par_unseq,
-						std::shift_left(
-							std::execution::par_unseq,
-							mBegin(), mEnd(), -_rows * mCols
-						),
-						mEnd(),
-						T()
-					);
-				} else {
-					std::fill(
-						std::execution::par_unseq,
-						mBegin(),
-						std::shift_right(
-							std::execution::par_unseq,
-							mBegin(), mEnd(), _rows * mCols
-						),
-						T()
-					);
-				}
-			}
-			if (_cols != 0) {
-				for (auto& row : *this) {
-					row.shift(_cols);
-				}
-			}
+		if (rowValidAbs(rows) && colValidAbs(cols)) {
+			rotate(rows, cols);
 		}
-		return *this;
+		return wipe(rows, cols);
 	}
 	#pragma endregion
 	
