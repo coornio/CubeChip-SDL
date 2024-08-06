@@ -167,7 +167,7 @@ void VM_Guest::instructionLoop() {
 								[[unlikely]] default: triggerOpcodeError(mInstruction);
 							} break;
 							case 0x1:					// 01NN - set I to NN'NNNN *MEGACHIP*
-								mRegisterI = LO << 16 | NNNN();
+								mRegisterI = (LO << 16) | NNNN();
 								mProgCounter += 2;
 								break;
 							case 0x2:					// 02NN - load NN palette colors from RAM at I *MEGACHIP*
@@ -183,15 +183,15 @@ void VM_Guest::instructionLoop() {
 								BVS.setTextureAlpha(LO);
 								break;
 							case 0x6:					// 060N - start digital sound from RAM at I, repeat if N == 0 *MEGACHIP*
-								if (Y) { triggerOpcodeError(mInstruction); }
+								if (Y) [[unlikely]] { triggerOpcodeError(mInstruction); }
 								else { startAudioTrack(N == 0); }
 								break;
 							case 0x7:					// 0700 - stop digital sound *MEGACHIP*
-								if (LO) { triggerOpcodeError(mInstruction); }
+								if (LO) [[unlikely]] { triggerOpcodeError(mInstruction); }
 								else { resetAudioTrack(); }
 								break;
 							case 0x8:					// 080N - set trait flags to VF, blend mode to N *GIGACHIP*
-								if (Y) { triggerOpcodeError(mInstruction); }
+								if (Y) [[unlikely]] { triggerOpcodeError(mInstruction); }
 								else if (State.gigachip_rom) {
 									setTextureFlags(mRegisterV[0xF]);
 									SetGigachip.chooseBlend(N);
@@ -423,7 +423,7 @@ void VM_Guest::instructionLoop() {
 						);
 					}
 				} else {								// BXNN - jump to NNN + V0 (else VX *SCHIP*)
-					const auto addr{ NNN() + (Quirk.jmpRegX ? mRegisterV[X] : mRegisterV[0])};
+					const auto addr{ NNN() + (Quirk.jmpRegX ? mRegisterV[X] : mRegisterV[0]) };
 					if (jumpInstruction_C8(addr)) [[unlikely]]
 						{ setInterrupt(Interrupt::SOUND); }
 				}
