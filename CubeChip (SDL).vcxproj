@@ -176,7 +176,7 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
-      <DisableSpecificWarnings>4324,4619;4061;4062;4365;4623;4625;4626;4668;4710;4711;4820;5026;5027;5031;5032;5045;4514;4464;5219;4800;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4324;4619;4061;4062;4365;4623;4625;4626;4668;4710;4711;4820;5026;5027;5031;5032;5045;4514;4464;5219;4800;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

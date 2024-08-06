@@ -167,7 +167,7 @@ void VM_Guest::instructionLoop() {
 								[[unlikely]] default: triggerOpcodeError(mInstruction);
 							} break;
 							case 0x1:					// 01NN - set I to NN'NNNN *MEGACHIP*
-								mRegisterI = (LO << 16) | NNNN();
+								mRegisterI = LO << 16 | NNNN();
 								mProgCounter += 2;
 								break;
 							case 0x2:					// 02NN - load NN palette colors from RAM at I *MEGACHIP*
@@ -183,14 +183,17 @@ void VM_Guest::instructionLoop() {
 								BVS.setTextureAlpha(LO);
 								break;
 							case 0x6:					// 060N - start digital sound from RAM at I, repeat if N == 0 *MEGACHIP*
-								startAudioTrack(N == 0);
+								if (Y) { triggerOpcodeError(mInstruction); }
+								else { startAudioTrack(N == 0); }
 								break;
 							case 0x7:					// 0700 - stop digital sound *MEGACHIP*
-								resetAudioTrack();
+								if (LO) { triggerOpcodeError(mInstruction); }
+								else { resetAudioTrack(); }
 								break;
-							case 0x8:					// 08YN - set trait flags to VY (Y > 0), blend mode to N *GIGACHIP*
-								if (State.gigachip_rom) {
-									setTextureFlags(mRegisterV[Y]);
+							case 0x8:					// 080N - set trait flags to VF, blend mode to N *GIGACHIP*
+								if (Y) { triggerOpcodeError(mInstruction); }
+								else if (State.gigachip_rom) {
+									setTextureFlags(mRegisterV[0xF]);
 									SetGigachip.chooseBlend(N);
 								} else {				// 080N - set blend mode to N *MEGACHIP*
 									static constexpr float alpha[]{ 1.0f, 0.25f, 0.50f, 0.75f };
@@ -244,8 +247,8 @@ void VM_Guest::instructionLoop() {
 				case 0x0:								// 5XY0 - skip next instruction if VX == VY
 					if (mRegisterV[X] == mRegisterV[Y]) { skipInstruction(); }
 					break;
-				case 0x1:								// 5XY1 - skip next instruction if VX > VY *CHIP-8E*
-					if (!State.chip8X_rom) {
+				case 0x1:
+					if (!State.chip8X_rom) {			// 5XY1 - skip next instruction if VX > VY *CHIP-8E*
 						if (mRegisterV[X] > mRegisterV[Y]) { skipInstruction(); }
 					} else {							// 5XY1 - add nibbles of VX,VY and modulo 8 to VX *CHIP-8X*
 						const auto mask{ isLoresExtended() ? 0x77 : 0xFF};
@@ -261,7 +264,7 @@ void VM_Guest::instructionLoop() {
 								writeMemory(mRegisterV[Z], mRegisterI++);
 							}
 						} else [[unlikely]]
-							{ setInterrupt(Interrupt::FRAME); }
+							{ triggerOpcodeError(mInstruction); }
 					} else {							// 5XY2 - store range of registers to memory *XOCHIP*
 						const auto dist{ std::abs(X - Y) + 1 };
 						if (X < Y) {
@@ -282,7 +285,7 @@ void VM_Guest::instructionLoop() {
 								mRegisterV[Z] = readMemory(mRegisterI++);
 							}
 						} else [[unlikely]]
-							{ setInterrupt(Interrupt::FRAME); }
+							{ triggerOpcodeError(mInstruction); }
 					} else {							// 5XY3 - load range of registers from memory *XOCHIP*
 						const auto dist{ std::abs(X - Y) + 1 };
 						if (X < Y) {
@@ -394,23 +397,27 @@ void VM_Guest::instructionLoop() {
 				mRegisterI = NNN();
 				break;
 			case 0xB: {
-				if (State.chip8E_rom) switch (X) {
-					case 0xB:							// BBNN - jump to current PC - NN *CHIP-8E*
-						if (jumpInstruction_8E(-LO)) [[unlikely]]
-							{ setInterrupt(Interrupt::SOUND); }
-						break;
-					case 0xF:							// BFNN - jump to current PC + NN *CHIP-8E*
-						if (jumpInstruction_8E(+LO)) [[unlikely]]
-							{ setInterrupt(Interrupt::SOUND); }
-						break;
-					[[unlikely]] default: triggerOpcodeError(mInstruction);
+				if (State.chip8E_rom) {
+					switch (X) {
+						case 0xB:						// BBNN - jump to current PC - NN *CHIP-8E*
+							if (jumpInstruction_8E(-LO)) [[unlikely]]
+								{ setInterrupt(Interrupt::SOUND); }
+							break;
+						case 0xF:						// BFNN - jump to current PC + NN *CHIP-8E*
+							if (jumpInstruction_8E(+LO)) [[unlikely]]
+								{ setInterrupt(Interrupt::SOUND); }
+							break;
+						[[unlikely]] default: triggerOpcodeError(mInstruction);
+					}
 				}
-				else if (State.chip8X_rom) {			// BXYN - set foreground color *CHIP-8X*
-					if (N) {
+				else if (State.chip8X_rom) {
+					if (X == 0xF) [[unlikely]] {
+						triggerOpcodeError(mInstruction);
+					} else if (N) {						// BXYN - set foreground hires color *CHIP-8X*
 						currFncSet->drawHiresColor(
 							mRegisterV[X], mRegisterV[X + 1], mRegisterV[Y] & 0x7, N
 						);
-					} else {
+					} else {							// BXY0 - set foreground lores color *CHIP-8X*
 						currFncSet->drawLoresColor(
 							mRegisterV[X], mRegisterV[X + 1], mRegisterV[Y] & 0x7
 						);
