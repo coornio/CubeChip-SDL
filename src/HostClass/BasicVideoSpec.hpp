@@ -48,8 +48,8 @@ public:
 	u32  getOutlineUnlitColor() const noexcept { return frameColor[2]; }
 
 	void setFrameColor       (const u32 color) noexcept { frameColor[0] = color; }
-	void setOutlineLitColor  (const u32 color) noexcept { frameColor[1] = color; }
-	void setOutlineUnlitColor(const u32 color) noexcept { frameColor[2] = color; }
+	void setOutlineLitColor  (const u32 color) noexcept { frameColor[2] = color; }
+	void setOutlineUnlitColor(const u32 color) noexcept { frameColor[1] = color; }
 
 private:
 	void createWindow(s32, s32);
