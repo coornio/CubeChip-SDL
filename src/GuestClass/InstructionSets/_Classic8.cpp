@@ -43,26 +43,23 @@ void FunctionsForClassic8::drawByte(
 			return;
 		case 0b10000000:
 			if (vm.Quirk.wrapSprite) { X &= vm.Trait.Wb; }
-			else if (X >= vm.Trait.W) { return; }
-			{
-				auto& elem{ vm.displayBuffer[0].at_raw(Y, X) };
-				if (elem) { vm.mRegisterV[0xF] = 1; }
-				elem ^= 1;
+			if (X < vm.Trait.W) {
+				if (!(vm.displayBuffer[0].at_raw(Y, X) ^= 1))
+					{ vm.mRegisterV[0xF] = 1; }
 			}
-			break;
+			return;
 		default:
 			if (vm.Quirk.wrapSprite) { X &= vm.Trait.Wb; }
 			else if (X >= vm.Trait.W) { return; }
 
 			for (auto B{ 0 }; B++ < 8; ++X &= vm.Trait.Wb) {
 				if (DATA >> (8 - B) & 0x1) {
-					auto& elem{ vm.displayBuffer[0].at_raw(Y, X) };
-					if (elem) { vm.mRegisterV[0xF] = 1; }
-					elem ^= 1;
+					if (!(vm.displayBuffer[0].at_raw(Y, X) ^= 1))
+						{ vm.mRegisterV[0xF] = 1; }
 				}
 				if (!vm.Quirk.wrapSprite && X == vm.Trait.Wb) { return; }
 			}
-			break;
+			return;
 	}
 }
 

@@ -94,7 +94,10 @@ public:
 	auto fetchCPF()       const noexcept { return mCyclesPerFrame; }
 	auto fetchFramerate() const noexcept { return mFramerate; }
 
-	void changeCPF(const s32 delta) noexcept { mCyclesPerFrame = std::abs(mCyclesPerFrame) + delta; }
+	void changeCPF(const s32 delta) noexcept {
+		const auto newCPF{ std::abs(mCyclesPerFrame) + delta };
+		if (newCPF > 0) { mCyclesPerFrame = newCPF; }
+	}
 
 	bool stateRunning() const noexcept { return (
 		mInterruptType != Interrupt::FINAL &&
@@ -964,7 +967,7 @@ private:
 	void instruction_DxyN_C8(const s32 X, const s32 Y, const s32 N) {
 		if (Quirk.waitVblank) [[unlikely]]
 			{ setInterrupt(Interrupt::FRAME); }
-		currFncSet->drawSprite(X, Y, N);
+		drawSprite(X, Y, N);
 	}
 
 /*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
@@ -1140,4 +1143,65 @@ private:
 /*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
+
+	void drawByte(
+		s32 X, s32 Y,
+		const usz DATA
+	) {
+		switch (DATA) {
+			case 0b00000000:
+				return;
+			case 0b10000000:
+				if (Quirk.wrapSprite) { X &= Trait.Wb; }
+				if (X < Trait.W) {
+					if (!(displayBuffer[0].at_raw(Y, X) ^= 1))
+						{ mRegisterV[0xF] = 1; }
+				}
+				return;
+			default:
+				if (Quirk.wrapSprite) { X &= Trait.Wb; }
+				else if (X >= Trait.W) { return; }
+
+				for (auto B{ 0 }; B++ < 8; ++X &= Trait.Wb) {
+					if (DATA >> (8 - B) & 0x1) {
+						if (!(displayBuffer[0].at_raw(Y, X) ^= 1))
+							{ mRegisterV[0xF] = 1; }
+					}
+					if (!Quirk.wrapSprite && X == Trait.Wb) { return; }
+				}
+				return;
+		}
+	}
+
+	void drawSprite(
+		s32 X,
+		s32 Y,
+		s32 N
+	) {
+		X = mRegisterV[X] & Trait.Wb;
+		Y = mRegisterV[Y] & Trait.Hb;
+
+		mRegisterV[0xF] = 0;
+
+		switch (N) {
+			case 1:
+				drawByte(X, Y, readMemoryI());
+				break;
+			case 0:
+				for (auto H{ 0 }, I{ 0 }; H < 16; ++H, ++Y &= Trait.Hb)
+				{
+					drawByte(X + 0, Y, readMemoryI(I++));
+					drawByte(X + 8, Y, readMemoryI(I++));
+					if (!Quirk.wrapSprite && Y == Trait.Hb) { break; }
+				}
+				break;
+			default:
+				for (auto H{ 0 }; H < N; ++H, ++Y &= Trait.Hb)
+				{
+					drawByte(X, Y, readMemoryI(H));
+					if (!Quirk.wrapSprite && Y == Trait.Hb) { break; }
+				}
+		}
+	}
+
 };

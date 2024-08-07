@@ -156,7 +156,7 @@ bool VM_Guest::romTypeCheck() {
 		case (RomExt::benchmark):
 			if (!romCopyToMemory(65'536, 0x200))
 				return false;
-			initProgramParams(0x200, 3'000'000);
+			initProgramParams(0x200, 4'000'000);
 			changeFunctionSet(&SetClassic8);
 			break;
 
