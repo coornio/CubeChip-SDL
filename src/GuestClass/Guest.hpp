@@ -94,6 +94,8 @@ public:
 	auto fetchCPF()       const noexcept { return mCyclesPerFrame; }
 	auto fetchFramerate() const noexcept { return mFramerate; }
 
+	void changeCPF(const s32 delta) noexcept { mCyclesPerFrame = std::abs(mCyclesPerFrame) + delta; }
+
 	bool stateRunning() const noexcept { return (
 		mInterruptType != Interrupt::FINAL &&
 		mInterruptType != Interrupt::ERROR

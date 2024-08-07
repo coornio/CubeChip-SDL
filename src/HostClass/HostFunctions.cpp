@@ -102,12 +102,19 @@ bool VM_Host::runHost() {
 			}
 
 			if (doBench()) {
+				if (kb.isPressed(KEY(UP))) {
+					Guest->changeCPF(+50'000);
+				}
+				if (kb.isPressed(KEY(DOWN))) {
+					Guest->changeCPF(-50'000);
+				}
+
 				using namespace std::chrono;
 
 				std::cout << "\33[2;1H" << std::dec << std::setfill(' ') << std::setprecision(6)
-					<< "\33[K\nframes: " << Guest->getTotalFrames()
-					<< "\33[K\ncycles: " << Guest->getTotalCycles()
-					<< "\33[K\ncpf:    " << std::abs(Guest->fetchCPF())
+					<< "\33[K\nframes: " << Guest->getTotalFrames() << "      "
+					<< "\33[K\ncycles: " << Guest->getTotalCycles() << "      "
+					<< "\33[K\ncpf:    " << std::abs(Guest->fetchCPF()) << "      "
 					<< (Frame.paced() ? "\n\n > keeping up pace." : "\n\n > cannot keep up!!")
 					<< "\n\nelapsed since last: " << Frame.elapsed() << std::endl;
 
