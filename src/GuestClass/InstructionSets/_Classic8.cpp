@@ -38,17 +38,31 @@ void FunctionsForClassic8::drawByte(
 	s32 X, s32 Y,
 	const usz DATA
 ) {
-	if (!DATA) { return; }
-	if (vm.Quirk.wrapSprite) { X &= vm.Trait.Wb; }
-	else if (X >= vm.Trait.W) { return; }
+	switch (DATA) {
+		case 0b00000000:
+			return;
+		case 0b10000000:
+			if (vm.Quirk.wrapSprite) { X &= vm.Trait.Wb; }
+			else if (X >= vm.Trait.W) { return; }
+			{
+				auto& elem{ vm.displayBuffer[0].at_raw(Y, X) };
+				if (elem) { vm.mRegisterV[0xF] = 1; }
+				elem ^= 1;
+			}
+			break;
+		default:
+			if (vm.Quirk.wrapSprite) { X &= vm.Trait.Wb; }
+			else if (X >= vm.Trait.W) { return; }
 
-	for (auto B{ 0 }; B++ < 8; ++X &= vm.Trait.Wb) {
-		if (DATA >> (8 - B) & 0x1) {
-			auto& elem{ vm.displayBuffer[0].at_raw(Y, X) };
-			if (elem) { vm.mRegisterV[0xF] = 1; }
-			elem ^= 1;
-		}
-		if (!vm.Quirk.wrapSprite && X == vm.Trait.Wb) { return; }
+			for (auto B{ 0 }; B++ < 8; ++X &= vm.Trait.Wb) {
+				if (DATA >> (8 - B) & 0x1) {
+					auto& elem{ vm.displayBuffer[0].at_raw(Y, X) };
+					if (elem) { vm.mRegisterV[0xF] = 1; }
+					elem ^= 1;
+				}
+				if (!vm.Quirk.wrapSprite && X == vm.Trait.Wb) { return; }
+			}
+			break;
 	}
 }
 
@@ -62,14 +76,24 @@ void FunctionsForClassic8::drawSprite(
 
 	vm.mRegisterV[0xF] = 0;
 
-	const bool wide{ N == 0 };
-	if (wide) { N = 16; }
-
-	for (auto H{ 0 }, I{ 0 }; H < N; ++H, ++Y &= vm.Trait.Hb)
-	{
-		if (true) { drawByte(X + 0, Y, vm.readMemoryI(I++)); }
-		if (wide) { drawByte(X + 8, Y, vm.readMemoryI(I++)); }
-		if (!vm.Quirk.wrapSprite && Y == vm.Trait.Hb) { break; }
+	switch (N) {
+		case 1:
+			drawByte(X, Y, vm.readMemoryI());
+			break;
+		case 0:
+			for (auto H{ 0 }, I{ 0 }; H < 16; ++H, ++Y &= vm.Trait.Hb)
+			{
+				drawByte(X + 0, Y, vm.readMemoryI(I++));
+				drawByte(X + 8, Y, vm.readMemoryI(I++));
+				if (!vm.Quirk.wrapSprite && Y == vm.Trait.Hb) { break; }
+			}
+			break;
+		default:
+			for (auto H{ 0 }; H < N; ++H, ++Y &= vm.Trait.Hb)
+			{
+				drawByte(X, Y, vm.readMemoryI(H));
+				if (!vm.Quirk.wrapSprite && Y == vm.Trait.Hb) { break; }
+			}
 	}
 }
 

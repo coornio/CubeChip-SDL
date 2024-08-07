@@ -156,7 +156,7 @@ bool VM_Guest::romTypeCheck() {
 		case (RomExt::benchmark):
 			if (!romCopyToMemory(65'536, 0x200))
 				return false;
-			initProgramParams(0x200, 3'200'000);
+			initProgramParams(0x200, 4'000'000);
 			changeFunctionSet(&SetClassic8);
 			blog.stdLogOut("benchmarking.");
 			break;
@@ -352,7 +352,7 @@ void VM_Guest::fontCopyToMemory() {
 
 	// copy the FONT at the desired offset, and omit A-F superchip sprites if needed
 	std::copy_n(
-		std::execution::par_unseq,
+		std::execution::unseq,
 		FONT_DATA, State.schip_legacy ? 180 : 240,
 		mMemoryBank.data()
 	);
@@ -360,7 +360,7 @@ void VM_Guest::fontCopyToMemory() {
 	if (!State.megachip_rom) return;
 
 	std::copy_n(
-		std::execution::par_unseq,
+		std::execution::unseq,
 		MEGA_FONT_DATA, 160,
 		mMemoryBank.data() + 240
 	);
@@ -369,7 +369,7 @@ void VM_Guest::fontCopyToMemory() {
 void VM_Guest::renderToTexture() {
 	if (isManualRefresh()) {
 		std::copy_n(
-			std::execution::par_unseq,
+			std::execution::seq,
 			foregroundBuffer.data(),
 			Trait.S, BVS.lockTexture()
 		);
@@ -452,7 +452,7 @@ void VM_Guest::renderToTexture() {
 			displayBuffer[1] = displayBuffer[0];
 		} else {
 			std::transform(
-				std::execution::par_unseq,
+				std::execution::unseq,
 				displayBuffer[0].raw_begin(),
 				displayBuffer[0].raw_end(),
 				BVS.lockTexture(),
