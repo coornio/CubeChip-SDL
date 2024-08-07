@@ -177,17 +177,17 @@ void BasicVideoSpec::renderPresent() {
 	if (texture) {
 		SDL_SetRenderDrawColor(
 			renderer,
-			static_cast<u8>(frameColor[1 + enableBuzzGlow] >> 16),
-			static_cast<u8>(frameColor[1 + enableBuzzGlow] >>  8),
-			static_cast<u8>(frameColor[1 + enableBuzzGlow]), 255
+			static_cast<u8>(frameFullColor[enableBuzzGlow] >> 16),
+			static_cast<u8>(frameFullColor[enableBuzzGlow] >>  8),
+			static_cast<u8>(frameFullColor[enableBuzzGlow]), 255
 		);
 		SDL_RenderFillRect(renderer, &frameFull);
 
 		SDL_SetRenderDrawColor(
 			renderer,
-			static_cast<u8>(frameColor[0] >> 16),
-			static_cast<u8>(frameColor[0] >>  8),
-			static_cast<u8>(frameColor[0]), 255
+			static_cast<u8>(frameGameColor >> 16),
+			static_cast<u8>(frameGameColor >>  8),
+			static_cast<u8>(frameGameColor), 255
 		);
 		SDL_RenderFillRect(renderer, &frameGame);
 

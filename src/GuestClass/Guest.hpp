@@ -514,7 +514,7 @@ private:
 
 
 	// 0010 - disable mega mode *MEGACHIP*
-	void instruction_0010_MC(const u32 color) {
+	void instruction_0010_MC() {
 		setInterrupt(Interrupt::FRAME);
 		changeFunctionSet(&SetClassic8);
 
@@ -524,7 +524,7 @@ private:
 		flushBuffers(FlushType::DISPLAY);
 		prepDisplayArea(Resolution::LO);
 		setDisplayOpacity(0xFF);
-		setBackgroundColorTo(color);
+		setBackgroundColorTo(Color.bit[0]);
 	}
 	// 0011 - enable mega mode *MEGACHIP*
 	void instruction_0011_MC() {

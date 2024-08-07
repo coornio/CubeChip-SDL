@@ -27,11 +27,9 @@ class BasicVideoSpec final {
 
 	SDL_FRect frameGame{};
 	SDL_FRect frameFull{};
-	
-	// 0: background
-	// 1: outline unlit
-	// 2: outline lit (audio)
-	u32  frameColor[3]{};
+
+	u32  frameGameColor{};
+	u32  frameFullColor[2]{};
 
 	s32  perimeterWidth{};
 	s32  frameMultiplier{ 2 };
@@ -43,13 +41,20 @@ public:
 	static bool showErrorBoxSDL(std::string_view);
 	static bool showErrorBox(std::string_view, std::string_view);
 
-	u32  getFrameColor()        const noexcept { return frameColor[0]; }
-	u32  getOutlineLitColor()   const noexcept { return frameColor[1]; }
-	u32  getOutlineUnlitColor() const noexcept { return frameColor[2]; }
+	void setBackColor (
+		const u32 color
+	) noexcept {
+		frameGameColor = color;
+	}
 
-	void setFrameColor       (const u32 color) noexcept { frameColor[0] = color; }
-	void setOutlineLitColor  (const u32 color) noexcept { frameColor[2] = color; }
-	void setOutlineUnlitColor(const u32 color) noexcept { frameColor[1] = color; }
+	void setFrameColor(
+		const u32 color_off,
+		const u32 color_on
+	) noexcept {
+		frameFullColor[0] = color_off;
+		frameFullColor[1] = color_on;
+	}
+
 
 private:
 	void createWindow(s32, s32);

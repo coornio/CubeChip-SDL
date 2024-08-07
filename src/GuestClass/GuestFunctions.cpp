@@ -125,7 +125,7 @@ void VM_Guest::instructionLoop() {
 						switch (X) {
 							case 0x0: switch (LO) {
 								case 0x10:
-									instruction_0010_MC(BVS.getFrameColor());
+									instruction_0010_MC();
 									break;
 								case 0x11:
 									instruction_0011_MC();
@@ -563,11 +563,11 @@ void VM_Guest::flushBuffers(const FlushType option) {
 }
 
 void VM_Guest::setBackgroundColorTo(const u32 color) const noexcept {
-	BVS.setFrameColor(color);
+	BVS.setBackColor(color);
 }
 
 void VM_Guest::cycleBackgroundColor() noexcept {
-	BVS.setFrameColor(Color.BackColors[Color.bgindex++ & 0x3]);
+	BVS.setBackColor(Color.BackColors[Color.bgindex++ & 0x3]);
 }
 
 void VM_Guest::setDisplayOpacity(const s32 value) const {
@@ -829,24 +829,19 @@ void VM_Guest::renderAudioData() {
 
 	if (mBuzzLight) {
 		renderAudio_C8(audioBuffer, BAS.getAmplitude());
-		BVS.setOutlineLitColor(Color.buzz[1]);
-		BVS.setOutlineUnlitColor(Color.buzz[0]);
+		BVS.setFrameColor(Color.buzz[0], Color.buzz[1]);
 	} else if (mAudioIsMC) {
 		renderAudio_MC(audioBuffer, BAS.getVolume());
-		BVS.setOutlineLitColor(0xFF202020);
-		BVS.setOutlineUnlitColor(0xFF202020);
+		BVS.setFrameColor(0xFF202020, 0xFF202020);
 	} else if (!mSoundTimer) {
 		mWavePhase = 0.0f;
-		BVS.setOutlineLitColor(Color.buzz[0]);
-		BVS.setOutlineUnlitColor(Color.buzz[0]);
+		BVS.setFrameColor(Color.buzz[0], Color.buzz[0]);
 	} else if (mAudioIsXO) {
 		renderAudio_XO(audioBuffer, BAS.getAmplitude());
-		BVS.setOutlineLitColor(Color.buzz[0]);
-		BVS.setOutlineUnlitColor(Color.buzz[0]);
+		BVS.setFrameColor(Color.buzz[0], Color.buzz[0]);
 	} else {
 		renderAudio_C8(audioBuffer, BAS.getAmplitude());
-		BVS.setOutlineLitColor(Color.buzz[1]);
-		BVS.setOutlineUnlitColor(Color.buzz[0]);
+		BVS.setFrameColor(Color.buzz[0], Color.buzz[1]);
 	}
 
 	BAS.pushAudioData(audioBuffer.data(), audioBuffer.size());
