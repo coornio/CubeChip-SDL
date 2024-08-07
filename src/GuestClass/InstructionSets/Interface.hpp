@@ -37,7 +37,7 @@ struct FncSetInterface {
 /*  derived class  FunctionsForGigachip                             */
 /*------------------------------------------------------------------*/
 
-class alignas(32) FunctionsForGigachip final : public FncSetInterface {
+class FunctionsForGigachip final : public FncSetInterface {
 	VM_Guest& vm;
 
 	f32(*blendAlgo)(f32, f32) noexcept {};
@@ -73,7 +73,7 @@ public:
 /*  derived class  FunctionsForMegachip                             */
 /*------------------------------------------------------------------*/
 
-class alignas(32) FunctionsForMegachip final : public FncSetInterface {
+class FunctionsForMegachip final : public FncSetInterface {
 	VM_Guest& vm;
 
 	f32(*blendAlgo)(f32, f32) noexcept {};

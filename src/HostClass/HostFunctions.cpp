@@ -112,9 +112,9 @@ bool VM_Host::runHost() {
 				using namespace std::chrono;
 
 				std::cout << "\33[2;1H" << std::dec << std::setfill(' ') << std::setprecision(6)
-					<< "\nframes: " << Guest->getTotalFrames() << "\33[K0"
-					<< "\ncycles: " << Guest->getTotalCycles() << "\33[K0"
-					<< "\ncpf:    " << std::abs(Guest->fetchCPF()) << "\33[K0"
+					<< "\nframes: " << Guest->getTotalFrames()     << "      "
+					<< "\ncycles: " << Guest->getTotalCycles()     << "      "
+					<< "\ncpf:    " << std::abs(Guest->fetchCPF()) << "      "
 					<< (Frame.paced() ? "\n\n > keeping up pace." : "\n\n > cannot keep up!!")
 					<< "\n\nelapsed since last: " << Frame.elapsed() << std::endl;
 

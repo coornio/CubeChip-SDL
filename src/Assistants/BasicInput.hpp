@@ -27,7 +27,7 @@ enum BIC_Button {
 /*  singleton class  Keyboard                                       */
 /*------------------------------------------------------------------*/
 
-class alignas(512) BasicKeyboard final {
+class alignas(32) BasicKeyboard final {
 	static std::unique_ptr<BasicKeyboard> _self;
 	Uint8 oldState[SDL_NUM_SCANCODES]{};
 

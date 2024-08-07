@@ -15,7 +15,7 @@ class BasicAudioSpec;
 class FrameLimiter;
 class VM_Guest;
 
-class alignas(32) VM_Host final {
+class VM_Host final {
 	bool _isReady{};
 	bool _doBench{};
 

@@ -30,13 +30,6 @@ class alignas(64) VM_Guest final {
 /*==================================================================*/
 
 private:
-	FunctionsForGigachip SetGigachip{ *this }; friend class FunctionsForGigachip;
-	FunctionsForMegachip SetMegachip{ *this }; friend class FunctionsForMegachip;
-	FunctionsForModernXO SetModernXO{ *this }; friend class FunctionsForModernXO;
-	FunctionsForLegacySC SetLegacySC{ *this }; friend class FunctionsForLegacySC;
-	FunctionsForClassic8 SetClassic8{ *this }; friend class FunctionsForClassic8;
-	FncSetInterface* currFncSet{ &SetClassic8 }; // whole segment to be deprecated
-
 	HomeDirManager& HDM;
 	BasicVideoSpec& BVS;
 	BasicAudioSpec& BAS;
@@ -148,8 +141,7 @@ private:
 	u32  mStackTop{};
 	u32  mRegisterI{};
 
-	alignas(64) u32
-		mStackBank[16]{};
+	u32  mStackBank[16]{};
 
 	Map2D<u8>  displayBuffer[4];
 	Map2D<u32> color8xBuffer;
@@ -375,6 +367,13 @@ private:
 
 	Well512  Wrand;
 	HexInput Input;
+
+	FunctionsForGigachip SetGigachip{ *this }; friend class FunctionsForGigachip;
+	FunctionsForMegachip SetMegachip{ *this }; friend class FunctionsForMegachip;
+	FunctionsForModernXO SetModernXO{ *this }; friend class FunctionsForModernXO;
+	FunctionsForLegacySC SetLegacySC{ *this }; friend class FunctionsForLegacySC;
+	FunctionsForClassic8 SetClassic8{ *this }; friend class FunctionsForClassic8;
+	FncSetInterface* currFncSet{ &SetClassic8 }; // whole segment to be deprecated
 
 private:
 	bool routineCall(u32) noexcept;
