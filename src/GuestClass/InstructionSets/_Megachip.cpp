@@ -166,7 +166,7 @@ paintTexture:
 
 				collideCoord = sourceColorIdx;
 				backbufCoord = blendPixel(
-					vm.megaPalette[sourceColorIdx],
+					vm.megaColorPalette.at_raw(sourceColorIdx),
 					backbufCoord, vm.Texture.alpha,
 					blendAlgo
 				);

@@ -156,7 +156,7 @@ bool VM_Guest::romTypeCheck() {
 		case (RomExt::benchmark):
 			if (!romCopyToMemory(65'536, 0x200))
 				return false;
-			initProgramParams(0x200, 3'400'000);
+			initProgramParams(0x200, 3'200'000);
 			changeFunctionSet(&SetClassic8);
 			blog.stdLogOut("benchmarking.");
 			break;
@@ -275,7 +275,7 @@ void VM_Guest::prepDisplayArea(const Resolution mode, const bool forced) {
 		foregroundBuffer.resize(false, H, W);
 		backgroundBuffer.resize(false, H, W);
 		collisionPalette.resize(false, H, W);
-		megaPalette.resize(256);
+		megaColorPalette.resize(false, 1, 256);
 	} else {
 		BVS.setAspectRatio(512, 256, +2);
 		displayBuffer[0].resize(!forced, H, W);
@@ -376,7 +376,6 @@ void VM_Guest::renderToTexture() {
 	}
 	else if (isPixelBitColor()) {
 		auto* pixels{ BVS.lockTexture() };
-		BVS.setFrameColor(Color.bit[0]);
 		for (auto idx{ 0 }; idx < Trait.S; ++idx) {
 			pixels[idx] = (0xFF << 24 | Color.bit[
 				displayBuffer[0].at_raw(idx) << 0 |
@@ -388,7 +387,6 @@ void VM_Guest::renderToTexture() {
 	}
 	else if (State.chip8X_rom) {
 		auto* pixels{ BVS.lockTexture() };
-		BVS.setFrameColor(Color.bit[0]);
 		if (isPixelTrailing()) {
 			for (auto idx{ 0 }; idx < Trait.S; ++idx) {
 				const auto Y = idx / Trait.W & Trait.mask8X;
@@ -420,14 +418,13 @@ void VM_Guest::renderToTexture() {
 			for (auto idx{ 0 }; idx < Trait.S; ++idx) {
 				const auto Y = idx / Trait.W & Trait.mask8X;
 				const auto X = idx % Trait.W >> 3; // 8px color zones
-
+			
 				pixels[idx] = (0xFF << 24 | (displayBuffer[0].at_raw(idx)
 					? color8xBuffer.at_raw(Y, X) : 0));
 			}
 		}
 	}
 	else {
-		BVS.setFrameColor(Color.bit[0]);
 		if (isPixelTrailing()) {
 			auto* pixels{ BVS.lockTexture() };
 			for (auto idx{ 0 }; idx < Trait.S; ++idx) {
@@ -459,8 +456,8 @@ void VM_Guest::renderToTexture() {
 				displayBuffer[0].raw_begin(),
 				displayBuffer[0].raw_end(),
 				BVS.lockTexture(),
-				[this](const u32 value) {
-					return 0xFF << 24 | Color.bit[value];
+				[this](const auto pixel) noexcept {
+					return 0xFF << 24 | Color.bit[pixel];
 				}
 			);
 		}

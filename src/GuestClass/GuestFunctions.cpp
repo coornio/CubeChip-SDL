@@ -57,81 +57,65 @@ void VM_Guest::instructionLoop() {
 
 		switch (HI >> 4) {
 			case 0x0: switch (NN0()) {
-				case 0x00B0:							// 00BN - scroll selected color plane N lines up *MEGACHIP*
-				case 0x00D0:							// 00DN - scroll selected color plane N lines up *XOCHIP*
-					if (Quirk.waitScroll) [[unlikely]]
-						{ setInterrupt(Interrupt::FRAME); }
-					if (!N) [[unlikely]] { break; }
-					currFncSet->scrollUP(N);
+				case 0x00B0:
+				case 0x00D0:
+					instruction_00DN_XO(N);
 					break;
-				case 0x00C0:							// 00CN - scroll selected color plane N lines down *XOCHIP*
-					if (Quirk.waitScroll) [[unlikely]]
-						{ setInterrupt(Interrupt::FRAME); }
-					if (!N) [[unlikely]] { break; }
-					currFncSet->scrollDN(N);
+				case 0x00C0:
+					instruction_00CN_XO(N);
 					break;
 				case 0x00E0: switch (N) {
 					case 0x0:
-						if (isManualRefresh()) {		// 00E0 - push (and then clear) framebuffer to screen *MEGACHIP*
-							setInterrupt(Interrupt::FRAME);
-							flushBuffers(FlushType::DISPLAY);
-						} else {						// 00E0 - erase whole display (or plane *XO-CHIP*)
-							if (Quirk.waitVblank) [[unlikely]]
-								{ setInterrupt(Interrupt::FRAME); }
-							if (isPixelBitColor()) {
-								modifyDisplay_XO();
-							} else {
-								modifyDisplay_C8();
-							}
+						if (isManualRefresh()) {
+							instruction_00E0_MC();
+						} else if (isPixelBitColor()) {
+							instruction_00E0_XO();
+						} else {
+							instruction_00E0_C8();
 						}
 						break;
-					case 0x1:							// 00E1 - invert selected color plane *HWCHIP64*
-						modifyDisplay_HW();
+					case 0x1:
+						instruction_00E1_HW();
 						break;
-					case 0xD:							// 00ED - stop signal *CHIP-8E*
-						setInterrupt(Interrupt::SOUND);
+					case 0xD:
+						instruction_00ED_8E();
 						break;
-					case 0xE:							// 00EE - return from subroutine
-						if (routineReturn()) [[unlikely]]
-							{ triggerError("Error :: Cannot return from empty stack!"); }
+					case 0xE:
+						instruction_00EE_C8();
 						break;
 					[[unlikely]] default: triggerOpcodeError(mInstruction);
 				} break;
 				case 0x00F0: switch (N) {
-					case 0x0:							// 00F0 - return from subroutine *CHIP-8X MPD*
+					case 0x0:
 						if (routineReturn()) [[unlikely]]
 							{ triggerError("Error :: Cannot return from empty stack!"); }
 						break;
-					case 0x1:							// 00F1 - set DRAW mode to ADD *HWCHIP64*
-						Trait.paintBrush = BrushType::ADD;
+					case 0x1:
+						instruction_00F1_HW();
 						break;
-					case 0x2:							// 00F2 - set DRAW mode to SUB *HWCHIP64*
-						Trait.paintBrush = BrushType::SUB;
+					case 0x2:
+						instruction_00F2_HW();
 						break;
-					case 0x3:							// 00F3 - set DRAW mode to XOR *HWCHIP64*
-						Trait.paintBrush = BrushType::XOR;
+					case 0x3:
+						instruction_00F3_HW();
 						break;
-					case 0xB:							// 00FB - scroll selected color plane 4 pixels right *XOCHIP*
-						if (Quirk.waitScroll) [[unlikely]]
-							{ setInterrupt(Interrupt::FRAME); }
-						currFncSet->scrollRT(4);
+					case 0xB:
+						instruction_00FB_XO(4);
 						break;
-					case 0xC:							// 00FC - scroll selected color plane 4 pixels left *XOCHIP*
-						if (Quirk.waitScroll) [[unlikely]]
-							{ setInterrupt(Interrupt::FRAME); }
-						currFncSet->scrollLT(4);
+					case 0xC:
+						instruction_00FC_XO(4);
 						break;
-					case 0xD:							// 00FD - stop signal *SCHIP*
-						setInterrupt(Interrupt::SOUND);
+					case 0xD:
+						instruction_00FD_C8();
 						break;
-					case 0xE:							// 00FE - display == 64*32, erase the screen *XOCHIP*
+					case 0xE:
 						if (!isManualRefresh()) [[likely]] {
-							prepDisplayArea(Resolution::LO, !State.schip_legacy);
+							instruction_00FE_C8();
 						}
 						break;
-					case 0xF:							// 00FF - display == 128*64, erase the screen *XOCHIP*
+					case 0xF:
 						if (!isManualRefresh()) [[likely]] {
-							prepDisplayArea(Resolution::HI, !State.schip_legacy);
+							instruction_00FF_C8();
 						}
 						break;
 					[[unlikely]] default: triggerOpcodeError(mInstruction);
@@ -140,272 +124,187 @@ void VM_Guest::instructionLoop() {
 					if (State.megachip_rom || State.gigachip_rom) {
 						switch (X) {
 							case 0x0: switch (LO) {
-								case 0x10:				// 0010 - disable mega mode *MEGACHIP*
-									setInterrupt(Interrupt::FRAME);
-									changeFunctionSet(&SetClassic8);
-
-									isManualRefresh(false);
-									resetAudioTrack();
-
-									flushBuffers(FlushType::DISPLAY);
-									prepDisplayArea(Resolution::LO);
-									BVS.setTextureAlpha(0xFF);
-									setBackgroundColorTo(BVS.getFrameColor());
+								case 0x10:
+									instruction_0010_MC(BVS.getFrameColor());
 									break;
-								case 0x11:				// 0011 - enable mega mode *MEGACHIP*
-									setInterrupt(Interrupt::FRAME);
-									changeFunctionSet(&SetMegachip);
-
-									isManualRefresh(true);
-									resetAudioTrack();
-
-									flushBuffers(FlushType::DISCARD);
-									prepDisplayArea(Resolution::MC);
-									BVS.setTextureAlpha(0xFF);
-									setBackgroundColorTo(0);
+								case 0x11:
+									instruction_0011_MC();
 									break;
 								[[unlikely]] default: triggerOpcodeError(mInstruction);
 							} break;
-							case 0x1:					// 01NN - set I to NN'NNNN *MEGACHIP*
-								mRegisterI = (LO << 16) | NNNN();
-								mProgCounter += 2;
+							case 0x1:
+								instruction_01NN_MC(LO);
 								break;
-							case 0x2:					// 02NN - load NN palette colors from RAM at I *MEGACHIP*
-								loadMegaPalette(LO);
+							case 0x2:
+								instruction_02NN_MC(LO);
 								break;
-							case 0x3:					// 03NN - set sprite width to NN *MEGACHIP*
-								Texture.W = LO ? LO : 256;
+							case 0x3:
+								instruction_03NN_MC(LO);
 								break;
-							case 0x4:					// 04NN - set sprite height to NN *MEGACHIP*
-								Texture.H = LO ? LO : 256;
+							case 0x4:
+								instruction_04NN_MC(LO);
 								break;
-							case 0x5:					// 05NN - set screen brightness to NN *MEGACHIP*
-								BVS.setTextureAlpha(LO);
+							case 0x5:
+								instruction_05NN_MC(LO);
 								break;
-							case 0x6:					// 060N - start digital sound from RAM at I, repeat if N == 0 *MEGACHIP*
+							case 0x6:
 								if (Y) [[unlikely]] { triggerOpcodeError(mInstruction); }
-								else { startAudioTrack(N == 0); }
+								else { instruction_060N_MC(N); }
 								break;
-							case 0x7:					// 0700 - stop digital sound *MEGACHIP*
+							case 0x7:
 								if (LO) [[unlikely]] { triggerOpcodeError(mInstruction); }
-								else { resetAudioTrack(); }
+								else { instruction_0700_MC(); }
 								break;
-							case 0x8:					// 080N - set trait flags to VF, blend mode to N *GIGACHIP*
+							case 0x8:
 								if (Y) [[unlikely]] { triggerOpcodeError(mInstruction); }
 								else if (State.gigachip_rom) {
-									setTextureFlags(mRegisterV[0xF]);
-									SetGigachip.chooseBlend(N);
-								} else {				// 080N - set blend mode to N *MEGACHIP*
-									static constexpr float alpha[]{ 1.0f, 0.25f, 0.50f, 0.75f };
-									Texture.alpha = alpha[N > 3 ? 0 : N];
-									SetMegachip.chooseBlend(N);
+									instruction_080N_GC(N);
+								} else {
+									instruction_080N_MC(N);
 								}
 								break;
-							case 0x9:					// 09NN - set collision color to palette entry NN *MEGACHIP*
-								Texture.collision = LO;
+							case 0x9:
+								instruction_09NN_MC(LO);
 								break;
 							[[unlikely]] default: triggerOpcodeError(mInstruction);
 						}
 					}
 					else switch (NNN()) {
-						case 0x151:						// 0151 - stop signal if delay timer == 0 *CHIP-8E*
-							setInterrupt(Interrupt::DELAY);
+						case 0x151:
+							instruction_0151_8E();
 							break;
-						case 0x188:						// 0188 - skip next instruction *CHIP-8E*
-							skipInstruction();
+						case 0x188:
+							instruction_0188_8E();
 							break;
-						case 0x216:						// 0216 - protect pages in V0 *CHIP-8 4PD*
-							protectPages();
+						case 0x216:
+							instruction_0216_C8_4P();
 							break;
-						case 0x200:						// 0200 - erase pages *CHIP-8 4PD*
-						case 0x230:						// 0230 - erase pages *CHIP-8 2PD*
-							clearPages();
+						case 0x200:
+							instruction_0200_C8_4P();
 							break;
-						case 0x2A0:						// 02A0 - cycle background color *CHIP-8X*
-						case 0x2F0:						// 02F0 - cycle background color *CHIP-8X MPD*
-							cycleBackgroundColor();
+						case 0x230:
+							instruction_0200_C8_2P();
+							break;
+						case 0x2A0:
+							instruction_02A0_8X();
+							break;
+						case 0x2F0:
+							instruction_02F0_8X_MP();
 							break;
 						[[unlikely]] default: triggerOpcodeError(mInstruction);
 					}
 				}
 			} break;
-			case 0x1:									// 1NNN - jump to NNN; stop if PC == NNN (inf loop)
-				if (jumpInstruction_C8(NNN())) [[unlikely]]
-					{ setInterrupt(Interrupt::SOUND); }
+			case 0x1:
+				instruction_1NNN_C8();
 				break;
-			case 0x2:									// 2NNN - call subroutine
-				if (routineCall(NNN())) [[unlikely]]
-					{ triggerError("Error :: Cannot call with a full stack!"); }
+			case 0x2:
+				instruction_2NNN_C8();
 				break;
-			case 0x3:									// 3XNN - skip next instruction if VX == NN
-				if (mRegisterV[X] == LO) { skipInstruction(); }
+			case 0x3:
+				instruction_3xNN_C8(X, LO);
 				break;
-			case 0x4:									// 4XNN - skip next instruction if VX != NN
-				if (mRegisterV[X] != LO) { skipInstruction(); }
+			case 0x4:
+				instruction_4xNN_C8(X, LO);
 				break;
 			case 0x5: switch (N) {
-				case 0x0:								// 5XY0 - skip next instruction if VX == VY
-					if (mRegisterV[X] == mRegisterV[Y]) { skipInstruction(); }
+				case 0x0:
+					instruction_5xy0_C8(X, Y);
 					break;
 				case 0x1:
-					if (!State.chip8X_rom) {			// 5XY1 - skip next instruction if VX > VY *CHIP-8E*
-						if (mRegisterV[X] > mRegisterV[Y]) { skipInstruction(); }
-					} else {							// 5XY1 - add nibbles of VX,VY and modulo 8 to VX *CHIP-8X*
-						const auto mask{ isLoresExtended() ? 0x77 : 0xFF};
-						const auto lenX{ (mRegisterV[X] & 0xF0) + (mRegisterV[Y] & 0xF0) };
-						const auto lenY{ (mRegisterV[X] + mRegisterV[Y]) & 0xF };
-						mRegisterV[X] = static_cast<u8>((lenX | lenY) & mask);
+					if (State.chip8X_rom) {
+						instruction_5xy1_8X(X, Y);
+					} else {
+						instruction_5xy1_8E(X, Y);
 					}
 					break;
-				case 0x2: {								// 5XY2 - store range of registers to memory *CHIP-8E*
+				case 0x2: {
 					if (State.chip8E_rom) [[unlikely]] {
 						if (X < Y) {
-							for (auto Z{ X }; Z <= Y; ++Z) {
-								writeMemory(mRegisterV[Z], mRegisterI++);
-							}
+							instruction_5xy2_8E(X, Y);
 						} else [[unlikely]]
 							{ triggerOpcodeError(mInstruction); }
-					} else {							// 5XY2 - store range of registers to memory *XOCHIP*
-						const auto dist{ std::abs(X - Y) + 1 };
-						if (X < Y) {
-							for (auto Z{ 0 }; Z < dist; ++Z) {
-								writeMemoryI(mRegisterV[X + Z], Z);
-							}
-						} else {
-							for (auto Z{ 0 }; Z < dist; ++Z) {
-								writeMemoryI(mRegisterV[X - Z], Z);
-							}
-						}
-					}
-				} break;
-				case 0x3: {								// 5XY3 - load range of registers from memory *CHIP-8E*
-					if (State.chip8E_rom) [[unlikely]] {
-						if (X < Y) {
-							for (auto Z{ X }; Z <= Y; ++Z) {
-								mRegisterV[Z] = readMemory(mRegisterI++);
-							}
-						} else [[unlikely]]
-							{ triggerOpcodeError(mInstruction); }
-					} else {							// 5XY3 - load range of registers from memory *XOCHIP*
-						const auto dist{ std::abs(X - Y) + 1 };
-						if (X < Y) {
-							for (auto Z{ 0 }; Z < dist; ++Z) {
-								mRegisterV[X + Z] = readMemoryI(Z);
-							}
-						} else {
-							for (auto Z{ 0 }; Z < dist; ++Z) {
-								mRegisterV[X - Z] = readMemoryI(Z);
-							}
-						}
-					}
-				} break;
-				case 0x4: {								// 5XY4 - load range of colors from memory *EXPERIMENTAL*
-					const auto dist{ std::abs(X - Y) + 1 };
-					if (X < Y) {
-						for (auto Z{ 0 }; Z < dist; ++Z) {
-							setColorBit332(X + Z, readMemoryI(Z));
-						}
 					} else {
-						for (auto Z{ 0 }; Z < dist; ++Z) {
-							setColorBit332(X - Z, readMemoryI(Z));
-						}
+						instruction_5xy2_XO(X, Y);
 					}
+				} break;
+				case 0x3: {
+					if (State.chip8E_rom) [[unlikely]] {
+						if (X < Y) {
+							instruction_5xy3_8E(X, Y);
+						} else [[unlikely]]
+							{ triggerOpcodeError(mInstruction); }
+					} else {
+						instruction_5xy3_XO(X, Y);
+					}
+				} break;
+				case 0x4: {
+					instruction_5xy4_XO(X, Y);
 				} break;
 				[[unlikely]] default: triggerOpcodeError(mInstruction);
 			} break;
-			case 0x6:									// 6XNN - set VX = NN
-				mRegisterV[X]  = LO;
+			case 0x6:
+				instruction_6xNN_C8(X, LO);
 				break;
-			case 0x7:									// 7XNN - set VX = VX + NN
-				mRegisterV[X] += LO;
+			case 0x7:
+				instruction_7xNN_C8(X, LO);
 				break;
 			case 0x8: switch (N) {
-				case 0x0:								// 8XY0 - set VX = VY
-					mRegisterV[X]  = mRegisterV[Y];
+				case 0x0:
+					instruction_8xy0_C8(X, Y);
 					break;
-				case 0x1:								// 8XY1 - set VX = VX | VY
-					mRegisterV[X] |= mRegisterV[Y];
-					if (Quirk.clearVF) { mRegisterV[0xF] = 0; }
+				case 0x1:
+					instruction_8xy1_C8(X, Y);
 					break;
-				case 0x2:								// 8XY2 - set VX = VX & VY
-					mRegisterV[X] &= mRegisterV[Y];
-					if (Quirk.clearVF) { mRegisterV[0xF] = 0; }
+				case 0x2:
+					instruction_8xy2_C8(X, Y);
 					break;
-				case 0x3:								// 8XY3 - set VX = VX ^ VY
-					mRegisterV[X] ^= mRegisterV[Y];
-					if (Quirk.clearVF) { mRegisterV[0xF] = 0; }
+				case 0x3:
+					instruction_8xy3_C8(X, Y);
 					break;
-				case 0x4: {								// 8XY4 - set VX = VX + VY, VF = carry
-					const auto sum{ mRegisterV[X] + mRegisterV[Y] };
-					mRegisterV[X]   = static_cast<u8>(sum);
-					mRegisterV[0xF] = static_cast<u8>(sum >> 8);
+				case 0x4: {
+					instruction_8xy4_C8(X, Y);
 				} break;
-				case 0x5: {								// 8XY5 - set VX = VX - VY, VF = !borrow
-					const bool borrow{ mRegisterV[X] < mRegisterV[Y] };
-					mRegisterV[X]   = mRegisterV[X] - mRegisterV[Y];
-					mRegisterV[0xF] = !borrow;
+				case 0x5: {
+					instruction_8xy5_C8(X, Y);
 				} break;
-				case 0x7: {								// 8XY7 - set VX = VY - VX, VF = !borrow
-					const bool borrow{ mRegisterV[Y] < mRegisterV[X] };
-					mRegisterV[X]   = mRegisterV[Y] - mRegisterV[X];
-					mRegisterV[0xF] = !borrow;
+				case 0x7: {
+					instruction_8xy7_C8(X, Y);
 				};  break;
-				case 0x6: {								// 8XY6 - set VX = VY >> 1, VF = carry
-					if (!Quirk.shiftVX) mRegisterV[X] = mRegisterV[Y];
-					const bool lsb{ (mRegisterV[X] & 1) == 1 };
-					mRegisterV[X]   = mRegisterV[X] >> 1;
-					mRegisterV[0xF] = lsb;
+				case 0x6: {
+					instruction_8xy6_C8(X, Y);
 				} break;
-				case 0xE: {								// 8XYE - set VX = VY << 1, VF = carry
-					if (!Quirk.shiftVX) mRegisterV[X] = mRegisterV[Y];
-					const bool msb{ (mRegisterV[X] >> 7) == 1 };
-					mRegisterV[X]   = mRegisterV[X] << 1;
-					mRegisterV[0xF] = msb;
+				case 0xE: {
+					instruction_8xyE_C8(X, Y);
 				} break;
-				case 0xC: {								// 8XYC - set VX = VX * VY, VF = overflow *HWCHIP64*
-					const auto mul{ mRegisterV[X] * mRegisterV[Y] };
-					mRegisterV[X]   = static_cast<u8>(mul);
-					mRegisterV[0xF] = static_cast<u8>(mul >> 8);
+				case 0xC: {
+					instruction_8xyC_HW(X, Y);
 				} break;
-				case 0xD: {								// 8XYD - set VX = VX / VY, VF = VX % VY *HWCHIP64*
-					if (!mRegisterV[Y]) {
-						mRegisterV[0xF] = mRegisterV[X] = 0;
-					} else {
-						const auto remainder{ mRegisterV[X] % mRegisterV[Y] };
-						mRegisterV[X]   = mRegisterV[X] / mRegisterV[Y];
-						mRegisterV[0xF] = static_cast<u8>(remainder);
-					}
+				case 0xD: {
+					instruction_8xyD_HW(X, Y);
 				} break;
-				case 0xF: {								// 8XYF - set VX = VY / VX, VF = VX % VY *HWCHIP64*
-					if (!mRegisterV[X]) {
-						mRegisterV[0xF] = 0;
-					} else {
-						const auto remainder{ mRegisterV[Y] % mRegisterV[X] };
-						mRegisterV[X]   = mRegisterV[Y] / mRegisterV[X];
-						mRegisterV[0xF] = static_cast<u8>(remainder);
-					}
+				case 0xF: {
+					instruction_8xyF_HW(X, Y);
 				} break;
 				[[unlikely]] default: triggerOpcodeError(mInstruction);
 			} break;
 			case 0x9: switch (N) {
-				case 0x0:								// 9XY0 - skip next instruction if VX != VY
-					if (mRegisterV[X] != mRegisterV[Y]) skipInstruction();
+				case 0x0:
+					instruction_9xy0_C8(X, Y);
 					break;
 				[[unlikely]] default: triggerOpcodeError(mInstruction);
 			} break;
-			case 0xA:									// ANNN - set I = NNN
-				mRegisterI = NNN();
+			case 0xA:
+				instruction_ANNN_C8();
 				break;
 			case 0xB: {
 				if (State.chip8E_rom) {
 					switch (X) {
-						case 0xB:						// BBNN - jump to current PC - NN *CHIP-8E*
-							if (jumpInstruction_8E(-LO)) [[unlikely]]
-								{ setInterrupt(Interrupt::SOUND); }
+						case 0xB:
+							instruction_BBNN_8E(LO);
 							break;
-						case 0xF:						// BFNN - jump to current PC + NN *CHIP-8E*
-							if (jumpInstruction_8E(+LO)) [[unlikely]]
-								{ setInterrupt(Interrupt::SOUND); }
+						case 0xF:
+							instruction_BFNN_8E(LO);
 							break;
 						[[unlikely]] default: triggerOpcodeError(mInstruction);
 					}
@@ -413,153 +312,120 @@ void VM_Guest::instructionLoop() {
 				else if (State.chip8X_rom) {
 					if (X == 0xF) [[unlikely]] {
 						triggerOpcodeError(mInstruction);
-					} else if (N) {						// BXYN - set foreground hires color *CHIP-8X*
-						currFncSet->drawHiresColor(
-							mRegisterV[X], mRegisterV[X + 1], mRegisterV[Y] & 0x7, N
-						);
-					} else {							// BXY0 - set foreground lores color *CHIP-8X*
-						currFncSet->drawLoresColor(
-							mRegisterV[X], mRegisterV[X + 1], mRegisterV[Y] & 0x7
-						);
+					} else {
+						instruction_BxyN_8X(X, Y, N);
 					}
-				} else {								// BXNN - jump to NNN + V0 (else VX *SCHIP*)
-					const auto addr{ NNN() + (Quirk.jmpRegX ? mRegisterV[X] : mRegisterV[0]) };
-					if (jumpInstruction_C8(addr)) [[unlikely]]
-						{ setInterrupt(Interrupt::SOUND); }
+				} else {
+					instruction_BxNN_C8(X);
 				}
 			} break;
-			case 0xC:									// CXNN - set VX = rnd(256) & NN
-				mRegisterV[X] = Wrand.get() & LO;
+			case 0xC:
+				instruction_CxNN_C8(X, LO);
 				break;
-			case 0xD:									// DXYN - draw N sprite rows at VX and VY
-				if (Quirk.waitVblank) [[unlikely]]
-					{ setInterrupt(Interrupt::FRAME); }
-				currFncSet->drawSprite(X, Y, N);
+			case 0xD:
+				instruction_DxyN_C8(X, Y, N);
 				break;
 			case 0xE: switch (LO) {
-				case 0x9E:								// EX9E - skip next instruction if key VX down (p1)
-					if ( Input.keyHeld_P1(mRegisterV[X])) { skipInstruction(); }
+				case 0x9E:
+					instruction_Ex9E_C8(X);
 					break;
-				case 0xA1:								// EXA1 - skip next instruction if key VX up (p1)
-					if (!Input.keyHeld_P1(mRegisterV[X])) { skipInstruction(); }
+				case 0xA1:
+					instruction_ExA1_C8(X);
 					break;
-				case 0xF2:								// EXF2 - skip next instruction if key VX down (p2) *CHIP-8X*
-					if ( Input.keyHeld_P2(mRegisterV[X])) { skipInstruction(); }
+				case 0xF2:
+					instruction_ExF2_8X(X);
 					break;
-				case 0xF5:								// EXF5 - skip next instruction if key VX up (p2) *CHIP-8X*
-					if (!Input.keyHeld_P2(mRegisterV[X])) { skipInstruction(); }
+				case 0xF5:
+					instruction_ExF5_8X(X);
 					break;
 				[[unlikely]] default: triggerOpcodeError(mInstruction);
 			} break;
 			case 0xF: switch (NNN()) {
-				case 0x000:								// F000 - set I = NEXT NNNN then skip instruction *XOCHIP*
-					mRegisterI = NNNN();
-					mProgCounter += 2;
+				case 0x000:
+					instruction_F000_XO();
 					break;
-				case 0x002:								// F002 - load audio pattern 0..15 from RAM at I..I+15 *XOCHIP*
-					fetchPattern_XO();
+				case 0x002:
+					instruction_F002_XO();
 					break;
-				case 0x100:								// F100 - long jump to NEXT NNNN *HWCHIP64*
-					mProgCounter = NNNN();
+				case 0x100:
+					instruction_F100_HW();
 					break;
-				case 0x200:								// F200 - call long subroutine *HWCHIP64*
-					if (routineCall(NNNN())) [[unlikely]]
-						{ triggerError("Error :: Cannot call with a full stack!"); }
+				case 0x200:
+					instruction_F200_HW();
 					break;
-				case 0x300:								// F300 - long jump to NEXT NNNN + V0 *HWCHIP64*
-					if (jumpInstruction_C8(NNNN() + mRegisterV[0])) [[unlikely]]
-						{ setInterrupt(Interrupt::SOUND); }
+				case 0x300:
+					instruction_F300_HW();
 					break;
 				default: switch (LO) {
-					case 0x01:							// FX01 - set plane drawing to X *XOCHIP*
-						Trait.maskPlane = X;
+					case 0x01:
+						instruction_Fx01_XO(X);
 						break;
-					case 0x03:							// FX03 - load 24bit color X from RAM at I, I+1, I+2 *HWCHIP64*
-						if (!State.chip8E_rom) {
-							Color.bit[X] = 0xFF000000
-								| readMemoryI(0) << 16
-								| readMemoryI(1) <<  8
-								| readMemoryI(2);
-						} else [[unlikely]] {			// FX03 - output VX to port 3 *CHIP-8E*
-							setInterrupt(Interrupt::FRAME);
+					case 0x03:
+						if (State.chip8E_rom) [[unlikely]] {
+							instruction_Fx03_8X(X);
+						} else {
+							instruction_Fx03_HW(X);
 						}
 						break;
-					case 0x07:							// FX07 - set VX = delay timer
-						mRegisterV[X] = mDelayTimer;
+					case 0x07:
+						instruction_Fx07_C8(X);
 						break;
-					case 0x0A:							// FX0A - set VX = key, wait for keypress
-						setInterrupt(Interrupt::INPUT);
-						if (isManualRefresh()) [[unlikely]] {
-							flushBuffers(FlushType::DISPLAY);
-						}
+					case 0x0A:
+						instruction_Fx0A_C8(X);
 						break;
-					case 0x15:							// FX15 - set delay timer = VX
-						mDelayTimer = mRegisterV[X];
+					case 0x15:
+						instruction_Fx15_C8(X);
 						break;
-					case 0x18:							// FX18 - set sound timer = VX
-						if (!State.chip8X_rom) [[likely]]
-							{ setAudioTone_C8(); }
-						mBuzzLight = false;
-						mSoundTimer = mRegisterV[X] + (mRegisterV[X] == 1);
+					case 0x18:
+						instruction_Fx18_C8(X);
 						break;
-					case 0x1B:							// FX1B - skip VX amount of bytes *CHIP-8E*
-						mProgCounter += mRegisterV[X];
+					case 0x1B:
+						instruction_Fx1B_8E(X);
 						break;
-					case 0x1E:							// FX1E - set I = I + VX
-						mRegisterI += mRegisterV[X];
+					case 0x1E:
+						instruction_Fx1E_C8(X);
 						break;
-					case 0x1F:							// FX1F - set I = I - VX *HWCHIP64*
-						mRegisterI -= mRegisterV[X];
+					case 0x1F:
+						instruction_Fx1F_HW(X);
 						break;
-					case 0x29:							// FX29 - point I to 5 byte hex sprite from value in VX
-						mRegisterI = (mRegisterV[X] & 0xF) * 5;
+					case 0x29:
+						instruction_Fx29_C8(X);
 						break;
-					case 0x30:							// FX30 - point I to 10 byte hex sprite from value in VX *SCHIP*
-						mRegisterI = (mRegisterV[X] & 0xF) * 10 + 80;
+					case 0x30:
+						instruction_Fx30_C8(X);
 						break;
-					case 0x33:							// FX33 - store BCD of VX to RAM at I, I+1, I+2
-						writeMemoryI(mRegisterV[X] / 100,     0);
-						writeMemoryI(mRegisterV[X] / 10 % 10, 1);
-						writeMemoryI(mRegisterV[X] % 10,      2);
+					case 0x33:
+						instruction_Fx33_C8(X);
 						break;
-					case 0x3A:							// FX3A - set sound pitch = VX *XOCHIP*
-						setAudioTone_XO(mRegisterV[X]);
+					case 0x3A:
+						instruction_Fx3A_XO(X);
 						break;
-					case 0x4F:							// FX4F - set delay timer = VX and wait *CHIP-8E*
-						setInterrupt(Interrupt::DELAY);
-						mDelayTimer = mRegisterV[X];
+					case 0x4F:
+						instruction_Fx4F_8E(X);
 						break;
-					case 0x55:							// FX55 - store V0..VX to RAM at I..I+X
-						for (auto idx{ 0 }; idx <= X; ++idx)
-							{ writeMemoryI(mRegisterV[idx], idx); }
-						if (!Quirk.idxRegNoInc) [[likely]]
-							{ mRegisterI += X + !Quirk.idxRegMinus; }
+					case 0x55:
+						instruction_Fx55_C8(X);
 						break;
-					case 0x65:							// FX65 - load V0..VX from RAM at I..I+X
-						for (auto idx{ 0 }; idx <= X; ++idx)
-							{ mRegisterV[idx] = readMemoryI(idx); }
-						if (!Quirk.idxRegNoInc) [[likely]]
-							{ mRegisterI += X + !Quirk.idxRegMinus; }
+					case 0x65:
+						instruction_Fx65_C8(X);
 						break;
-					case 0x75:							// FX75 - store V0..VX to the P flags *XOCHIP*
-						if (writePermRegs((State.schip_legacy ? std::min(X, 7) : X) + 1)) [[unlikely]]
-							{ triggerError("Error :: Failed writing persistent registers!"); }
+					case 0x75:
+						instruction_Fx75_C8(X);
 						break;
-					case 0x85:							// FX85 - load V0..VX from the P flags *XOCHIP*
-						if (readPermRegs((State.schip_legacy ? std::min(X, 7) : X) + 1)) [[unlikely]]
-							{ triggerError("Error :: Failed reading persistent registers!"); }
+					case 0x85:
+						instruction_Fx85_C8(X);
 						break;
-					case 0xE3:							// FXE3 - wait for port 3 input, load into VX *CHIP-8E*
-						setInterrupt(Interrupt::FRAME);
+					case 0xE3:
+						instruction_FxE3_8E(X);
 						break;
-					case 0xE7:							// FXE7 - read port 3 input, load to VX *CHIP-8E*
-						setInterrupt(Interrupt::FRAME);
+					case 0xE7:
+						instruction_FxE7_8E(X);
 						break;
-					case 0xF8:							// FXF8 - output VX to port (sound freq) *CHIP-8X*
-						setAudioTone_8X(mRegisterV[X]);
+					case 0xF8:
+						instruction_FxF8_8X(X);
 						break;
-					case 0xFB:							// FXFB - wait for port input, load to VX *CHIP-8X*
-						setInterrupt(Interrupt::FRAME);
+					case 0xFB:
+						instruction_FxFB_8X(X);
 						break;
 					[[unlikely]] default: triggerOpcodeError(mInstruction);
 				} break;
@@ -678,28 +544,11 @@ void VM_Guest::handleInputWait() noexcept {
 	}
 }
 
-void VM_Guest::modifyDisplay_C8() {
-	displayBuffer[0].wipeAll();
-}
-
-void VM_Guest::modifyDisplay_XO() {
-	for (auto P{ 0 }; P < 4; ++P) {
-		if (!(Trait.maskPlane & (1 << P))) { continue; }
-		displayBuffer[P].wipeAll();
-	}
-}
-
-void VM_Guest::modifyDisplay_HW() {
-	for (auto P{ 0 }; P < 4; ++P) {
-		if (!(Trait.maskPlane & (1 << P))) { continue; }
-		for (auto& px : displayBuffer[P].span()) { px ^= 1; }
-	}
-}
 
 void VM_Guest::flushBuffers(const FlushType option) {
 	switch (option) {
 		case FlushType::DISCARD:
-			for (auto& elem : megaPalette) { elem = {}; }
+			megaColorPalette.wipeAll();
 			backgroundBuffer.wipeAll();
 			collisionPalette.wipeAll();
 			break;
@@ -713,29 +562,16 @@ void VM_Guest::flushBuffers(const FlushType option) {
 	}
 }
 
-void VM_Guest::loadMegaPalette(const s32 count) noexcept {
-	auto index{ mRegisterI };
-	for (auto pos{ 0 }; pos < count; index += 4) {
-		megaPalette[++pos] = readMemory(index + 0) << 24
-						   | readMemory(index + 1) << 16
-						   | readMemory(index + 2) <<  8
-						   | readMemory(index + 3);
-	}
-}
-
-void VM_Guest::clearPages() {
-	auto row{ Trait.pageGuard };
-	while (row < Trait.H) {
-		displayBuffer[0][row++].wipeAll();
-	}
-}
-
 void VM_Guest::setBackgroundColorTo(const u32 color) const noexcept {
 	BVS.setFrameColor(color);
 }
 
 void VM_Guest::cycleBackgroundColor() noexcept {
 	BVS.setFrameColor(Color.BackColors[Color.bgindex++ & 0x3]);
+}
+
+void VM_Guest::setDisplayOpacity(const s32 value) const {
+	BVS.setTextureAlpha(value);
 }
 
 bool VM_Guest::routineCall(const u32 addr) noexcept {
@@ -756,10 +592,6 @@ bool VM_Guest::routineReturn() noexcept {
 	//	mProgCounter = *(--mStackTop);
 	//	return false;
 	//} else { return true; }
-}
-
-void VM_Guest::protectPages() noexcept {
-	Trait.pageGuard = (3 - (mRegisterV[0] - 1 & 0x3)) << 5;
 }
 
 bool VM_Guest::readPermRegs(const usz X) {

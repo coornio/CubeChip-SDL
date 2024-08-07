@@ -170,7 +170,7 @@ void FunctionsForGigachip::drawSprite(
 				collideCoord = sourceColorIdx;
 				if (!vm.Texture.nodraw) {
 					backbufCoord = blendPixel(
-						vm.megaPalette[sourceColorIdx],
+						vm.megaColorPalette.at_raw(sourceColorIdx),
 						backbufCoord, vm.Texture.rgbmod,
 						vm.Texture.alpha, vm.Texture.invert,
 						blendAlgo
