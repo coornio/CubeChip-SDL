@@ -17,7 +17,7 @@
 /*  class  FncSetInterface -> FunctionsForMegachip                  */
 /*------------------------------------------------------------------*/
 
-FunctionsForMegachip::FunctionsForMegachip(VM_Guest& parent) noexcept
+FunctionsForMegachip::FunctionsForMegachip(MEGACORE& parent) noexcept
 	: vm{ parent }
 {
 	chooseBlend(Blend::NORMAL);

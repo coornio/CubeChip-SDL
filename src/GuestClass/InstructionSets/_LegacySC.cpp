@@ -11,7 +11,7 @@
 /*  class  FncSetInterface -> FunctionsForLegacySC                  */
 /*------------------------------------------------------------------*/
 
-FunctionsForLegacySC::FunctionsForLegacySC(VM_Guest& parent) noexcept
+FunctionsForLegacySC::FunctionsForLegacySC(MEGACORE& parent) noexcept
 	: vm{ parent }
 {}
 

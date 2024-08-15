@@ -18,7 +18,7 @@
 
 #include "Host.hpp"
 #include "../GuestClass/Guest.hpp"
-#include "../GuestClass/RomCheck.hpp"
+#include "../GuestClass/GameFileChecker.hpp"
 
 using namespace blogger;
 using namespace bic;
@@ -39,7 +39,7 @@ VM_Host::VM_Host(
 	, BAS{ ref_BAS }
 {
 	if (filename) {
-		isReady(HDM.verifyFile(RomFile::validate, filename));
+		isReady(HDM.verifyFile(GameFileChecker::validate, filename));
 	}
 }
 
@@ -53,7 +53,7 @@ void VM_Host::doBench(const bool state) noexcept { _doBench = state; }
 bool VM_Host::runHost() {
 	FrameLimiter Frame;
 
-	std::optional<VM_Guest> Guest;
+	std::optional<MEGACORE> Guest;
 
 	using namespace bic;
 
@@ -146,7 +146,7 @@ bool VM_Host::runHost() {
 	}
 }
 
-void VM_Host::prepareGuest(std::optional<VM_Guest>& Guest, FrameLimiter& Frame) {
+void VM_Host::prepareGuest(std::optional<MEGACORE>& Guest, FrameLimiter& Frame) {
 	Guest.reset();
 	bic::kb.updateCopy();
 	bic::mb.updateCopy();
@@ -165,7 +165,7 @@ void VM_Host::prepareGuest(std::optional<VM_Guest>& Guest, FrameLimiter& Frame) 
 	}
 }
 
-bool VM_Host::eventLoopSDL(std::optional<VM_Guest>& Guest, FrameLimiter& Frame) {
+bool VM_Host::eventLoopSDL(std::optional<MEGACORE>& Guest, FrameLimiter& Frame) {
 	SDL_Event Event;
 
 	while (SDL_PollEvent(&Event)) {
@@ -175,12 +175,12 @@ bool VM_Host::eventLoopSDL(std::optional<VM_Guest>& Guest, FrameLimiter& Frame) 
 
 			case SDL_EVENT_DROP_FILE:
 				BVS.raiseWindow();
-				if (HDM.verifyFile(RomFile::validate, Event.drop.data)) {
+				if (HDM.verifyFile(GameFileChecker::validate, Event.drop.data)) {
 					isReady(true);
 					doBench(false);
 					prepareGuest(Guest, Frame);
 				} else {
-					blog.stdLogOut(std::string{ "File drop denied: " } + RomFile::error);
+					blog.stdLogOut(std::string{ "File drop denied: " } + GameFileChecker::getError());
 				}
 				break;
 

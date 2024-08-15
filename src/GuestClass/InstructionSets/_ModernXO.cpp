@@ -11,7 +11,7 @@
 /*  class  FncSetInterface -> FunctionsForModernXO                  */
 /*------------------------------------------------------------------*/
 
-FunctionsForModernXO::FunctionsForModernXO(VM_Guest& parent) noexcept
+FunctionsForModernXO::FunctionsForModernXO(MEGACORE& parent) noexcept
 	: vm{ parent }
 {}
 

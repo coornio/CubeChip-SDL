@@ -13,7 +13,7 @@ class BasicVideoSpec;
 class BasicAudioSpec;
 
 class FrameLimiter;
-class VM_Guest;
+class MEGACORE;
 
 class VM_Host final {
 	bool _isReady{};
@@ -28,8 +28,8 @@ class VM_Host final {
 	void isReady(bool) noexcept;
 	void doBench(bool) noexcept;
 
-	void prepareGuest(std::optional<VM_Guest>&, FrameLimiter&);
-	bool eventLoopSDL(std::optional<VM_Guest>&, FrameLimiter&);
+	void prepareGuest(std::optional<MEGACORE>&, FrameLimiter&);
+	bool eventLoopSDL(std::optional<MEGACORE>&, FrameLimiter&);
 
 public:
 	explicit VM_Host(

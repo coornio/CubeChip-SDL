@@ -6,9 +6,8 @@
 
 #pragma once
 
-#include <optional>
+#include <variant>
 #include <string>
-#include <array>
 #include <vector>
 
 #include "../Assistants/Well512.hpp"
@@ -23,10 +22,10 @@ class HomeDirManager;
 class BasicVideoSpec;
 class BasicAudioSpec;
 
-class alignas(64) VM_Guest final {
+class MEGACORE final {
 
 /*==================================================================*/
-	#pragma region VM_GUEST SPECIFICS
+	#pragma region MEGACORE SPECIFICS
 /*==================================================================*/
 
 private:
@@ -110,12 +109,12 @@ public:
 	); }
 
 public:
-	explicit VM_Guest(
+	explicit MEGACORE(
 		HomeDirManager&,
 		BasicVideoSpec&,
 		BasicAudioSpec&
 	);
-	~VM_Guest();
+	~MEGACORE();
 
 /*==================================================================*/
 	#pragma endregion
@@ -1143,3 +1142,4 @@ private:
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 };
+

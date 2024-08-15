@@ -13,10 +13,6 @@
 
 using namespace blogger;
 
-inline static constexpr std::size_t cexprHash(const char* str) noexcept {
-	return (*str == '\0') ? 0 : cexprHash(str + 1) * 31 + *str;
-}
-
 HomeDirManager::HomeDirManager(const char* homeName) try
 	: BasicHome{ homeName }
 {
@@ -35,7 +31,7 @@ HomeDirManager::HomeDirManager(const char* homeName) try
 
 void HomeDirManager::reset() noexcept {
 	path = name = type = sha1 = {};
-	size = hash = 0;
+	size = 0;
 }
 
 void HomeDirManager::addDirectory() {
@@ -47,7 +43,7 @@ void HomeDirManager::addDirectory() {
 }
 
 bool HomeDirManager::verifyFile(
-	bool (*validate)(std::uint64_t hash, std::uint64_t fsize, std::string_view sha1),
+	bool(*validate)(std::uint64_t fsize, std::string_view type, std::string_view sha1),
 	const char* filepath
 ) {
 	if (!filepath) { return false; }
@@ -84,10 +80,9 @@ bool HomeDirManager::verifyFile(
 
 	auto tempPath{ fspath.string() };
 	auto tempType{ fspath.extension().string() };
-	auto tempHash{ cexprHash(tempType.c_str()) };
 	auto tempSHA1{ SHA1::from_file(tempPath) };
 
-	const bool result{ validate(tempHash, fileSize, tempSHA1) };
+	const bool result{ validate(fileSize, tempType, tempSHA1) };
 
 	if (result) {
 		path = tempPath;
@@ -95,7 +90,6 @@ bool HomeDirManager::verifyFile(
 		name = fspath.stem().string();
 		type = tempType;
 		sha1 = tempSHA1;
-		hash = tempHash;
 		size = fileSize;
 	}
 

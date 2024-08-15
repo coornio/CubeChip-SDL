@@ -16,10 +16,10 @@ using namespace blogger;
 #include "../HostClass/HomeDirManager.hpp"
 
 #include "Guest.hpp"
-#include "RomCheck.hpp"
+#include "GameFileChecker.hpp"
 #include "HexInput.hpp"
 
-bool VM_Guest::setupMachine() {
+bool MEGACORE::setupMachine() {
 	if (!romTypeCheck()) {
 		return false;
 	}
@@ -31,14 +31,14 @@ bool VM_Guest::setupMachine() {
 	return true;
 }
 
-bool VM_Guest::romTypeCheck() {
+bool MEGACORE::romTypeCheck() {
 	/*
 	* This place requires a database check, only after which would
 	* we fall back to deriving the platform specifics via extension
 	*/
-	switch (HDM.hash) {
+	switch (cexprHash(HDM.type.c_str())) {
 
-		case (RomExt::c2x):
+		case (FileExt::c2x):
 			if (!romCopyToMemory(4'096, 0x300))
 				return false;
 			initProgramParams(0x300, 30);
@@ -48,7 +48,7 @@ bool VM_Guest::romTypeCheck() {
 			State.hires_2paged = true;
 			break;
 
-		case (RomExt::c4x):
+		case (FileExt::c4x):
 			if (!romCopyToMemory(4'096, 0x300))
 				return false;
 			initProgramParams(0x300, 30);
@@ -58,7 +58,7 @@ bool VM_Guest::romTypeCheck() {
 			State.hires_4paged = true;
 			break;
 
-		case (RomExt::c8x):
+		case (FileExt::c8x):
 			if (!romCopyToMemory(4'096, 0x300))
 				return false;
 			initProgramParams(0x300, 30);
@@ -67,7 +67,7 @@ bool VM_Guest::romTypeCheck() {
 			State.chip8X_rom   = true;
 			break;
 
-		case (RomExt::c8e):
+		case (FileExt::c8e):
 			if (!romCopyToMemory(4'096, 0x200))
 				return false;
 			initProgramParams(0x200, 30);
@@ -76,7 +76,7 @@ bool VM_Guest::romTypeCheck() {
 			State.chip8E_rom   = true;
 			break;
 
-		case (RomExt::c2h):
+		case (FileExt::c2h):
 			if (!romCopyToMemory(4'096, 0x260))
 				return false;
 			initProgramParams(0x260, 30);
@@ -85,7 +85,7 @@ bool VM_Guest::romTypeCheck() {
 			State.hires_2paged = true;
 			break;
 
-		case (RomExt::c4h):
+		case (FileExt::c4h):
 			if (!romCopyToMemory(4'096, 0x244))
 				return false;
 			initProgramParams(0x244, 30);
@@ -94,7 +94,7 @@ bool VM_Guest::romTypeCheck() {
 			State.hires_4paged = true;
 			break;
 
-		case (RomExt::c8h):
+		case (FileExt::c8h):
 			if (!romCopyToMemory(4'096, 0x200))
 				return false;
 			if (readMemory(0x200) != 0x12 || readMemory(0x201) != 0x60) {
@@ -109,21 +109,21 @@ bool VM_Guest::romTypeCheck() {
 			Quirk.shiftVX      = true;
 			break;
 
-		case (RomExt::ch8):
+		case (FileExt::ch8):
 			if (!romCopyToMemory(4'096, 0x200))
 				return false;
 			initProgramParams(0x200, 11);
 			changeFunctionSet(&SetClassic8);
 			break;
 
-		case (RomExt::sc8):
+		case (FileExt::sc8):
 			if (!romCopyToMemory(4'096, 0x200))
 				return false;
 			initProgramParams(0x200, 30);
 			changeFunctionSet(&SetClassic8);
 			break;
 
-		case (RomExt::gc8):
+		case (FileExt::gc8):
 			if (!romCopyToMemory(16'777'216, 0x200))
 				return false;
 			initProgramParams(0x200, 10'000);
@@ -131,7 +131,7 @@ bool VM_Guest::romTypeCheck() {
 			State.gigachip_rom = true;
 			break;
 
-		case (RomExt::mc8):
+		case (FileExt::mc8):
 			if (!romCopyToMemory(16'777'216, 0x200))
 				return false;
 			initProgramParams(0x200, 3'000);
@@ -143,8 +143,8 @@ bool VM_Guest::romTypeCheck() {
 			Quirk.jmpRegX      = true;
 			break;
 
-		case (RomExt::xo8):
-		case (RomExt::hw8):
+		case (FileExt::xo8):
+		case (FileExt::hw8):
 			if (!romCopyToMemory(65'536, 0x200))
 				return false;
 			initProgramParams(0x200, 200'000);
@@ -153,7 +153,7 @@ bool VM_Guest::romTypeCheck() {
 			Quirk.wrapSprite = true;
 			break;
 
-		case (RomExt::benchmark):
+		case (FileExt::bnc):
 			if (!romCopyToMemory(65'536, 0x200))
 				return false;
 			initProgramParams(0x200, 4'000'000);
@@ -167,7 +167,7 @@ bool VM_Guest::romTypeCheck() {
 	return true;
 }
 
-bool VM_Guest::romCopyToMemory(const usz size, const usz offset) {
+bool MEGACORE::romCopyToMemory(const usz size, const usz offset) {
 	mMemoryBank.resize(size);
 
 	std::basic_ifstream<char> ifs(HDM.path, std::ios::binary);
@@ -180,7 +180,7 @@ bool VM_Guest::romCopyToMemory(const usz size, const usz offset) {
 	}
 }
 
-void VM_Guest::initPlatform() {
+void MEGACORE::initPlatform() {
 	//Color->bit[0] = 0xFF000000;
 	//Color->bit[1] = 0xFF333333;
 	//Color->bit[2] = 0xFF555555;
@@ -250,7 +250,7 @@ void VM_Guest::initPlatform() {
 	}
 }
 
-void VM_Guest::prepDisplayArea(const Resolution mode, const bool forced) {
+void MEGACORE::prepDisplayArea(const Resolution mode, const bool forced) {
 	//                                HI   LO   TP   FP   MC
 	static constexpr s32 sizeW[]{ 0, 128,  64,  64,  64, 256 };
 	static constexpr s32 sizeH[]{ 0,  64,  32,  64, 128, 192 };
@@ -292,7 +292,7 @@ void VM_Guest::prepDisplayArea(const Resolution mode, const bool forced) {
 	}
 };
 
-void VM_Guest::fontCopyToMemory() {
+void MEGACORE::fontCopyToMemory() {
 	static constexpr u8 FONT_DATA[]{
 		0x60, 0xA0, 0xA0, 0xA0, 0xC0, // 0
 		0x40, 0xC0, 0x40, 0x40, 0xE0, // 1
@@ -365,7 +365,7 @@ void VM_Guest::fontCopyToMemory() {
 	);
 }
 
-void VM_Guest::renderToTexture() {
+void MEGACORE::renderToTexture() {
 	if (isManualRefresh()) {
 		std::copy_n(
 			std::execution::seq,

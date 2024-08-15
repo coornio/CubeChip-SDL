@@ -13,7 +13,7 @@
 /*  class  FncSetInterface -> FunctionsForClassic8                  */
 /*------------------------------------------------------------------*/
 
-FunctionsForClassic8::FunctionsForClassic8(VM_Guest& parent) noexcept
+FunctionsForClassic8::FunctionsForClassic8(MEGACORE& parent) noexcept
 	: vm{ parent }
 {}
 

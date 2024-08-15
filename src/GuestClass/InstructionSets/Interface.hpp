@@ -12,7 +12,7 @@
 
 #include "../../Types.hpp"
 
-class VM_Guest;
+class MEGACORE;
 
 /*------------------------------------------------------------------*/
 /*  interface class  FncSetInterface                                */
@@ -38,7 +38,7 @@ struct FncSetInterface {
 /*------------------------------------------------------------------*/
 
 class FunctionsForGigachip final : public FncSetInterface {
-	VM_Guest& vm;
+	MEGACORE& vm;
 
 	f32(*blendAlgo)(f32, f32) noexcept {};
 
@@ -66,7 +66,7 @@ private:
 
 public:
 	void chooseBlend(usz) noexcept;
-	explicit FunctionsForGigachip(VM_Guest&) noexcept;
+	explicit FunctionsForGigachip(MEGACORE&) noexcept;
 };
 
 /*------------------------------------------------------------------*/
@@ -74,7 +74,7 @@ public:
 /*------------------------------------------------------------------*/
 
 class FunctionsForMegachip final : public FncSetInterface {
-	VM_Guest& vm;
+	MEGACORE& vm;
 
 	f32(*blendAlgo)(f32, f32) noexcept {};
 
@@ -101,7 +101,7 @@ private:
 
 public:
 	void chooseBlend(usz) noexcept;
-	explicit FunctionsForMegachip(VM_Guest&) noexcept;
+	explicit FunctionsForMegachip(MEGACORE&) noexcept;
 };
 
 /*------------------------------------------------------------------*/
@@ -109,7 +109,7 @@ public:
 /*------------------------------------------------------------------*/
 
 class FunctionsForModernXO final : public FncSetInterface {
-	VM_Guest& vm;
+	MEGACORE& vm;
 
 	void drawByte(s32, s32, s32, usz);
 
@@ -125,7 +125,7 @@ class FunctionsForModernXO final : public FncSetInterface {
 	void drawHiresColor(s32, s32, s32, s32) override {};
 
 public:
-	explicit FunctionsForModernXO(VM_Guest&) noexcept;
+	explicit FunctionsForModernXO(MEGACORE&) noexcept;
 };
 
 /*------------------------------------------------------------------*/
@@ -133,7 +133,7 @@ public:
 /*------------------------------------------------------------------*/
 
 class FunctionsForLegacySC final : public FncSetInterface {
-	VM_Guest& vm;
+	MEGACORE& vm;
 
 	void drawByte(s32, s32, usz, bool&);
 	void drawShort(s32, s32, usz);
@@ -151,7 +151,7 @@ class FunctionsForLegacySC final : public FncSetInterface {
 	void drawHiresColor(s32, s32, s32, s32) override;
 
 public:
-	explicit FunctionsForLegacySC(VM_Guest&) noexcept;
+	explicit FunctionsForLegacySC(MEGACORE&) noexcept;
 };
 
 /*------------------------------------------------------------------*/
@@ -159,7 +159,7 @@ public:
 /*------------------------------------------------------------------*/
 
 class FunctionsForClassic8 final : public FncSetInterface {
-	VM_Guest& vm;
+	MEGACORE& vm;
 
 	void drawByte(s32, s32, usz);
 
@@ -175,5 +175,5 @@ class FunctionsForClassic8 final : public FncSetInterface {
 	void drawHiresColor(s32, s32, s32, s32) override;
 
 public:
-	explicit FunctionsForClassic8(VM_Guest&) noexcept;
+	explicit FunctionsForClassic8(MEGACORE&) noexcept;
 };

@@ -20,7 +20,6 @@ public:
 	std::string   name{};
 	std::string   type{};
 	std::string   sha1{};
-	std::uint64_t hash{};
 	std::uint64_t size{};
 
 	HomeDirManager(const char*);
@@ -28,7 +27,7 @@ public:
 	void reset() noexcept;
 	void addDirectory();
 	bool verifyFile(
-		bool (*)(std::uint64_t, std::uint64_t, std::string_view),
+		bool(*)(std::uint64_t, std::string_view, std::string_view),
 		const char*
 	);
 };

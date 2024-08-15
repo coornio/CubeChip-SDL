@@ -40,16 +40,16 @@
     <Filter Include="Header Files\_nlohmann">
       <UniqueIdentifier>{55d4d668-6f28-4b99-9a19-8f349a95197e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\PlatformCores">
+    <Filter Include="Header Files\VM Guest\EmuCores">
+      <UniqueIdentifier>{adc5a6be-595d-46a9-9d99-8f8938de479f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\EmuCores">
       <UniqueIdentifier>{363dd659-8f39-4b20-b452-3626fdb1bc8b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\CubeChip.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\GuestClass\RomCheck.cpp">
-      <Filter>Source Files\VM Guest</Filter>
     </ClCompile>
     <ClCompile Include="src\GuestClass\GuestFunctions.cpp">
       <Filter>Source Files\VM Guest</Filter>
@@ -102,6 +102,15 @@
     <ClCompile Include="src\Assistants\SHA1.cpp">
       <Filter>Source Files\Assistants</Filter>
     </ClCompile>
+    <ClCompile Include="src\GuestClass\EmuCores\CHIP8_MODERN.cpp">
+      <Filter>Source Files\EmuCores</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GuestClass\EmuCores\EmuCores.cpp">
+      <Filter>Source Files\EmuCores</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GuestClass\GameFileChecker.cpp">
+      <Filter>Source Files\VM Guest</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Includes.hpp">
@@ -137,9 +146,6 @@
     <ClInclude Include="src\Assistants\BasicHome.hpp">
       <Filter>Header Files\Assistants</Filter>
     </ClInclude>
-    <ClInclude Include="src\GuestClass\RomCheck.hpp">
-      <Filter>Header Files\VM Guest</Filter>
-    </ClInclude>
     <ClInclude Include="src\GuestClass\Guest.hpp">
       <Filter>Header Files\VM Guest</Filter>
     </ClInclude>
@@ -172,6 +178,15 @@
     </ClInclude>
     <ClInclude Include="src\Types.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\GuestClass\EmuCores\CHIP8_MODERN.hpp">
+      <Filter>Header Files\VM Guest\EmuCores</Filter>
+    </ClInclude>
+    <ClInclude Include="src\GuestClass\EmuCores\EmuCores.hpp">
+      <Filter>Header Files\VM Guest\EmuCores</Filter>
+    </ClInclude>
+    <ClInclude Include="src\GuestClass\GameFileChecker.hpp">
+      <Filter>Header Files\VM Guest</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
