@@ -12,26 +12,6 @@
 #include <string>
 #include <unordered_map>
 
-class Core_XOCHIP;
-class Core_CHIP8E;
-class Core_CHIP8X;
-
-class Core_CHIP8_2P;
-class Core_CHIP8_4P;
-
-class Core_CHIP8_LEGACY;
-class Core_SCHIP_LEGACY;
-
-class Core_CHIP8_MODERN;
-class Core_SCHIP_MODERN;
-
-class Core_CHIP8X_HIRES;
-class Core_CHIP8X_SCHIP;
-
-class Core_HWCHIP64;
-class Core_MEGACHIP;
-class Core_GIGACHIP;
-
 inline constexpr std::size_t cexprHash(const char* str) noexcept {
 	return (*str == '\0') ? 0 : cexprHash(str + 1) * 31 + *str;
 }
@@ -57,7 +37,6 @@ enum FileExt : std::size_t {
 
 	bnc = cexprHash(".bnc"), // benchmark
 };
-
 
 enum class GameFileType {
 	c2x, // CHIP-8X 2-page
@@ -86,6 +65,12 @@ enum class GameCoreType {
 	HWCHIP64, MEGACHIP, GIGACHIP,
 };
 
+class EmuCores;
+
+class HomeDirManager;
+class BasicVideoSpec;
+class BasicAudioSpec;
+
 class GameFileChecker final {
 	 GameFileChecker() = delete;
 	~GameFileChecker() = delete;
@@ -93,23 +78,34 @@ class GameFileChecker final {
 	static std::string sErrorMsg;
 	static GameCoreType sEmuCore;
 
-public:
-	[[nodiscard]] static constexpr auto getError() noexcept {
-		return std::move(sErrorMsg);
-	}
-
-	[[nodiscard]] static constexpr auto getCore()  noexcept {
-		auto coreCopy{ sEmuCore };
-		sEmuCore = GameCoreType::INVALID;
-		return coreCopy;
-	}
-
 	[[nodiscard]] static constexpr bool testGame(
 		const bool pass, const GameCoreType type
 	) noexcept {
 		if (pass) { sEmuCore = type; }
 		return pass;
 	}
+
+public:
+	[[nodiscard]] static constexpr auto getError() noexcept {
+		return std::move(sErrorMsg);
+	}
+
+	[[nodiscard]] static constexpr auto getCore()  noexcept {
+		return sEmuCore;
+	}
+
+	static constexpr void delCore() noexcept {
+		sErrorMsg.clear();
+		sEmuCore = GameCoreType::INVALID;
+	}
+
+	[[nodiscard]] static constexpr bool hasCore()  noexcept {
+		return sEmuCore != GameCoreType::INVALID;
+	}
+
+	[[nodiscard]] static std::unique_ptr<EmuCores> initializeCore(
+		HomeDirManager&, BasicVideoSpec&, BasicAudioSpec&
+	);
 
 	static bool validate(
 		std::uint64_t    size,

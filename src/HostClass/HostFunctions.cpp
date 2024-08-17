@@ -18,6 +18,7 @@
 
 #include "Host.hpp"
 #include "../GuestClass/Guest.hpp"
+#include "../GuestClass/EmuCores/EmuCores.hpp"
 #include "../GuestClass/GameFileChecker.hpp"
 
 using namespace blogger;
@@ -39,21 +40,17 @@ VM_Host::VM_Host(
 	, BAS{ ref_BAS }
 {
 	if (filename) {
-		isReady(HDM.verifyFile(GameFileChecker::validate, filename));
+		HDM.verifyFile(GameFileChecker::validate, filename);
 	}
 }
 
-bool VM_Host::isReady() const noexcept { return _isReady; }
 bool VM_Host::doBench() const noexcept { return _doBench; }
-
-void VM_Host::isReady(const bool state) noexcept { _isReady = state; }
 void VM_Host::doBench(const bool state) noexcept { _doBench = state; }
 
 
 bool VM_Host::runHost() {
 	FrameLimiter Frame;
-
-	std::optional<MEGACORE> Guest;
+	VM_Guest     Guest;
 
 	using namespace bic;
 
@@ -76,11 +73,10 @@ bool VM_Host::runHost() {
 			BAS.changeVolume(-15);
 		}
 
-		if (isReady()) {
+		if (GameFileChecker::hasCore()) {
 			if (kb.isPressed(KEY(ESCAPE))) {
-				isReady(false);
-				doBench(false);
 				BVS.resetWindow();
+				GameFileChecker::delCore();
 				prepareGuest(Guest, Frame);
 				continue;
 			}
@@ -103,24 +99,24 @@ bool VM_Host::runHost() {
 
 			if (doBench()) {
 				if (kb.isPressed(KEY(UP))) {
-					Guest->changeCPF(+50'000);
+					Guest.changeCPF(+50'000);
 				}
 				if (kb.isPressed(KEY(DOWN))) {
-					Guest->changeCPF(-50'000);
+					Guest.changeCPF(-50'000);
 				}
 
 				using namespace std::chrono;
 
 				std::cout << "\33[2;1H" << std::dec << std::setfill(' ') << std::setprecision(6)
-					<< "\nframes: " << Guest->getTotalFrames()     << "      "
-					<< "\ncycles: " << Guest->getTotalCycles()     << "      "
-					<< "\ncpf:    " << std::abs(Guest->fetchCPF()) << "      "
+					<< "\nframes: " << Guest.getTotalFrames()     << "      "
+					<< "\ncycles: " << Guest.getTotalCycles()     << "      "
+					<< "\ncpf:    " << std::abs(Guest.fetchCPF()) << "      "
 					<< (Frame.paced() ? "\n\n > keeping up pace." : "\n\n > cannot keep up!!")
 					<< "\n\nelapsed since last: " << Frame.elapsed() << std::endl;
 
 				auto start = high_resolution_clock::now();
 
-				Guest->processFrame();
+				Guest.processFrame();
 
 				auto end = high_resolution_clock::now();
 
@@ -132,7 +128,7 @@ bool VM_Host::runHost() {
 					<< "\33[1;13H" << std::setw(4) << ms.count()
 					<< "\33[1;23H" << std::setw(3) << mu.count()
 					<< "\33[1;1H";
-			} else { Guest->processFrame(); }
+			} else { Guest.processFrame(); }
 		} else {
 			if (kb.isPressed(KEY(ESCAPE))) {
 				return EXIT_SUCCESS;
@@ -146,26 +142,21 @@ bool VM_Host::runHost() {
 	}
 }
 
-void VM_Host::prepareGuest(std::optional<MEGACORE>& Guest, FrameLimiter& Frame) {
-	Guest.reset();
+void VM_Host::prepareGuest(VM_Guest& Guest, FrameLimiter& Frame) {
 	bic::kb.updateCopy();
 	bic::mb.updateCopy();
 
-	if (isReady()) {
-		Guest.emplace(HDM, BVS, BAS);
-
-		if (Guest->setupMachine()) {
-			Frame.setLimiter(Guest->fetchFramerate());
-			BVS.changeTitle(HDM.file.c_str());
-		} else {
-			Frame.setLimiter(30.0f);
-			isReady(false);
-			HDM.reset();
-		}
+	if (GameFileChecker::hasCore()) {
+		Guest.initGameCore(HDM, BVS, BAS);
+		Frame.setLimiter(Guest.fetchFramerate());
+		BVS.changeTitle(HDM.file.c_str());
+	} else {
+		Frame.setLimiter(30.0f);
+		HDM.reset();
 	}
 }
 
-bool VM_Host::eventLoopSDL(std::optional<MEGACORE>& Guest, FrameLimiter& Frame) {
+bool VM_Host::eventLoopSDL(VM_Guest& Guest, FrameLimiter& Frame) {
 	SDL_Event Event;
 
 	while (SDL_PollEvent(&Event)) {
@@ -175,9 +166,8 @@ bool VM_Host::eventLoopSDL(std::optional<MEGACORE>& Guest, FrameLimiter& Frame) 
 
 			case SDL_EVENT_DROP_FILE:
 				BVS.raiseWindow();
-				if (HDM.verifyFile(GameFileChecker::validate, Event.drop.data)) {
-					isReady(true);
-					doBench(false);
+				HDM.verifyFile(GameFileChecker::validate, Event.drop.data);
+				if (GameFileChecker::hasCore()) {
 					prepareGuest(Guest, Frame);
 				} else {
 					blog.stdLogOut(std::string{ "File drop denied: " } + GameFileChecker::getError());
@@ -185,11 +175,11 @@ bool VM_Host::eventLoopSDL(std::optional<MEGACORE>& Guest, FrameLimiter& Frame) 
 				break;
 
 			case SDL_EVENT_WINDOW_MINIMIZED:
-				if (Guest) { Guest->isSystemStopped(true); }
+				Guest.isSystemStopped(true);
 				break;
 
 			case SDL_EVENT_WINDOW_RESTORED:
-				if (Guest) { Guest->isSystemStopped(false); }
+				Guest.isSystemStopped(false);
 				break;
 		}
 	}

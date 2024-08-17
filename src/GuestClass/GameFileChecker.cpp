@@ -16,6 +16,58 @@
 std::string GameFileChecker::sErrorMsg{};
 GameCoreType GameFileChecker::sEmuCore{};
 
+std::unique_ptr<EmuCores> GameFileChecker::initializeCore(
+	HomeDirManager& HDM, BasicVideoSpec& BVS, BasicAudioSpec& BAS
+) {
+	switch (sEmuCore) {
+		case GameCoreType::XOCHIP:
+			//return std::make_unique<XOCHIP>(HDM, BVS, BAS);
+
+		case GameCoreType::CHIP8E:
+			//return std::make_unique<CHIP8E>(HDM, BVS, BAS);
+
+		case GameCoreType::CHIP8X:
+			//return std::make_unique<CHIP8X>(HDM, BVS, BAS);
+
+		case GameCoreType::CHIP8_2P:
+			//return std::make_unique<CHIP8_2P>(HDM, BVS, BAS);
+
+		case GameCoreType::CHIP8_4P:
+			//return std::make_unique<CHIP8_4P>(HDM, BVS, BAS);
+
+		case GameCoreType::CHIP8_LEGACY:
+			//return std::make_unique<CHIP8_LEGACY>(HDM, BVS, BAS);
+
+		case GameCoreType::SCHIP_LEGACY:
+			//return std::make_unique<SCHIP_LEGACY>(HDM, BVS, BAS);
+
+		case GameCoreType::CHIP8_MODERN:
+			return std::make_unique<CHIP8_MODERN>(HDM, BVS, BAS);
+
+		case GameCoreType::SCHIP_MODERN:
+			//return std::make_unique<SCHIP_MODERN>(HDM, BVS, BAS);
+
+		case GameCoreType::CHIP8X_HIRES:
+			//return std::make_unique<CHIP8X_HIRES>(HDM, BVS, BAS);
+
+		case GameCoreType::CHIP8X_SCHIP:
+			//return std::make_unique<CHIP8X_SCHIP>(HDM, BVS, BAS);
+
+		case GameCoreType::HWCHIP64:
+			//return std::make_unique<HWCHIP64>(HDM, BVS, BAS);
+
+		case GameCoreType::MEGACHIP:
+			//return std::make_unique<MEGACHIP>(HDM, BVS, BAS);
+
+		case GameCoreType::GIGACHIP:
+			//return std::make_unique<GIGACHIP>(HDM, BVS, BAS);
+
+		default:
+		case GameCoreType::INVALID:
+			return nullptr;
+	}
+}
+
 bool GameFileChecker::validate(
 	const std::uint64_t    size,
 	const std::string_view type,
@@ -37,6 +89,8 @@ bool GameFileChecker::validate(
 		{".hwc", GameFileType::hwc},
 		{".bnc", GameFileType::bnc},
 	};
+
+	sErrorMsg.clear();
 
 	if (!sha1.empty()) {
 		/* database check here */

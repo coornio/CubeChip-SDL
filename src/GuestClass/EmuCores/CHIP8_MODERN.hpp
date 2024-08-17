@@ -349,11 +349,11 @@ private:
 				}
 				return;
 			default:
-				if (Quirk.wrapSprite) { X &= 0x3F; }
+				if (Quirk.wrapSprite) { X &= mDisplayWb; }
 				else if (X >= mDisplayW) { return; }
 
-				for (auto B{ 0 }; B++ < 8; ++X &= mDisplayWb) {
-					if (DATA & 0x80 >> B) {
+				for (auto B{ 0 }; B < 8; ++X &= mDisplayWb) {
+					if (DATA & 0x80 >> B++) {
 						if (!(mDisplayBuffer[Y * mDisplayW + X] ^= 1))
 							{ mRegisterV[0xF] = 1; }
 					}

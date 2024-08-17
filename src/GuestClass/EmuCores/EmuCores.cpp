@@ -41,7 +41,7 @@ std::string EmuCores::formatOpcode(const u8 HI, const u8 LO) const {
 	std::stringstream out;
 	out << std::setfill('0') << std::setw(2)
 		<< std::uppercase    << std::hex
-		<< HI << LO;
+		<< HI + 0 << LO + 0;
 	return out.str();
 }
 
@@ -71,4 +71,13 @@ void EmuCores::copyFontToMemory(u8* dest, const usz offset, const usz size) {
 		std::execution::unseq,
 		cFontData, size, dest + offset
 	);
+}
+
+bool VM_Guest::initGameCore(
+	HomeDirManager& HDM,
+	BasicVideoSpec& BVS,
+	BasicAudioSpec& BAS
+) {
+	mCoreBase = std::move(GameFileChecker::initializeCore(HDM, BVS, BAS));
+	return mCoreBase ? true : false;
 }

@@ -62,21 +62,26 @@ protected:
 		mDisplayH = H; mDisplayHb = H - 1;
 	}
 
-	//bool mLegacyPlatform{};
-	bool mSystemStopped{};
 	bool mLoresExtended{};
 	bool mManualRefresh{};
 	bool mPixelTrailing{};
 
-	[[nodiscard]] bool isSystemStopped() const noexcept { return mSystemStopped || mCyclesPerFrame == 0; }
+	bool mSystemStopped{};
+
+	
 	[[nodiscard]] bool isLoresExtended() const noexcept { return mLoresExtended; }
 	[[nodiscard]] bool isManualRefresh() const noexcept { return mManualRefresh; }
 	[[nodiscard]] bool isPixelTrailing() const noexcept { return mPixelTrailing; }
 	void isLoresExtended(const bool state) noexcept { mLoresExtended = state; }
 	void isManualRefresh(const bool state) noexcept { mManualRefresh = state; }
 	void isPixelTrailing(const bool state) noexcept { mPixelTrailing = state; }
+
+public:
+	[[nodiscard]]
+	bool isSystemStopped()           const noexcept { return mSystemStopped || mCyclesPerFrame == 0; }
 	void isSystemStopped(const bool state) noexcept { mSystemStopped = state; }
 
+protected:
 	Well512  Wrand;
 	HexInput Input;
 
@@ -89,6 +94,7 @@ protected:
 
 	bool copyGameToMemory(u8* dest, const usz offset);
 	void copyFontToMemory(u8* dest, const usz offset, const usz size);
+
 public:
 	~EmuCores() noexcept;
 	explicit EmuCores(
@@ -99,8 +105,6 @@ public:
 
 	//virtual bool initPlatform() { return false; }
 	virtual void processFrame() { return; };
-
-	//bool islegacyPlatform() const { return mLegacyPlatform; }
 
 	auto getTotalFrames() const noexcept { return mTotalFrames; }
 	auto getTotalCycles() const noexcept { return mTotalCycles; }
@@ -201,14 +205,48 @@ public:
 };
 
 class VM_Guest final {
-	HomeDirManager& HDM;
-	BasicVideoSpec& BVS;
-	BasicAudioSpec& BAS;
-
 	std::unique_ptr<EmuCores>
 		mCoreBase{};
 
 public:
-	void processFrame() const;
+	bool initGameCore(
+		HomeDirManager&,
+		BasicVideoSpec&,
+		BasicAudioSpec&
+	);
 
+	[[nodiscard]]
+	bool isSystemStopped() const {
+		return mCoreBase ? mCoreBase->isSystemStopped() : true;
+	}
+	void isSystemStopped(const bool state) {
+		if (mCoreBase) {
+			mCoreBase->isSystemStopped(state);
+		}
+	}
+
+	auto getTotalFrames() const noexcept {
+		return mCoreBase ? mCoreBase->getTotalFrames() : 0;
+	}
+	auto getTotalCycles() const noexcept {
+		return mCoreBase ? mCoreBase->getTotalCycles() : 0;
+	}
+	auto fetchCPF()       const noexcept {
+		return mCoreBase ? mCoreBase->fetchCPF() : 0;
+	}
+	auto fetchFramerate() const noexcept {
+		return mCoreBase ? mCoreBase->fetchFramerate() : 0;
+	}
+
+	void changeCPF(const s32 delta) noexcept {
+		if (mCoreBase) {
+			mCoreBase->changeCPF(delta);
+		}
+	}
+
+	void processFrame() const {
+		if (mCoreBase) {
+			mCoreBase->processFrame();
+		}
+	}
 };

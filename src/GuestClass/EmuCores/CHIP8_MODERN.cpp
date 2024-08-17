@@ -22,9 +22,16 @@ CHIP8_MODERN::CHIP8_MODERN(
 	BasicVideoSpec& ref_BVS,
 	BasicAudioSpec& ref_BAS
 ) noexcept
-	: EmuCores(ref_HDM, ref_BVS, ref_BAS)
+	: EmuCores{ ref_HDM, ref_BVS, ref_BAS }
 {
+	copyGameToMemory(mMemoryBank.data(), cGameLoadPos);
+	copyFontToMemory(mMemoryBank.data(), 0, 80);
 
+	mProgCounter    = cStartOffset;
+	mFramerate      = cRefreshRate;
+	mCyclesPerFrame = Quirk.waitVblank ? cInstSpeedHi : cInstSpeedLo;
+
+	initPlatform();
 }
 
 void CHIP8_MODERN::processFrame() {
@@ -67,7 +74,7 @@ void CHIP8_MODERN::handlePreFrameInterrupt() noexcept {
 void CHIP8_MODERN::handleEndFrameInterrupt() noexcept {
 	switch (mInterruptType)
 	{
-		case Interrupt::INPUT: // resumes emulation when key press event for Fx0A
+		case Interrupt::INPUT:
 			if (Input.keyPressed(mRegisterV[mInputReg], mTotalFrames)) {
 				mInterruptType  = Interrupt::CLEAR;
 				mCyclesPerFrame = std::abs(mCyclesPerFrame);
