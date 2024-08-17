@@ -31,7 +31,6 @@ public:
 
 	void processFrame() override;
 
-
 private:
 	u8  mRegisterV[16]{};
 	u16 mStackBank[16]{};
@@ -53,44 +52,42 @@ private:
 
 	std::array<u8, cTotalMemory>
 		mMemoryBank{};
-	
+
 	std::array<u8, 2048>
 		mDisplayBuffer{};
 
-	bool in_range(const usz pos) const noexcept { return pos < mMemoryBank.size(); }
-
-	//auto& VX() noexcept { return mRegisterV[(mInstruction >> 8) & 0xF]; }
+	bool constexpr in_range(const usz pos) const noexcept { return pos < mMemoryBank.size(); }
 
 	// Write memory at given index using given value
-	void writeMemory(const usz value, const usz pos) noexcept {
-		//mMemoryBank[pos & mMemoryBank.size() - 1] = static_cast<u8>(value);
-		if (in_range(pos)) { mMemoryBank[pos] = static_cast<u8>(value); }
+	void writeMemory(const u32 value, const u32 pos) noexcept {
+		mMemoryBank[pos & mMemoryBank.size() - 1] = static_cast<u8>(value);
+		//if (in_range(pos)) { mMemoryBank[pos] = static_cast<u8>(value); }
 	}
 	// Write memory at saved index using given value
-	void writeMemoryI(const usz value, const usz pos) noexcept {
-		//mMemoryBank[mRegisterI + pos & mMemoryBank.size() - 1] = static_cast<u8>(value);
-		if (in_range(mRegisterI + pos)) { mMemoryBank[mRegisterI + pos] = static_cast<u8>(value); }
+	void writeMemoryI(const u32 value, const u32 pos) noexcept {
+		mMemoryBank[mRegisterI + pos & mMemoryBank.size() - 1] = static_cast<u8>(value);
+		//if (in_range(mRegisterI + pos)) { mMemoryBank[mRegisterI + pos] = static_cast<u8>(value); }
 	}
 	// Write memory at saved index using given value
-	void writeMemoryI(const usz value) noexcept {
-		//mMemoryBank[mRegisterI & mMemoryBank.size() - 1] = static_cast<u8>(value);
-		if (in_range(mRegisterI)) { mMemoryBank[mRegisterI] = static_cast<u8>(value); }
+	void writeMemoryI(const u32 value) noexcept {
+		mMemoryBank[mRegisterI & mMemoryBank.size() - 1] = static_cast<u8>(value);
+		//if (in_range(mRegisterI)) { mMemoryBank[mRegisterI] = static_cast<u8>(value); }
 	}
 
 	// Read memory at given index
-	auto readMemory(const usz pos) const noexcept -> u8 {
-		return (in_range(pos)) ? mMemoryBank[pos] : 0;
-		//return mMemoryBank[pos & mMemoryBank.size() - 1];
+	auto readMemory(const u32 pos) const noexcept {
+		//return (in_range(pos)) ? mMemoryBank[pos] : 0;
+		return mMemoryBank[pos & mMemoryBank.size() - 1];
 	}
 	// Read memory at saved index
-	auto readMemoryI(const usz pos) const noexcept -> u8 {
-		return (in_range(mRegisterI + pos)) ? mMemoryBank[mRegisterI + pos] : 0;
-		//return mMemoryBank[mRegisterI + pos & mMemoryBank.size() - 1];
+	auto readMemoryI(const u32 pos) const noexcept {
+		//return (in_range(mRegisterI + pos)) ? mMemoryBank[mRegisterI + pos] : 0;
+		return mMemoryBank[mRegisterI + pos & mMemoryBank.size() - 1];
 	}
 	// Read memory at saved index
-	auto readMemoryI() const noexcept -> u8 {
-		return (in_range(mRegisterI)) ? mMemoryBank[mRegisterI] : 0;
-		//return mMemoryBank[mRegisterI & mMemoryBank.size() - 1];
+	auto readMemoryI() const noexcept {
+		//return (in_range(mRegisterI)) ? mMemoryBank[mRegisterI] : 0;
+		return mMemoryBank[mRegisterI & mMemoryBank.size() - 1];
 	}
 
 private:
@@ -249,26 +246,26 @@ private:
 	}
 	// 8XY5 - set VX = VX - VY, VF = !borrow
 	void instruction_8xy5(const s32 X, const s32 Y) {
-		const bool borrow{ mRegisterV[X] < mRegisterV[Y] };
+		const bool nborrow{ mRegisterV[X] >= mRegisterV[Y] };
 		mRegisterV[X]   = mRegisterV[X] - mRegisterV[Y];
-		mRegisterV[0xF] = !borrow;
+		mRegisterV[0xF] = nborrow;
 	}
 	// 8XY7 - set VX = VY - VX, VF = !borrow
 	void instruction_8xy7(const s32 X, const s32 Y) {
-		const bool borrow{ mRegisterV[Y] < mRegisterV[X] };
+		const bool nborrow{ mRegisterV[Y] >= mRegisterV[X] };
 		mRegisterV[X]   = mRegisterV[Y] - mRegisterV[X];
-		mRegisterV[0xF] = !borrow;
+		mRegisterV[0xF] = nborrow;
 	}
 	// 8XY6 - set VX = VY >> 1, VF = carry
 	void instruction_8xy6(const s32 X, const s32 Y) {
-		if (!Quirk.shiftVX) mRegisterV[X] = mRegisterV[Y];
+		if (!Quirk.shiftVX) { mRegisterV[X] = mRegisterV[Y]; }
 		const bool lsb{ (mRegisterV[X] & 1) == 1 };
 		mRegisterV[X]   = mRegisterV[X] >> 1;
 		mRegisterV[0xF] = lsb;
 	}
 	// 8XYE - set VX = VY << 1, VF = carry
 	void instruction_8xyE(const s32 X, const s32 Y) {
-		if (!Quirk.shiftVX) mRegisterV[X] = mRegisterV[Y];
+		if (!Quirk.shiftVX) { mRegisterV[X] = mRegisterV[Y]; }
 		const bool msb{ (mRegisterV[X] >> 7) == 1 };
 		mRegisterV[X]   = mRegisterV[X] << 1;
 		mRegisterV[0xF] = msb;
@@ -363,43 +360,36 @@ private:
 		}
 	}
 
-	void drawSprite(
-		s32 X,
-		s32 Y,
-		s32 N
-	) {
-		X = mRegisterV[X] & mDisplayWb;
-		Y = mRegisterV[Y] & mDisplayHb;
+	// DXYN - draw N sprite rows at VX and VY
+	void instruction_DxyN(const s32 X, const s32 Y, const s32 N) {
+		if (Quirk.waitVblank) [[unlikely]]
+			{ setInterrupt(Interrupt::FRAME); }
+
+		auto pX{ mRegisterV[X] & mDisplayWb };
+		auto pY{ mRegisterV[Y] & mDisplayHb };
 
 		mRegisterV[0xF] = 0;
 
 		switch (N) {
 			case 1:
-				drawByte(X, Y, readMemoryI());
+				drawByte(pX, pY, readMemoryI());
 				break;
 			case 0:
-				for (auto H{ 0 }, I{ 0 }; H < 16; ++H, ++Y &= mDisplayHb)
+				for (auto H{ 0 }, I{ 0 }; H < 16; ++H, ++pY &= mDisplayHb)
 				{
-					drawByte(X + 0, Y, readMemoryI(I++));
-					drawByte(X + 8, Y, readMemoryI(I++));
-					if (!Quirk.wrapSprite && Y == mDisplayHb) { break; }
+					drawByte(pX + 0, pY, readMemoryI(I++));
+					drawByte(pX + 8, pY, readMemoryI(I++));
+					if (!Quirk.wrapSprite && pY == mDisplayHb) { break; }
 				}
 				break;
 			default:
-				for (auto H{ 0 }; H < N; ++H, ++Y &= mDisplayHb)
+				for (auto H{ 0 }; H < N; ++H, ++pY &= mDisplayHb)
 				{
-					drawByte(X, Y, readMemoryI(H));
-					if (!Quirk.wrapSprite && Y == mDisplayHb) { break; }
+					drawByte(pX, pY, readMemoryI(H));
+					if (!Quirk.wrapSprite && pY == mDisplayHb) { break; }
 				}
 				break;
 		}
-	}
-
-	// DXYN - draw N sprite rows at VX and VY
-	void instruction_DxyN(const s32 X, const s32 Y, const s32 N) {
-		if (Quirk.waitVblank) [[unlikely]]
-			{ setInterrupt(Interrupt::FRAME); }
-		drawSprite(X, Y, N);
 	}
 
 /*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
@@ -469,7 +459,7 @@ private:
 	// FX65 - load V0..VX from RAM at I..I+X
 	void instruction_Fx65(const s32 X) {
 		for (auto idx{ 0 }; idx <= X; ++idx)
-			{ mRegisterV[idx] = readMemoryI(idx); }
+			{ mRegisterV[idx] = static_cast<u8>(readMemoryI(idx)); }
 		if (!Quirk.idxRegNoInc) [[likely]]
 			{ mRegisterI += static_cast<u16>(X + 1); }
 	}

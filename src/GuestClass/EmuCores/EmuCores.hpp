@@ -85,15 +85,15 @@ protected:
 	Well512  Wrand;
 	HexInput Input;
 
-	std::string formatOpcode(const u8 HI, const u8 LO) const;
+	std::string formatOpcode(const u32 HI, const u32 LO) const;
 
 	void setInterrupt(Interrupt);
 	void operationError(std::string_view);
-	void instructionError(const u8 HI, const u8 LO);
-	void instructionErrorML(const u8 HI, const u8 LO);
+	void instructionError(const u32 HI, const u32 LO);
+	void instructionErrorML(const u32 HI, const u32 LO);
 
-	bool copyGameToMemory(u8* dest, const usz offset);
-	void copyFontToMemory(u8* dest, const usz offset, const usz size);
+	bool copyGameToMemory(u8* dest, const u32 offset);
+	void copyFontToMemory(u8* dest, const u32 offset, const u32 size);
 
 public:
 	~EmuCores() noexcept;
@@ -235,7 +235,7 @@ public:
 		return mCoreBase ? mCoreBase->fetchCPF() : 0;
 	}
 	auto fetchFramerate() const noexcept {
-		return mCoreBase ? mCoreBase->fetchFramerate() : 0;
+		return mCoreBase ? mCoreBase->fetchFramerate() : 60.0f;
 	}
 
 	void changeCPF(const s32 delta) noexcept {

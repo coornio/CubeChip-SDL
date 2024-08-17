@@ -29,7 +29,7 @@ CHIP8_MODERN::CHIP8_MODERN(
 
 	mProgCounter    = cStartOffset;
 	mFramerate      = cRefreshRate;
-	mCyclesPerFrame = Quirk.waitVblank ? cInstSpeedHi : cInstSpeedLo;
+	mCyclesPerFrame = Quirk.waitVblank ? cInstSpeedHi : 4000000;
 
 	initPlatform();
 }
@@ -99,11 +99,11 @@ void CHIP8_MODERN::instructionLoop() {
 
 		switch (HI >> 4) {
 			case 0x0:
-				switch ((HI << 8 | LO) & 0xFFF) {
-					case 0x0E0:
+				switch (HI << 8 | LO) {
+					case 0x00E0:
 						instruction_00E0();
 						break;
-					case 0x0EE:
+					case 0x00EE:
 						instruction_00EE();
 						break;
 					[[unlikely]]
@@ -250,7 +250,7 @@ f32  CHIP8_MODERN::calcAudioTone() const {
 }
 
 void CHIP8_MODERN::renderAudioData() {
-	std::vector<s16> audioBuffer(static_cast<usz>(BAS.getFrequency() / mFramerate));
+	std::vector<s16> audioBuffer(static_cast<usz>(BAS.getFrequency() / cRefreshRate));
 
 	if (mSoundTimer) {
 		const auto amplitute{ BAS.getAmplitude() };

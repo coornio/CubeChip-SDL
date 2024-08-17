@@ -37,25 +37,25 @@ void EmuCores::operationError(std::string_view msg) {
 	setInterrupt(Interrupt::ERROR);
 }
 
-std::string EmuCores::formatOpcode(const u8 HI, const u8 LO) const {
+std::string EmuCores::formatOpcode(const u32 HI, const u32 LO) const {
 	std::stringstream out;
 	out << std::setfill('0') << std::setw(2)
 		<< std::uppercase    << std::hex
-		<< HI + 0 << LO + 0;
+		<< HI << LO;
 	return out.str();
 }
 
-void EmuCores::instructionError(const u8 HI, const u8 LO) {
+void EmuCores::instructionError(const u32 HI, const u32 LO) {
 	blog.stdLogOut("Error :: Unknown instruction: " + formatOpcode(HI, LO));
 	setInterrupt(Interrupt::ERROR);
 }
 
-void EmuCores::instructionErrorML(const u8 HI, const u8 LO) {
+void EmuCores::instructionErrorML(const u32 HI, const u32 LO) {
 	blog.stdLogOut("Error :: ML routines unsupported: " + formatOpcode(HI, LO));
 	setInterrupt(Interrupt::ERROR);
 }
 
-bool EmuCores::copyGameToMemory(u8* dest, const usz offset) {
+bool EmuCores::copyGameToMemory(u8* dest, const u32 offset) {
 	std::basic_ifstream<char> ifs(HDM.path, std::ios::binary);
 	ifs.read(reinterpret_cast<char*>(dest + offset), HDM.size);
 	if (ifs.fail()) {
@@ -66,7 +66,7 @@ bool EmuCores::copyGameToMemory(u8* dest, const usz offset) {
 	}
 }
 
-void EmuCores::copyFontToMemory(u8* dest, const usz offset, const usz size) {
+void EmuCores::copyFontToMemory(u8* dest, const u32 offset, const u32 size) {
 	std::copy_n(
 		std::execution::unseq,
 		cFontData, size, dest + offset
