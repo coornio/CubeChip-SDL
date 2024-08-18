@@ -1,7 +1,27 @@
 cmake_minimum_required(VERSION 3.2)
 project(CubeChip)
 
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
 find_package(SDL3 REQUIRED CONFIG REQUIRED COMPONENTS SDL3-shared)
+
+if(NOT SDL3_FOUND)
+  include(FetchContent)
+  set(SDL_SHARED TRUE CACHE BOOL "Build a SDL shared library (if available)")
+  set(SDL_STATIC TRUE CACHE BOOL "Build a SDL static library (if available)")
+  FetchContent_Declare(
+      SDL
+      GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+      GIT_TAG main
+      GIT_SHALLOW TRUE
+      GIT_PROGRESS TRUE
+  )
+  message(STATUS "Using SDL3 via FetchContent")
+  FetchContent_MakeAvailable(SDL)
+  set_property(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/_deps/sdl-src" PROPERTY EXCLUDE_FROM_ALL TRUE)
+endif()
 
 add_executable(CubeChipSDL
   src/CubeChip.cpp
