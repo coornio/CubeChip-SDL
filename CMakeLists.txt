@@ -1,0 +1,38 @@
+cmake_minimum_required(VERSION 3.2)
+project(CubeChip)
+
+find_package(SDL3 REQUIRED CONFIG REQUIRED COMPONENTS SDL3-shared)
+
+add_executable(CubeChipSDL
+  src/CubeChip.cpp
+  src/HostClass/BasicAudioSpec.cpp
+  src/HostClass/HomeDirManager.cpp
+  src/HostClass/HostFunctions.cpp
+  src/HostClass/BasicVideoSpec.cpp
+  src/GuestClass/GuestFunctions.cpp
+  src/GuestClass/GameFileChecker.cpp
+  src/GuestClass/HexInput.cpp
+  src/GuestClass/InstructionSets/_LegacySC.cpp
+  src/GuestClass/InstructionSets/_Gigachip.cpp
+  src/GuestClass/InstructionSets/_Classic8.cpp
+  src/GuestClass/InstructionSets/_ModernXO.cpp
+  src/GuestClass/InstructionSets/_Megachip.cpp
+  src/GuestClass/EmuCores/CHIP8_MODERN.cpp
+  src/GuestClass/EmuCores/EmuCores.cpp
+  src/GuestClass/Init.cpp
+  src/Assistants/BasicLogger.cpp
+  src/Assistants/BasicInput.cpp
+  src/Assistants/FrameLimiter.cpp
+  src/Assistants/BasicHome.cpp
+  src/Assistants/SHA1.cpp
+)
+target_include_directories(CubeChipSDL PRIVATE src)
+target_link_libraries(CubeChipSDL PRIVATE SDL3)
+
+if(MSVC)
+  # MSVC compiler options.
+  target_compile_options(CubeChipSDL PRIVATE /W4 /WX /std:c++latest)
+else()
+  # Everything else.
+  target_compile_options(CubeChipSDL PRIVATE -Wall -Wextra --std=c++23)
+endif()

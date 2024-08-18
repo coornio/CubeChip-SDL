@@ -15,11 +15,10 @@
 /*------------------------------------------------------------------*/
 
 BasicLogger& BasicLogger::create() {
-	if (!_self) _self = std::make_unique<BasicLogger>();
-	return *_self.get();
+	return _self;
 }
 
-std::unique_ptr<BasicLogger> BasicLogger::_self = nullptr;
+BasicLogger BasicLogger::_self = {};
 BasicLogger& blogger::blog{ BasicLogger::create() };
 
 /*------------------------------------------------------------------*/

@@ -45,7 +45,7 @@ void BasicVideoSpec::createRenderer() {
 	quitRenderer();
 
 	renderer = SDL_CreateRenderer(
-		window, nullptr, 0
+		window, nullptr
 		/*SDL_RENDERER_PRESENTVSYNC*/
 		// conflicts with the current frameLimiter setup
 		// will need to thread things out, etc.

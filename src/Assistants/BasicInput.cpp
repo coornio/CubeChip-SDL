@@ -12,18 +12,17 @@
 /*------------------------------------------------------------------*/
 
 BasicKeyboard& BasicKeyboard::create() {
-	if (!_self) { _self = std::make_unique<BasicKeyboard>(); }
-	return *_self.get();
+	return _self;
 }
 
-std::unique_ptr<BasicKeyboard> BasicKeyboard::_self{ nullptr };
+BasicKeyboard BasicKeyboard::_self = {};
 BasicKeyboard& bic::kb{ BasicKeyboard::create() };
 
 void BasicKeyboard::updateCopy() {
 	std::copy_n(
 		std::execution::par_unseq,
 		SDL_GetKeyboardState(nullptr),
-		SDL_NUM_SCANCODES,
+		static_cast<long int>(SDL_NUM_SCANCODES),
 		oldState
 	);
 }
@@ -33,11 +32,10 @@ void BasicKeyboard::updateCopy() {
 /*------------------------------------------------------------------*/
 
 BasicMouse& BasicMouse::create() {
-	if (!_self) { _self = std::make_unique<BasicMouse>(); }
-	return *_self.get();
+	return _self;
 }
 
-std::unique_ptr<BasicMouse> BasicMouse::_self{ nullptr };
+BasicMouse BasicMouse::_self = {};
 BasicMouse& bic::mb{ BasicMouse::create() };
 
 void BasicMouse::updateCopy() {

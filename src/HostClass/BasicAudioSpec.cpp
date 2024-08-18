@@ -5,6 +5,7 @@
 */
 
 #include "BasicAudioSpec.hpp"
+#include <SDL3/SDL_audio.h>
 #include <algorithm>
 
 static constexpr s32 VOL_MAX{ 255 };
@@ -20,7 +21,7 @@ BasicAudioSpec::BasicAudioSpec()
 	setVolume(VOL_MAX);
 
 	stream = SDL_OpenAudioDeviceStream(
-		SDL_AUDIO_DEVICE_DEFAULT_OUTPUT,
+		SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK,
 		&audiospec, nullptr, nullptr
 	);
 	device = SDL_GetAudioStreamDevice(stream);

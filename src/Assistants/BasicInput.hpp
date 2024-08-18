@@ -28,13 +28,12 @@ enum BIC_Button {
 /*------------------------------------------------------------------*/
 
 class alignas(32) BasicKeyboard final {
-	static std::unique_ptr<BasicKeyboard> _self;
+	static BasicKeyboard _self;
 	Uint8 oldState[SDL_NUM_SCANCODES]{};
 
 	BasicKeyboard() {};
 	BasicKeyboard(const BasicKeyboard&) = delete;
 	BasicKeyboard& operator=(const BasicKeyboard&) = delete;
-	friend std::unique_ptr<BasicKeyboard> std::make_unique<BasicKeyboard>();
 
 public:
 	static BasicKeyboard& create();
@@ -73,7 +72,7 @@ public:
 /*------------------------------------------------------------------*/
 
 class alignas(8) BasicMouse final {
-	static std::unique_ptr<BasicMouse> _self;
+	static BasicMouse _self;
 	Uint32 curState{}, oldState{};
 	float posX{}, posY{};
 	float relX{}, relY{};
@@ -81,7 +80,6 @@ class alignas(8) BasicMouse final {
 	BasicMouse() {};
 	BasicMouse(const BasicMouse&) = delete;
 	BasicMouse& operator=(const BasicMouse&) = delete;
-	friend std::unique_ptr<BasicMouse> std::make_unique<BasicMouse>();
 
 public:
 	static BasicMouse& create();

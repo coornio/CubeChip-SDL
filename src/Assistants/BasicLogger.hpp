@@ -11,12 +11,11 @@
 #include <filesystem>
 
 class BasicLogger final {
-	static std::unique_ptr<BasicLogger> _self;
+	static BasicLogger _self;
 
 	BasicLogger() {};
 	BasicLogger(const BasicLogger&) = delete;
 	BasicLogger& operator=(const BasicLogger&) = delete;
-	friend std::unique_ptr<BasicLogger> std::make_unique<BasicLogger>();
 
 	std::filesystem::path stdLogPath{};
 	std::filesystem::path dbgLogPath{};
