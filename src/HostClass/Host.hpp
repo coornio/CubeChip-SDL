@@ -15,6 +15,7 @@ class VM_Guest;
 
 class VM_Host final {
 	bool _doBench{};
+	s32  _cycles{};
 
 	HomeDirManager& HDM;
 	BasicVideoSpec& BVS;

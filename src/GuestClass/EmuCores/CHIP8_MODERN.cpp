@@ -27,7 +27,7 @@ CHIP8_MODERN::CHIP8_MODERN(
 
 	mProgCounter    = cStartOffset;
 	mFramerate      = cRefreshRate;
-	mCyclesPerFrame = Quirk.waitVblank ? cInstSpeedHi : 4000000;
+	mCyclesPerFrame = Quirk.waitVblank ? cInstSpeedHi : 5000000;
 
 	initPlatform();
 }

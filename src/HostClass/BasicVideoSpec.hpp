@@ -62,7 +62,7 @@ private:
 
 public:
 	void createTexture(s32, s32);
-	void changeTitle(const char* = nullptr);
+	void changeTitle(const std::string&);
 
 	void raiseWindow();
 	void resetWindow();

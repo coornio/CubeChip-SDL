@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <array>
+
 #include "EmuCores.hpp"
 
 class CHIP8_MODERN final : public EmuCores {
@@ -76,17 +78,17 @@ private:
 
 	// Read memory at given index
 	auto readMemory(const u32 pos) const noexcept {
-		//return (in_range(pos)) ? mMemoryBank[pos] : 0;
+		//return (in_range(pos)) ? mMemoryBank[pos] : 0xFF;
 		return mMemoryBank[pos & mMemoryBank.size() - 1];
 	}
 	// Read memory at saved index
 	auto readMemoryI(const u32 pos) const noexcept {
-		//return (in_range(mRegisterI + pos)) ? mMemoryBank[mRegisterI + pos] : 0;
+		//return (in_range(mRegisterI + pos)) ? mMemoryBank[mRegisterI + pos] : 0xFF;
 		return mMemoryBank[mRegisterI + pos & mMemoryBank.size() - 1];
 	}
 	// Read memory at saved index
 	auto readMemoryI() const noexcept {
-		//return (in_range(mRegisterI)) ? mMemoryBank[mRegisterI] : 0;
+		//return (in_range(mRegisterI)) ? mMemoryBank[mRegisterI] : 0xFF;
 		return mMemoryBank[mRegisterI & mMemoryBank.size() - 1];
 	}
 

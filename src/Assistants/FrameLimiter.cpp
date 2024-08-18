@@ -10,22 +10,22 @@ void FrameLimiter::setLimiter(
 	const float               framerate,
 	const std::optional<bool> firstpass,
 	const std::optional<bool> lostframe
-) {
+) noexcept {
 	timeFrequency = 1000.0f / std::clamp(framerate, 0.5f, 1000.0f);
-	if (firstpass) skipFirstPass = *firstpass;
-	if (lostframe) skipLostFrame = *lostframe;
+	if (firstpass) { skipFirstPass = *firstpass; }
+	if (lostframe) { skipLostFrame = *lostframe; }
 }
 
-bool FrameLimiter::check(const bool mode) {
-	if (isValidFrame()) return true;
+bool FrameLimiter::checkTime(const bool mode) {
+	if (isValidFrame()) { return true; }
 
-	if (mode == SLEEP && remains() >= 2.0f) {
+	if (mode == SLEEP && getRemainder() >= 2.0f) {
 		std::this_thread::sleep_for(millis(1));
 	}
 	return false;
 }
 
-bool FrameLimiter::isValidFrame() {
+bool FrameLimiter::isValidFrame() noexcept {
 	using namespace std::chrono;
 	const auto timeAtCurrent{ steady_clock::now() };
 

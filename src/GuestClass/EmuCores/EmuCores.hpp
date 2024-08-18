@@ -112,9 +112,10 @@ public:
 	auto fetchCPF()       const noexcept { return mCyclesPerFrame; }
 	auto fetchFramerate() const noexcept { return mFramerate; }
 
-	void changeCPF(const s32 delta) noexcept {
+	auto changeCPF(const s32 delta) noexcept {
 		const auto newCPF{ std::abs(mCyclesPerFrame) + delta };
 		if (newCPF > 0) { mCyclesPerFrame = newCPF; }
+		return mCyclesPerFrame;
 	}
 
 	bool stateRunning() const noexcept { return (
@@ -238,10 +239,8 @@ public:
 		return mCoreBase ? mCoreBase->fetchFramerate() : 60.0f;
 	}
 
-	void changeCPF(const s32 delta) noexcept {
-		if (mCoreBase) {
-			mCoreBase->changeCPF(delta);
-		}
+	auto changeCPF(const s32 delta) noexcept {
+		return (mCoreBase) ? mCoreBase->changeCPF(delta) : 0;
 	}
 
 	void processFrame() const {

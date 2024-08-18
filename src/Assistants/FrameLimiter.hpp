@@ -29,7 +29,10 @@ class FrameLimiter final {
 	chrono timePastFrame{}; // holds timestamp of the last frame's check
 	uint64 validFrameCnt{}; // counter of successful frame checks performed
 
-	bool isValidFrame();
+	bool isValidFrame() noexcept;
+	auto getElapsedTime() const noexcept {
+		return std::chrono::steady_clock::now() - timePastFrame;
+	}
 
 public:
 	FrameLimiter(
@@ -50,14 +53,24 @@ public:
 		float               framerate,
 		std::optional<bool> firstpass = std::nullopt,
 		std::optional<bool> lostframe = std::nullopt
-	);
+	) noexcept;
 
 	enum : bool { SPINLOCK, SLEEP };
-	bool   check(bool mode = SPINLOCK);
+	bool checkTime(bool mode = SLEEP);
 
-	uint64 count()   const { return validFrameCnt; }
-	float  elapsed() const { return timeVariation; }
-	float  remains() const { return timeFrequency - timeVariation; }
-	float  percent() const { return timeVariation / timeFrequency; }
-	bool   paced()   const { return timeOvershoot < timeFrequency && !lastFrameLost; }
+	auto getElapsedMillisSince() const noexcept {
+		using millis = std::chrono::milliseconds;
+		return duration_cast<millis>(getElapsedTime()).count();
+	}
+
+	auto getElapsedMicrosSince() const noexcept {
+		using micros = std::chrono::microseconds;
+		return duration_cast<micros>(getElapsedTime()).count();
+	}
+
+	auto getValidFrameCounter() const noexcept { return validFrameCnt; }
+	auto getElapsedMillisLast() const noexcept { return timeVariation; }
+	auto getRemainder()         const noexcept { return timeFrequency - timeVariation; }
+	auto getPercentage()        const noexcept { return timeVariation / timeFrequency; }
+	bool isKeepingPace()        const noexcept { return timeOvershoot < timeFrequency && !lastFrameLost; }
 };

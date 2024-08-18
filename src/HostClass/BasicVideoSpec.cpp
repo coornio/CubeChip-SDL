@@ -77,10 +77,9 @@ void BasicVideoSpec::createTexture(s32 texture_W, s32 texture_H) {
 	}
 }
 
-void BasicVideoSpec::changeTitle(const char* name) {
+void BasicVideoSpec::changeTitle(const std::string& name) {
 	static constexpr char emuVersion[]{ "[06.06.24]" };
-	std::string windowTitle{ "CubeChip :: " };
-	windowTitle += (name ? name : "Waiting for file...");
+	std::string windowTitle{ "CubeChip :: " + name };
 	SDL_SetWindowTitle(window, windowTitle.c_str());
 }
 
@@ -104,7 +103,7 @@ void BasicVideoSpec::raiseWindow() {
 
 void BasicVideoSpec::resetWindow() {
 	SDL_SetWindowSize(window, 640, 480);
-	changeTitle();
+	changeTitle("Waiting for file...");
 	quitTexture();
 	renderPresent();
 }

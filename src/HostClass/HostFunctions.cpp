@@ -56,14 +56,11 @@ bool VM_Host::runHost() {
 	prepareGuest(Guest, Frame);
 
 	while (true) {
+		if (!Frame.checkTime()) { continue; }
+
 		if (eventLoopSDL(Guest, Frame)) {
 			return EXIT_SUCCESS;
 		}
-
-		if (!Frame.check(doBench()
-			? FrameLimiter::SPINLOCK
-			: FrameLimiter::SLEEP
-		)) { continue; }
 
 		if (kb.isPressed(KEY(RIGHT))) {
 			BAS.changeVolume(+15);
@@ -84,9 +81,16 @@ bool VM_Host::runHost() {
 				continue;
 			}
 			if (kb.isPressed(KEY(RSHIFT))) {
-				doBench(!doBench());
-				std::cout << "\33[1;1H\33[2J\33[?25l"
-					<< "Cycle time:      ms |     μs";
+				if (doBench()) {
+					doBench(false);
+					BVS.changeTitle(HDM.file.c_str());
+				} else {
+					doBench(true);
+					BVS.changeTitle(std::to_string(Guest.fetchCPF()));
+					std::cout << "\33[1;1H\33[2J\33[?25l"
+						<< "Cycle time:      ms |     μs"
+						<< "\nelapsed since last: ";
+				}
 			}
 
 			if (kb.isPressed(KEY(PAGEDOWN))) {
@@ -98,35 +102,19 @@ bool VM_Host::runHost() {
 
 			if (doBench()) {
 				if (kb.isPressed(KEY(UP))) {
-					Guest.changeCPF(+50'000);
+					BVS.changeTitle(std::to_string(Guest.changeCPF(+50'000)));
 				}
 				if (kb.isPressed(KEY(DOWN))) {
-					Guest.changeCPF(-50'000);
+					BVS.changeTitle(std::to_string(Guest.changeCPF(-50'000)));
 				}
-
-				using namespace std::chrono;
-
-				std::cout << "\33[2;1H" << std::dec << std::setfill(' ') << std::setprecision(6)
-					<< "\nframes: " << Guest.getTotalFrames()     << "      "
-					<< "\ncycles: " << Guest.getTotalCycles()     << "      "
-					<< "\ncpf:    " << std::abs(Guest.fetchCPF()) << "      "
-					<< (Frame.paced() ? "\n\n > keeping up pace." : "\n\n > cannot keep up!!")
-					<< "\n\nelapsed since last: " << Frame.elapsed() << std::endl;
-
-				auto start = high_resolution_clock::now();
 
 				Guest.processFrame();
 
-				auto end = high_resolution_clock::now();
-
-				auto duration = end - start;
-				auto ms = duration_cast<std::chrono::milliseconds>(duration);
-				auto mu = duration_cast<std::chrono::microseconds>(duration - ms);
-
-				std::cout
-					<< "\33[1;13H" << std::setw(4) << ms.count()
-					<< "\33[1;23H" << std::setw(3) << mu.count()
-					<< "\33[1;1H";
+				const auto micros{ Frame.getElapsedMicrosSince()};
+				std::cout << "\33[2;21H" << Frame.getElapsedMillisLast();
+				std::cout << "\33[1;13H" << std::setw(4) << micros / 1000;
+				std::cout << "\33[1;23H" << std::setw(3) << micros % 1000;
+					
 			} else { Guest.processFrame(); }
 		} else {
 			if (kb.isPressed(KEY(ESCAPE))) {
