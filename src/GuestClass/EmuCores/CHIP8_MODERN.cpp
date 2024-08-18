@@ -4,8 +4,6 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include <sstream>
-#include <iomanip>
 #include <utility>
 
 #include "CHIP8_MODERN.hpp"

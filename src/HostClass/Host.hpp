@@ -6,15 +6,12 @@
 
 #pragma once
 
-#include <optional>
-
 class HomeDirManager;
 class BasicVideoSpec;
 class BasicAudioSpec;
 
 class FrameLimiter;
 class VM_Guest;
-class MEGACORE;
 
 class VM_Host final {
 	bool _doBench{};

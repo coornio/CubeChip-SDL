@@ -5,6 +5,8 @@
 */
 
 #include <fstream>
+#include <sstream>
+#include <iomanip>
 
 #include "EmuCores.hpp"
 #include "../Enums.hpp"

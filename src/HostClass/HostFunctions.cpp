@@ -17,7 +17,6 @@
 #include "../Assistants/FrameLimiter.hpp"
 
 #include "Host.hpp"
-#include "../GuestClass/Guest.hpp"
 #include "../GuestClass/EmuCores/EmuCores.hpp"
 #include "../GuestClass/GameFileChecker.hpp"
 
