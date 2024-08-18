@@ -270,7 +270,7 @@ void CHIP8_MODERN::renderToTexture() {
 		mDisplayBuffer.begin(),
 		mDisplayBuffer.end(),
 		BVS.lockTexture(),
-		[this](const auto pixel) noexcept {
+		[](const auto pixel) noexcept {
 			return 0xFF000000 | cBitsColor[pixel];
 		}
 	);

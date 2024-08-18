@@ -10,9 +10,6 @@
 static constexpr s32 VOL_MAX{ 255 };
 static constexpr s32 VOL_MIN{   0 };
 
-static constexpr f32 VOL_FMAX{ 255.0f };
-static constexpr f32 VOL_FMIN{   0.0f };
-
 BasicAudioSpec::BasicAudioSpec()
 	: audiospec{ SDL_AUDIO_S16, 1, outFrequency }
 {
@@ -20,7 +17,7 @@ BasicAudioSpec::BasicAudioSpec()
 	setVolume(VOL_MAX);
 
 	stream = SDL_OpenAudioDeviceStream(
-		SDL_AUDIO_DEVICE_DEFAULT_OUTPUT,
+		SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK,
 		&audiospec, nullptr, nullptr
 	);
 	device = SDL_GetAudioStreamDevice(stream);

@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <cmath>
 #include <chrono>
 #include <ratio>
 #include <thread>

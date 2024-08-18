@@ -6,6 +6,7 @@
 
 #include "BasicInput.hpp"
 #include <execution>
+#include <utility>
 
 /*------------------------------------------------------------------*/
 /*  class  BasicInput.hpp > Keyboard                                */
@@ -23,7 +24,7 @@ void BasicKeyboard::updateCopy() {
 	std::copy_n(
 		std::execution::par_unseq,
 		SDL_GetKeyboardState(nullptr),
-		SDL_NUM_SCANCODES,
+		std::to_underlying(SDL_NUM_SCANCODES),
 		oldState
 	);
 }

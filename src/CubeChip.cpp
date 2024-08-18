@@ -14,17 +14,26 @@
 
 #include "HostClass/Host.hpp"
 
-int SDL_main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
 
 	atexit(SDL_Quit);
 
 #ifdef _DEBUG
 	{
-		SDL_Version compiled{}; SDL_VERSION(&compiled);
-		SDL_Version linked{};   SDL_GetVersion(&linked);
+		printf("SDL3 source dated: 18/8/2024\n");
+		const auto compiled{ SDL_VERSION };  /* hardcoded number from SDL headers */
+		const auto linked{ SDL_GetVersion() };  /* reported by linked SDL library */
 
-		printf("Compiled with SDL version %d.%d.%d\n", compiled.major, compiled.minor, compiled.patch);
-		printf("Linked with SDL version %d.%d.%d\n", linked.major, linked.minor, linked.patch);
+		printf("Compiled with SDL version: %d.%d.%d\n",
+			SDL_VERSIONNUM_MAJOR(compiled),
+			SDL_VERSIONNUM_MINOR(compiled),
+			SDL_VERSIONNUM_MICRO(compiled)
+		);
+		printf("Linked with SDL version: %d.%d.%d\n",
+			SDL_VERSIONNUM_MAJOR(linked),
+			SDL_VERSIONNUM_MINOR(linked),
+			SDL_VERSIONNUM_MICRO(linked)
+		);
 	}
 #endif
 

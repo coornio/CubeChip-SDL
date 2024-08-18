@@ -44,12 +44,7 @@ void BasicVideoSpec::createWindow(const s32 window_W, const s32 window_H) {
 void BasicVideoSpec::createRenderer() {
 	quitRenderer();
 
-	renderer = SDL_CreateRenderer(
-		window, nullptr, 0
-		/*SDL_RENDERER_PRESENTVSYNC*/
-		// conflicts with the current frameLimiter setup
-		// will need to thread things out, etc.
-	);
+	renderer = SDL_CreateRenderer(window, nullptr);
 	
 	if (!renderer) {
 		throw std::runtime_error(SDL_GetError());
