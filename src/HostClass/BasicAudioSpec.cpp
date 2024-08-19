@@ -5,6 +5,7 @@
 */
 
 #include "BasicAudioSpec.hpp"
+#include <SDL3/SDL_audio.h>
 #include <algorithm>
 
 static constexpr s32 VOL_MAX{ 255 };

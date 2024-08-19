@@ -5,6 +5,7 @@
 */
 
 #include "FrameLimiter.hpp"
+#include <cmath>
 
 void FrameLimiter::setLimiter(
 	const float               framerate,
