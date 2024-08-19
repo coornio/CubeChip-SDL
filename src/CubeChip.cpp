@@ -18,7 +18,8 @@ int main(int argc, char* argv[]) {
 
 	atexit(SDL_Quit);
 
-#ifdef _DEBUG
+//            VS               OTHER
+#if defined(_DEBUG) || defined(DEBUG)
 	{
 		printf("SDL3 source dated: 18/8/2024\n");
 		const auto compiled{ SDL_VERSION };  /* hardcoded number from SDL headers */
@@ -37,8 +38,10 @@ int main(int argc, char* argv[]) {
 	}
 #endif
 
-	SDL_SetHint(SDL_HINT_WINDOWS_RAW_KEYBOARD, "0");
+#ifdef SDL_PLATFORM_WIN32
 	SDL_SetHint(SDL_HINT_RENDER_DRIVER, "direct3d");
+#endif
+	SDL_SetHint(SDL_HINT_WINDOWS_RAW_KEYBOARD, "0");
 	SDL_SetHint(SDL_HINT_RENDER_VSYNC, "0"); // until the UI is independent
 	SDL_SetHint(SDL_HINT_APP_NAME, "CubeChip");
 
