@@ -49,7 +49,7 @@ void CHIP8_MODERN::processFrame() {
 
 	renderAudioData();
 
-	renderToTexture();
+	renderVideoData();
 }
 
 void CHIP8_MODERN::handlePreFrameInterrupt() noexcept {
@@ -264,13 +264,13 @@ void CHIP8_MODERN::renderAudioData() {
 	BAS.pushAudioData(audioBuffer.data(), audioBuffer.size());
 }
 
-void CHIP8_MODERN::renderToTexture() {
+void CHIP8_MODERN::renderVideoData() {
 	std::transform(
 		std::execution::unseq,
 		mDisplayBuffer.begin(),
 		mDisplayBuffer.end(),
 		BVS.lockTexture(),
-		[this](const auto pixel) noexcept {
+		[](const auto pixel) noexcept {
 			return 0xFF000000 | cBitsColor[pixel];
 		}
 	);

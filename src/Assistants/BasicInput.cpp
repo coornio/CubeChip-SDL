@@ -5,37 +5,33 @@
 */
 
 #include "BasicInput.hpp"
+#include <algorithm>
 #include <execution>
+#include <utility>
 
-/*------------------------------------------------------------------*/
-/*  class  BasicInput.hpp > Keyboard                                */
-/*------------------------------------------------------------------*/
+/*==================================================================*/
+	#pragma region BasicKeyboard Singleton Class
+/*==================================================================*/
 
-BasicKeyboard& BasicKeyboard::create() {
-	return _self;
-}
-
-BasicKeyboard BasicKeyboard::_self = {};
 BasicKeyboard& bic::kb{ BasicKeyboard::create() };
 
 void BasicKeyboard::updateCopy() {
 	std::copy_n(
 		std::execution::par_unseq,
 		SDL_GetKeyboardState(nullptr),
-		static_cast<long int>(SDL_NUM_SCANCODES),
-		oldState
+		std::to_underlying(SDL_NUM_SCANCODES),
+		oldState.data()
 	);
 }
 
-/*------------------------------------------------------------------*/
-/*  class  BasicInput.hpp > Mouse                                   */
-/*------------------------------------------------------------------*/
+/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
+	#pragma endregion
+/*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
-BasicMouse& BasicMouse::create() {
-	return _self;
-}
+/*==================================================================*/
+	#pragma region BasicMouse Singleton Class
+/*==================================================================*/
 
-BasicMouse BasicMouse::_self = {};
 BasicMouse& bic::mb{ BasicMouse::create() };
 
 void BasicMouse::updateCopy() {
@@ -45,3 +41,7 @@ void BasicMouse::updateCopy() {
 	relX = posX - oldX;
 	relY = posY - oldY;
 }
+
+/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
+	#pragma endregion
+/*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/

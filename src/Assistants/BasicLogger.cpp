@@ -10,19 +10,11 @@
 #include "BasicLogger.hpp"
 #include "PathExceptionClass.hpp"
 
-/*------------------------------------------------------------------*/
-/*  class  BasicLogger                                              */
-/*------------------------------------------------------------------*/
-
-BasicLogger& BasicLogger::create() {
-	return _self;
-}
-
-BasicLogger BasicLogger::_self = {};
 BasicLogger& blogger::blog{ BasicLogger::create() };
 
-/*------------------------------------------------------------------*/
-/*------------------------------------------------------------------*/
+/*==================================================================*/
+	#pragma region BasicLogger Singleton Class
+/*==================================================================*/
 
 void BasicLogger::createDirectory(
 	const std::string&           filename,
@@ -71,8 +63,7 @@ void BasicLogger::setDbgLogFile(
 	}
 }
 
-/*------------------------------------------------------------------*/
-/*------------------------------------------------------------------*/
+/*==================================================================*/
 
 void BasicLogger::writeLogFile(
 	const std::string&           message,
@@ -108,3 +99,7 @@ void BasicLogger::dbgLogOut(const std::string& text) {
 		std::cerr << ":: ERROR :: " << e.what() << std::endl;
 	}
 }
+
+/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
+	#pragma endregion
+/*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
