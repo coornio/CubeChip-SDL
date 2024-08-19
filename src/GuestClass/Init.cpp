@@ -255,7 +255,7 @@ void MEGACORE::prepDisplayArea(const Resolution mode, const bool forced) {
 	static constexpr s32 sizeW[]{ 0, 128,  64,  64,  64, 256 };
 	static constexpr s32 sizeH[]{ 0,  64,  32,  64, 128, 192 };
 
-	const auto select{ State.schip_legacy ? 1 : std::to_underlying(mode) };
+	const auto select{ State.schip_legacy ? 1 : static_cast<u32>(mode) };
 	const auto lores{ mode == Resolution::LO }; isLoresExtended(lores);
 
 	const auto W{ sizeW[select] };

@@ -9,6 +9,7 @@
 
 #include "SHA1.hpp"
 
+#include <bit>
 #include <fstream>
 #include <sstream>
 #include <iomanip>

@@ -19,7 +19,7 @@ void BasicKeyboard::updateCopy() {
 	std::copy_n(
 		std::execution::par_unseq,
 		SDL_GetKeyboardState(nullptr),
-		std::to_underlying(SDL_NUM_SCANCODES),
+		static_cast<Uint32>(SDL_NUM_SCANCODES),
 		oldState.data()
 	);
 }
