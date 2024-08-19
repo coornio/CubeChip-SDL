@@ -46,7 +46,7 @@ add_executable(CubeChipSDL
   src/Assistants/SHA1.cpp
 )
 target_include_directories(CubeChipSDL PRIVATE src)
-target_link_libraries(CubeChipSDL PRIVATE SDL3)
+target_link_libraries(CubeChipSDL PRIVATE SDL3::SDL3-shared)
 
 if(MSVC)
   # MSVC compiler options.
