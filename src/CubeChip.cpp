@@ -4,9 +4,12 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include <SDL3/SDL_main.h>
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_version.h>
+
+#ifdef SDL_PLATFORM_WIN32
+	#include <SDL3/SDL_main.h>
+#endif
+
 #include <optional>
 
 #include "HostClass/HomeDirManager.hpp"
@@ -19,8 +22,8 @@ int main(int argc, char* argv[]) {
 
 	atexit(SDL_Quit);
 
-//            VS               OTHER
-#if defined(_DEBUG) || defined(DEBUG)
+//             VS               OTHER
+#if !defined(NDEBUG) || defined(DEBUG)
 	{
 		printf("SDL3 source dated: 18/8/2024\n");
 		const auto compiled{ SDL_VERSION };  /* hardcoded number from SDL headers */
