@@ -86,20 +86,20 @@ class GameFileChecker final {
 	}
 
 public:
-	[[nodiscard]] static constexpr auto getError() noexcept {
+	[[nodiscard]] static auto getError() noexcept {
 		return std::move(sErrorMsg);
 	}
 
-	[[nodiscard]] static constexpr auto getCore()  noexcept {
+	[[nodiscard]] static auto getCore()  noexcept {
 		return sEmuCore;
 	}
 
-	static constexpr void delCore() noexcept {
+	static void delCore() noexcept {
 		sErrorMsg.clear();
 		sEmuCore = GameCoreType::INVALID;
 	}
 
-	[[nodiscard]] static constexpr bool hasCore()  noexcept {
+	[[nodiscard]] static bool hasCore() noexcept {
 		return sEmuCore != GameCoreType::INVALID;
 	}
 
