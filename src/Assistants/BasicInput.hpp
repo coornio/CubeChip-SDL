@@ -10,7 +10,8 @@
 #include <SDL3/SDL_scancode.h>
 #include <SDL3/SDL_mouse.h>
 
-#include <memory>
+#include <array>
+#include <concepts>
 
 #define KEY(i) SDL_SCANCODE_##i
 #define BTN(i) BIC_MOUSE_##i
@@ -23,21 +24,22 @@ enum BIC_Button {
 	BIC_MOUSE_X2     = SDL_BUTTON_X2MASK,
 };
 
-/*------------------------------------------------------------------*/
-/*  singleton class  Keyboard                                       */
-/*------------------------------------------------------------------*/
+/*==================================================================*/
+	#pragma region BasicKeyboard Singleton Class
+/*==================================================================*/
 
-class alignas(32) BasicKeyboard final {
-	static std::unique_ptr<BasicKeyboard> _self;
-	Uint8 oldState[SDL_NUM_SCANCODES]{};
+class BasicKeyboard final {
+	std::array<Uint8, SDL_NUM_SCANCODES> oldState{};
 
-	BasicKeyboard() {};
+	BasicKeyboard() = default;
 	BasicKeyboard(const BasicKeyboard&) = delete;
 	BasicKeyboard& operator=(const BasicKeyboard&) = delete;
-	friend std::unique_ptr<BasicKeyboard> std::make_unique<BasicKeyboard>();
 
 public:
-	static BasicKeyboard& create();
+	static BasicKeyboard& create() {
+		static BasicKeyboard _self;
+		return _self;
+	}
 
 	void updateCopy();
 	bool isHeldPrev(const SDL_Scancode key) const noexcept {
@@ -68,23 +70,28 @@ public:
 	}
 };
 
-/*------------------------------------------------------------------*/
-/*  singleton class  Mouse                                          */
-/*------------------------------------------------------------------*/
+/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
+	#pragma endregion
+/*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
-class alignas(8) BasicMouse final {
-	static std::unique_ptr<BasicMouse> _self;
+/*==================================================================*/
+	#pragma region BasicMouse Singleton Class
+/*==================================================================*/
+
+class BasicMouse final {
 	Uint32 curState{}, oldState{};
 	float posX{}, posY{};
 	float relX{}, relY{};
 
-	BasicMouse() {};
+	BasicMouse() = default;
 	BasicMouse(const BasicMouse&) = delete;
 	BasicMouse& operator=(const BasicMouse&) = delete;
-	friend std::unique_ptr<BasicMouse> std::make_unique<BasicMouse>();
 
 public:
-	static BasicMouse& create();
+	static BasicMouse& create() {
+		static BasicMouse _self;
+		return _self;
+	}
 
 	void updateCopy();
 
@@ -120,6 +127,10 @@ public:
 		return ((state & code) || ...);
 	}
 };
+
+/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
+	#pragma endregion
+/*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 namespace bic { // basic input class
 	extern BasicKeyboard& kb;

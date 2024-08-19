@@ -40,9 +40,6 @@ private:
 	f32  mWavePhase{};
 	f32  mAudioTone{};
 
-	f32  calcAudioTone() const;
-	void renderAudioData();
-
 	u8  mDelayTimer{};
 	u8  mSoundTimer{};
 
@@ -95,13 +92,15 @@ private:
 private:
 	void initPlatform();
 
-	void renderToTexture();
+	void renderAudioData();
+	void renderVideoData();
 
 	void instructionLoop();
 
 	void handlePreFrameInterrupt() noexcept;
 	void handleEndFrameInterrupt() noexcept;
 
+	f32  calcAudioTone() const;
 	void jumpProgramTo(s32) noexcept;
 
 /*==================================================================*/

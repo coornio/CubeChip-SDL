@@ -5,19 +5,14 @@
 */
 
 #include "BasicInput.hpp"
+#include <algorithm>
 #include <execution>
 #include <utility>
 
-/*------------------------------------------------------------------*/
-/*  class  BasicInput.hpp > Keyboard                                */
-/*------------------------------------------------------------------*/
+/*==================================================================*/
+	#pragma region BasicKeyboard Singleton Class
+/*==================================================================*/
 
-BasicKeyboard& BasicKeyboard::create() {
-	if (!_self) { _self = std::make_unique<BasicKeyboard>(); }
-	return *_self.get();
-}
-
-std::unique_ptr<BasicKeyboard> BasicKeyboard::_self{ nullptr };
 BasicKeyboard& bic::kb{ BasicKeyboard::create() };
 
 void BasicKeyboard::updateCopy() {
@@ -25,20 +20,18 @@ void BasicKeyboard::updateCopy() {
 		std::execution::par_unseq,
 		SDL_GetKeyboardState(nullptr),
 		std::to_underlying(SDL_NUM_SCANCODES),
-		oldState
+		oldState.data()
 	);
 }
 
-/*------------------------------------------------------------------*/
-/*  class  BasicInput.hpp > Mouse                                   */
-/*------------------------------------------------------------------*/
+/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
+	#pragma endregion
+/*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
-BasicMouse& BasicMouse::create() {
-	if (!_self) { _self = std::make_unique<BasicMouse>(); }
-	return *_self.get();
-}
+/*==================================================================*/
+	#pragma region BasicMouse Singleton Class
+/*==================================================================*/
 
-std::unique_ptr<BasicMouse> BasicMouse::_self{ nullptr };
 BasicMouse& bic::mb{ BasicMouse::create() };
 
 void BasicMouse::updateCopy() {
@@ -48,3 +41,7 @@ void BasicMouse::updateCopy() {
 	relX = posX - oldX;
 	relY = posY - oldY;
 }
+
+/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
+	#pragma endregion
+/*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/

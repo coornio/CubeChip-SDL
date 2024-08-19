@@ -6,17 +6,17 @@
 
 #pragma once
 
-#include <memory>
 #include <string>
 #include <filesystem>
 
-class BasicLogger final {
-	static std::unique_ptr<BasicLogger> _self;
+/*==================================================================*/
+	#pragma region BasicLogger Singleton Class
+/*==================================================================*/
 
-	BasicLogger() {};
+class BasicLogger final {
+	BasicLogger() = default;
 	BasicLogger(const BasicLogger&) = delete;
 	BasicLogger& operator=(const BasicLogger&) = delete;
-	friend std::unique_ptr<BasicLogger> std::make_unique<BasicLogger>();
 
 	std::filesystem::path stdLogPath{};
 	std::filesystem::path dbgLogPath{};
@@ -35,7 +35,10 @@ class BasicLogger final {
 	) const;
 
 public:
-	static BasicLogger& create();
+	static BasicLogger& create() {
+		static BasicLogger _self;
+		return _self;
+	}
 
 	void setStdLogFile(const std::string&, const std::filesystem::path&);
 	void setDbgLogFile(const std::string&, const std::filesystem::path&);
@@ -43,6 +46,10 @@ public:
 	void stdLogOut(const std::string&);
 	void dbgLogOut(const std::string&);
 };
+
+/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
+	#pragma endregion
+/*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 namespace blogger { // basic logger class
 	extern BasicLogger& blog;
