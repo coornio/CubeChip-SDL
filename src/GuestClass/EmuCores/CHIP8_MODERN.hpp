@@ -7,6 +7,7 @@
 #pragma once
 
 #include <array>
+#include <utility>
 
 #include "EmuCores.hpp"
 
@@ -55,17 +56,17 @@ private:
 	std::array<u8, cTotalMemory + 31>
 		mMemoryBank{};
 
-	//bool constexpr in_range(const usz pos) const noexcept { return pos < cTotalMemory; }
-
 	// Write memory at saved index + offset, using given value
 	void writeMemoryI(const u32 value, const u32 pos) noexcept {
-		mMemoryBank[mRegisterI + pos & cTotalMemory - 1u] = static_cast<u8>(value);
-		//if (in_range(mRegisterI + pos)) { mMemoryBank[mRegisterI + pos] = static_cast<u8>(value); }
+		//mMemoryBank[mRegisterI + pos & cTotalMemory - 1u] = value & 0xFF;
+		const auto index{ mRegisterI + pos };
+		if (!(index & cTotalMemory)) [[likely]]
+			{ mMemoryBank[index] = value & 0xFF; }
 	}
 
 	// Read memory at saved index + offset
 	auto readMemoryI(const u32 pos) const noexcept {
-		//return (in_range(mRegisterI + pos)) ? mMemoryBank[mRegisterI + pos] : 0xFF;
+		//return mMemoryBank[mRegisterI + pos & cTotalMemory - 1u];
 		return mMemoryBank[mRegisterI + pos];
 	}
 
@@ -82,7 +83,7 @@ private:
 	void handleEndFrameInterrupt() noexcept;
 
 	f32  calcAudioTone() const;
-	void jumpProgramTo(s32);
+	void jumpProgramTo(u32);
 
 /*==================================================================*/
 	#pragma region 0 instruction branch
@@ -276,7 +277,7 @@ private:
 
 	// ANNN - set I = NNN
 	void instruction_ANNN(const s32 NNN) {
-		mRegisterI = static_cast<u16>(NNN);
+		mRegisterI = NNN & 0xFFF;
 	}
 
 /*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
@@ -318,8 +319,11 @@ private:
 		const usz DATA
 	) {
 		switch (DATA) {
+			[[unlikely]]
 			case 0b00000000:
 				return;
+
+			[[likely]]
 			case 0b10000000:
 				if (Quirk.wrapSprite) { X &= mDisplayWb; }
 				if (X < mDisplayW) {
@@ -327,6 +331,8 @@ private:
 						{ mRegisterV[0xF] = 1; }
 				}
 				return;
+
+			[[unlikely]]
 			default:
 				if (Quirk.wrapSprite) { X &= mDisplayWb; }
 				else if (X >= mDisplayW) { return; }
@@ -353,17 +359,23 @@ private:
 		mRegisterV[0xF] = 0;
 
 		switch (N) {
+			[[likely]]
 			case 1:
 				drawByte(pX, pY, readMemoryI(0));
 				break;
+
+			[[unlikely]]
 			case 0:
-				for (auto H{ 0 }, I{ 0 }; H < 16; ++H, ++pY &= mDisplayHb)
+				for (auto H{ 0 }, I{ 0 }; H < 16; ++H, I += 2, ++pY &= mDisplayHb)
 				{
-					drawByte(pX + 0, pY, readMemoryI(I++));
-					drawByte(pX + 8, pY, readMemoryI(I++));
+					drawByte(pX + 0, pY, readMemoryI(I + 0));
+					drawByte(pX + 8, pY, readMemoryI(I + 1));
+					
 					if (!Quirk.wrapSprite && pY == mDisplayHb) { break; }
 				}
 				break;
+
+			[[unlikely]]
 			default:
 				for (auto H{ 0 }; H < N; ++H, ++pY &= mDisplayHb)
 				{
@@ -419,7 +431,7 @@ private:
 	}
 	// FX1E - set I = I + VX
 	void instruction_Fx1E(const s32 X) {
-		mRegisterI += mRegisterV[X];
+		(mRegisterI += mRegisterV[X]) &= 0xFFF;
 	}
 	// FX29 - point I to 5 byte hex sprite from value in VX
 	void instruction_Fx29(const s32 X) {
@@ -436,14 +448,14 @@ private:
 		for (auto idx{ 0 }; idx <= X; ++idx)
 			{ writeMemoryI(mRegisterV[idx], idx); }
 		if (!Quirk.idxRegNoInc) [[likely]]
-			{ mRegisterI += static_cast<u16>(X + 1); }
+			{ (mRegisterI += X + 1 & 0xFF) &= 0xFFF; }
 	}
 	// FX65 - load V0..VX from RAM at I..I+X
 	void instruction_Fx65(const s32 X) {
 		for (auto idx{ 0 }; idx <= X; ++idx)
-			{ mRegisterV[idx] = static_cast<u8>(readMemoryI(idx)); }
+			{ mRegisterV[idx] = readMemoryI(idx); }
 		if (!Quirk.idxRegNoInc) [[likely]]
-			{ mRegisterI += static_cast<u16>(X + 1); }
+			{ (mRegisterI += X + 1 & 0xFF) &= 0xFFF; }
 	}
 
 /*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/

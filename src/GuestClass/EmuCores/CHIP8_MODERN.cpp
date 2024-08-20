@@ -4,15 +4,11 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include <utility>
-
 #include "CHIP8_MODERN.hpp"
 
 #include "../../HostClass/HomeDirManager.hpp"
 #include "../../HostClass/BasicVideoSpec.hpp"
 #include "../../HostClass/BasicAudioSpec.hpp"
-
-
 
 CHIP8_MODERN::~CHIP8_MODERN() = default;
 CHIP8_MODERN::CHIP8_MODERN(
@@ -23,7 +19,7 @@ CHIP8_MODERN::CHIP8_MODERN(
 	: EmuCores{ ref_HDM, ref_BVS, ref_BAS }
 {
 	copyGameToMemory(mMemoryBank.data(), cGameLoadPos);
-	copyFontToMemory(mMemoryBank.data(), 0, 80);
+	copyFontToMemory(mMemoryBank.data(), 0x0, 0x50);
 
 	mProgCounter    = cStartOffset;
 	mFramerate      = cRefreshRate;
@@ -110,10 +106,10 @@ void CHIP8_MODERN::instructionLoop() {
 				}
 				break;
 			case 0x1:
-				instruction_1NNN((HI << 8 | LO) & 0xFFF);
+				instruction_1NNN(HI << 8 | LO);
 				break;
 			case 0x2:
-				instruction_2NNN((HI << 8 | LO) & 0xFFF);
+				instruction_2NNN(HI << 8 | LO);
 				break;
 			case 0x3:
 				instruction_3xNN(HI & 0xF, LO);
@@ -175,14 +171,15 @@ void CHIP8_MODERN::instructionLoop() {
 				}
 				break;
 			case 0xA:
-				instruction_ANNN((HI << 8 | LO) & 0xFFF);
+				instruction_ANNN(HI << 8 | LO);
 				break;
 			case 0xB:
-				instruction_BNNN((HI << 8 | LO) & 0xFFF);
+				instruction_BNNN(HI << 8 | LO);
 				break;
 			case 0xC:
 				instruction_CxNN(HI & 0xF, LO);
 				break;
+			[[likely]]
 			case 0xD:
 				instruction_DxyN(HI & 0xF, LO >> 4, LO & 0xF);
 				break;
@@ -243,13 +240,14 @@ f32  CHIP8_MODERN::calcAudioTone() const {
 }
 
 void CHIP8_MODERN::nextInstruction() {
-	mProgCounter = mProgCounter + 2;
+	mProgCounter += 2;
 }
 
-void CHIP8_MODERN::jumpProgramTo(const s32 next) {
-	if (mProgCounter - 2 == next) [[unlikely]] {
+void CHIP8_MODERN::jumpProgramTo(const u32 next) {
+	const auto NNN{ next & 0xFFF };
+	if (mProgCounter - 2u == NNN) [[unlikely]] {
 		setInterrupt(Interrupt::SOUND);
-	} else { mProgCounter = static_cast<u16>(next); }
+	} else { mProgCounter = NNN & 0xFFF; }
 }
 
 void CHIP8_MODERN::renderAudioData() {
