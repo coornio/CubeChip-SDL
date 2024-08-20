@@ -57,36 +57,16 @@ private:
 
 	bool constexpr in_range(const usz pos) const noexcept { return pos < mMemoryBank.size(); }
 
-	// Write memory at given index using given value
-	void writeMemory(const u32 value, const u32 pos) noexcept {
-		mMemoryBank[pos & mMemoryBank.size() - 1] = static_cast<u8>(value);
-		//if (in_range(pos)) { mMemoryBank[pos] = static_cast<u8>(value); }
-	}
-	// Write memory at saved index using given value
+	// Write memory at saved index + offset, using given value
 	void writeMemoryI(const u32 value, const u32 pos) noexcept {
 		mMemoryBank[mRegisterI + pos & mMemoryBank.size() - 1] = static_cast<u8>(value);
 		//if (in_range(mRegisterI + pos)) { mMemoryBank[mRegisterI + pos] = static_cast<u8>(value); }
 	}
-	// Write memory at saved index using given value
-	void writeMemoryI(const u32 value) noexcept {
-		mMemoryBank[mRegisterI & mMemoryBank.size() - 1] = static_cast<u8>(value);
-		//if (in_range(mRegisterI)) { mMemoryBank[mRegisterI] = static_cast<u8>(value); }
-	}
 
-	// Read memory at given index
-	auto readMemory(const u32 pos) const noexcept {
-		//return (in_range(pos)) ? mMemoryBank[pos] : 0xFF;
-		return mMemoryBank[pos & mMemoryBank.size() - 1];
-	}
-	// Read memory at saved index
+	// Read memory at saved index + offset
 	auto readMemoryI(const u32 pos) const noexcept {
 		//return (in_range(mRegisterI + pos)) ? mMemoryBank[mRegisterI + pos] : 0xFF;
 		return mMemoryBank[mRegisterI + pos & mMemoryBank.size() - 1];
-	}
-	// Read memory at saved index
-	auto readMemoryI() const noexcept {
-		//return (in_range(mRegisterI)) ? mMemoryBank[mRegisterI] : 0xFF;
-		return mMemoryBank[mRegisterI & mMemoryBank.size() - 1];
 	}
 
 private:
@@ -96,12 +76,13 @@ private:
 	void renderVideoData();
 
 	void instructionLoop();
+	void nextInstruction();
 
 	void handlePreFrameInterrupt() noexcept;
 	void handleEndFrameInterrupt() noexcept;
 
 	f32  calcAudioTone() const;
-	void jumpProgramTo(s32) noexcept;
+	void jumpProgramTo(s32);
 
 /*==================================================================*/
 	#pragma region 0 instruction branch
@@ -160,7 +141,7 @@ private:
 
 	// 3XNN - skip next instruction if VX == NN
 	void instruction_3xNN(const s32 X, const s32 NN) {
-		if (mRegisterV[X] == NN) { mProgCounter += 2; }
+		if (mRegisterV[X] == NN) { nextInstruction(); }
 	}
 
 /*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
@@ -173,7 +154,7 @@ private:
 
 	// 4XNN - skip next instruction if VX != NN
 	void instruction_4xNN(const s32 X, const s32 NN) {
-		if (mRegisterV[X] != NN) { mProgCounter += 2; }
+		if (mRegisterV[X] != NN) { nextInstruction(); }
 	}
 
 /*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
@@ -186,7 +167,7 @@ private:
 
 	// 5XY0 - skip next instruction if VX == VY
 	void instruction_5xy0(const s32 X, const s32 Y) {
-		if (mRegisterV[X] == mRegisterV[Y]) { mProgCounter += 2; }
+		if (mRegisterV[X] == mRegisterV[Y]) { nextInstruction(); }
 	}
 
 /*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
@@ -282,7 +263,7 @@ private:
 
 	// 9XY0 - skip next instruction if VX != VY
 	void instruction_9xy0(const s32 X, const s32 Y) {
-		if (mRegisterV[X] != mRegisterV[Y]) { mProgCounter += 2; }
+		if (mRegisterV[X] != mRegisterV[Y]) { nextInstruction(); }
 	}
 
 /*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
@@ -373,7 +354,7 @@ private:
 
 		switch (N) {
 			case 1:
-				drawByte(pX, pY, readMemoryI());
+				drawByte(pX, pY, readMemoryI(0));
 				break;
 			case 0:
 				for (auto H{ 0 }, I{ 0 }; H < 16; ++H, ++pY &= mDisplayHb)
@@ -403,11 +384,11 @@ private:
 
 	// EX9E - skip next instruction if key VX down (p1)
 	void instruction_Ex9E(const s32 X) {
-		if ( Input.keyHeld_P1(mRegisterV[X])) { mProgCounter += 2; }
+		if ( Input.keyHeld_P1(mRegisterV[X])) { nextInstruction(); }
 	}
 	// EXA1 - skip next instruction if key VX up (p1)
 	void instruction_ExA1(const s32 X) {
-		if (!Input.keyHeld_P1(mRegisterV[X])) { mProgCounter += 2; }
+		if (!Input.keyHeld_P1(mRegisterV[X])) { nextInstruction(); }
 	}
 
 /*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/

@@ -92,8 +92,9 @@ void CHIP8_MODERN::instructionLoop() {
 
 	auto cycleCount{ 0 };
 	for (; cycleCount < mCyclesPerFrame; ++cycleCount) {
-		const auto HI{ readMemory(mProgCounter++) };
-		const auto LO{ readMemory(mProgCounter++) };
+		const auto HI{ mMemoryBank[mProgCounter + 0u] };
+		const auto LO{ mMemoryBank[mProgCounter + 1u] };
+		nextInstruction();
 
 		switch (HI >> 4) {
 			case 0x0:
@@ -235,16 +236,20 @@ void CHIP8_MODERN::instructionLoop() {
 	mTotalCycles += cycleCount;
 }
 
-void CHIP8_MODERN::jumpProgramTo(const s32 next) noexcept {
-	if (mProgCounter - 2 == next) [[unlikely]] {
-		setInterrupt(Interrupt::SOUND);
-	} else { mProgCounter = static_cast<u16>(next); }
-}
-
 f32  CHIP8_MODERN::calcAudioTone() const {
 	return (160.0f + 8.0f * (
 		(mProgCounter >> 1) + mStackBank[mStackTop] + 1 & 0x3E)
 	) / BAS.getFrequency();
+}
+
+void CHIP8_MODERN::nextInstruction() {
+	mProgCounter = mProgCounter + 2;
+}
+
+void CHIP8_MODERN::jumpProgramTo(const s32 next) {
+	if (mProgCounter - 2 == next) [[unlikely]] {
+		setInterrupt(Interrupt::SOUND);
+	} else { mProgCounter = static_cast<u16>(next); }
 }
 
 void CHIP8_MODERN::renderAudioData() {
