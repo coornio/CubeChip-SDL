@@ -239,8 +239,8 @@ public:
 		return mCoreBase ? mCoreBase->fetchFramerate() : 60.0f;
 	}
 
-	void changeCPF(const s32 delta) noexcept {
-		if (mCoreBase) { mCoreBase->changeCPF(delta); }
+	auto changeCPF(const s32 delta) noexcept {
+		return (mCoreBase) ? mCoreBase->changeCPF(delta) : 0;
 	}
 
 	void processFrame() const {

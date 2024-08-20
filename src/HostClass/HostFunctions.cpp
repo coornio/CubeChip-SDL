@@ -4,7 +4,7 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include <sstream>
+#include <iostream>
 #include <iomanip>
 
 #include "HomeDirManager.hpp"
@@ -80,9 +80,16 @@ bool VM_Host::runHost() {
 				continue;
 			}
 			if (kb.isPressed(KEY(RSHIFT))) {
-				doBench(!doBench());
-				if (!doBench()) {
+				if (doBench()) {
+					doBench(false);
 					BVS.changeTitle(HDM.file.c_str());
+				} else {
+					doBench(true);
+					BVS.changeTitle(std::to_string(Guest.fetchCPF()));
+					std::cout
+						<< "\33[1;1H\33[2J"
+						<< "Cycle time:    .    ms\n"
+						<< "Time since last frame: ";
 				}
 			}
 
@@ -95,22 +102,24 @@ bool VM_Host::runHost() {
 
 			if (doBench()) {
 				if (kb.isPressed(KEY(UP))) {
-					Guest.changeCPF(+50'000);
+					BVS.changeTitle(std::to_string(Guest.changeCPF(+50'000)));
 				}
 				if (kb.isPressed(KEY(DOWN))) {
-					Guest.changeCPF(-50'000);
+					BVS.changeTitle(std::to_string(Guest.changeCPF(-50'000)));
 				}
 
 				Guest.processFrame();
 
-				{
+				if (Frame.getValidFrameCounter() & 0x1) {
 					const auto micros{ Frame.getElapsedMicrosSince() };
-					std::ostringstream out;
-
-					out << Guest.fetchCPF() << " :: " << (micros / 1000) << ".";
-					out << std::setfill('0') << std::setw(3) << (micros % 1000) << " :: ";
-					out << std::left << Frame.getElapsedMillisLast();
-					BVS.changeTitle(out.str());
+					std::cout
+						<< "\33[2;25H"
+						<< Frame.getElapsedMillisLast()
+						<< "\33[1;12H"
+						<< std::setfill(' ') << std::setw(4) << micros / 1000
+						<< "\33[1C"
+						<< std::setfill('0') << std::setw(3) << micros % 1000
+						<< std::endl;
 				}
 			} else { Guest.processFrame(); }
 		} else {
