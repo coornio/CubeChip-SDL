@@ -55,7 +55,7 @@ bool VM_Host::runHost() {
 	prepareGuest(Guest, Frame);
 
 	while (true) {
-		if (!Frame.checkTime()) { continue; }
+		if (!Frame.checkTime()) [[likely]] { continue; }
 
 		if (eventLoopSDL(Guest, Frame)) [[unlikely]] {
 			return EXIT_SUCCESS;
