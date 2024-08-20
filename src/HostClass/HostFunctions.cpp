@@ -4,9 +4,8 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include <iostream>
+#include <sstream>
 #include <iomanip>
-#include <chrono>
 
 #include "HomeDirManager.hpp"
 #include "BasicVideoSpec.hpp"
@@ -81,15 +80,9 @@ bool VM_Host::runHost() {
 				continue;
 			}
 			if (kb.isPressed(KEY(RSHIFT))) {
-				if (doBench()) {
-					doBench(false);
+				doBench(!doBench());
+				if (!doBench()) {
 					BVS.changeTitle(HDM.file.c_str());
-				} else {
-					doBench(true);
-					BVS.changeTitle(std::to_string(Guest.fetchCPF()));
-					std::cout << "\33[1;1H\33[2J\33[?25l"
-						<< "Cycle time:      ms |     μs"
-						<< "\nelapsed since last: ";
 				}
 			}
 
@@ -102,19 +95,23 @@ bool VM_Host::runHost() {
 
 			if (doBench()) {
 				if (kb.isPressed(KEY(UP))) {
-					BVS.changeTitle(std::to_string(Guest.changeCPF(+50'000)));
+					Guest.changeCPF(+50'000);
 				}
 				if (kb.isPressed(KEY(DOWN))) {
-					BVS.changeTitle(std::to_string(Guest.changeCPF(-50'000)));
+					Guest.changeCPF(-50'000);
 				}
 
 				Guest.processFrame();
 
-				const auto micros{ Frame.getElapsedMicrosSince()};
-				std::cout << "\33[2;21H" << Frame.getElapsedMillisLast();
-				std::cout << "\33[1;13H" << std::setw(4) << micros / 1000;
-				std::cout << "\33[1;23H" << std::setw(3) << micros % 1000;
-					
+				{
+					const auto micros{ Frame.getElapsedMicrosSince() };
+					std::ostringstream out;
+
+					out << Guest.fetchCPF() << " :: " << (micros / 1000) << ".";
+					out << std::setfill('0') << std::setw(3) << (micros % 1000) << " :: ";
+					out << std::left << Frame.getElapsedMillisLast();
+					BVS.changeTitle(out.str());
+				}
 			} else { Guest.processFrame(); }
 		} else {
 			if (kb.isPressed(KEY(ESCAPE))) {

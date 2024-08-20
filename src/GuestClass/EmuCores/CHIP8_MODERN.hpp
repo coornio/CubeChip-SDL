@@ -49,24 +49,24 @@ private:
 	u8  mStackTop{};
 	u16 mRegisterI{};
 
-	std::array<u8, cTotalMemory>
-		mMemoryBank{};
-
 	std::array<u8, 2048>
 		mDisplayBuffer{};
 
-	bool constexpr in_range(const usz pos) const noexcept { return pos < mMemoryBank.size(); }
+	std::array<u8, cTotalMemory + 31>
+		mMemoryBank{};
+
+	//bool constexpr in_range(const usz pos) const noexcept { return pos < cTotalMemory; }
 
 	// Write memory at saved index + offset, using given value
 	void writeMemoryI(const u32 value, const u32 pos) noexcept {
-		mMemoryBank[mRegisterI + pos & mMemoryBank.size() - 1] = static_cast<u8>(value);
+		mMemoryBank[mRegisterI + pos & cTotalMemory - 1u] = static_cast<u8>(value);
 		//if (in_range(mRegisterI + pos)) { mMemoryBank[mRegisterI + pos] = static_cast<u8>(value); }
 	}
 
 	// Read memory at saved index + offset
 	auto readMemoryI(const u32 pos) const noexcept {
 		//return (in_range(mRegisterI + pos)) ? mMemoryBank[mRegisterI + pos] : 0xFF;
-		return mMemoryBank[mRegisterI + pos & mMemoryBank.size() - 1];
+		return mMemoryBank[mRegisterI + pos];
 	}
 
 private:
