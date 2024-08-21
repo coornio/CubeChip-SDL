@@ -83,11 +83,7 @@ bool VM_Host::runHost() {
 				if (doBench()) {
 					doBench(false);
 					BVS.changeTitle(HDM.file.c_str());
-				#ifdef _WIN32
-					std::system("cls");
-				#else
-					std::system("clear");
-				#endif
+					std::cout << "\33[1;1H\33[3J" << std::endl;
 				} else {
 					doBench(true);
 					BVS.changeTitle(std::to_string(Guest.fetchCPF()));
@@ -165,8 +161,6 @@ bool VM_Host::eventLoopSDL(VM_Guest& Guest, FrameLimiter& Frame) {
 				HDM.verifyFile(GameFileChecker::validate, Event.drop.data);
 				if (GameFileChecker::hasCore()) {
 					prepareGuest(Guest, Frame);
-				} else {
-					blog.stdLogOut(std::string{ "File drop denied: " } + GameFileChecker::getError());
 				}
 				break;
 
