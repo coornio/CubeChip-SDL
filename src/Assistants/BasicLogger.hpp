@@ -9,6 +9,8 @@
 #include <string>
 #include <filesystem>
 
+enum class BLOG { INFO, WARN, ERROR, DEBUG };
+
 /*==================================================================*/
 	#pragma region BasicLogger Singleton Class
 /*==================================================================*/
@@ -18,21 +20,31 @@ class BasicLogger final {
 	BasicLogger(const BasicLogger&) = delete;
 	BasicLogger& operator=(const BasicLogger&) = delete;
 
-	std::filesystem::path stdLogPath{};
-	std::filesystem::path dbgLogPath{};
-
-	std::size_t cStd{}, cDbg{};
+	std::filesystem::path mLogPath{};
 
 	void createDirectory(
 		const std::string&,
-		const std::filesystem::path&,
-		std::filesystem::path&
-	) const;
-	void writeLogFile(
-		const std::string&,
-		const std::filesystem::path&,
-		std::size_t&
-	) const;
+		const std::filesystem::path&
+	);
+
+	std::string_view getSeverity(BLOG type) const noexcept {
+		switch (type) {
+			case BLOG::INFO:
+				return "INFO";
+
+			case BLOG::WARN:
+				return "WARN";
+
+			case BLOG::ERROR:
+				return "ERROR";
+
+			case BLOG::DEBUG:
+				return "DEBUG";
+
+			default:
+				return "OTHER";
+		}
+	}
 
 public:
 	static BasicLogger& create() {
@@ -41,10 +53,8 @@ public:
 	}
 
 	void setStdLogFile(const std::string&, const std::filesystem::path&);
-	void setDbgLogFile(const std::string&, const std::filesystem::path&);
 
-	void stdLogOut(const std::string&);
-	void dbgLogOut(const std::string&);
+	void newEntry(const BLOG type, const std::string&) noexcept;
 };
 
 /*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/

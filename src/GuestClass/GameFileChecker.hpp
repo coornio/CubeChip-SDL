@@ -111,5 +111,5 @@ public:
 		std::uint64_t    size,
 		std::string_view type,
 		std::string_view sha1 = ""
-	);
+	) noexcept;
 };

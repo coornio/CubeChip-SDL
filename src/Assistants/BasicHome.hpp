@@ -7,13 +7,14 @@
 #pragma once
 
 #include <filesystem>
+#include <string_view>
 
 class BasicHome {
-	std::filesystem::path homeDir{};
+	std::filesystem::path mHomeDirectory{};
 
 protected:
 	static bool showErrorBox(std::string_view, std::string_view);
-	const std::filesystem::path& getHome() const noexcept { return homeDir; }
+	const auto& getHome() const noexcept { return mHomeDirectory; }
 
-	BasicHome(const char*);
+	BasicHome(const std::string_view);
 };

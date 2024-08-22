@@ -19,18 +19,20 @@ bool BasicHome::showErrorBox(
 	);
 }
 
-BasicHome::BasicHome(const char* path) {
-	char* platformHome{ SDL_GetPrefPath(nullptr, path) };
+BasicHome::BasicHome(const std::string_view homeName) {
+	auto* path{ SDL_GetPrefPath(nullptr, homeName.data()) };
 
-	if (!platformHome) {
+	if (!path) {
 		throw PathException("Failed to get platform home directory!", "");
 	}
 
-	homeDir = platformHome;
-	SDL_free(reinterpret_cast<void*>(platformHome));
+	mHomeDirectory.assign(path);
+	SDL_free(path);
 
-	std::filesystem::create_directories(homeDir);
-	if (!std::filesystem::exists(homeDir)) {
-		throw PathException("Cannot create home directory: ", homeDir);
+	namespace fs = std::filesystem;
+
+	fs::create_directories(mHomeDirectory);
+	if (!fs::exists(mHomeDirectory) || !fs::is_directory(mHomeDirectory)) {
+		throw PathException("Cannot create home directory: ", mHomeDirectory);
 	}
 }

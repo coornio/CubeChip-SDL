@@ -27,7 +27,7 @@ bool MEGACORE::setupMachine() {
 	initPlatform();
 	fontCopyToMemory();
 
-	blog.stdLogOut("Successfully initialized rom/platform.");
+	blog.newEntry(BLOG::INFO, "Successfully initialized rom/platform.");
 	return true;
 }
 
@@ -98,7 +98,7 @@ bool MEGACORE::romTypeCheck() {
 			if (!romCopyToMemory(4'096, 0x200))
 				return false;
 			if (readMemory(0x200) != 0x12 || readMemory(0x201) != 0x60) {
-				blog.stdLogOut("Invalid TPD rom patch, aborting.");
+				blog.newEntry(BLOG::WARN, "Invalid TPD rom patch, aborting.");
 				return false;
 			}
 			initProgramParams(0x2C0, 30);
@@ -161,7 +161,7 @@ bool MEGACORE::romTypeCheck() {
 			break;
 
 		default:
-			blog.stdLogOut("Unknown rom type, we shouldn't be here!");
+			blog.newEntry(BLOG::WARN, "Unknown rom type, we shouldn't be here!");
 			return false;
 	}
 	return true;
@@ -173,7 +173,7 @@ bool MEGACORE::romCopyToMemory(const usz size, const usz offset) {
 	std::basic_ifstream<char> ifs(HDM.path, std::ios::binary);
 	ifs.read(reinterpret_cast<char*>(mMemoryBank.data() + offset), HDM.size);
 	if (ifs.fail()) {
-		blog.stdLogOut("Failed to copy rom data to memory, aborting.");
+		blog.newEntry(BLOG::ERROR, "Failed to copy rom data to memory, aborting.");
 		return false;
 	} else {
 		return true;

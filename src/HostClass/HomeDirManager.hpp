@@ -9,10 +9,16 @@
 #include <cstdint>
 #include <string>
 #include <filesystem>
+#include <string_view>
 
 #include "../Assistants/BasicHome.hpp"
 
 class HomeDirManager final : public BasicHome {
+
+	using GameValidator = bool (*)(std::uint64_t, std::string_view, std::string_view);
+
+	GameValidator checkGame{};
+
 public:
 	std::filesystem::path permRegs{};
 	std::string   path{};
@@ -22,12 +28,11 @@ public:
 	std::string   sha1{};
 	std::uint64_t size{};
 
-	HomeDirManager(const char*);
+	HomeDirManager(const std::string_view);
 
-	void reset() noexcept;
+	void setValidator(GameValidator func) noexcept { checkGame = func; }
+
 	void addDirectory();
-	bool verifyFile(
-		bool(*)(std::uint64_t, std::string_view, std::string_view),
-		const char*
-	);
+	void clearCachedFileData() noexcept;
+	bool validateGameFile(const char*) noexcept;
 };

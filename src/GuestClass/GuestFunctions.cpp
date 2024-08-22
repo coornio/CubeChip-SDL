@@ -464,15 +464,15 @@ void MEGACORE::setInterrupt(const Interrupt type) {
 }
 
 void MEGACORE::triggerError(std::string_view msg) {
-	blog.stdLogOut(msg.data());
+	blog.newEntry(BLOG::INFO, msg.data());
 	setInterrupt(Interrupt::ERROR);
 }
 
 void MEGACORE::triggerOpcodeError(const u32 opcode) {
 	if (opcode & 0xF000) {
-		blog.stdLogOut("Error :: Unknown instruction detected: " + hexOpcode(opcode));
+		blog.newEntry(BLOG::INFO, "Unknown instruction detected: " + hexOpcode(opcode));
 	} else {
-		blog.stdLogOut("Error :: ML routines are unsupported: " + hexOpcode(opcode));
+		blog.newEntry(BLOG::INFO, "ML routines are unsupported: " + hexOpcode(opcode));
 	}
 	setInterrupt(Interrupt::ERROR);
 }
@@ -598,7 +598,7 @@ bool MEGACORE::readPermRegs(const usz X) {
 
 	if (std::filesystem::exists(path)) {
 		if (!std::filesystem::is_regular_file(path)) {
-			blog.stdLogOut("SHA1 file is malformed: " + path.string());
+			blog.newEntry(BLOG::ERROR, "SHA1 file is malformed: " + path.string());
 			return true;
 		}
 
@@ -615,7 +615,7 @@ bool MEGACORE::readPermRegs(const usz X) {
 				std::fill_n(mRegisterV + totalBytes, X - totalBytes, u8());
 			}
 		} else {
-			blog.stdLogOut("Could not open SHA1 file to read: " + path.string());
+			blog.newEntry(BLOG::ERROR, "Could not open SHA1 file to read: " + path.string());
 			return true;
 		}
 	} else {
@@ -629,7 +629,7 @@ bool MEGACORE::writePermRegs(const usz X) {
 
 	if (std::filesystem::exists(path)) {
 		if (!std::filesystem::is_regular_file(path)) {
-			blog.stdLogOut("SHA1 file is malformed: " + path.string());
+			blog.newEntry(BLOG::ERROR, "SHA1 file is malformed: " + path.string());
 			return true;
 		}
 
@@ -644,7 +644,7 @@ bool MEGACORE::writePermRegs(const usz X) {
 			in.read(tempV, std::min<std::streamsize>(totalBytes, X));
 			in.close();
 		} else {
-			blog.stdLogOut("Could not open SHA1 file to read: " + path.string());
+			blog.newEntry(BLOG::ERROR, "Could not open SHA1 file to read: " + path.string());
 			return true;
 		}
 
@@ -655,7 +655,7 @@ bool MEGACORE::writePermRegs(const usz X) {
 			out.write(tempV, 16);
 			out.close();
 		} else {
-			blog.stdLogOut("Could not open SHA1 file to write: " + path.string());
+			blog.newEntry(BLOG::ERROR, "Could not open SHA1 file to write: " + path.string());
 			return true;
 		}
 	} else {
@@ -668,7 +668,7 @@ bool MEGACORE::writePermRegs(const usz X) {
 			}
 			out.close();
 		} else {
-			blog.stdLogOut("Could not open SHA1 file to write: " + path.string());
+			blog.newEntry(BLOG::ERROR, "Could not open SHA1 file to write: " + path.string());
 			return true;
 		}
 	}

@@ -7,6 +7,7 @@
 #pragma once
 
 #include <filesystem>
+#include <string_view>
 #include <stdexcept>
 
 struct PathException : public std::runtime_error {

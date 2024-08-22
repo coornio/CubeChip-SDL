@@ -35,7 +35,7 @@ void EmuCores::setInterrupt(const Interrupt type) {
 }
 
 void EmuCores::operationError(std::string_view msg) {
-	blog.stdLogOut(msg.data());
+	blog.newEntry(BLOG::INFO, msg.data());
 	setInterrupt(Interrupt::ERROR);
 }
 
@@ -48,12 +48,12 @@ std::string EmuCores::formatOpcode(const u32 HI, const u32 LO) const {
 }
 
 void EmuCores::instructionError(const u32 HI, const u32 LO) {
-	blog.stdLogOut("Error :: Unknown instruction: " + formatOpcode(HI, LO));
+	blog.newEntry(BLOG::INFO, "Unknown instruction: " + formatOpcode(HI, LO));
 	setInterrupt(Interrupt::ERROR);
 }
 
 void EmuCores::instructionErrorML(const u32 HI, const u32 LO) {
-	blog.stdLogOut("Error :: ML routines unsupported: " + formatOpcode(HI, LO));
+	blog.newEntry(BLOG::INFO, "ML routines unsupported: " + formatOpcode(HI, LO));
 	setInterrupt(Interrupt::ERROR);
 }
 
@@ -61,7 +61,7 @@ bool EmuCores::copyGameToMemory(u8* dest, const u32 offset) {
 	std::basic_ifstream<char> ifs(HDM.path, std::ios::binary);
 	ifs.read(reinterpret_cast<char*>(dest + offset), HDM.size);
 	if (ifs.fail()) {
-		blog.stdLogOut("Failed to copy rom data to memory, aborting.");
+		blog.newEntry(BLOG::ERROR, "Failed to copy rom data to memory, aborting.");
 		return false;
 	} else {
 		return true;

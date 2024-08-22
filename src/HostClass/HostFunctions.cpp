@@ -37,9 +37,8 @@ VM_Host::VM_Host(
 	, BVS{ ref_BVS }
 	, BAS{ ref_BAS }
 {
-	if (filename) {
-		HDM.verifyFile(GameFileChecker::validate, filename);
-	}
+	HDM.setValidator(GameFileChecker::validate);
+	HDM.validateGameFile(filename);
 }
 
 bool VM_Host::doBench() const noexcept { return _doBench; }
@@ -76,7 +75,9 @@ bool VM_Host::runHost() {
 				continue;
 			}
 			if (kb.isPressed(KEY(BACKSPACE))) [[unlikely]] {
-				prepareGuest(Guest, Frame);
+				if (HDM.validateGameFile(HDM.file.c_str())) {
+					prepareGuest(Guest, Frame);
+				}
 				continue;
 			}
 			if (kb.isPressed(KEY(RSHIFT))) [[unlikely]] {
@@ -144,7 +145,7 @@ void VM_Host::prepareGuest(VM_Guest& Guest, FrameLimiter& Frame) {
 		BVS.changeTitle(HDM.file.c_str());
 	} else {
 		Frame.setLimiter(30.0f);
-		HDM.reset();
+		HDM.clearCachedFileData();
 	}
 }
 
@@ -158,8 +159,7 @@ bool VM_Host::eventLoopSDL(VM_Guest& Guest, FrameLimiter& Frame) {
 
 			case SDL_EVENT_DROP_FILE:
 				BVS.raiseWindow();
-				HDM.verifyFile(GameFileChecker::validate, Event.drop.data);
-				if (GameFileChecker::hasCore()) {
+				if (HDM.validateGameFile(Event.drop.data)) {
 					prepareGuest(Guest, Frame);
 				}
 				break;

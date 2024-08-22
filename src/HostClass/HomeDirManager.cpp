@@ -13,12 +13,11 @@
 
 using namespace blogger;
 
-HomeDirManager::HomeDirManager(const char* homeName) try
-	: BasicHome{ homeName }
+HomeDirManager::HomeDirManager(const std::string_view homeDirName) try
+	: BasicHome{ homeDirName }
 {
 	try {
 		blog.setStdLogFile("program.log", getHome());
-		blog.setDbgLogFile("debug.log", getHome());
 		addDirectory();
 	} catch (const std::exception& e) {
 		BasicHome::showErrorBox(e.what(), "Fatal Initialization Error");
@@ -29,9 +28,10 @@ HomeDirManager::HomeDirManager(const char* homeName) try
 	throw;
 }
 
-void HomeDirManager::reset() noexcept {
-	path = name = type = sha1 = {};
-	size = 0;
+void HomeDirManager::clearCachedFileData() noexcept {
+	path.clear(); file.clear();
+	name.clear(); type.clear();
+	sha1.clear(); size = 0;
 }
 
 void HomeDirManager::addDirectory() {
@@ -42,56 +42,52 @@ void HomeDirManager::addDirectory() {
 	}
 }
 
-bool HomeDirManager::verifyFile(
-	bool(*validate)(std::uint64_t fsize, std::string_view type, std::string_view sha1),
-	const char* filepath
-) {
+bool HomeDirManager::validateGameFile(const char* filepath) noexcept {
 	if (!filepath) { return false; }
 	namespace fs = std::filesystem;
+	std::error_code error;
 
 	const fs::path fspath{ filepath };
-	blog.stdLogOut("Attempting to access file: " + fspath.string());
+	blog.newEntry(BLOG::INFO, "Attempting to access file: " + fspath.string());
 
-	if (!fs::exists(fspath) || !fs::is_regular_file(fspath)) {
-		blog.dbgLogOut("Unable to use locate path: " + fspath.string());
+	if (!fs::exists(fspath, error) || error) {
+		blog.newEntry(BLOG::WARN, "Unable to locate path!" + error.message());
 		return false;
 	}
 
-	std::ifstream fileStream(fspath);
-	if (!fileStream.is_open()) {
-		blog.dbgLogOut("Failed to open file: " + fspath.string());
+	if (!fs::is_regular_file(fspath, error) || error) {
+		blog.newEntry(BLOG::WARN, "Provided path is not to a file!");
 		return false;
 	}
-	if (!fileStream.good()) {
-		blog.dbgLogOut("File is not readable: " + fspath.string());
-		return false;
-	}
-
-	std::error_code error;
+	
 	const std::uint64_t fileSize{ fs::file_size(fspath, error) };
 	if (error) {
-		blog.dbgLogOut("Unable to access file: " + fspath.string());
+		blog.newEntry(BLOG::ERROR, "Unable to read file!");
 		return false;
 	}
 	if (fileSize == 0) {
-		blog.dbgLogOut("File is empty: " + fspath.string());
+		blog.newEntry(BLOG::WARN, "File must not be empty!");
 		return false;
 	}
 
-	auto tempPath{ fspath.string() };
-	auto tempType{ fspath.extension().string() };
-	auto tempSHA1{ SHA1::from_file(tempPath) };
+	const auto tempPath{ fspath.string() };
+	const auto tempType{ fspath.extension().string() };
+	const auto tempSHA1{ SHA1::from_file(tempPath) };
 
-	const bool result{ validate(fileSize, tempType, tempSHA1) };
+	const bool gameApproved{ checkGame(fileSize, tempType, tempSHA1) };
 
-	if (result) {
+	if (gameApproved) {
 		path = tempPath;
 		file = fspath.filename().string();
 		name = fspath.stem().string();
 		type = tempType;
 		sha1 = tempSHA1;
 		size = fileSize;
+
+		blog.newEntry(BLOG::INFO, "File is a valid game!");
+	} else {
+		blog.newEntry(BLOG::INFO, "File is not a valid game!");
 	}
 
-	return result;
+	return gameApproved;
 }

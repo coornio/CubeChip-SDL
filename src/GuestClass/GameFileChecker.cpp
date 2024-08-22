@@ -72,7 +72,7 @@ bool GameFileChecker::validate(
 	const std::uint64_t    size,
 	const std::string_view type,
 	const std::string_view sha1
-) {
+) noexcept {
 	static const std::unordered_map <std::string_view, GameFileType> sExtMap{
 		{".c2x", GameFileType::c2x},
 		{".c4x", GameFileType::c4x},
