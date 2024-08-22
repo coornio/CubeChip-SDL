@@ -75,7 +75,7 @@ bool VM_Host::runHost() {
 				continue;
 			}
 			if (kb.isPressed(KEY(BACKSPACE))) [[unlikely]] {
-				if (HDM.validateGameFile(HDM.file.c_str())) {
+				if (HDM.validateGameFile(HDM.getFilePath().c_str())) {
 					prepareGuest(Guest, Frame);
 				}
 				continue;
@@ -83,7 +83,7 @@ bool VM_Host::runHost() {
 			if (kb.isPressed(KEY(RSHIFT))) [[unlikely]] {
 				if (doBench()) {
 					doBench(false);
-					BVS.changeTitle(HDM.file.c_str());
+					BVS.changeTitle(HDM.getFileStem().c_str());
 					std::cout << "\33[1;1H\33[3J" << std::endl;
 				} else {
 					doBench(true);
@@ -142,7 +142,7 @@ void VM_Host::prepareGuest(VM_Guest& Guest, FrameLimiter& Frame) {
 
 	if (Guest.initGameCore(HDM, BVS, BAS)) {
 		Frame.setLimiter(Guest.fetchFramerate());
-		BVS.changeTitle(HDM.file.c_str());
+		BVS.changeTitle(HDM.getFileStem().c_str());
 	} else {
 		Frame.setLimiter(30.0f);
 		HDM.clearCachedFileData();

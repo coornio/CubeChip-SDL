@@ -16,23 +16,37 @@
 class HomeDirManager final : public BasicHome {
 
 	using GameValidator = bool (*)(std::uint64_t, std::string_view, std::string_view);
+	using FileModTime   = std::filesystem::file_time_type;
+	using FilePath      = std::filesystem::path;
+	using FileSize      = std::uintmax_t;
+
+	//FilePath    mFullPath{};
+	std::string mFilePath{};
+	std::string mFileName{};
+	std::string mFileStem{};
+	std::string mFileExts{};
+	std::string mFileSHA1{};
+	FileModTime mFileTime{};
+	FileSize    mFileSize{};
 
 	GameValidator checkGame{};
 
 public:
-	std::filesystem::path permRegs{};
-	std::string   path{};
-	std::string   file{};
-	std::string   name{};
-	std::string   type{};
-	std::string   sha1{};
-	std::uint64_t size{};
+	FilePath    permRegs{};
+	void addDirectory();
+
+	auto getFilePath() const noexcept { return mFilePath; }
+	auto getFileName() const noexcept { return mFileName; }
+	auto getFileStem() const noexcept { return mFileStem; }
+	auto getFileExts() const noexcept { return mFileExts; }
+	auto getFileSHA1() const noexcept { return mFileSHA1; }
+	auto getFileTime() const noexcept { return mFileTime; }
+	auto getFileSize() const noexcept { return mFileSize; }
 
 	HomeDirManager(const std::string_view);
 
 	void setValidator(GameValidator func) noexcept { checkGame = func; }
 
-	void addDirectory();
 	void clearCachedFileData() noexcept;
 	bool validateGameFile(const char*) noexcept;
 };

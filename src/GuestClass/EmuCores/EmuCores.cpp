@@ -58,8 +58,8 @@ void EmuCores::instructionErrorML(const u32 HI, const u32 LO) {
 }
 
 bool EmuCores::copyGameToMemory(u8* dest, const u32 offset) {
-	std::basic_ifstream<char> ifs(HDM.path, std::ios::binary);
-	ifs.read(reinterpret_cast<char*>(dest + offset), HDM.size);
+	std::basic_ifstream<char> ifs(HDM.getFilePath(), std::ios::binary);
+	ifs.read(reinterpret_cast<char*>(dest + offset), HDM.getFileSize());
 	if (ifs.fail()) {
 		blog.newEntry(BLOG::ERROR, "Failed to copy rom data to memory, aborting.");
 		return false;

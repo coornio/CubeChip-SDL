@@ -29,9 +29,13 @@ HomeDirManager::HomeDirManager(const std::string_view homeDirName) try
 }
 
 void HomeDirManager::clearCachedFileData() noexcept {
-	path.clear(); file.clear();
-	name.clear(); type.clear();
-	sha1.clear(); size = 0;
+	mFilePath.clear();
+	mFileName.clear();
+	mFileStem.clear();
+	mFileExts.clear();
+	mFileSHA1.clear();
+	mFileTime = {};
+	mFileSize = {};
 }
 
 void HomeDirManager::addDirectory() {
@@ -42,48 +46,52 @@ void HomeDirManager::addDirectory() {
 	}
 }
 
-bool HomeDirManager::validateGameFile(const char* filepath) noexcept {
-	if (!filepath) { return false; }
+bool HomeDirManager::validateGameFile(const char* inputPath) noexcept {
+	if (!inputPath) { return false; }
 	namespace fs = std::filesystem;
 	std::error_code error;
 
-	const fs::path fspath{ filepath };
-	blog.newEntry(BLOG::INFO, "Attempting to access file: " + fspath.string());
+	const FilePath gamePath{ inputPath };
+	blog.newEntry(BLOG::INFO, "Attempting to access file: " + gamePath.string());
 
-	if (!fs::exists(fspath, error) || error) {
+	if (!fs::exists(gamePath, error) || error) {
 		blog.newEntry(BLOG::WARN, "Unable to locate path!" + error.message());
 		return false;
 	}
 
-	if (!fs::is_regular_file(fspath, error) || error) {
+	if (!fs::is_regular_file(gamePath, error) || error) {
 		blog.newEntry(BLOG::WARN, "Provided path is not to a file!");
 		return false;
 	}
 	
-	const std::uint64_t fileSize{ fs::file_size(fspath, error) };
+	const auto tempSize{ fs::file_size(gamePath, error) };
 	if (error) {
 		blog.newEntry(BLOG::ERROR, "Unable to read file!");
 		return false;
 	}
-	if (fileSize == 0) {
+	if (tempSize == 0) {
 		blog.newEntry(BLOG::WARN, "File must not be empty!");
 		return false;
 	}
 
-	const auto tempPath{ fspath.string() };
-	const auto tempType{ fspath.extension().string() };
+	const auto tempPath{ gamePath.string() };
+	const auto tempName{ gamePath.filename().string() };
+	const auto tempStem{ gamePath.stem().string() };
+	const auto tempExts{ gamePath.extension().string() };
 	const auto tempSHA1{ SHA1::from_file(tempPath) };
 
-	const bool gameApproved{ checkGame(fileSize, tempType, tempSHA1) };
+	const bool gameApproved{ checkGame(tempSize, tempExts, tempSHA1) };
 
 	if (gameApproved) {
-		path = tempPath;
-		file = fspath.filename().string();
-		name = fspath.stem().string();
-		type = tempType;
-		sha1 = tempSHA1;
-		size = fileSize;
+		mFilePath = tempPath;
+		mFileName = tempName;
+		mFileStem = tempExts;
+		mFileExts = tempExts;
+		mFileSHA1 = tempSHA1;
+		mFileSize = tempSize;
+	}
 
+	if (gameApproved) {
 		blog.newEntry(BLOG::INFO, "File is a valid game!");
 	} else {
 		blog.newEntry(BLOG::INFO, "File is not a valid game!");

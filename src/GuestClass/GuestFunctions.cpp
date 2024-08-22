@@ -594,7 +594,7 @@ bool MEGACORE::routineReturn() noexcept {
 }
 
 bool MEGACORE::readPermRegs(const usz X) {
-	const auto path{ HDM.permRegs / HDM.sha1 };
+	const auto path{ HDM.permRegs / HDM.getFileSHA1() };
 
 	if (std::filesystem::exists(path)) {
 		if (!std::filesystem::is_regular_file(path)) {
@@ -625,7 +625,7 @@ bool MEGACORE::readPermRegs(const usz X) {
 }
 
 bool MEGACORE::writePermRegs(const usz X) {
-	const auto path{ HDM.permRegs / HDM.sha1 };
+	const auto path{ HDM.permRegs / HDM.getFileSHA1() };
 
 	if (std::filesystem::exists(path)) {
 		if (!std::filesystem::is_regular_file(path)) {

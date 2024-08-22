@@ -36,7 +36,7 @@ bool MEGACORE::romTypeCheck() {
 	* This place requires a database check, only after which would
 	* we fall back to deriving the platform specifics via extension
 	*/
-	switch (cexprHash(HDM.type.c_str())) {
+	switch (cexprHash(HDM.getFileExts().c_str())) {
 
 		case (FileExt::c2x):
 			if (!romCopyToMemory(4'096, 0x300))
@@ -170,8 +170,8 @@ bool MEGACORE::romTypeCheck() {
 bool MEGACORE::romCopyToMemory(const usz size, const usz offset) {
 	mMemoryBank.resize(size);
 
-	std::basic_ifstream<char> ifs(HDM.path, std::ios::binary);
-	ifs.read(reinterpret_cast<char*>(mMemoryBank.data() + offset), HDM.size);
+	std::basic_ifstream<char> ifs(HDM.getFilePath(), std::ios::binary);
+	ifs.read(reinterpret_cast<char*>(mMemoryBank.data() + offset), HDM.getFileSize());
 	if (ifs.fail()) {
 		blog.newEntry(BLOG::ERROR, "Failed to copy rom data to memory, aborting.");
 		return false;
