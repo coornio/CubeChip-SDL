@@ -61,10 +61,10 @@ void BasicLogger::newEntry(const BLOG type, const std::string& message) noexcept
 	static std::size_t lineCount;
 
 	std::ostringstream output;
-	output << ++lineCount << " :: " << getSeverity(type) << " :: " << message << std::endl;
+	output << ++lineCount << " :: " << getSeverity(type) << " :: " << message;
 
-	std::cout << output.str();
-	if (lineCount % 10 == 0) { std::cout.flush(); }
+	std::cout << output.str() << std::endl;
+	if (lineCount % 10 == 0) [[unlikely]] { std::cout.flush(); }
 
 	std::ofstream logFile(mLogPath, std::ios::app);
 	if (!logFile) {
