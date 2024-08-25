@@ -4,6 +4,7 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include "Assistants/FrameLimiter.hpp"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_init.h>
 
@@ -12,10 +13,12 @@
 
 #include <optional>
 #include <memory>
+#include <mutex>
 
 #include "HostClass/HomeDirManager.hpp"
 #include "HostClass/BasicVideoSpec.hpp"
 #include "HostClass/BasicAudioSpec.hpp"
+#include "Assistants/BasicInput.hpp"
 
 #include "HostClass/Host.hpp"
 
@@ -23,10 +26,14 @@ struct {
 	std::optional<HomeDirManager> HDM;
 	std::optional<BasicVideoSpec> BVS;
 	std::optional<BasicAudioSpec> BAS;
+	FrameLimiter Limiter;
 	std::unique_ptr<VM_Host> Host;
+	std::mutex Mut;
 } global;
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char* argv[]) {
+
+	SDL_InitSubSystem(SDL_INIT_EVENTS);
 
 //             VS               OTHER
 #if !defined(NDEBUG) || defined(DEBUG)
@@ -52,8 +59,9 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char* argv[]) {
 	SDL_SetHint(SDL_HINT_RENDER_DRIVER, "direct3d");
 	SDL_SetHint(SDL_HINT_WINDOWS_RAW_KEYBOARD, "0");
 #endif
-	SDL_SetHint(SDL_HINT_RENDER_VSYNC, "0"); // until the UI is independent
 	SDL_SetHint(SDL_HINT_APP_NAME, "CubeChip");
+
+	global.Mut.lock();
 
 	try {
 		global.HDM.emplace("CubeChip_SDL");
@@ -65,15 +73,38 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char* argv[]) {
 		argc <= 1 ? nullptr : argv[1],
 		*global.HDM, *global.BVS, *global.BAS
 	);
+	global.Host->prepareGuest(global.Limiter);
+
+	global.Mut.unlock();
 
 	return SDL_APP_CONTINUE;
 }
 
 SDL_AppResult SDL_AppIterate(void* appstate) {
+	global.Mut.lock();
+
+	if (!global.Host->runFrame(global.Limiter)) {
+		global.Mut.unlock();
+		return SDL_APP_SUCCESS;
+	}
+
+	global.Host->BVS.renderPresent();
+
+	global.Mut.unlock();
+
 	return SDL_APP_CONTINUE;
 }
 
 SDL_AppResult SDL_AppEvent(void *appstate, const SDL_Event *event) {
+	global.Mut.lock();
+
+	if (!global.Host->handleEventSDL(global.Limiter, event)) {
+		global.Mut.unlock();
+		return SDL_APP_SUCCESS;
+	}
+
+	global.Mut.unlock();
+	
 	return SDL_APP_CONTINUE;
 }
 
