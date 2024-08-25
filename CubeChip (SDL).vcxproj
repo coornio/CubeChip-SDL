@@ -29,13 +29,13 @@
     <ClCompile Include="src\GuestClass\EmuCores\EmuCores.cpp" />
     <ClCompile Include="src\GuestClass\GameFileChecker.cpp" />
     <ClCompile Include="src\GuestClass\HexInput.cpp" />
-    <ClCompile Include="src\GuestClass\InstructionSets\_Classic8.cpp" />
-    <ClCompile Include="src\GuestClass\InstructionSets\_Gigachip.cpp" />
-    <ClCompile Include="src\GuestClass\InstructionSets\_LegacySC.cpp" />
-    <ClCompile Include="src\GuestClass\InstructionSets\_Megachip.cpp" />
-    <ClCompile Include="src\GuestClass\InstructionSets\_ModernXO.cpp" />
-    <ClCompile Include="src\GuestClass\GuestFunctions.cpp" />
-    <ClCompile Include="src\GuestClass\Init.cpp" />
+    <ClCompile Include="src\GuestClass\to_be_removed\GuestFunctions.cpp" />
+    <ClCompile Include="src\GuestClass\to_be_removed\Init.cpp" />
+    <ClCompile Include="src\GuestClass\to_be_removed\InstructionSets\_Classic8.cpp" />
+    <ClCompile Include="src\GuestClass\to_be_removed\InstructionSets\_Gigachip.cpp" />
+    <ClCompile Include="src\GuestClass\to_be_removed\InstructionSets\_LegacySC.cpp" />
+    <ClCompile Include="src\GuestClass\to_be_removed\InstructionSets\_Megachip.cpp" />
+    <ClCompile Include="src\GuestClass\to_be_removed\InstructionSets\_ModernXO.cpp" />
     <ClCompile Include="src\HostClass\BasicAudioSpec.cpp" />
     <ClCompile Include="src\HostClass\BasicVideoSpec.cpp" />
     <ClCompile Include="src\HostClass\HostFunctions.cpp" />
@@ -54,16 +54,15 @@
     <ClInclude Include="src\Concepts.hpp" />
     <ClInclude Include="src\GuestClass\EmuCores\CHIP8_MODERN.hpp" />
     <ClInclude Include="src\GuestClass\EmuCores\EmuCores.hpp" />
-    <ClInclude Include="src\GuestClass\Enums.hpp" />
     <ClInclude Include="src\GuestClass\GameFileChecker.hpp" />
-    <ClInclude Include="src\GuestClass\Guest.hpp" />
     <ClInclude Include="src\GuestClass\HexInput.hpp" />
-    <ClInclude Include="src\GuestClass\InstructionSets\Interface.hpp" />
+    <ClInclude Include="src\GuestClass\to_be_removed\Enums.hpp" />
+    <ClInclude Include="src\GuestClass\to_be_removed\Guest.hpp" />
+    <ClInclude Include="src\GuestClass\to_be_removed\InstructionSets\Interface.hpp" />
     <ClInclude Include="src\HostClass\BasicAudioSpec.hpp" />
     <ClInclude Include="src\HostClass\BasicVideoSpec.hpp" />
     <ClInclude Include="src\HostClass\HomeDirManager.hpp" />
     <ClInclude Include="src\HostClass\Host.hpp" />
-    <ClInclude Include="src\Includes.hpp" />
     <ClInclude Include="src\Types.hpp" />
     <ClInclude Include="src\_nlohmann\json.hpp" />
     <ClInclude Include="src\_nlohmann\json_fwd.hpp" />
@@ -198,7 +197,8 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <DisableSpecificWarnings>4324</DisableSpecificWarnings>
+      <DisableSpecificWarnings>
+      </DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

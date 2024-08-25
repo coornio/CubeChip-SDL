@@ -85,7 +85,7 @@ bool HomeDirManager::validateGameFile(const char* inputPath) noexcept {
 	if (gameApproved) {
 		mFilePath = tempPath;
 		mFileName = tempName;
-		mFileStem = tempExts;
+		mFileStem = tempStem;
 		mFileExts = tempExts;
 		mFileSHA1 = tempSHA1;
 		mFileSize = tempSize;

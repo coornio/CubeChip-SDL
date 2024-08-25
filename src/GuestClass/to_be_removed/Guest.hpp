@@ -10,12 +10,12 @@
 #include <string>
 #include <vector>
 
-#include "../Assistants/Well512.hpp"
-#include "../Assistants/Map2D.hpp"
-#include "../Types.hpp"
+#include "../../Assistants/Well512.hpp"
+#include "../../Assistants/Map2D.hpp"
+#include "../../Types.hpp"
 
 #include "InstructionSets/Interface.hpp" // this should be removed eventually
-#include "HexInput.hpp"
+#include "../HexInput.hpp"
 #include "Enums.hpp"
 
 class HomeDirManager;

@@ -28,17 +28,17 @@ add_executable(CubeChipSDL
   src/HostClass/HomeDirManager.cpp
   src/HostClass/HostFunctions.cpp
   src/HostClass/BasicVideoSpec.cpp
-  src/GuestClass/GuestFunctions.cpp
+  # src/GuestClass/GuestFunctions.cpp
   src/GuestClass/GameFileChecker.cpp
   src/GuestClass/HexInput.cpp
-  src/GuestClass/InstructionSets/_LegacySC.cpp
-  src/GuestClass/InstructionSets/_Gigachip.cpp
-  src/GuestClass/InstructionSets/_Classic8.cpp
-  src/GuestClass/InstructionSets/_ModernXO.cpp
-  src/GuestClass/InstructionSets/_Megachip.cpp
+  # src/GuestClass/InstructionSets/_LegacySC.cpp
+  # src/GuestClass/InstructionSets/_Gigachip.cpp
+  # src/GuestClass/InstructionSets/_Classic8.cpp
+  # src/GuestClass/InstructionSets/_ModernXO.cpp
+  # src/GuestClass/InstructionSets/_Megachip.cpp
   src/GuestClass/EmuCores/CHIP8_MODERN.cpp
   src/GuestClass/EmuCores/EmuCores.cpp
-  src/GuestClass/Init.cpp
+  # src/GuestClass/Init.cpp
   src/Assistants/BasicLogger.cpp
   src/Assistants/BasicInput.cpp
   src/Assistants/FrameLimiter.cpp

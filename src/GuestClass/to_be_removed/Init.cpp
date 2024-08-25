@@ -9,15 +9,41 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "../Assistants/BasicLogger.hpp"
+#include "../../Assistants/BasicLogger.hpp"
 using namespace blogger;
 
-#include "../HostClass/BasicVideoSpec.hpp"
-#include "../HostClass/HomeDirManager.hpp"
+#include "../../HostClass/BasicVideoSpec.hpp"
+#include "../../HostClass/HomeDirManager.hpp"
 
 #include "Guest.hpp"
-#include "GameFileChecker.hpp"
-#include "HexInput.hpp"
+#include "../GameFileChecker.hpp"
+#include "../HexInput.hpp"
+
+static constexpr std::size_t cexprHash(const char* str) noexcept {
+	return (*str == '\0') ? 0 : cexprHash(str + 1) * 31 + *str;
+}
+
+enum FileExt : std::size_t {
+	c2x = cexprHash(".c2x"), // CHIP-8X 2-page
+	c4x = cexprHash(".c4x"), // CHIP-8X 4-page
+	c8x = cexprHash(".c8x"), // CHIP-8X
+
+	c8e = cexprHash(".c8e"), // CHIP-8E
+
+	c2h = cexprHash(".c2h"), // CHIP-8 (HIRES) 2-page
+	c4h = cexprHash(".c4h"), // CHIP-8 (HIRES) 4-page
+	c8h = cexprHash(".c8h"), // CHIP-8 (HIRES) 2-page patched
+
+	ch8 = cexprHash(".ch8"), // CHIP-8
+	sc8 = cexprHash(".sc8"), // SUPERCHIP
+	mc8 = cexprHash(".mc8"), // MEGACHIP
+	gc8 = cexprHash(".gc8"), // GIGACHIP
+
+	xo8 = cexprHash(".xo8"), // XO-CHIP
+	hw8 = cexprHash(".hw8"), // HYPERWAVE-CHIP
+
+	bnc = cexprHash(".bnc"), // benchmark
+};
 
 bool MEGACORE::setupMachine() {
 	if (!romTypeCheck()) {

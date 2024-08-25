@@ -11,12 +11,15 @@
 	#include "../_nlohmann/json.hpp"
 #pragma warning(pop)
 
+using json = nlohmann::json;
+
+
 #include "EmuCores/CHIP8_MODERN.hpp"
 
 std::string GameFileChecker::sErrorMsg{};
 GameCoreType GameFileChecker::sEmuCore{};
 
-std::unique_ptr<EmuCores> GameFileChecker::initializeCore(
+std::unique_ptr<EmuInterface> GameFileChecker::initializeCore(
 	HomeDirManager& HDM, BasicVideoSpec& BVS, BasicAudioSpec& BAS
 ) {
 	switch (sEmuCore) {

@@ -11,22 +11,27 @@ class BasicVideoSpec;
 class BasicAudioSpec;
 
 class FrameLimiter;
-class VM_Guest;
+class EmuInterface;
 
 class VM_Host final {
-	bool _doBench{};
-	s32  _cycles{};
+
+	std::unique_ptr<EmuInterface>
+		iGuest;
 
 	HomeDirManager& HDM;
 	BasicVideoSpec& BVS;
 	BasicAudioSpec& BAS;
 
+	bool _doBench{};
+
 	[[nodiscard]]
 	bool doBench() const noexcept;
 	void doBench(bool) noexcept;
 
-	void prepareGuest(VM_Guest&, FrameLimiter&);
-	bool eventLoopSDL(VM_Guest&, FrameLimiter&);
+	void prepareGuest(FrameLimiter&);
+	bool eventLoopSDL(FrameLimiter&);
+
+	bool initGameCore();
 
 public:
 	explicit VM_Host(
