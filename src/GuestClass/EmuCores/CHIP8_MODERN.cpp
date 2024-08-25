@@ -16,7 +16,7 @@ CHIP8_MODERN::CHIP8_MODERN(
 	BasicVideoSpec& ref_BVS,
 	BasicAudioSpec& ref_BAS
 ) noexcept
-	: EmuCores{ ref_HDM, ref_BVS, ref_BAS }
+	: Chip8_CoreInterface{ ref_HDM, ref_BVS, ref_BAS }
 {
 	copyGameToMemory(mMemoryBank.data(), cGameLoadPos);
 	copyFontToMemory(mMemoryBank.data(), 0x0, 0x50);

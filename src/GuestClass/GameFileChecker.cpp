@@ -19,7 +19,7 @@ using json = nlohmann::json;
 std::string GameFileChecker::sErrorMsg{};
 GameCoreType GameFileChecker::sEmuCore{};
 
-std::unique_ptr<EmuCores> GameFileChecker::initializeCore(
+std::unique_ptr<EmuInterface> GameFileChecker::initializeCore(
 	HomeDirManager& HDM, BasicVideoSpec& BVS, BasicAudioSpec& BAS
 ) {
 	switch (sEmuCore) {

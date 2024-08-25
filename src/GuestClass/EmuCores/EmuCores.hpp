@@ -22,7 +22,27 @@ class HomeDirManager;
 class BasicVideoSpec;
 class BasicAudioSpec;
 
-class EmuCores {
+
+class EmuInterface {
+
+public:
+	virtual ~EmuInterface() noexcept {};
+
+	[[nodiscard]]
+	virtual bool isSystemStopped() const = 0;
+	virtual void isSystemStopped(const bool state) = 0;
+
+	virtual u32 getTotalFrames() const noexcept = 0;
+	virtual u64 getTotalCycles() const noexcept = 0;
+	virtual s32 fetchCPF()       const noexcept = 0;
+	virtual f32 fetchFramerate() const noexcept = 0;
+	virtual s32 changeCPF(const s32 delta) noexcept = 0;
+
+	virtual void processFrame() = 0;
+};
+
+
+class Chip8_CoreInterface : public EmuInterface {
 
 protected:
 	HomeDirManager& HDM;
@@ -86,8 +106,8 @@ protected:
 
 public:
 	[[nodiscard]]
-	bool isSystemStopped()           const noexcept { return mSystemStopped || mCyclesPerFrame == 0; }
-	void isSystemStopped(const bool state) noexcept { mSystemStopped = state; }
+	bool isSystemStopped()           const noexcept override { return mSystemStopped || mCyclesPerFrame == 0; }
+	void isSystemStopped(const bool state) noexcept override { mSystemStopped = state; }
 
 protected:
 	Well512  Wrand;
@@ -104,23 +124,22 @@ protected:
 	void copyFontToMemory(u8* dest, const u32 offset, const u32 size);
 
 public:
-	~EmuCores() noexcept;
-	explicit EmuCores(
+	explicit Chip8_CoreInterface(
 		HomeDirManager& ref_HDM,
 		BasicVideoSpec& ref_BVS,
 		BasicAudioSpec& ref_BAS
 	) noexcept;
 
 	//virtual bool initPlatform() { return false; }
-	virtual void processFrame() { return; };
+	virtual void processFrame() override = 0;
 
-	auto getTotalFrames() const noexcept { return mTotalFrames; }
-	auto getTotalCycles() const noexcept { return mTotalCycles; }
+	u32 getTotalFrames() const noexcept override { return mTotalFrames; }
+	u64 getTotalCycles() const noexcept override { return mTotalCycles; }
 
-	auto fetchCPF()       const noexcept { return mCyclesPerFrame; }
-	auto fetchFramerate() const noexcept { return mFramerate; }
+	s32 fetchCPF()       const noexcept override { return mCyclesPerFrame; }
+	f32 fetchFramerate() const noexcept override { return mFramerate; }
 
-	auto changeCPF(const s32 delta) noexcept {
+	s32 changeCPF(const s32 delta) noexcept override {
 		const auto newCPF{ std::abs(mCyclesPerFrame) + delta };
 		if (newCPF > 0) { mCyclesPerFrame = newCPF; }
 		return mCyclesPerFrame;
@@ -211,45 +230,4 @@ public:
 	static constexpr u32 cBackColor[]{ // CHIP-8X background colors
 		0x111133, 0x111111, 0x113311, 0x331111,
 	};
-};
-
-class VM_Guest final {
-	std::unique_ptr<EmuCores>
-		mCoreBase{};
-
-public:
-	bool initGameCore(
-		HomeDirManager&,
-		BasicVideoSpec&,
-		BasicAudioSpec&
-	);
-
-	[[nodiscard]]
-	bool isSystemStopped() const {
-		return mCoreBase ? mCoreBase->isSystemStopped() : true;
-	}
-	void isSystemStopped(const bool state) {
-		if (mCoreBase) { mCoreBase->isSystemStopped(state); }
-	}
-
-	auto getTotalFrames() const noexcept {
-		return mCoreBase ? mCoreBase->getTotalFrames() : 0;
-	}
-	auto getTotalCycles() const noexcept {
-		return mCoreBase ? mCoreBase->getTotalCycles() : 0;
-	}
-	auto fetchCPF()       const noexcept {
-		return mCoreBase ? mCoreBase->fetchCPF() : 0;
-	}
-	auto fetchFramerate() const noexcept {
-		return mCoreBase ? mCoreBase->fetchFramerate() : 60.0f;
-	}
-
-	auto changeCPF(const s32 delta) noexcept {
-		return (mCoreBase) ? mCoreBase->changeCPF(delta) : 0;
-	}
-
-	void processFrame() const {
-		if (mCoreBase) { mCoreBase->processFrame(); }
-	}
 };

@@ -39,7 +39,7 @@ enum class GameCoreType {
 	HWCHIP64, MEGACHIP, GIGACHIP,
 };
 
-class EmuCores;
+class EmuInterface;
 
 class HomeDirManager;
 class BasicVideoSpec;
@@ -77,7 +77,7 @@ public:
 		return sEmuCore != GameCoreType::INVALID;
 	}
 
-	[[nodiscard]] static std::unique_ptr<EmuCores> initializeCore(
+	[[nodiscard]] static std::unique_ptr<EmuInterface> initializeCore(
 		HomeDirManager&, BasicVideoSpec&, BasicAudioSpec&
 	);
 

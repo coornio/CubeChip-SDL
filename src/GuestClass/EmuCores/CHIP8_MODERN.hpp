@@ -11,7 +11,7 @@
 
 #include "EmuCores.hpp"
 
-class CHIP8_MODERN final : public EmuCores {
+class CHIP8_MODERN final : public Chip8_CoreInterface {
 	static constexpr u32 cTotalMemory{ 0x1000u };
 	static constexpr u32 cGameLoadPos{ 0x0200u };
 	static constexpr u32 cStartOffset{ 0x0200u };
