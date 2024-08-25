@@ -56,31 +56,31 @@ bool VM_Host::runHost() {
 	while (true) {
 		if (!Frame.checkTime()) [[likely]] { continue; }
 
-		if (eventLoopSDL(Guest, Frame)) [[unlikely]] {
+		if (eventLoopSDL(Guest, Frame)) {
 			return EXIT_SUCCESS;
 		}
 
-		if (kb.isPressed(KEY(RIGHT))) [[unlikely]] {
+		if (kb.isPressed(KEY(RIGHT))) {
 			BAS.changeVolume(+15);
 		}
-		if (kb.isPressed(KEY(LEFT))) [[unlikely]] {
+		if (kb.isPressed(KEY(LEFT))) {
 			BAS.changeVolume(-15);
 		}
 
 		if (GameFileChecker::hasCore()) {
-			if (kb.isPressed(KEY(ESCAPE))) [[unlikely]] {
+			if (kb.isPressed(KEY(ESCAPE))) {
 				BVS.resetWindow();
 				GameFileChecker::delCore();
 				prepareGuest(Guest, Frame);
 				continue;
 			}
-			if (kb.isPressed(KEY(BACKSPACE))) [[unlikely]] {
+			if (kb.isPressed(KEY(BACKSPACE))) {
 				if (HDM.validateGameFile(HDM.getFilePath().c_str())) {
 					prepareGuest(Guest, Frame);
 				}
 				continue;
 			}
-			if (kb.isPressed(KEY(RSHIFT))) [[unlikely]] {
+			if (kb.isPressed(KEY(RSHIFT))) {
 				if (doBench()) {
 					doBench(false);
 					BVS.changeTitle(HDM.getFileStem().c_str());
@@ -94,18 +94,18 @@ bool VM_Host::runHost() {
 				}
 			}
 
-			if (kb.isPressed(KEY(PAGEDOWN))) [[unlikely]] {
+			if (kb.isPressed(KEY(PAGEDOWN))){
 				BVS.changeFrameMultiplier(-1);
 			}
-			if (kb.isPressed(KEY(PAGEUP))) [[unlikely]] {
+			if (kb.isPressed(KEY(PAGEUP))) {
 				BVS.changeFrameMultiplier(+1);
 			}
 
 			if (doBench()) [[likely]] {
-				if (kb.isPressed(KEY(UP))) [[unlikely]] {
+				if (kb.isPressed(KEY(UP))) {
 					BVS.changeTitle(std::to_string(Guest.changeCPF(+50'000)));
 				}
-				if (kb.isPressed(KEY(DOWN))) [[unlikely]] {
+				if (kb.isPressed(KEY(DOWN))){
 					BVS.changeTitle(std::to_string(Guest.changeCPF(-50'000)));
 				}
 
@@ -124,7 +124,7 @@ bool VM_Host::runHost() {
 				}
 			} else { Guest.processFrame(); }
 		} else {
-			if (kb.isPressed(KEY(ESCAPE))) [[unlikely]] {
+			if (kb.isPressed(KEY(ESCAPE))) {
 				return EXIT_SUCCESS;
 			}
 		}

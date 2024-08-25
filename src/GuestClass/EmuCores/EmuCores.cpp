@@ -9,7 +9,6 @@
 #include <iomanip>
 
 #include "EmuCores.hpp"
-#include "../Enums.hpp"
 
 #include "../../HostClass/HomeDirManager.hpp"
 #include "../../HostClass/BasicVideoSpec.hpp"
@@ -42,8 +41,9 @@ void EmuCores::operationError(std::string_view msg) {
 std::string EmuCores::formatOpcode(const u32 HI, const u32 LO) const {
 	std::stringstream out;
 	out << std::setfill('0') << std::setw(2)
-		<< std::uppercase    << std::hex
-		<< HI << LO;
+		<< std::uppercase    << std::hex << HI
+		<< std::setfill('0') << std::setw(2)
+		<< std::uppercase    << std::hex << LO;
 	return out.str();
 }
 

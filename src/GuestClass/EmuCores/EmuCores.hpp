@@ -12,7 +12,6 @@
 
 #include "../GameFileChecker.hpp"
 #include "../HexInput.hpp"
-#include "../Enums.hpp"
 
 #include <utility>
 #include <cstddef>
@@ -41,8 +40,17 @@ protected:
 		bool wrapSprite{};
 	} Quirk;
 
-	using enum Interrupt;
-	Interrupt mInterruptType{ CLEAR };
+	enum class Interrupt {
+		CLEAR, // no interrupt
+		FRAME, // single-frame
+		SOUND, // wait for sound and stop
+		DELAY, // wait for delay and proceed
+		INPUT, // wait for input and proceed
+		FINAL, // end state, all is well
+		ERROR, // end state, error occured
+	};
+
+	Interrupt mInterruptType{};
 
 	f32  mFramerate{};
 
@@ -221,9 +229,7 @@ public:
 		return mCoreBase ? mCoreBase->isSystemStopped() : true;
 	}
 	void isSystemStopped(const bool state) {
-		if (mCoreBase) {
-			mCoreBase->isSystemStopped(state);
-		}
+		if (mCoreBase) { mCoreBase->isSystemStopped(state); }
 	}
 
 	auto getTotalFrames() const noexcept {
@@ -244,8 +250,6 @@ public:
 	}
 
 	void processFrame() const {
-		if (mCoreBase) {
-			mCoreBase->processFrame();
-		}
+		if (mCoreBase) { mCoreBase->processFrame(); }
 	}
 };

@@ -9,15 +9,15 @@
 #include <utility>
 #include <fstream>
 
-#include "../Assistants/BasicLogger.hpp"
+#include "../../Assistants/BasicLogger.hpp"
 using namespace blogger;
 
-#include "../HostClass/HomeDirManager.hpp"
-#include "../HostClass/BasicVideoSpec.hpp"
-#include "../HostClass/BasicAudioSpec.hpp"
+#include "../../HostClass/HomeDirManager.hpp"
+#include "../../HostClass/BasicVideoSpec.hpp"
+#include "../../HostClass/BasicAudioSpec.hpp"
 
 #include "Guest.hpp"
-#include "HexInput.hpp"
+#include "../HexInput.hpp"
 
 /*------------------------------------------------------------------*/
 /*  class  MEGACORE                                                 */

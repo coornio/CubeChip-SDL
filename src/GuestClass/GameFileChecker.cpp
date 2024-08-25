@@ -11,6 +11,9 @@
 	#include "../_nlohmann/json.hpp"
 #pragma warning(pop)
 
+using json = nlohmann::json;
+
+
 #include "EmuCores/CHIP8_MODERN.hpp"
 
 std::string GameFileChecker::sErrorMsg{};
