@@ -5,12 +5,13 @@
 */
 
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_init.h>
 
-#ifdef SDL_PLATFORM_WIN32
-	#include <SDL3/SDL_main.h>
-#endif
+#define SDL_MAIN_USE_CALLBACKS
+#include <SDL3/SDL_main.h>
 
 #include <optional>
+#include <memory>
 
 #include "HostClass/HomeDirManager.hpp"
 #include "HostClass/BasicVideoSpec.hpp"
@@ -18,9 +19,14 @@
 
 #include "HostClass/Host.hpp"
 
-int main(int argc, char* argv[]) {
+struct {
+	std::optional<HomeDirManager> HDM;
+	std::optional<BasicVideoSpec> BVS;
+	std::optional<BasicAudioSpec> BAS;
+	std::unique_ptr<VM_Host> Host;
+} global;
 
-	atexit(SDL_Quit);
+SDL_AppResult SDL_AppInit(void **appstate, int argc, char* argv[]) {
 
 //             VS               OTHER
 #if !defined(NDEBUG) || defined(DEBUG)
@@ -44,25 +50,31 @@ int main(int argc, char* argv[]) {
 
 #ifdef SDL_PLATFORM_WIN32
 	SDL_SetHint(SDL_HINT_RENDER_DRIVER, "direct3d");
-#endif
 	SDL_SetHint(SDL_HINT_WINDOWS_RAW_KEYBOARD, "0");
+#endif
 	SDL_SetHint(SDL_HINT_RENDER_VSYNC, "0"); // until the UI is independent
 	SDL_SetHint(SDL_HINT_APP_NAME, "CubeChip");
 
-	std::optional<HomeDirManager> HDM;
-	std::optional<BasicVideoSpec> BVS;
-	std::optional<BasicAudioSpec> BAS;
-
 	try {
-		HDM.emplace("CubeChip_SDL");
-		BVS.emplace();
-		BAS.emplace();
-	} catch (...) { return EXIT_FAILURE; }
+		global.HDM.emplace("CubeChip_SDL");
+		global.BVS.emplace();
+		global.BAS.emplace();
+	} catch (...) { return SDL_APP_FAILURE; }
 
-	VM_Host Host(
+	global.Host = std::make_unique<VM_Host>(
 		argc <= 1 ? nullptr : argv[1],
-		*HDM, *BVS, *BAS
+		*global.HDM, *global.BVS, *global.BAS
 	);
 
-	return Host.runHost();
+	return SDL_APP_CONTINUE;
 }
+
+SDL_AppResult SDL_AppIterate(void* appstate) {
+	return SDL_APP_CONTINUE;
+}
+
+SDL_AppResult SDL_AppEvent(void *appstate, const SDL_Event *event) {
+	return SDL_APP_CONTINUE;
+}
+
+void SDL_AppQuit(void *appstate) {}
