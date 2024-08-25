@@ -93,7 +93,8 @@ bool VM_Host::runHost() {
 					BVS.changeTitle(std::to_string(iGuest->fetchCPF()));
 					std::cout << "\33[1;1H\33[2J"
 						<< "Cycle time:    .    ms"
-						<< "\nTime since last frame: ";
+						<< "\nTime since last frame: "
+						<< "\nCPF: ";
 				}
 			}
 
@@ -123,6 +124,8 @@ bool VM_Host::runHost() {
 						<< std::setfill('0') << std::setw(3) << micros % 1000
 						<< "\33[2;25H"
 						<< Frame.getElapsedMillisLast()
+						<< "\33[3;6H"
+						<< iGuest->fetchCPF() << "   "
 						<< std::endl;
 				}
 			} else { iGuest->processFrame(); }
