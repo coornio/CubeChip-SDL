@@ -6,10 +6,7 @@
 
 #include "GameFileChecker.hpp"
 
-#pragma warning(push)
-	#pragma warning(disable : 26819) // C fallthrough warning disabled
-	#include "../_nlohmann/json.hpp"
-#pragma warning(pop)
+#include "../_nlohmann/json.hpp"
 
 using json = nlohmann::json;
 

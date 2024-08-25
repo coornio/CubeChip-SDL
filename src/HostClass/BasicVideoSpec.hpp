@@ -6,10 +6,7 @@
 
 #pragma once
 
-#pragma warning(push)
-#pragma warning(disable : 26819) // C fallthrough warning disabled
 #include <SDL3/SDL.h>
-#pragma warning(pop)
 
 #include <string>
 #include <utility>
