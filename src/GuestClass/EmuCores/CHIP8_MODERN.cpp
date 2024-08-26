@@ -62,6 +62,7 @@ void CHIP8_MODERN::handlePreFrameInterrupt() noexcept {
 				mCyclesPerFrame = 0;
 			}
 			return;
+		default:;
 	}
 }
 
@@ -81,6 +82,7 @@ void CHIP8_MODERN::handleEndFrameInterrupt() noexcept {
 		case Interrupt::FINAL:
 			mCyclesPerFrame = 0;
 			return;
+		default:;
 	}
 }
 

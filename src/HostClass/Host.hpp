@@ -13,14 +13,12 @@ class BasicAudioSpec;
 class FrameLimiter;
 class EmuInterface;
 
+union SDL_Event;
+
 class VM_Host final {
 
 	std::unique_ptr<EmuInterface>
 		iGuest;
-
-	HomeDirManager& HDM;
-	BasicVideoSpec& BVS;
-	BasicAudioSpec& BAS;
 
 	bool _doBench{};
 
@@ -28,12 +26,13 @@ class VM_Host final {
 	bool doBench() const noexcept;
 	void doBench(bool) noexcept;
 
-	void prepareGuest(FrameLimiter&);
-	bool eventLoopSDL(FrameLimiter&);
-
 	bool initGameCore();
 
 public:
+	HomeDirManager& HDM;
+	BasicVideoSpec& BVS;
+	BasicAudioSpec& BAS;
+
 	explicit VM_Host(
 		const char* const,
 		HomeDirManager&,
@@ -42,5 +41,7 @@ public:
 	);
 	~VM_Host();
 
-	bool runHost();
+	void prepareGuest(FrameLimiter&);
+	bool handleEventSDL(FrameLimiter&, const SDL_Event*);
+	bool runFrame(FrameLimiter& Limiter);
 };

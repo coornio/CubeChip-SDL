@@ -64,7 +64,6 @@ void BasicLogger::newEntry(const BLOG type, const std::string& message) noexcept
 	output << ++lineCount << " :: " << getSeverity(type) << " :: " << message;
 
 	std::cout << output.str() << std::endl;
-	if (lineCount % 10 == 0) [[unlikely]] { std::cout.flush(); }
 
 	std::ofstream logFile(mLogPath, std::ios::app);
 	if (!logFile) {

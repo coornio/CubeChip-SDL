@@ -4,23 +4,36 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include "Assistants/FrameLimiter.hpp"
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_init.h>
 
-#ifdef SDL_PLATFORM_WIN32
-	#include <SDL3/SDL_main.h>
-#endif
+#define SDL_MAIN_USE_CALLBACKS
+#include <SDL3/SDL_main.h>
 
 #include <optional>
+#include <memory>
+#include <mutex>
 
 #include "HostClass/HomeDirManager.hpp"
 #include "HostClass/BasicVideoSpec.hpp"
 #include "HostClass/BasicAudioSpec.hpp"
+#include "Assistants/BasicInput.hpp"
 
 #include "HostClass/Host.hpp"
 
-int main(int argc, char* argv[]) {
+struct {
+	std::optional<HomeDirManager> HDM;
+	std::optional<BasicVideoSpec> BVS;
+	std::optional<BasicAudioSpec> BAS;
+	FrameLimiter Limiter;
+	std::unique_ptr<VM_Host> Host;
+	std::mutex Mut;
+} global;
 
-	atexit(SDL_Quit);
+SDL_AppResult SDL_AppInit(void **appstate, int argc, char* argv[]) {
+
+	SDL_InitSubSystem(SDL_INIT_EVENTS);
 
 //             VS               OTHER
 #if !defined(NDEBUG) || defined(DEBUG)
@@ -44,25 +57,55 @@ int main(int argc, char* argv[]) {
 
 #ifdef SDL_PLATFORM_WIN32
 	SDL_SetHint(SDL_HINT_RENDER_DRIVER, "direct3d");
-#endif
 	SDL_SetHint(SDL_HINT_WINDOWS_RAW_KEYBOARD, "0");
-	SDL_SetHint(SDL_HINT_RENDER_VSYNC, "0"); // until the UI is independent
+#endif
 	SDL_SetHint(SDL_HINT_APP_NAME, "CubeChip");
 
-	std::optional<HomeDirManager> HDM;
-	std::optional<BasicVideoSpec> BVS;
-	std::optional<BasicAudioSpec> BAS;
+	global.Mut.lock();
 
 	try {
-		HDM.emplace("CubeChip_SDL");
-		BVS.emplace();
-		BAS.emplace();
-	} catch (...) { return EXIT_FAILURE; }
+		global.HDM.emplace("CubeChip_SDL");
+		global.BVS.emplace();
+		global.BAS.emplace();
+	} catch (...) { return SDL_APP_FAILURE; }
 
-	VM_Host Host(
+	global.Host = std::make_unique<VM_Host>(
 		argc <= 1 ? nullptr : argv[1],
-		*HDM, *BVS, *BAS
+		*global.HDM, *global.BVS, *global.BAS
 	);
+	global.Host->prepareGuest(global.Limiter);
 
-	return Host.runHost();
+	global.Mut.unlock();
+
+	return SDL_APP_CONTINUE;
 }
+
+SDL_AppResult SDL_AppIterate(void* appstate) {
+	global.Mut.lock();
+
+	if (!global.Host->runFrame(global.Limiter)) {
+		global.Mut.unlock();
+		return SDL_APP_SUCCESS;
+	}
+
+	global.Host->BVS.renderPresent();
+
+	global.Mut.unlock();
+
+	return SDL_APP_CONTINUE;
+}
+
+SDL_AppResult SDL_AppEvent(void *appstate, const SDL_Event *event) {
+	global.Mut.lock();
+
+	if (!global.Host->handleEventSDL(global.Limiter, event)) {
+		global.Mut.unlock();
+		return SDL_APP_SUCCESS;
+	}
+
+	global.Mut.unlock();
+	
+	return SDL_APP_CONTINUE;
+}
+
+void SDL_AppQuit(void *appstate) {}
