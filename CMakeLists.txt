@@ -50,7 +50,7 @@ target_link_libraries(CubeChipSDL PRIVATE SDL3::SDL3-shared)
 
 if(MSVC)
   # MSVC compiler options.
-  target_compile_options(CubeChipSDL PRIVATE /W4 /WX /std:c++latest)
+  target_compile_options(CubeChipSDL PRIVATE /W4 /std:c++latest)
 else()
   # Everything else.
   target_compile_options(CubeChipSDL PRIVATE -Wall -Wextra --std=c++23)
