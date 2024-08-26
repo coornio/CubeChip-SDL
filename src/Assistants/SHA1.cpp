@@ -210,6 +210,25 @@ void SHA1::update(std::istream& is) {
 	}
 }
 
+void SHA1::update(std::span<const char> data) {
+	std::size_t offset{};
+
+	while (offset < data.size()) {
+		const auto chunksize{ std::min(BLOCK_BYTES - buffer.size(), data.size() - offset) };
+
+		buffer.append(data.data() + offset, chunksize);
+		offset += chunksize;
+
+		// If buffer is full, process the block
+		if (buffer.size() == BLOCK_BYTES) {
+			std::uint32_t block[BLOCK_INTS]{};
+			buffer_to_block(buffer, block);
+			transform(digest, block, transforms);
+			buffer.clear();
+		}
+	}
+}
+
 std::string SHA1::final() {
 	// total number of hashed bits
 	const std::uint64_t total_bits{ (transforms * BLOCK_BYTES + buffer.size()) * 8 };
@@ -251,5 +270,11 @@ std::string SHA1::from_file(const std::filesystem::path& filePath) {
 	std::ifstream stream(filePath, std::ios::binary);
 	SHA1 checksum;
 	checksum.update(stream);
+	return checksum.final();
+}
+
+std::string SHA1::from_span(const std::span<const char> fileData) {
+	SHA1 checksum;
+	checksum.update(fileData);
 	return checksum.final();
 }

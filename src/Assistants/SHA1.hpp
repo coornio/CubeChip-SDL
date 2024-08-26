@@ -9,8 +9,10 @@
 
 #pragma once
 
+#include <span>
 #include <string>
 #include <cstdint>
+#include <sstream>
 #include <filesystem>
 
 class SHA1 {
@@ -22,7 +24,9 @@ public:
 	SHA1();
 	void update(const std::string& s);
 	void update(std::istream& is);
+	void update(std::span<const char> data);
 	std::string final();
 
 	static std::string from_file(const std::filesystem::path& filePath);
+	static std::string from_span(const std::span<const char> fileData);
 };
