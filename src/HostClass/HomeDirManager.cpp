@@ -79,6 +79,7 @@ bool HomeDirManager::validateGameFile(const char* inputPath) noexcept {
 	const auto tempStem{ gamePath.stem().string() };
 	const auto tempExts{ gamePath.extension().string() };
 	const auto tempSHA1{ SHA1::from_file(tempPath) };
+	const auto tempTime{ fs::last_write_time(gamePath) };
 
 	const bool gameApproved{ checkGame(tempSize, tempExts, tempSHA1) };
 
@@ -88,6 +89,7 @@ bool HomeDirManager::validateGameFile(const char* inputPath) noexcept {
 		mFileStem = tempStem;
 		mFileExts = tempExts;
 		mFileSHA1 = tempSHA1;
+		mFileTime = tempTime;
 		mFileSize = tempSize;
 	}
 

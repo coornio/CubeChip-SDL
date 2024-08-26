@@ -6,12 +6,10 @@
 
 #include "Assistants/FrameLimiter.hpp"
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_init.h>
 
 #define SDL_MAIN_USE_CALLBACKS
 #include <SDL3/SDL_main.h>
 
-#include <optional>
 #include <memory>
 #include <mutex>
 
@@ -22,18 +20,7 @@
 
 #include "HostClass/Host.hpp"
 
-struct {
-	std::optional<HomeDirManager> HDM;
-	std::optional<BasicVideoSpec> BVS;
-	std::optional<BasicAudioSpec> BAS;
-	FrameLimiter Limiter;
-	std::unique_ptr<VM_Host> Host;
-	std::mutex Mut;
-} global;
-
-SDL_AppResult SDL_AppInit(void **appstate, int argc, char* argv[]) {
-
-	SDL_InitSubSystem(SDL_INIT_EVENTS);
+SDL_AppResult SDL_AppInit(void **Host, int argc, char* argv[]) {
 
 //             VS               OTHER
 #if !defined(NDEBUG) || defined(DEBUG)
@@ -61,51 +48,58 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char* argv[]) {
 #endif
 	SDL_SetHint(SDL_HINT_APP_NAME, "CubeChip");
 
-	global.Mut.lock();
+	*Host = VM_Host::initialize(argc <= 1 ? nullptr : argv[1]);
 
-	try {
-		global.HDM.emplace("CubeChip_SDL");
-		global.BVS.emplace();
-		global.BAS.emplace();
-	} catch (...) { return SDL_APP_FAILURE; }
-
-	global.Host = std::make_unique<VM_Host>(
-		argc <= 1 ? nullptr : argv[1],
-		*global.HDM, *global.BVS, *global.BAS
-	);
-	global.Host->prepareGuest(global.Limiter);
-
-	global.Mut.unlock();
-
-	return SDL_APP_CONTINUE;
+	if (Host) { return SDL_APP_CONTINUE; }
+	else      { return SDL_APP_FAILURE;  }
 }
 
-SDL_AppResult SDL_AppIterate(void* appstate) {
-	global.Mut.lock();
+SDL_AppResult SDL_AppIterate(void* Host_ptr) {
+	auto& Host{ *static_cast<VM_Host*>(Host_ptr) };
 
-	if (!global.Host->runFrame(global.Limiter)) {
-		global.Mut.unlock();
-		return SDL_APP_SUCCESS;
+	Host.Mutex.lock();
+	switch (Host.runFrame()) {
+		case SDL_APP_SUCCESS:
+			Host.Mutex.unlock();
+			return SDL_APP_SUCCESS;
+
+		case SDL_APP_CONTINUE:
+			Host.Mutex.unlock();
+			return SDL_APP_CONTINUE;
+
+		case SDL_APP_FAILURE:
+			Host.Mutex.unlock();
+			return SDL_APP_FAILURE;
 	}
-
-	global.Host->BVS.renderPresent();
-
-	global.Mut.unlock();
-
-	return SDL_APP_CONTINUE;
 }
 
-SDL_AppResult SDL_AppEvent(void *appstate, const SDL_Event *event) {
-	global.Mut.lock();
+SDL_AppResult SDL_AppEvent(void* Host_ptr, const SDL_Event* Event) {
+	auto& Host{ *static_cast<VM_Host*>(Host_ptr) };
 
-	if (!global.Host->handleEventSDL(global.Limiter, event)) {
-		global.Mut.unlock();
-		return SDL_APP_SUCCESS;
+	switch (Event->type) {
+		case SDL_EVENT_QUIT:
+			return SDL_APP_SUCCESS;
+
+		case SDL_EVENT_DROP_FILE:
+			Host.Mutex.lock();
+			Host.loadGameFile(Event->drop.data, true);
+			Host.Mutex.unlock();
+			break;
+
+		case SDL_EVENT_WINDOW_MINIMIZED:
+			Host.Mutex.lock();
+			Host.pauseSystem(true);
+			Host.Mutex.unlock();
+			break;
+
+		case SDL_EVENT_WINDOW_RESTORED:
+			Host.Mutex.lock();
+			Host.pauseSystem(false);
+			Host.Mutex.unlock();
+			break;
 	}
-
-	global.Mut.unlock();
 	
 	return SDL_APP_CONTINUE;
 }
 
-void SDL_AppQuit(void *appstate) {}
+void SDL_AppQuit(void*) {}

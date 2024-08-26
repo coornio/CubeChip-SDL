@@ -26,99 +26,99 @@ using namespace bic;
 /*  class  VM_Host                                                  */
 /*------------------------------------------------------------------*/
 
-VM_Host::~VM_Host() = default;
-VM_Host::VM_Host(
-	const char* const filename,
-	HomeDirManager&   ref_HDM,
-	BasicVideoSpec&   ref_BVS,
-	BasicAudioSpec&   ref_BAS
-)
-	: HDM{ ref_HDM }
-	, BVS{ ref_BVS }
-	, BAS{ ref_BAS }
+VM_Host::VM_Host(const char* const filename)
+	: HDM    { std::make_unique<HomeDirManager>("CubeChip") }
+	, BVS    { std::make_unique<BasicVideoSpec>() }
+	, BAS    { std::make_unique<BasicAudioSpec>() }
+	, Limiter{ std::make_unique<FrameLimiter>() }
 {
-	HDM.setValidator(GameFileChecker::validate);
-	HDM.validateGameFile(filename);
+	HDM->setValidator(GameFileChecker::validate);
+	loadGameFile(filename);
 }
 
-bool VM_Host::doBench() const noexcept { return _doBench; }
-void VM_Host::doBench(const bool state) noexcept { _doBench = state; }
+VM_Host* VM_Host::initialize(const char* const filename) {
+	try {
+		static VM_Host self(filename);
+		return &self;
+	} catch (...) {
+		return nullptr;
+	}
+}
 
 bool VM_Host::initGameCore() {
-	iGuest = std::move(GameFileChecker::initializeCore(HDM, BVS, BAS));
+	iGuest = std::move(GameFileChecker::initializeCore(*HDM, *BVS, *BAS));
 	return iGuest ? true : false;
 }
 
-bool VM_Host::runFrame(FrameLimiter& Limiter) {
+SDL_AppResult VM_Host::runFrame() {
 	using namespace bic;
 
-	if (!Limiter.checkTime()) [[likely]] { return true; }
+	if (!Limiter->checkTime()) [[likely]] { return SDL_APP_CONTINUE; }
 
 	if (kb.isPressed(KEY(RIGHT))) {
-		BAS.changeVolume(+15);
+		BAS->changeVolume(+15);
 	}
 	if (kb.isPressed(KEY(LEFT))) {
-		BAS.changeVolume(-15);
+		BAS->changeVolume(-15);
 	}
 
 	if (iGuest) {
 		if (kb.isPressed(KEY(ESCAPE))) {
-			BVS.resetWindow();
-			GameFileChecker::delCore();
-			prepareGuest(Limiter);
-			// continue
-			return true;
+			replaceGuest(true);
+			return SDL_APP_CONTINUE;
 		}
 		if (kb.isPressed(KEY(BACKSPACE))) {
-			if (HDM.validateGameFile(HDM.getFilePath().c_str())) {
-				prepareGuest(Limiter);
-			}
-			// continue
-			return true;
+			loadGameFile(HDM->getFilePath().c_str());
+			return SDL_APP_CONTINUE;
 		}
 		if (kb.isPressed(KEY(RSHIFT))) {
-			if (doBench()) {
-				doBench(false);
-				BVS.changeTitle(HDM.getFileStem().c_str());
+			if (runBenchmark) {
+				runBenchmark = false;
+				BVS->changeTitle(HDM->getFileStem().c_str());
 				std::cout << "\33[1;1H\33[3J" << std::endl;
 			} else {
-				doBench(true);
-				BVS.changeTitle(std::to_string(iGuest->fetchCPF()));
+				runBenchmark = true;
+				BVS->changeTitle(std::to_string(iGuest->fetchCPF()));
 				std::cout << "\33[1;1H\33[2J"
 					<< "Cycle time:    .    ms"
 					<< "\nTime since last frame: "
-					<< "\nCPF: ";
+				#ifndef SDL_PLATFORM_WIN32
+					<< "\nCPF: "
+				#endif
+					<< std::endl;
 			}
 		}
 
 		if (kb.isPressed(KEY(PAGEDOWN))){
-			BVS.changeFrameMultiplier(-1);
+			BVS->changeFrameMultiplier(-1);
 		}
 		if (kb.isPressed(KEY(PAGEUP))) {
-			BVS.changeFrameMultiplier(+1);
+			BVS->changeFrameMultiplier(+1);
 		}
 
-		if (doBench()) [[likely]] {
+		if (runBenchmark) [[likely]] {
 			if (kb.isPressed(KEY(UP))) {
-				BVS.changeTitle(std::to_string(iGuest->changeCPF(+50'000)));
+				BVS->changeTitle(std::to_string(iGuest->changeCPF(+50'000)));
 			}
 			if (kb.isPressed(KEY(DOWN))){
-				BVS.changeTitle(std::to_string(iGuest->changeCPF(-50'000)));
+				BVS->changeTitle(std::to_string(iGuest->changeCPF(-50'000)));
 			}
 
 			iGuest->processFrame();
 
-			if (Limiter.getValidFrameCounter() & 0x1) {
-				const auto micros{ Limiter.getElapsedMicrosSince() };
+			if (Limiter->getValidFrameCounter() & 0x1) {
+				const auto micros{ Limiter->getElapsedMicrosSince() };
 				std::cout
 					<< "\33[1;12H"
 					<< std::setfill(' ') << std::setw(4) << micros / 1000
 					<< "\33[1C"
 					<< std::setfill('0') << std::setw(3) << micros % 1000
 					<< "\33[2;25H"
-					<< Limiter.getElapsedMillisLast()
+					<< Limiter->getElapsedMillisLast()
+				#ifndef SDL_PLATFORM_WIN32
 					<< "\33[3;6H"
 					<< iGuest->fetchCPF() << "   "
+				#endif
 					<< std::endl;
 			}
 		} else { 
@@ -126,48 +126,43 @@ bool VM_Host::runFrame(FrameLimiter& Limiter) {
 		}
 	} else {
 		if (kb.isPressed(KEY(ESCAPE))) {
-			// this one stops execution
-			return false;
+			return SDL_APP_SUCCESS;
 		}
 	}
 
+	BVS->renderPresent();
+
 	bic::kb.updateCopy();
 	bic::mb.updateCopy();
-	return true;
+
+	return SDL_APP_CONTINUE;
 }
 
-void VM_Host::prepareGuest(FrameLimiter& Frame) {
+void VM_Host::replaceGuest(const bool disable) {
 	bic::kb.updateCopy();
 	bic::mb.updateCopy();
+
+	if (disable) {
+		BVS->resetWindow();
+		GameFileChecker::delCore();
+	}
 
 	if (initGameCore()) {
-		Frame.setLimiter(iGuest->fetchFramerate());
-		BVS.changeTitle(HDM.getFileStem().c_str());
+		Limiter->setLimiter(iGuest->fetchFramerate());
+		BVS->changeTitle(HDM->getFileStem().c_str());
 	} else {
-		Frame.setLimiter(30.0f);
-		HDM.clearCachedFileData();
+		Limiter->setLimiter(30.0f);
+		HDM->clearCachedFileData();
 	}
 }
 
-bool VM_Host::handleEventSDL(FrameLimiter& Frame, const SDL_Event* Event) {
-	switch (Event->type) {
-		case SDL_EVENT_QUIT:
-			return false;
-
-		case SDL_EVENT_DROP_FILE:
-			BVS.raiseWindow();
-			if (HDM.validateGameFile(Event->drop.data)) {
-				prepareGuest(Frame);
-			}
-			break;
-
-		case SDL_EVENT_WINDOW_MINIMIZED:
-			if (iGuest) { iGuest->isSystemStopped(true); }
-			break;
-
-		case SDL_EVENT_WINDOW_RESTORED:
-			if (iGuest) { iGuest->isSystemStopped(false); }
-			break;
+void VM_Host::loadGameFile(const char* const filename, const bool alert) {
+	if (alert) { BVS->raiseWindow(); }
+	if (HDM->validateGameFile(filename)) {
+		replaceGuest(false);
 	}
-	return true;
+}
+
+void VM_Host::pauseSystem(const bool state) const noexcept {
+	if (iGuest) { iGuest->isSystemStopped(state); }
 }

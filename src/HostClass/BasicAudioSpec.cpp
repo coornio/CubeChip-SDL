@@ -26,7 +26,6 @@ BasicAudioSpec::BasicAudioSpec()
 }
 
 BasicAudioSpec::~BasicAudioSpec() {
-	if (stream) SDL_DestroyAudioStream(stream);
 	SDL_QuitSubSystem(SDL_INIT_AUDIO);
 }
 

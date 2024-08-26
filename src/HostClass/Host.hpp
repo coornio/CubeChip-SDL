@@ -6,6 +6,11 @@
 
 #pragma once
 
+#include <memory>
+#include <mutex>
+
+#include <SDL3/SDL_init.h>
+
 class HomeDirManager;
 class BasicVideoSpec;
 class BasicAudioSpec;
@@ -13,35 +18,32 @@ class BasicAudioSpec;
 class FrameLimiter;
 class EmuInterface;
 
-union SDL_Event;
-
 class VM_Host final {
 
 	std::unique_ptr<EmuInterface>
 		iGuest;
 
-	bool _doBench{};
+	std::unique_ptr<FrameLimiter> Limiter;
+	std::unique_ptr<HomeDirManager> HDM;
+	std::unique_ptr<BasicVideoSpec> BVS;
+	std::unique_ptr<BasicAudioSpec> BAS;
 
-	[[nodiscard]]
-	bool doBench() const noexcept;
-	void doBench(bool) noexcept;
+	bool runBenchmark{};
 
 	bool initGameCore();
+	void replaceGuest(const bool);
+
+	VM_Host(const char* const);
+	VM_Host(const VM_Host&) = delete;
+	VM_Host& operator=(const VM_Host&) = delete;
 
 public:
-	HomeDirManager& HDM;
-	BasicVideoSpec& BVS;
-	BasicAudioSpec& BAS;
+	std::mutex Mutex;
 
-	explicit VM_Host(
-		const char* const,
-		HomeDirManager&,
-		BasicVideoSpec&,
-		BasicAudioSpec&
-	);
-	~VM_Host();
+	static VM_Host* initialize(const char* const);
 
-	void prepareGuest(FrameLimiter&);
-	bool handleEventSDL(FrameLimiter&, const SDL_Event*);
-	bool runFrame(FrameLimiter& Limiter);
+	void pauseSystem(const bool state) const noexcept;
+	void loadGameFile(const char* const, const bool = false);
+
+	SDL_AppResult runFrame();
 };

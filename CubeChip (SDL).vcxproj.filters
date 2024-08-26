@@ -90,27 +90,6 @@
     <ClCompile Include="src\GuestClass\GameFileChecker.cpp">
       <Filter>Source Files\VM Guest</Filter>
     </ClCompile>
-    <ClCompile Include="src\GuestClass\to_be_removed\GuestFunctions.cpp">
-      <Filter>to_be_removed</Filter>
-    </ClCompile>
-    <ClCompile Include="src\GuestClass\to_be_removed\Init.cpp">
-      <Filter>to_be_removed</Filter>
-    </ClCompile>
-    <ClCompile Include="src\GuestClass\to_be_removed\InstructionSets\_Classic8.cpp">
-      <Filter>to_be_removed\InstructionSets</Filter>
-    </ClCompile>
-    <ClCompile Include="src\GuestClass\to_be_removed\InstructionSets\_Gigachip.cpp">
-      <Filter>to_be_removed\InstructionSets</Filter>
-    </ClCompile>
-    <ClCompile Include="src\GuestClass\to_be_removed\InstructionSets\_LegacySC.cpp">
-      <Filter>to_be_removed\InstructionSets</Filter>
-    </ClCompile>
-    <ClCompile Include="src\GuestClass\to_be_removed\InstructionSets\_Megachip.cpp">
-      <Filter>to_be_removed\InstructionSets</Filter>
-    </ClCompile>
-    <ClCompile Include="src\GuestClass\to_be_removed\InstructionSets\_ModernXO.cpp">
-      <Filter>to_be_removed\InstructionSets</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\HostClass\BasicAudioSpec.hpp">
@@ -175,15 +154,6 @@
     </ClInclude>
     <ClInclude Include="src\GuestClass\GameFileChecker.hpp">
       <Filter>Header Files\VM Guest</Filter>
-    </ClInclude>
-    <ClInclude Include="src\GuestClass\to_be_removed\Enums.hpp">
-      <Filter>to_be_removed</Filter>
-    </ClInclude>
-    <ClInclude Include="src\GuestClass\to_be_removed\Guest.hpp">
-      <Filter>to_be_removed</Filter>
-    </ClInclude>
-    <ClInclude Include="src\GuestClass\to_be_removed\InstructionSets\Interface.hpp">
-      <Filter>to_be_removed\InstructionSets</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

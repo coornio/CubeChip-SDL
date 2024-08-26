@@ -25,9 +25,6 @@ BasicVideoSpec::BasicVideoSpec()
 }
 
 BasicVideoSpec::~BasicVideoSpec() {
-	quitTexture();
-	quitRenderer();
-	quitWindow();
 	SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }
 
