@@ -11,6 +11,7 @@
 
 #include <string>
 #include <cstdint>
+#include <filesystem>
 
 class SHA1 {
 	std::uint32_t digest[5]{};
@@ -22,5 +23,6 @@ public:
 	void update(const std::string& s);
 	void update(std::istream& is);
 	std::string final();
-	static std::string from_file(const std::string& filename);
+
+	static std::string from_file(const std::filesystem::path& filePath);
 };

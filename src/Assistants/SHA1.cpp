@@ -201,7 +201,7 @@ void SHA1::update(std::istream& is) {
 		is.read(sbuf, static_cast<std::streamsize>(chunksize));
 
 		buffer.append(sbuf, static_cast<std::size_t>(is.gcount()));
-		if (buffer.size() != BLOCK_BYTES) return;
+		if (buffer.size() != BLOCK_BYTES) { return; }
 
 		std::uint32_t block[BLOCK_INTS]{};
 		buffer_to_block(buffer, block);
@@ -247,8 +247,8 @@ std::string SHA1::final() {
 	return result.str();
 }
 
-std::string SHA1::from_file(const std::string& filename) {
-	std::ifstream stream(filename.c_str(), std::ios::binary);
+std::string SHA1::from_file(const std::filesystem::path& filePath) {
+	std::ifstream stream(filePath, std::ios::binary);
 	SHA1 checksum;
 	checksum.update(stream);
 	return checksum.final();
