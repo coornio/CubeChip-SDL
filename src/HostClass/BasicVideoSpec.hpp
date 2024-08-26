@@ -22,11 +22,11 @@ class BasicVideoSpec final {
 	bool enableBuzzGlow{};
 	bool enableScanLine{};
 
-	SDL_FRect frameGame{};
-	SDL_FRect frameFull{};
+	SDL_FRect frameBack{};
+	SDL_FRect frameRect{};
 
-	u32  frameGameColor{};
-	u32  frameFullColor[2]{};
+	u32  frameBackColor{};
+	u32  frameRectColor[2]{};
 
 	s32  perimeterWidth{};
 	s32  frameMultiplier{ 2 };
@@ -41,17 +41,16 @@ public:
 	void setBackColor (
 		const u32 color
 	) noexcept {
-		frameGameColor = color;
+		frameBackColor = color;
 	}
 
 	void setFrameColor(
 		const u32 color_off,
 		const u32 color_on
 	) noexcept {
-		frameFullColor[0] = color_off;
-		frameFullColor[1] = color_on;
+		frameRectColor[0] = color_off;
+		frameRectColor[1] = color_on;
 	}
-
 
 private:
 	void createWindow(s32, s32);
