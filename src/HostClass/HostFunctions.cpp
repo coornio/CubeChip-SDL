@@ -26,19 +26,19 @@ using namespace bic;
 /*  class  VM_Host                                                  */
 /*------------------------------------------------------------------*/
 
-VM_Host::VM_Host(const char* const filename)
-	: HDM    { std::make_unique<HomeDirManager>("CubeChip") }
+VM_Host::VM_Host(const FilePath& gamePath)
+	: Limiter{ std::make_unique<FrameLimiter>() }
+	, HDM    { std::make_unique<HomeDirManager>("CubeChip") }
 	, BVS    { std::make_unique<BasicVideoSpec>() }
 	, BAS    { std::make_unique<BasicAudioSpec>() }
-	, Limiter{ std::make_unique<FrameLimiter>() }
 {
 	HDM->setValidator(GameFileChecker::validate);
-	loadGameFile(filename);
+	loadGameFile(gamePath);
 }
 
-VM_Host* VM_Host::initialize(const char* const filename) {
+VM_Host* VM_Host::initialize(const FilePath& gamePath) {
 	try {
-		static VM_Host self(filename);
+		static VM_Host self(gamePath);
 		return &self;
 	} catch (...) {
 		return nullptr;
@@ -68,7 +68,7 @@ SDL_AppResult VM_Host::runFrame() {
 			return SDL_APP_CONTINUE;
 		}
 		if (kb.isPressed(KEY(BACKSPACE))) {
-			loadGameFile(HDM->getFilePath().c_str());
+			loadGameFile(HDM->getFullPath());
 			return SDL_APP_CONTINUE;
 		}
 		if (kb.isPressed(KEY(RSHIFT))) {
@@ -156,9 +156,9 @@ void VM_Host::replaceGuest(const bool disable) {
 	}
 }
 
-void VM_Host::loadGameFile(const char* const filename, const bool alert) {
+void VM_Host::loadGameFile(const FilePath& gameFile, const bool alert) {
 	if (alert) { BVS->raiseWindow(); }
-	if (HDM->validateGameFile(filename)) {
+	if (HDM->validateGameFile(gameFile)) {
 		replaceGuest(false);
 	}
 }

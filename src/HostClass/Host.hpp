@@ -8,6 +8,7 @@
 
 #include <memory>
 #include <mutex>
+#include <filesystem>
 
 #include <SDL3/SDL_init.h>
 
@@ -19,6 +20,8 @@ class FrameLimiter;
 class EmuInterface;
 
 class VM_Host final {
+
+	using FilePath = std::filesystem::path;
 
 	std::unique_ptr<EmuInterface>
 		iGuest;
@@ -33,17 +36,17 @@ class VM_Host final {
 	bool initGameCore();
 	void replaceGuest(const bool);
 
-	VM_Host(const char* const);
+	VM_Host(const FilePath&);
 	VM_Host(const VM_Host&) = delete;
 	VM_Host& operator=(const VM_Host&) = delete;
 
 public:
 	std::mutex Mutex;
 
-	static VM_Host* initialize(const char* const);
+	static VM_Host* initialize(const FilePath&);
 
 	void pauseSystem(const bool state) const noexcept;
-	void loadGameFile(const char* const, const bool = false);
+	void loadGameFile(const FilePath&, const bool = false);
 
 	SDL_AppResult runFrame();
 };

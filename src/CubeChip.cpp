@@ -4,14 +4,15 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include "Assistants/FrameLimiter.hpp"
 #include <SDL3/SDL.h>
 
 #define SDL_MAIN_USE_CALLBACKS
 #include <SDL3/SDL_main.h>
 
-#include <memory>
-#include <mutex>
+#if 0
+#include <windows.h>
+#include <shellapi.h>
+#endif
 
 #include "HostClass/HomeDirManager.hpp"
 #include "HostClass/BasicVideoSpec.hpp"
@@ -48,14 +49,24 @@ SDL_AppResult SDL_AppInit(void **Host, int argc, char* argv[]) {
 #endif
 	SDL_SetHint(SDL_HINT_APP_NAME, "CubeChip");
 
-	*Host = VM_Host::initialize(argc <= 1 ? nullptr : argv[1]);
+#if 0
+	setlocale(LC_CTYPE, "");
+	LPWSTR* wargv{}; int wargc{};
+	wargv = CommandLineToArgvW(GetCommandLineW(), &wargc);
+	if (!wargv) { return SDL_APP_FAILURE; }
+
+	*Host = VM_Host::initialize(wargc <= 1 ? L"" : wargv[1]);
+	LocalFree(wargv);
+#else
+	*Host = VM_Host::initialize(argc <= 1 ? "" : argv[1]);
+#endif
 
 	if (Host) { return SDL_APP_CONTINUE; }
 	else      { return SDL_APP_FAILURE;  }
 }
 
-SDL_AppResult SDL_AppIterate(void* Host_ptr) {
-	auto& Host{ *static_cast<VM_Host*>(Host_ptr) };
+SDL_AppResult SDL_AppIterate(void* pHost) {
+	auto& Host{ *static_cast<VM_Host*>(pHost) };
 
 	Host.Mutex.lock();
 	switch (Host.runFrame()) {
@@ -73,8 +84,8 @@ SDL_AppResult SDL_AppIterate(void* Host_ptr) {
 	}
 }
 
-SDL_AppResult SDL_AppEvent(void* Host_ptr, const SDL_Event* Event) {
-	auto& Host{ *static_cast<VM_Host*>(Host_ptr) };
+SDL_AppResult SDL_AppEvent(void* pHost, const SDL_Event* Event) {
+	auto& Host{ *static_cast<VM_Host*>(pHost) };
 
 	switch (Event->type) {
 		case SDL_EVENT_QUIT:

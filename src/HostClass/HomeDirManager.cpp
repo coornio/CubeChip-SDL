@@ -29,10 +29,11 @@ HomeDirManager::HomeDirManager(const std::string_view homeDirName) try
 }
 
 void HomeDirManager::clearCachedFileData() noexcept {
+	//mFilePath.clear();
+	//mFileName.clear();
+	//mFileStem.clear();
+	//mFileExts.clear();
 	mFilePath.clear();
-	mFileName.clear();
-	mFileStem.clear();
-	mFileExts.clear();
 	mFileSHA1.clear();
 	mFileTime = {};
 	mFileSize = {};
@@ -46,12 +47,11 @@ void HomeDirManager::addDirectory() {
 	}
 }
 
-bool HomeDirManager::validateGameFile(const char* inputPath) noexcept {
-	if (!inputPath) { return false; }
+bool HomeDirManager::validateGameFile(const FilePath gamePath) noexcept {
+	if (gamePath.empty()) { return false; }
 	namespace fs = std::filesystem;
 	std::error_code error;
 
-	const FilePath gamePath{ inputPath };
 	blog.newEntry(BLOG::INFO, "Attempting to access file: " + gamePath.string());
 
 	if (!fs::exists(gamePath, error) || error) {
@@ -74,20 +74,18 @@ bool HomeDirManager::validateGameFile(const char* inputPath) noexcept {
 		return false;
 	}
 
-	const auto tempPath{ gamePath.string() };
-	const auto tempName{ gamePath.filename().string() };
-	const auto tempStem{ gamePath.stem().string() };
-	const auto tempExts{ gamePath.extension().string() };
-	const auto tempSHA1{ SHA1::from_file(tempPath) };
-	const auto tempTime{ fs::last_write_time(gamePath) };
+	const auto tempTime{ HDM::getFileTime(gamePath) };
+	const auto tempSHA1{ SHA1::from_file(gamePath.string()) };
 
-	const bool gameApproved{ checkGame(tempSize, tempExts, tempSHA1) };
+	if (tempTime != HDM::getFileTime(gamePath)) {
+		blog.newEntry(BLOG::WARN, "File was modified while reading!");
+		return false;
+	}
+
+	const bool gameApproved{ checkGame(tempSize, gamePath.extension().string(), tempSHA1) };
 
 	if (gameApproved) {
-		mFilePath = tempPath;
-		mFileName = tempName;
-		mFileStem = tempStem;
-		mFileExts = tempExts;
+		mFilePath = gamePath;
 		mFileSHA1 = tempSHA1;
 		mFileTime = tempTime;
 		mFileSize = tempSize;

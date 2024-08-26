@@ -14,17 +14,12 @@
 #include "../Assistants/BasicHome.hpp"
 
 class HomeDirManager final : public BasicHome {
-
 	using GameValidator = bool (*)(std::uint64_t, std::string_view, std::string_view);
 	using FileModTime   = std::filesystem::file_time_type;
 	using FilePath      = std::filesystem::path;
 	using FileSize      = std::uintmax_t;
 
-	//FilePath    mFullPath{};
-	std::string mFilePath{};
-	std::string mFileName{};
-	std::string mFileStem{};
-	std::string mFileExts{};
+	FilePath    mFilePath{};
 	std::string mFileSHA1{};
 	FileModTime mFileTime{};
 	FileSize    mFileSize{};
@@ -32,21 +27,29 @@ class HomeDirManager final : public BasicHome {
 	GameValidator checkGame{};
 
 public:
-	FilePath    permRegs{};
-	void addDirectory();
+	HomeDirManager(const std::string_view);
 
-	auto getFilePath() const noexcept { return mFilePath; }
-	auto getFileName() const noexcept { return mFileName; }
-	auto getFileStem() const noexcept { return mFileStem; }
-	auto getFileExts() const noexcept { return mFileExts; }
+	FilePath permRegs{}; // XXX needs fixing
+	void addDirectory(); // XXX needs fixing
+
+	auto getFullPath() const noexcept { return mFilePath; }
+	auto getFilePath() const noexcept { return mFilePath.string(); }
+	auto getFileName() const noexcept { return mFilePath.filename().string(); }
+	auto getFileStem() const noexcept { return mFilePath.stem().string(); }
+	auto getFileExts() const noexcept { return mFilePath.extension().string(); }
 	auto getFileSHA1() const noexcept { return mFileSHA1; }
 	auto getFileTime() const noexcept { return mFileTime; }
 	auto getFileSize() const noexcept { return mFileSize; }
 
-	HomeDirManager(const std::string_view);
-
 	void setValidator(GameValidator func) noexcept { checkGame = func; }
 
 	void clearCachedFileData() noexcept;
-	bool validateGameFile(const char*) noexcept;
+	bool validateGameFile(const FilePath) noexcept;
 };
+
+namespace HDM {
+	inline auto getFileTime(const std::filesystem::path& filePath) noexcept {
+		std::error_code error;
+		return std::filesystem::last_write_time(filePath, error);
+	}
+}
