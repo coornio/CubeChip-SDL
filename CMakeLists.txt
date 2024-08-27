@@ -42,7 +42,6 @@ add_executable(CubeChipSDL
   src/Assistants/BasicLogger.cpp
   src/Assistants/BasicInput.cpp
   src/Assistants/FrameLimiter.cpp
-  src/Assistants/BasicHome.cpp
   src/Assistants/SHA1.cpp
 )
 target_include_directories(CubeChipSDL PRIVATE src)
