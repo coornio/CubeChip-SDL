@@ -5,6 +5,7 @@
 */
 
 #include <fstream>
+#include <iostream>
 
 #include "HomeDirManager.hpp"
 #include "../Assistants/BasicLogger.hpp"
@@ -29,14 +30,10 @@ HomeDirManager::HomeDirManager(const std::string_view homeDirName) try
 }
 
 void HomeDirManager::clearCachedFileData() noexcept {
-	//mFilePath.clear();
-	//mFileName.clear();
-	//mFileStem.clear();
-	//mFileExts.clear();
 	mFilePath.clear();
 	mFileSHA1.clear();
+	mFileData.resize(0);
 	mFileTime = {};
-	mFileSize = {};
 }
 
 void HomeDirManager::addDirectory() {
@@ -63,32 +60,29 @@ bool HomeDirManager::validateGameFile(const FilePath gamePath) noexcept {
 		blog.newEntry(BLOG::WARN, "Provided path is not to a file!");
 		return false;
 	}
-	
-	const auto tempSize{ fs::file_size(gamePath, error) };
-	if (error) {
-		blog.newEntry(BLOG::ERROR, "Unable to read file!");
-		return false;
-	}
-	if (tempSize == 0) {
-		blog.newEntry(BLOG::WARN, "File must not be empty!");
-		return false;
-	}
 
 	const auto tempTime{ HDM::getFileTime(gamePath) };
-	const auto tempSHA1{ SHA1::from_file(gamePath.string()) };
+
+	std::ifstream ifs(gamePath, std::ios::binary);
+	mFileData.assign(std::istreambuf_iterator(ifs), {});
 
 	if (tempTime != HDM::getFileTime(gamePath)) {
 		blog.newEntry(BLOG::WARN, "File was modified while reading!");
 		return false;
 	}
 
-	const bool gameApproved{ checkGame(tempSize, gamePath.extension().string(), tempSHA1) };
+	if (!getFileSize()) {
+		blog.newEntry(BLOG::WARN, "File must not be empty!");
+		return false;
+	}
+
+	const auto tempSHA1{ SHA1::from_span(mFileData) };
+	const bool gameApproved{ checkGame(getFileSize(), gamePath.extension().string(), tempSHA1)};
 
 	if (gameApproved) {
 		mFilePath = gamePath;
 		mFileSHA1 = tempSHA1;
 		mFileTime = tempTime;
-		mFileSize = tempSize;
 	}
 
 	if (gameApproved) {

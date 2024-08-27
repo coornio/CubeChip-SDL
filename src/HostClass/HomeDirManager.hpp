@@ -8,6 +8,7 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 #include <filesystem>
 #include <string_view>
 
@@ -17,14 +18,14 @@ class HomeDirManager final : public BasicHome {
 	using GameValidator = bool (*)(std::uint64_t, std::string_view, std::string_view);
 	using FileModTime   = std::filesystem::file_time_type;
 	using FilePath      = std::filesystem::path;
-	using FileSize      = std::uintmax_t;
 
 	FilePath    mFilePath{};
 	std::string mFileSHA1{};
 	FileModTime mFileTime{};
-	FileSize    mFileSize{};
 
 	GameValidator checkGame{};
+
+	std::vector<char> mFileData{};
 
 public:
 	HomeDirManager(const std::string_view);
@@ -37,9 +38,10 @@ public:
 	auto getFileName() const noexcept { return mFilePath.filename().string(); }
 	auto getFileStem() const noexcept { return mFilePath.stem().string(); }
 	auto getFileExts() const noexcept { return mFilePath.extension().string(); }
+	auto getFileSize() const noexcept { return mFileData.size(); }
+	auto getFileData() const noexcept { return mFileData.data(); }
 	auto getFileSHA1() const noexcept { return mFileSHA1; }
 	auto getFileTime() const noexcept { return mFileTime; }
-	auto getFileSize() const noexcept { return mFileSize; }
 
 	void setValidator(GameValidator func) noexcept { checkGame = func; }
 

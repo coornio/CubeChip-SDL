@@ -120,7 +120,7 @@ protected:
 	void instructionError(const u32 HI, const u32 LO);
 	void instructionErrorML(const u32 HI, const u32 LO);
 
-	bool copyGameToMemory(u8* dest, const u32 offset);
+	void copyGameToMemory(u8* dest, const u32 offset);
 	void copyFontToMemory(u8* dest, const u32 offset, const u32 size);
 
 public:

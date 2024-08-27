@@ -56,15 +56,11 @@ void Chip8_CoreInterface::instructionErrorML(const u32 HI, const u32 LO) {
 	setInterrupt(Interrupt::ERROR);
 }
 
-bool Chip8_CoreInterface::copyGameToMemory(u8* dest, const u32 offset) {
-	std::basic_ifstream<char> ifs(HDM.getFilePath(), std::ios::binary);
-	ifs.read(reinterpret_cast<char*>(dest + offset), HDM.getFileSize());
-	if (ifs.fail()) {
-		blog.newEntry(BLOG::ERROR, "Failed to copy rom data to memory, aborting.");
-		return false;
-	} else {
-		return true;
-	}
+void Chip8_CoreInterface::copyGameToMemory(u8* dest, const u32 offset) {
+	std::copy_n(
+		std::execution::unseq,
+		HDM.getFileData(), HDM.getFileSize(), dest + offset
+	);
 }
 
 void Chip8_CoreInterface::copyFontToMemory(u8* dest, const u32 offset, const u32 size) {

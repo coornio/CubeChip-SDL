@@ -68,7 +68,7 @@ SDL_AppResult VM_Host::runFrame() {
 			return SDL_APP_CONTINUE;
 		}
 		if (kb.isPressed(KEY(BACKSPACE))) {
-			loadGameFile(HDM->getFullPath());
+			replaceGuest(false);
 			return SDL_APP_CONTINUE;
 		}
 		if (kb.isPressed(KEY(RSHIFT))) {
