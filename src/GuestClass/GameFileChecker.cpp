@@ -4,17 +4,38 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include "GameFileChecker.hpp"
+//#include <fstream>
+//#include <iostream>
 
 #include "../_nlohmann/json.hpp"
-
 using json = nlohmann::json;
+
+#include "GameFileChecker.hpp"
 
 
 #include "EmuCores/CHIP8_MODERN.hpp"
 
-std::string GameFileChecker::sErrorMsg{};
-GameCoreType GameFileChecker::sEmuCore{};
+/*==================================================================*/
+
+std::string    GameFileChecker::sErrorMsg{};
+GameCoreType   GameFileChecker::sEmuCore{};
+nlohmann::json GameFileChecker::sEmuConfig{};
+
+/*==================================================================*/
+
+void GameFileChecker::delCore() noexcept {
+	sErrorMsg.clear();
+	sEmuConfig.clear();
+	sEmuCore = GameCoreType::INVALID;
+}
+
+auto GameFileChecker::getError() noexcept { return std::move(sErrorMsg); }
+
+auto GameFileChecker::getCore()  noexcept { return sEmuCore; }
+
+bool GameFileChecker::hasCore()  noexcept { return sEmuCore != GameCoreType::INVALID; }
+
+/*==================================================================*/
 
 std::unique_ptr<EmuInterface> GameFileChecker::initializeCore(
 	HomeDirManager& HDM, BasicVideoSpec& BVS, BasicAudioSpec& BAS
@@ -68,10 +89,26 @@ std::unique_ptr<EmuInterface> GameFileChecker::initializeCore(
 	}
 }
 
+/*==================================================================*/
+
 bool GameFileChecker::validate(
-	const std::uint64_t    size,
-	const std::string_view type,
-	const std::string_view sha1
+	const std::size_t  size,
+	const std::string& type,
+	const std::string& sha1
+) noexcept {
+	sErrorMsg.clear();
+
+	if (sha1.empty()) {
+		return validate(size, type);
+	} else {
+		/* database check here */
+		return validate(size, type); // placeholder
+	}
+}
+
+bool GameFileChecker::validate(
+	const std::size_t  size,
+	const std::string& type
 ) noexcept {
 	static const std::unordered_map <std::string_view, GameFileType> sExtMap{
 		{".c2x", GameFileType::c2x},
@@ -89,12 +126,6 @@ bool GameFileChecker::validate(
 		{".hwc", GameFileType::hwc},
 		{".bnc", GameFileType::bnc},
 	};
-
-	sErrorMsg.clear();
-
-	if (!sha1.empty()) {
-		/* database check here */
-	}
 
 	const auto it{ sExtMap.find(type) };
 	if (it == sExtMap.end()) {
@@ -195,3 +226,4 @@ bool GameFileChecker::validate(
 	}
 	return false;
 };
+

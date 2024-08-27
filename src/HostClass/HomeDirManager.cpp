@@ -5,28 +5,35 @@
 */
 
 #include <fstream>
-#include <iostream>
 
 #include "HomeDirManager.hpp"
+
 #include "../Assistants/BasicLogger.hpp"
-#include "../Assistants/PathExceptionClass.hpp"
 #include "../Assistants/SHA1.hpp"
+
+#include <SDL3/SDL_messagebox.h>
 
 using namespace blogger;
 
-HomeDirManager::HomeDirManager(const std::string_view homeDirName) try
-	: BasicHome{ homeDirName }
-{
+/*==================================================================*/
+	#pragma region HomeDirManager Class
+/*==================================================================*/
+
+HomeDirManager::HomeDirManager(const char* const org, const char* const app) {
 	try {
-		blog.setStdLogFile("program.log", getHome());
-		addDirectory();
+		if (!HDM::getHomePath(org, app)) {
+			throw std::runtime_error("Unable to get home directory!");
+		} else {
+			blog.initLogFile("program.log", HDM::getHomePath());
+			addDirectory(); // XXX needs fixing
+		}
 	} catch (const std::exception& e) {
-		BasicHome::showErrorBox(e.what(), "Fatal Initialization Error");
+		SDL_ShowSimpleMessageBox(
+			SDL_MESSAGEBOX_ERROR, "Fatal Initialization Error",
+			e.what(), nullptr
+		);
 		throw;
 	}
-} catch (const std::exception& e) {
-	BasicHome::showErrorBox(e.what(), "Fatal Initilization Error");
-	throw;
 }
 
 void HomeDirManager::clearCachedFileData() noexcept {
@@ -36,11 +43,11 @@ void HomeDirManager::clearCachedFileData() noexcept {
 	mFileTime = {};
 }
 
-void HomeDirManager::addDirectory() {
-	permRegs = getHome() / "permRegs";
+void HomeDirManager::addDirectory() { // XXX needs fixing
+	permRegs.assign(HDM::getHomePath()) /= "permRegs";
 	std::filesystem::create_directories(permRegs);
 	if (!std::filesystem::exists(permRegs)) {
-		throw PathException("Could not create subdir: ", permRegs);
+		throw std::runtime_error("Unable to create subdirectory!");
 	}
 }
 
@@ -93,3 +100,7 @@ bool HomeDirManager::validateGameFile(const FilePath gamePath) noexcept {
 
 	return gameApproved;
 }
+
+/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
+#pragma endregion
+/*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/

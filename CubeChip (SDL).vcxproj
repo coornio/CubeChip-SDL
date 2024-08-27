@@ -19,7 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Assistants\BasicHome.cpp" />
     <ClCompile Include="src\Assistants\BasicInput.cpp" />
     <ClCompile Include="src\Assistants\BasicLogger.cpp" />
     <ClCompile Include="src\Assistants\FrameLimiter.cpp" />
@@ -35,12 +34,10 @@
     <ClCompile Include="src\HostClass\HomeDirManager.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Assistants\BasicHome.hpp" />
     <ClInclude Include="src\Assistants\BasicInput.hpp" />
     <ClInclude Include="src\Assistants\BasicLogger.hpp" />
     <ClInclude Include="src\Assistants\BytePun.hpp" />
     <ClInclude Include="src\Assistants\FrameLimiter.hpp" />
-    <ClInclude Include="src\Assistants\PathExceptionClass.hpp" />
     <ClInclude Include="src\Assistants\SHA1.hpp" />
     <ClInclude Include="src\Assistants\Map2D.hpp" />
     <ClInclude Include="src\Assistants\Well512.hpp" />

@@ -22,13 +22,13 @@
 using namespace blogger;
 using namespace bic;
 
-/*------------------------------------------------------------------*/
-/*  class  VM_Host                                                  */
-/*------------------------------------------------------------------*/
+/*==================================================================*/
+	#pragma region VM_Host Singleton Class
+/*==================================================================*/
 
 VM_Host::VM_Host(const FilePath& gamePath)
 	: Limiter{ std::make_unique<FrameLimiter>() }
-	, HDM    { std::make_unique<HomeDirManager>("CubeChip") }
+	, HDM    { std::make_unique<HomeDirManager>(nullptr, "CubeChip") }
 	, BVS    { std::make_unique<BasicVideoSpec>() }
 	, BAS    { std::make_unique<BasicAudioSpec>() }
 {
@@ -166,3 +166,7 @@ void VM_Host::loadGameFile(const FilePath& gameFile, const bool alert) {
 void VM_Host::pauseSystem(const bool state) const noexcept {
 	if (iGuest) { iGuest->isSystemStopped(state); }
 }
+
+/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
+	#pragma endregion
+/*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/

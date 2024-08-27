@@ -9,7 +9,6 @@
 #include <fstream>
 
 #include "BasicLogger.hpp"
-#include "PathExceptionClass.hpp"
 
 BasicLogger& blogger::blog{ BasicLogger::create() };
 
@@ -17,42 +16,27 @@ BasicLogger& blogger::blog{ BasicLogger::create() };
 	#pragma region BasicLogger Singleton Class
 /*==================================================================*/
 
-void BasicLogger::createDirectory(
+bool BasicLogger::initLogFile(
 	const std::string&           filename,
 	const std::filesystem::path& directory
-) {
+) noexcept {
 	if (filename.empty() || directory.empty()) {
-		throw PathException("The log file must have a path/name!", "");
+		std::cerr << ":: ERROR :: " << "Log file name/path is invalid!" << std::endl;
+		return true;
 	}
 
-	namespace fs = std::filesystem;
+	const auto newPath{ directory / filename };
+	std::error_code error;
 
-	fs::create_directories(directory);
-	if (!fs::exists(directory) || !fs::is_directory(directory)) {
-		throw PathException("Unable to create directory at: ", directory);
-	}
-
-	// append file.ext to directory, save to path
-	mLogPath = directory / filename;
-
-	// attempt to delete file if it exists already
-	if (fs::exists(mLogPath)) {
-		if (!fs::remove_all(mLogPath)) {
-			throw PathException("Unable to clear old log file: ", mLogPath);
+	if (std::filesystem::exists(newPath, error)) {
+		if (!std::filesystem::remove_all(newPath, error) || error) {
+			std::cerr << ":: ERROR :: " << "Unable to remove previous log file!" << std::endl;
+			return true;
 		}
 	}
-}
 
-void BasicLogger::setStdLogFile(
-	const std::string&           name,
-	const std::filesystem::path& path
-) {
-	try {
-		createDirectory(name, path);
-	} catch (const std::exception& e) {
-		std::cerr << ":: ERROR :: " << e.what() << std::endl;
-		throw;
-	}
+	mLogPath.assign(newPath);
+	return false;
 }
 
 /*==================================================================*/
@@ -65,12 +49,15 @@ void BasicLogger::newEntry(const BLOG type, const std::string& message) noexcept
 
 	std::cout << output.str() << std::endl;
 
-	std::ofstream logFile(mLogPath, std::ios::app);
-	if (!logFile) {
-		std::cerr << "Unable to open log file: " << mLogPath << std::endl;
-		return;
-	} else {
-		logFile << output.str() << std::endl;
+	if (!mLogPath.empty()) {
+		std::ofstream logFile(mLogPath, std::ios::app);
+		if (!logFile) {
+			std::cerr << ":: ERROR :: " << "Unable to open log file: " << mLogPath << std::endl;
+			mLogPath.clear();
+			return;
+		} else {
+			logFile << output.str() << std::endl;
+		}
 	}
 }
 

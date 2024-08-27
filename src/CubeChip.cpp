@@ -21,6 +21,8 @@
 
 #include "HostClass/Host.hpp"
 
+/*==================================================================*/
+
 SDL_AppResult SDL_AppInit(void **Host, int argc, char* argv[]) {
 
 //             VS               OTHER
@@ -48,6 +50,7 @@ SDL_AppResult SDL_AppInit(void **Host, int argc, char* argv[]) {
 	SDL_SetHint(SDL_HINT_WINDOWS_RAW_KEYBOARD, "0");
 #endif
 	SDL_SetHint(SDL_HINT_APP_NAME, "CubeChip");
+	SDL_SetHint(SDL_HINT_RENDER_VSYNC, "0");
 
 #if 0
 	setlocale(LC_CTYPE, "");
@@ -64,6 +67,8 @@ SDL_AppResult SDL_AppInit(void **Host, int argc, char* argv[]) {
 	if (Host) { return SDL_APP_CONTINUE; }
 	else      { return SDL_APP_FAILURE;  }
 }
+
+/*==================================================================*/
 
 SDL_AppResult SDL_AppIterate(void* pHost) {
 	auto& Host{ *static_cast<VM_Host*>(pHost) };
@@ -83,6 +88,8 @@ SDL_AppResult SDL_AppIterate(void* pHost) {
 			return SDL_APP_FAILURE;
 	}
 }
+
+/*==================================================================*/
 
 SDL_AppResult SDL_AppEvent(void* pHost, const SDL_Event* Event) {
 	auto& Host{ *static_cast<VM_Host*>(pHost) };
@@ -112,5 +119,7 @@ SDL_AppResult SDL_AppEvent(void* pHost, const SDL_Event* Event) {
 	
 	return SDL_APP_CONTINUE;
 }
+
+/*==================================================================*/
 
 void SDL_AppQuit(void*) {}

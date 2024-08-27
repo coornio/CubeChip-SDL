@@ -30,7 +30,7 @@ CHIP8_MODERN::CHIP8_MODERN(
 
 void CHIP8_MODERN::processFrame() {
 	if (isSystemStopped()) { return; }
-	else { ++mTotalFrames; }
+	else [[likely]] { ++mTotalFrames; }
 
 	Input.updateKeyStates();
 

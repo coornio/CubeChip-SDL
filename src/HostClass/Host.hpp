@@ -19,19 +19,23 @@ class BasicAudioSpec;
 class FrameLimiter;
 class EmuInterface;
 
+/*==================================================================*/
+	#pragma region VM_Host Singleton Class
+/*==================================================================*/
+
 class VM_Host final {
 
 	using FilePath = std::filesystem::path;
 
-	std::unique_ptr<EmuInterface>
-		iGuest;
-
+	std::unique_ptr<EmuInterface> iGuest;
 	std::unique_ptr<FrameLimiter> Limiter;
+
 	std::unique_ptr<HomeDirManager> HDM;
 	std::unique_ptr<BasicVideoSpec> BVS;
 	std::unique_ptr<BasicAudioSpec> BAS;
 
 	bool runBenchmark{};
+	bool forceFileCfg{};
 
 	bool initGameCore();
 	void replaceGuest(const bool);
@@ -50,3 +54,7 @@ public:
 
 	SDL_AppResult runFrame();
 };
+
+/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
+	#pragma endregion
+/*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/

@@ -66,9 +66,6 @@
     <ClCompile Include="src\HostClass\HostFunctions.cpp">
       <Filter>Source Files\VM Host</Filter>
     </ClCompile>
-    <ClCompile Include="src\Assistants\BasicHome.cpp">
-      <Filter>Source Files\Assistants</Filter>
-    </ClCompile>
     <ClCompile Include="src\Assistants\BasicInput.cpp">
       <Filter>Source Files\Assistants</Filter>
     </ClCompile>
@@ -116,16 +113,10 @@
     <ClInclude Include="src\Assistants\BasicLogger.hpp">
       <Filter>Header Files\Assistants</Filter>
     </ClInclude>
-    <ClInclude Include="src\Assistants\BasicHome.hpp">
-      <Filter>Header Files\Assistants</Filter>
-    </ClInclude>
     <ClInclude Include="src\GuestClass\HexInput.hpp">
       <Filter>Header Files\VM Guest</Filter>
     </ClInclude>
     <ClInclude Include="src\Assistants\SHA1.hpp">
-      <Filter>Header Files\Assistants</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Assistants\PathExceptionClass.hpp">
       <Filter>Header Files\Assistants</Filter>
     </ClInclude>
     <ClInclude Include="src\_nlohmann\json_fwd.hpp">

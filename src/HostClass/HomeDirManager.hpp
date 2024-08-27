@@ -6,29 +6,32 @@
 
 #pragma once
 
-#include <cstdint>
+#include <cstddef>
 #include <string>
 #include <vector>
 #include <filesystem>
-#include <string_view>
 
-#include "../Assistants/BasicHome.hpp"
+#include <SDL3/SDL_filesystem.h>
 
-class HomeDirManager final : public BasicHome {
-	using GameValidator = bool (*)(std::uint64_t, std::string_view, std::string_view);
+/*==================================================================*/
+	#pragma region HomeDirManager Class
+/*==================================================================*/
+
+class HomeDirManager final {
+	using GameValidator = bool (*)(const std::size_t, const std::string&, const std::string&);
 	using FileModTime   = std::filesystem::file_time_type;
 	using FilePath      = std::filesystem::path;
 
 	FilePath    mFilePath{};
-	std::string mFileSHA1{};
 	FileModTime mFileTime{};
 
+	std::string mFileSHA1{};
 	GameValidator checkGame{};
 
 	std::vector<char> mFileData{};
 
 public:
-	HomeDirManager(const std::string_view);
+	HomeDirManager(const char* const org, const char* const app);
 
 	FilePath permRegs{}; // XXX needs fixing
 	void addDirectory(); // XXX needs fixing
@@ -49,7 +52,19 @@ public:
 	bool validateGameFile(const FilePath) noexcept;
 };
 
+/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
+	#pragma endregion
+/*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
+
 namespace HDM {
+	inline auto getHomePath(
+		const char* const org = nullptr,
+		const char* const app = nullptr
+	) {
+		static const char* const homePath{ SDL_GetPrefPath(org, app) };
+		return homePath;
+	}
+
 	inline auto getFileTime(const std::filesystem::path& filePath) noexcept {
 		std::error_code error;
 		return std::filesystem::last_write_time(filePath, error);

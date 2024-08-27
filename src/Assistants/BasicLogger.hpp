@@ -22,11 +22,6 @@ class BasicLogger final {
 
 	std::filesystem::path mLogPath{};
 
-	void createDirectory(
-		const std::string&,
-		const std::filesystem::path&
-	);
-
 	std::string_view getSeverity(BLOG type) const noexcept {
 		switch (type) {
 			case BLOG::INFO:
@@ -47,12 +42,12 @@ class BasicLogger final {
 	}
 
 public:
-	static BasicLogger& create() {
+	static BasicLogger& create() noexcept {
 		static BasicLogger _self;
 		return _self;
 	}
 
-	void setStdLogFile(const std::string&, const std::filesystem::path&);
+	bool initLogFile(const std::string&, const std::filesystem::path&) noexcept;
 
 	void newEntry(const BLOG type, const std::string&) noexcept;
 };

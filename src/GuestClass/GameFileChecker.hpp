@@ -6,11 +6,12 @@
 
 #pragma once
 
-#include <utility>
 #include <cstddef>
-#include <memory>
 #include <string>
+#include <string_view>
 #include <unordered_map>
+
+#include "../_nlohmann/json_fwd.hpp"
 
 enum class GameFileType {
 	c2x, // CHIP-8X 2-page
@@ -49,41 +50,44 @@ class GameFileChecker final {
 	 GameFileChecker() = delete;
 	~GameFileChecker() = delete;
 
-	static std::string sErrorMsg;
-	static GameCoreType sEmuCore;
+	static std::string    sErrorMsg;
+	static GameCoreType   sEmuCore;
+	static nlohmann::json sEmuConfig;
 
-	[[nodiscard]] static constexpr bool testGame(
-		const bool pass, const GameCoreType type
+	[[nodiscard]]
+	static bool testGame(
+		const bool condition,
+		const GameCoreType type
 	) noexcept {
-		if (pass) { sEmuCore = type; }
-		return pass;
+		if (condition) { sEmuCore = type; }
+		return condition;
 	}
-
-public:
-	[[nodiscard]] static auto getError() noexcept {
-		return std::move(sErrorMsg);
-	}
-
-	[[nodiscard]] static auto getCore()  noexcept {
-		return sEmuCore;
-	}
-
-	static void delCore() noexcept {
-		sErrorMsg.clear();
-		sEmuCore = GameCoreType::INVALID;
-	}
-
-	[[nodiscard]] static bool hasCore() noexcept {
-		return sEmuCore != GameCoreType::INVALID;
-	}
-
-	[[nodiscard]] static std::unique_ptr<EmuInterface> initializeCore(
-		HomeDirManager&, BasicVideoSpec&, BasicAudioSpec&
-	);
 
 	static bool validate(
-		std::uint64_t    size,
-		std::string_view type,
-		std::string_view sha1 = ""
+		const std::size_t  size,
+		const std::string& type
 	) noexcept;
+
+public:
+	static bool validate(
+		const std::size_t  size,
+		const std::string& type,
+		const std::string& sha1
+	) noexcept;
+
+	static void delCore()  noexcept;
+
+	[[nodiscard]]
+	static auto getError() noexcept;
+
+	[[nodiscard]]
+	static auto getCore()  noexcept;
+
+	[[nodiscard]]
+	static bool hasCore()  noexcept;
+
+	[[nodiscard]]
+	static std::unique_ptr<EmuInterface> initializeCore(
+		HomeDirManager&, BasicVideoSpec&, BasicAudioSpec&
+	);
 };
