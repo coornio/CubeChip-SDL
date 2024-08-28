@@ -11,7 +11,7 @@
 static constexpr s32 VOL_MAX{ 255 };
 static constexpr s32 VOL_MIN{   0 };
 
-BasicAudioSpec::BasicAudioSpec()
+BasicAudioSpec::BasicAudioSpec() noexcept
 	: audiospec{ SDL_AUDIO_S16, 1, outFrequency }
 {
 	SDL_InitSubSystem(SDL_INIT_AUDIO);

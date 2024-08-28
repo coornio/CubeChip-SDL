@@ -26,26 +26,26 @@ using namespace bic;
 	#pragma region VM_Host Singleton Class
 /*==================================================================*/
 
-VM_Host::VM_Host(const FilePath& gamePath)
+VM_Host::VM_Host(const FilePath& gamePath) noexcept
 	: Limiter{ std::make_unique<FrameLimiter>() }
 	, HDM    { std::make_unique<HomeDirManager>(nullptr, "CubeChip") }
 	, BVS    { std::make_unique<BasicVideoSpec>() }
 	, BAS    { std::make_unique<BasicAudioSpec>() }
 {
-	HDM->setValidator(GameFileChecker::validate);
-	loadGameFile(gamePath);
-}
+	errorTriggered = (HDM->getSelfStatus() || BVS->getSelfStatus() || BAS->getSelfStatus());
 
-VM_Host* VM_Host::initialize(const FilePath& gamePath) {
-	try {
-		static VM_Host self(gamePath);
-		return &self;
-	} catch (...) {
-		return nullptr;
+	if (!getSelfStatus()) {
+		HDM->setValidator(GameFileChecker::validate);
+		loadGameFile(gamePath);
 	}
 }
 
-bool VM_Host::initGameCore() {
+VM_Host* VM_Host::initialize(const FilePath& gamePath) noexcept {
+	static VM_Host self(gamePath);
+	return self.getSelfStatus() ? nullptr : &self;
+}
+
+bool VM_Host::initGameCore() noexcept {
 	iGuest = std::move(GameFileChecker::initializeCore(*HDM, *BVS, *BAS));
 	return iGuest ? true : false;
 }

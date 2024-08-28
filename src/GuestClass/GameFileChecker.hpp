@@ -89,5 +89,5 @@ public:
 	[[nodiscard]]
 	static std::unique_ptr<EmuInterface> initializeCore(
 		HomeDirManager&, BasicVideoSpec&, BasicAudioSpec&
-	);
+	) noexcept;
 };

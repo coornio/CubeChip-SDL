@@ -22,6 +22,8 @@ class BasicVideoSpec final {
 	bool enableBuzzGlow{};
 	bool enableScanLine{};
 
+	bool errorTriggered{};
+
 	SDL_FRect frameBack{};
 	SDL_FRect frameRect{};
 
@@ -32,11 +34,13 @@ class BasicVideoSpec final {
 	s32  frameMultiplier{ 2 };
 
 public:
-	explicit BasicVideoSpec();
+	BasicVideoSpec() noexcept;
 	~BasicVideoSpec();
 
-	static bool showErrorBoxSDL(std::string_view);
-	static bool showErrorBox(std::string_view, std::string_view);
+	bool getSelfStatus() const noexcept { return errorTriggered; }
+
+	static bool showErrorBox(const char* const) noexcept;
+	static bool showErrorBox(const char* const, const char* const) noexcept;
 
 	void setBackColor (
 		const u32 color

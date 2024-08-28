@@ -50,7 +50,6 @@ SDL_AppResult SDL_AppInit(void **Host, int argc, char* argv[]) {
 	SDL_SetHint(SDL_HINT_WINDOWS_RAW_KEYBOARD, "0");
 #endif
 	SDL_SetHint(SDL_HINT_APP_NAME, "CubeChip");
-	SDL_SetHint(SDL_HINT_RENDER_VSYNC, "0");
 
 #if 0
 	setlocale(LC_CTYPE, "");

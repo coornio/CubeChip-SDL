@@ -9,19 +9,13 @@
 
 #include "BasicVideoSpec.hpp"
 
-BasicVideoSpec::BasicVideoSpec()
+BasicVideoSpec::BasicVideoSpec() noexcept
 	: enableBuzzGlow{ true }
 {
-	try {
-		SDL_InitSubSystem(SDL_INIT_VIDEO);
-		createWindow(0, 0);
-		createRenderer();
-		resetWindow();
-	}
-	catch (const std::exception& e) {
-		showErrorBoxSDL(e.what());
-		throw;
-	}
+	SDL_InitSubSystem(SDL_INIT_VIDEO);
+	createWindow(0, 0);
+	createRenderer();
+	resetWindow();
 }
 
 BasicVideoSpec::~BasicVideoSpec() {
@@ -33,7 +27,10 @@ void BasicVideoSpec::createWindow(const s32 window_W, const s32 window_H) {
 
 	window = SDL_CreateWindow(nullptr, window_W, window_H, 0);
 
-	if (!window) { throw std::runtime_error(SDL_GetError()); }
+	if (!window) {
+		errorTriggered = true;
+		showErrorBox("Failed to create SDL_Window!");
+	}
 }
 
 void BasicVideoSpec::createRenderer() {
@@ -41,7 +38,10 @@ void BasicVideoSpec::createRenderer() {
 
 	renderer = SDL_CreateRenderer(window, nullptr);
 	
-	if (!renderer) { throw std::runtime_error(SDL_GetError()); }
+	if (!renderer) {
+		errorTriggered = true;
+		showErrorBox("Failed to create SDL_Renderer!");
+	}
 }
 
 void BasicVideoSpec::createTexture(s32 texture_W, s32 texture_H) {
@@ -57,10 +57,13 @@ void BasicVideoSpec::createTexture(s32 texture_W, s32 texture_H) {
 		texture_W, texture_H
 	);
 
-	if (!texture) { throw std::runtime_error(SDL_GetError()); }
-
-	SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
-	ppitch = texture_W * 4;
+	if (!texture) {
+		errorTriggered = true;
+		showErrorBox("Failed to create SDL_Texture!");
+	} else {
+		SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
+		ppitch = texture_W * 4;
+	}
 }
 
 void BasicVideoSpec::changeTitle(const std::string& name) {
@@ -69,18 +72,12 @@ void BasicVideoSpec::changeTitle(const std::string& name) {
 	SDL_SetWindowTitle(window, windowTitle.c_str());
 }
 
-bool BasicVideoSpec::showErrorBoxSDL(std::string_view title) {
-	return SDL_ShowSimpleMessageBox(
-		SDL_MESSAGEBOX_ERROR, title.data(),
-		SDL_GetError(), nullptr
-	);
+bool BasicVideoSpec::showErrorBox(const char* const title) noexcept {
+	return showErrorBox(title, SDL_GetError());
 }
 
-bool BasicVideoSpec::showErrorBox(std::string_view message, std::string_view title) {
-	return SDL_ShowSimpleMessageBox(
-		SDL_MESSAGEBOX_ERROR, title.data(),
-		message.data(), nullptr
-	);
+bool BasicVideoSpec::showErrorBox(const char* const title, const char* const message) noexcept {
+	return SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title, message, nullptr);
 }
 
 void BasicVideoSpec::raiseWindow() {

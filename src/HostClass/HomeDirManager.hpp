@@ -19,19 +19,23 @@
 
 class HomeDirManager final {
 	using GameValidator = bool (*)(const std::size_t, const std::string&, const std::string&);
-	using FileModTime   = std::filesystem::file_time_type;
 	using FilePath      = std::filesystem::path;
 
 	FilePath    mFilePath{};
-	FileModTime mFileTime{};
-
 	std::string mFileSHA1{};
+
 	GameValidator checkGame{};
 
 	std::vector<char> mFileData{};
 
+	bool errorTriggered{};
+
 public:
-	HomeDirManager(const char* const org, const char* const app);
+	HomeDirManager(const char* const org, const char* const app) noexcept;
+
+	bool getSelfStatus() const noexcept { return errorTriggered; }
+
+	static bool showErrorBox(const char* const, const char* const) noexcept;
 
 	FilePath permRegs{}; // XXX needs fixing
 	void addDirectory(); // XXX needs fixing
@@ -44,7 +48,6 @@ public:
 	auto getFileSize() const noexcept { return mFileData.size(); }
 	auto getFileData() const noexcept { return mFileData.data(); }
 	auto getFileSHA1() const noexcept { return mFileSHA1; }
-	auto getFileTime() const noexcept { return mFileTime; }
 
 	void setValidator(GameValidator func) noexcept { checkGame = func; }
 

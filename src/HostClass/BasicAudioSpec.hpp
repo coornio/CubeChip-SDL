@@ -17,14 +17,17 @@ class BasicAudioSpec final {
 	s16 volume{};
 	s16 amplitude{};
 
-private:
+	bool errorTriggered{};
+
 	SDL_AudioSpec     audiospec{};
 	SDL_AudioDeviceID device{};
 	SDL_AudioStream*  stream{};
 
 public:
-	explicit BasicAudioSpec();
+	BasicAudioSpec() noexcept;
 	~BasicAudioSpec();
+
+	bool getSelfStatus() const noexcept { return errorTriggered; }
 
 	void pushAudioData(const void*, usz);
 

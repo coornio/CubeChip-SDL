@@ -37,17 +37,21 @@ class VM_Host final {
 	bool runBenchmark{};
 	bool forceFileCfg{};
 
-	bool initGameCore();
+	bool errorTriggered{};
+
+	bool initGameCore() noexcept;
 	void replaceGuest(const bool);
 
-	VM_Host(const FilePath&);
+	VM_Host(const FilePath&) noexcept;
 	VM_Host(const VM_Host&) = delete;
 	VM_Host& operator=(const VM_Host&) = delete;
 
 public:
 	std::mutex Mutex;
 
-	static VM_Host* initialize(const FilePath&);
+	bool getSelfStatus() const noexcept { return errorTriggered; }
+
+	static VM_Host* initialize(const FilePath&) noexcept;
 
 	void pauseSystem(const bool state) const noexcept;
 	void loadGameFile(const FilePath&, const bool = false);

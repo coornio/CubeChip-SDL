@@ -40,11 +40,11 @@ public:
 		float  framerate = 60.0f, // 0.5 ... 1000 range
 		bool   firstpass = true,  // skipFirstPass flag
 		bool   lostframe = true   // skipLostFrame flag
-	) {
+	) noexcept {
 		setLimiter(framerate, firstpass, lostframe);
 	}
 
-	FrameLimiter(const FrameLimiter& other)
+	FrameLimiter(const FrameLimiter& other) noexcept
 		: skipFirstPass{ other.skipFirstPass }
 		, skipLostFrame{ other.skipLostFrame }
 		, timeFrequency{ other.timeFrequency }
