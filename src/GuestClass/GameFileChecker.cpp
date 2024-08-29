@@ -20,27 +20,23 @@ using namespace blogger;
 
 /*==================================================================*/
 
-std::string    GameFileChecker::sErrorMsg{};
 GameCoreType   GameFileChecker::sEmuCore{};
 nlohmann::json GameFileChecker::sEmuConfig{};
 
 /*==================================================================*/
 
-void GameFileChecker::delCore() noexcept {
-	sErrorMsg.clear();
+void GameFileChecker::deleteGameCore() noexcept {
 	sEmuConfig.clear();
 	sEmuCore = GameCoreType::INVALID;
 }
 
-auto GameFileChecker::getError() noexcept { return std::move(sErrorMsg); }
+auto GameFileChecker::getGameCore()  noexcept { return sEmuCore; }
 
-auto GameFileChecker::getCore()  noexcept { return sEmuCore; }
-
-bool GameFileChecker::hasCore()  noexcept { return sEmuCore != GameCoreType::INVALID; }
+bool GameFileChecker::hasGameCore()  noexcept { return sEmuCore != GameCoreType::INVALID; }
 
 /*==================================================================*/
 
-std::unique_ptr<EmuInterface> GameFileChecker::initializeCore(
+std::unique_ptr<EmuInterface> GameFileChecker::constructCore(
 	HomeDirManager& HDM, BasicVideoSpec& BVS, BasicAudioSpec& BAS
 ) noexcept {
 	try {
@@ -97,6 +93,26 @@ std::unique_ptr<EmuInterface> GameFileChecker::initializeCore(
 	}
 }
 
+std::unique_ptr<EmuInterface> GameFileChecker::initGameCore(
+	HomeDirManager& HDM, BasicVideoSpec& BVS, BasicAudioSpec& BAS
+) noexcept {
+	std::unique_ptr<EmuInterface> tempCore{ constructCore(HDM, BVS, BAS) };
+
+	if (tempCore) {
+		if (tempCore->isCoreStopped()) {
+			if (hasGameCore()) {
+				blog.newEntry(BLOG::ERROR, "Failed critical Game Core initialization requirements!");
+				deleteGameCore();
+			}
+			return nullptr;
+		} else {
+			return tempCore;
+		}
+	} else {
+		return nullptr;
+	}
+}
+
 /*==================================================================*/
 
 bool GameFileChecker::validate(
@@ -104,8 +120,6 @@ bool GameFileChecker::validate(
 	const std::string& type,
 	const std::string& sha1
 ) noexcept {
-	sErrorMsg.clear();
-
 	if (sha1.empty()) {
 		return validate(size, type);
 	} else {
@@ -137,7 +151,7 @@ bool GameFileChecker::validate(
 
 	const auto it{ sExtMap.find(type) };
 	if (it == sExtMap.end()) {
-		sErrorMsg = "unknown filetype or platform";
+		blog.newEntry(BLOG::WARN, "Cannot match Game to a supported system/platform!");
 		return false;
 	}
 

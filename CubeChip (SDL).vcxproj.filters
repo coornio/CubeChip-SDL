@@ -146,5 +146,8 @@
     <ClInclude Include="src\GuestClass\GameFileChecker.hpp">
       <Filter>Header Files\VM Guest</Filter>
     </ClInclude>
+    <ClInclude Include="src\Assistants\PathGetters.hpp">
+      <Filter>Header Files\Assistants</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

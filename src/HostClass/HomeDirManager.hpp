@@ -11,23 +11,23 @@
 #include <vector>
 #include <filesystem>
 
-#include <SDL3/SDL_filesystem.h>
-
 /*==================================================================*/
 	#pragma region HomeDirManager Class
 /*==================================================================*/
 
 class HomeDirManager final {
 	using GameValidator = bool (*)(const std::size_t, const std::string&, const std::string&);
-	using FilePath      = std::filesystem::path;
 
-	FilePath    mFilePath{};
-	std::string mFileSHA1{};
+	std::filesystem::path mFilePath{};
+	std::string           mFileSHA1{};
+
+	std::vector<char>
+		mFileData{};
+
+	std::vector<std::filesystem::path>
+		mDirectories{};
 
 	GameValidator checkGame{};
-
-	std::vector<char> mFileData{};
-
 	bool errorTriggered{};
 
 public:
@@ -37,8 +37,10 @@ public:
 
 	static bool showErrorBox(const char* const, const char* const) noexcept;
 
-	FilePath permRegs{}; // XXX needs fixing
-	void addDirectory(); // XXX needs fixing
+	auto addSystemDir(
+		const std::filesystem::path& sub,
+		const std::filesystem::path& sys = {}
+	) noexcept -> std::filesystem::path*;
 
 	auto getFullPath() const noexcept { return mFilePath; }
 	auto getFilePath() const noexcept { return mFilePath.string(); }
@@ -52,24 +54,9 @@ public:
 	void setValidator(GameValidator func) noexcept { checkGame = func; }
 
 	void clearCachedFileData() noexcept;
-	bool validateGameFile(const FilePath) noexcept;
+	bool validateGameFile(const std::filesystem::path) noexcept;
 };
 
 /*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
-
-namespace HDM {
-	inline auto getHomePath(
-		const char* const org = nullptr,
-		const char* const app = nullptr
-	) {
-		static const char* const homePath{ SDL_GetPrefPath(org, app) };
-		return homePath;
-	}
-
-	inline auto getFileTime(const std::filesystem::path& filePath) noexcept {
-		std::error_code error;
-		return std::filesystem::last_write_time(filePath, error);
-	}
-}

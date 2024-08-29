@@ -46,7 +46,7 @@ VM_Host* VM_Host::initialize(const FilePath& gamePath) noexcept {
 }
 
 bool VM_Host::initGameCore() noexcept {
-	iGuest = std::move(GameFileChecker::initializeCore(*HDM, *BVS, *BAS));
+	iGuest = GameFileChecker::initGameCore(*HDM, *BVS, *BAS);
 	return iGuest ? true : false;
 }
 
@@ -144,7 +144,7 @@ void VM_Host::replaceGuest(const bool disable) {
 
 	if (disable) {
 		BVS->resetWindow();
-		GameFileChecker::delCore();
+		GameFileChecker::deleteGameCore();
 	}
 
 	if (initGameCore()) {
@@ -164,7 +164,11 @@ void VM_Host::loadGameFile(const FilePath& gameFile, const bool alert) {
 }
 
 void VM_Host::pauseSystem(const bool state) const noexcept {
-	if (iGuest) { iGuest->isSystemStopped(state); }
+	if (state) {
+		EmuInterface::addSystemState(EmuState::HIDDEN);
+	} else {
+		EmuInterface::subSystemState(EmuState::HIDDEN);
+	}
 }
 
 /*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/

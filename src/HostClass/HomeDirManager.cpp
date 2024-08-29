@@ -5,32 +5,67 @@
 */
 
 #include <fstream>
+#include <execution>
 
 #include "HomeDirManager.hpp"
 
-#include "../Assistants/BasicLogger.hpp"
 #include "../Assistants/SHA1.hpp"
+#include "../Assistants/PathGetters.hpp"
+#include "../Assistants/BasicLogger.hpp"
+using namespace blogger;
 
 #include <SDL3/SDL_messagebox.h>
 
-using namespace blogger;
+static auto getFileModTime(const std::filesystem::path& filePath) noexcept {
+	std::error_code error;
+	return std::filesystem::last_write_time(filePath, error);
+}
 
 /*==================================================================*/
 	#pragma region HomeDirManager Class
 /*==================================================================*/
 
 HomeDirManager::HomeDirManager(const char* const org, const char* const app) noexcept {
-	if (!HDM::getHomePath(org, app)) {
+	if (!getHomePath(org, app)) {
 		errorTriggered = true;
 		showErrorBox("Filesystem Error", "Unable to get home directory!");
 	} else {
-		blog.initLogFile("program.log", HDM::getHomePath());
-		addDirectory(); // XXX needs fixing
+		blog.initLogFile("program.log", getHomePath());
 	}
 }
 
 bool HomeDirManager::showErrorBox(const char* const title, const char* const message) noexcept {
 	return SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title, message, nullptr);
+}
+
+auto HomeDirManager::addSystemDir(
+	const std::filesystem::path& sub,
+	const std::filesystem::path& sys
+) noexcept -> std::filesystem::path* {
+	if (sub.empty()) { return nullptr; }
+	
+	const std::filesystem::path newDir{ getHomePath() / sys / sub };
+
+	auto it = std::find_if(
+		std::execution::unseq,
+		mDirectories.begin(), mDirectories.end(),
+		[&newDir](const auto& dirEntry) {
+			return dirEntry == newDir;
+		}
+	);
+
+	if (it != mDirectories.end()) { return &(*it); }
+
+	std::error_code error;
+
+	std::filesystem::create_directories(newDir, error);
+	if (!std::filesystem::exists(newDir, error) || error) {
+		showErrorBox("Filesystem Error", (newDir.string() + "\nUnable to create subdirectories!").c_str());
+		return nullptr;
+	}
+
+	mDirectories.push_back(newDir);
+	return &mDirectories.back();
 }
 
 void HomeDirManager::clearCachedFileData() noexcept {
@@ -39,19 +74,7 @@ void HomeDirManager::clearCachedFileData() noexcept {
 	mFileData.resize(0);
 }
 
-void HomeDirManager::addDirectory() { // XXX needs fixing
-	if (getSelfStatus()) { return; }
-
-	permRegs.assign(HDM::getHomePath()) /= "permRegs";
-
-	std::filesystem::create_directories(permRegs);
-	if (!std::filesystem::exists(permRegs)) {
-		errorTriggered = true;
-		showErrorBox("Filesystem Error", "Unable to create subdirectory!");
-	}
-}
-
-bool HomeDirManager::validateGameFile(const FilePath gamePath) noexcept {
+bool HomeDirManager::validateGameFile(const std::filesystem::path gamePath) noexcept {
 	if (gamePath.empty()) { return false; }
 	namespace fs = std::filesystem;
 	std::error_code error;
@@ -68,12 +91,12 @@ bool HomeDirManager::validateGameFile(const FilePath gamePath) noexcept {
 		return false;
 	}
 
-	const auto tempTime{ HDM::getFileTime(gamePath) };
+	const auto tempTime{ getFileModTime(gamePath) };
 
 	std::ifstream ifs(gamePath, std::ios::binary);
 	mFileData.assign(std::istreambuf_iterator(ifs), {});
 
-	if (tempTime != HDM::getFileTime(gamePath)) {
+	if (tempTime != getFileModTime(gamePath)) {
 		blog.newEntry(BLOG::WARN, "File was modified while reading!");
 		return false;
 	}

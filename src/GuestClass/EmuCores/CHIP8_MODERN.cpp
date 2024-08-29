@@ -18,14 +18,17 @@ CHIP8_MODERN::CHIP8_MODERN(
 ) noexcept
 	: Chip8_CoreInterface{ ref_HDM, ref_BVS, ref_BAS }
 {
-	copyGameToMemory(mMemoryBank.data(), cGameLoadPos);
-	copyFontToMemory(mMemoryBank.data(), 0x0, 0x50);
+	if (getCoreState() != EmuState::FAILED) {
 
-	mProgCounter    = cStartOffset;
-	mFramerate      = cRefreshRate;
-	mCyclesPerFrame = Quirk.waitVblank ? cInstSpeedHi : 5000000;
+		copyGameToMemory(mMemoryBank.data(), cGameLoadPos);
+		copyFontToMemory(mMemoryBank.data(), 0x0, 0x50);
 
-	initPlatform();
+		mProgCounter    = cStartOffset;
+		mFramerate      = cRefreshRate;
+		mCyclesPerFrame = Quirk.waitVblank ? cInstSpeedHi : 5000000;
+
+		initPlatform();
+	}
 }
 
 void CHIP8_MODERN::processFrame() {
@@ -79,6 +82,7 @@ void CHIP8_MODERN::handleEndFrameInterrupt() noexcept {
 
 		case Interrupt::ERROR:
 		case Interrupt::FINAL:
+			setCoreState(EmuState::HALTED);
 			mCyclesPerFrame = 0;
 			return;
 	}

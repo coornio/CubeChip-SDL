@@ -14,7 +14,6 @@
 #include "../HexInput.hpp"
 
 #include <utility>
-#include <cstddef>
 #include <memory>
 #include <string>
 
@@ -22,15 +21,26 @@ class HomeDirManager;
 class BasicVideoSpec;
 class BasicAudioSpec;
 
+enum EmuState : u8 {
+	NORMAL = 0x0, // normal operation
+	HIDDEN = 0x1, // window is hidden
+	PAUSED = 0x2, // paused by hotkey
+	HALTED = 0x4, // normal/error end
+	FAILED = 0x8, // failed core init
+};
 
 class EmuInterface {
+	static u32 mGlobalState;
 
 public:
-	virtual ~EmuInterface() noexcept {};
+	virtual ~EmuInterface() noexcept;
 
-	[[nodiscard]]
-	virtual bool isSystemStopped() const = 0;
-	virtual void isSystemStopped(const bool state) = 0;
+	static void addSystemState(const EmuState state) noexcept { mGlobalState |=  state; }
+	static void subSystemState(const EmuState state) noexcept { mGlobalState &= ~state; }
+	static void xorSystemState(const EmuState state) noexcept { mGlobalState ^=  state; }
+
+	static void setSystemState(const EmuState state) noexcept { mGlobalState  =  state; }
+	static auto getSystemState()                     noexcept { return mGlobalState;    }
 
 	virtual u32 getTotalFrames() const noexcept = 0;
 	virtual u64 getTotalCycles() const noexcept = 0;
@@ -38,11 +48,18 @@ public:
 	virtual f32 fetchFramerate() const noexcept = 0;
 	virtual s32 changeCPF(const s32 delta) noexcept = 0;
 
+	[[nodiscard]]
+	virtual bool isSystemStopped() const noexcept = 0;
+	virtual bool isCoreStopped()   const noexcept = 0;
+
 	virtual void processFrame() = 0;
 };
 
+/*==================================================================*/
 
 class Chip8_CoreInterface : public EmuInterface {
+	static std::filesystem::path* sPermaRegsPath;
+	static std::filesystem::path* sSavestatePath;
 
 protected:
 	HomeDirManager& HDM;
@@ -90,13 +107,22 @@ protected:
 		mDisplayH = H; mDisplayHb = H - 1;
 	}
 
+	u8 mCoreState{ EmuState::NORMAL };
+
+	void addCoreState(const EmuState state) noexcept { mCoreState |= state; }
+	void subCoreState(const EmuState state) noexcept { mCoreState &= ~state; }
+	void xorCoreState(const EmuState state) noexcept { mCoreState ^= state; }
+
+	void setCoreState(const EmuState state) noexcept { mCoreState = state; }
+	auto getCoreState()               const noexcept { return mCoreState;  }
+
+	bool isSystemStopped() const noexcept override { return getCoreState() || getSystemState(); }
+	bool isCoreStopped()   const noexcept override { return getCoreState(); }
+
 	bool mLoresExtended{};
 	bool mManualRefresh{};
 	bool mPixelTrailing{};
 
-	bool mSystemStopped{};
-
-	
 	[[nodiscard]] bool isLoresExtended() const noexcept { return mLoresExtended; }
 	[[nodiscard]] bool isManualRefresh() const noexcept { return mManualRefresh; }
 	[[nodiscard]] bool isPixelTrailing() const noexcept { return mPixelTrailing; }
@@ -104,12 +130,6 @@ protected:
 	void isManualRefresh(const bool state) noexcept { mManualRefresh = state; }
 	void isPixelTrailing(const bool state) noexcept { mPixelTrailing = state; }
 
-public:
-	[[nodiscard]]
-	bool isSystemStopped()           const noexcept override { return mSystemStopped || mCyclesPerFrame == 0; }
-	void isSystemStopped(const bool state) noexcept override { mSystemStopped = state; }
-
-protected:
 	Well512  Wrand;
 	HexInput Input;
 
@@ -130,7 +150,6 @@ public:
 		BasicAudioSpec& ref_BAS
 	) noexcept;
 
-	//virtual bool initPlatform() { return false; }
 	virtual void processFrame() override = 0;
 
 	u32 getTotalFrames() const noexcept override { return mTotalFrames; }

@@ -38,6 +38,7 @@
     <ClInclude Include="src\Assistants\BasicLogger.hpp" />
     <ClInclude Include="src\Assistants\BytePun.hpp" />
     <ClInclude Include="src\Assistants\FrameLimiter.hpp" />
+    <ClInclude Include="src\Assistants\PathGetters.hpp" />
     <ClInclude Include="src\Assistants\SHA1.hpp" />
     <ClInclude Include="src\Assistants\Map2D.hpp" />
     <ClInclude Include="src\Assistants\Well512.hpp" />
