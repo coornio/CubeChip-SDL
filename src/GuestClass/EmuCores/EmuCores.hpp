@@ -13,6 +13,7 @@
 #include "../GameFileChecker.hpp"
 #include "../HexInput.hpp"
 
+#include <filesystem>
 #include <utility>
 #include <memory>
 #include <string>
