@@ -20,7 +20,7 @@ void FrameLimiter::setLimiter(
 bool FrameLimiter::checkTime(const bool mode) {
 	if (isValidFrame()) { return true; }
 
-	if (mode == SLEEP && getRemainder() >= 5.0f) {
+	if (mode == SLEEP && getRemainder() >= 2.0f) {
 		std::this_thread::sleep_for(millis(1));
 	}
 	return false;
