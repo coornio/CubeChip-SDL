@@ -23,26 +23,19 @@ if(NOT SDL3_FOUND)
 endif()
 
 add_executable(CubeChipSDL
-  src/CubeChip.cpp
-  src/HostClass/BasicAudioSpec.cpp
-  src/HostClass/HomeDirManager.cpp
-  src/HostClass/HostFunctions.cpp
-  src/HostClass/BasicVideoSpec.cpp
-  # src/GuestClass/GuestFunctions.cpp
-  src/GuestClass/GameFileChecker.cpp
-  src/GuestClass/HexInput.cpp
-  # src/GuestClass/InstructionSets/_LegacySC.cpp
-  # src/GuestClass/InstructionSets/_Gigachip.cpp
-  # src/GuestClass/InstructionSets/_Classic8.cpp
-  # src/GuestClass/InstructionSets/_ModernXO.cpp
-  # src/GuestClass/InstructionSets/_Megachip.cpp
-  src/GuestClass/EmuCores/CHIP8_MODERN.cpp
-  src/GuestClass/EmuCores/EmuCores.cpp
-  # src/GuestClass/Init.cpp
   src/Assistants/BasicLogger.cpp
   src/Assistants/BasicInput.cpp
   src/Assistants/FrameLimiter.cpp
   src/Assistants/SHA1.cpp
+  src/HostClass/HomeDirManager.cpp
+  src/HostClass/BasicVideoSpec.cpp
+  src/HostClass/BasicAudioSpec.cpp
+  src/HostClass/EmuHost.cpp
+  src/GuestClass/HexInput.cpp
+  src/GuestClass/EmuCores/EmuCores.cpp
+  src/GuestClass/EmuCores/CHIP8_MODERN.cpp
+  src/GuestClass/GameFileChecker.cpp
+  src/CubeChip.cpp
 )
 target_include_directories(CubeChipSDL PRIVATE src)
 target_link_libraries(CubeChipSDL PRIVATE SDL3::SDL3-shared)
