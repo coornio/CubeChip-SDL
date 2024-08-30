@@ -12,7 +12,6 @@
 
 /*==================================================================*/
 
-CHIP8_MODERN::~CHIP8_MODERN() = default;
 CHIP8_MODERN::CHIP8_MODERN() noexcept {
 	if (getCoreState() != EmuState::FAILED) {
 
@@ -21,7 +20,7 @@ CHIP8_MODERN::CHIP8_MODERN() noexcept {
 
 		mProgCounter    = cStartOffset;
 		mFramerate      = cRefreshRate;
-		mCyclesPerFrame = Quirk.waitVblank ? cInstSpeedHi : 5000000;
+		mCyclesPerFrame = Quirk.waitVblank ? cInstSpeedHi : 6000000;
 
 		initPlatform();
 	}
@@ -236,7 +235,7 @@ void CHIP8_MODERN::instructionLoop() {
 f32  CHIP8_MODERN::calcAudioTone() const {
 	return (160.0f + 8.0f * (
 		(mProgCounter >> 1) + mStackBank[mStackTop] + 1 & 0x3E)
-	) / BAS.getFrequency();
+	) / BAS->getFrequency();
 }
 
 void CHIP8_MODERN::nextInstruction() {
@@ -251,20 +250,20 @@ void CHIP8_MODERN::jumpProgramTo(const u32 next) {
 }
 
 void CHIP8_MODERN::renderAudioData() {
-	std::vector<s16> audioBuffer(static_cast<usz>(BAS.getFrequency() / cRefreshRate));
+	std::vector<s16> audioBuffer(static_cast<usz>(BAS->getFrequency() / cRefreshRate));
 
 	if (mSoundTimer) {
-		const auto amplitute{ BAS.getAmplitude() };
+		const auto amplitute{ BAS->getAmplitude() };
 		for (auto& sample_s16 : audioBuffer) {
 			sample_s16 = mWavePhase > 0.5f ? amplitute : -amplitute;
 			mWavePhase = std::fmod(mWavePhase + mAudioTone, 1.0f);
 		}
-		BVS.setFrameColor(cBitsColor[0], cBitsColor[1]);
+		BVS->setFrameColor(cBitsColor[0], cBitsColor[1]);
 	} else {
 		mWavePhase = 0.0f;
-		BVS.setFrameColor(cBitsColor[0], cBitsColor[0]);
+		BVS->setFrameColor(cBitsColor[0], cBitsColor[0]);
 	}
-	BAS.pushAudioData(audioBuffer.data(), audioBuffer.size());
+	BAS->pushAudioData(audioBuffer.data(), audioBuffer.size());
 }
 
 void CHIP8_MODERN::renderVideoData() {
@@ -272,17 +271,17 @@ void CHIP8_MODERN::renderVideoData() {
 		std::execution::unseq,
 		mDisplayBuffer.begin(),
 		mDisplayBuffer.end(),
-		BVS.lockTexture(),
+		BVS->lockTexture(),
 		[](const auto pixel) noexcept {
 			return 0xFF000000 | cBitsColor[pixel];
 		}
 	);
-	BVS.unlockTexture();
+	BVS->unlockTexture();
 }
 
 void CHIP8_MODERN::initPlatform() {
 	setDisplayResolution(64, 32);
-	BVS.setBackColor(cBitsColor[0]);
-	BVS.createTexture(mDisplayW, mDisplayH);
-	BVS.setAspectRatio(512, 256, +2);
+	BVS->setBackColor(cBitsColor[0]);
+	BVS->createTexture(mDisplayW, mDisplayH);
+	BVS->setAspectRatio(512, 256, +2);
 }

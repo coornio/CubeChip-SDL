@@ -25,11 +25,9 @@
 
 /*==================================================================*/
 
-BasicLogger& blog{ BasicLogger::create() };
-
-HomeDirManager& HDM{ HomeDirManager::create(nullptr, "CubeChip") };
-BasicVideoSpec& BVS{ BasicVideoSpec::create() };
-BasicAudioSpec& BAS{ BasicAudioSpec::create() };
+BasicLogger&   blog{   *BasicLogger::create() };
+BasicKeyboard&   kb{ *BasicKeyboard::create() };
+BasicMouse&      mb{    *BasicMouse::create() };
 
 /*==================================================================*/
 
@@ -61,9 +59,11 @@ SDL_AppResult SDL_AppInit(void **Host, int argc, char* argv[]) {
 #endif
 	SDL_SetHint(SDL_HINT_APP_NAME, "CubeChip");
 
-	if (HDM.getErrorState() || BVS.getErrorState() || BAS.getErrorState()) {
-		return SDL_APP_FAILURE;
-	}
+	if (EmuHost::assignComponents(
+		HomeDirManager::create(nullptr, "CubeChip"),
+		BasicVideoSpec::create(),
+		BasicAudioSpec::create()
+	)) { return SDL_APP_FAILURE; }
 
 #if 0
 	setlocale(LC_CTYPE, "");
@@ -74,7 +74,7 @@ SDL_AppResult SDL_AppInit(void **Host, int argc, char* argv[]) {
 	*Host = &EmuHost::create(wargc <= 1 ? L"" : wargv[1]);
 	LocalFree(wargv);
 #else
-	*Host = &EmuHost::create(argc <= 1 ? "" : argv[1]);
+	*Host = EmuHost::create(argc <= 1 ? "" : argv[1]);
 #endif
 	return SDL_APP_CONTINUE;
 }

@@ -19,7 +19,9 @@
 #include "../GuestClass/EmuCores/EmuCores.hpp"
 #include "../GuestClass/GameFileChecker.hpp"
 
-using namespace bic;
+HomeDirManager* EmuHost::HDM{};
+BasicVideoSpec* EmuHost::BVS{};
+BasicAudioSpec* EmuHost::BAS{};
 
 /*==================================================================*/
 	#pragma region VM_Host Singleton Class
@@ -29,7 +31,9 @@ EmuHost::~EmuHost() noexcept = default;
 EmuHost::EmuHost(const std::filesystem::path& gamePath) noexcept
 	: Limiter{ std::make_unique<FrameLimiter>() }
 {
-	HDM.setValidator(GameFileChecker::validate);
+	EmuInterface::assignComponents(HDM, BVS, BAS);
+
+	HDM->setValidator(GameFileChecker::validate);
 	loadGameFile(gamePath);
 }
 
@@ -44,10 +48,10 @@ SDL_AppResult EmuHost::runFrame() {
 	if (!Limiter->checkTime()) [[likely]] { return SDL_APP_CONTINUE; }
 
 	if (kb.isPressed(KEY(RIGHT))) {
-		BAS.changeVolume(+15);
+		BAS->changeVolume(+15);
 	}
 	if (kb.isPressed(KEY(LEFT))) {
-		BAS.changeVolume(-15);
+		BAS->changeVolume(-15);
 	}
 
 	if (iGuest) {
@@ -62,11 +66,11 @@ SDL_AppResult EmuHost::runFrame() {
 		if (kb.isPressed(KEY(RSHIFT))) {
 			if (runBenchmark) {
 				runBenchmark = false;
-				BVS.changeTitle(HDM.getFileStem().c_str());
+				BVS->changeTitle(HDM->getFileStem().c_str());
 				std::cout << "\33[1;1H\33[3J" << std::endl;
 			} else {
 				runBenchmark = true;
-				BVS.changeTitle(std::to_string(iGuest->fetchCPF()));
+				BVS->changeTitle(std::to_string(iGuest->fetchCPF()));
 				std::cout << "\33[1;1H\33[2J"
 					<< "Cycle time:    .    ms"
 					<< "\nTime since last frame: "
@@ -78,18 +82,18 @@ SDL_AppResult EmuHost::runFrame() {
 		}
 
 		if (kb.isPressed(KEY(PAGEDOWN))){
-			BVS.changeFrameMultiplier(-1);
+			BVS->changeFrameMultiplier(-1);
 		}
 		if (kb.isPressed(KEY(PAGEUP))) {
-			BVS.changeFrameMultiplier(+1);
+			BVS->changeFrameMultiplier(+1);
 		}
 
 		if (runBenchmark) [[likely]] {
 			if (kb.isPressed(KEY(UP))) {
-				BVS.changeTitle(std::to_string(iGuest->changeCPF(+50'000)));
+				BVS->changeTitle(std::to_string(iGuest->changeCPF(+50'000)));
 			}
 			if (kb.isPressed(KEY(DOWN))){
-				BVS.changeTitle(std::to_string(iGuest->changeCPF(-50'000)));
+				BVS->changeTitle(std::to_string(iGuest->changeCPF(-50'000)));
 			}
 
 			iGuest->processFrame();
@@ -118,7 +122,7 @@ SDL_AppResult EmuHost::runFrame() {
 		}
 	}
 
-	BVS.renderPresent();
+	BVS->renderPresent();
 
 	bic::kb.updateCopy();
 	bic::mb.updateCopy();
@@ -131,22 +135,22 @@ void EmuHost::replaceGuest(const bool disable) {
 	bic::mb.updateCopy();
 
 	if (disable) {
-		BVS.resetWindow();
+		BVS->resetWindow();
 		GameFileChecker::deleteGameCore();
 	}
 
 	if (initGameCore()) {
 		Limiter->setLimiter(iGuest->fetchFramerate());
-		BVS.changeTitle(HDM.getFileStem().c_str());
+		BVS->changeTitle(HDM->getFileStem().c_str());
 	} else {
 		Limiter->setLimiter(30.0f);
-		HDM.clearCachedFileData();
+		HDM->clearCachedFileData();
 	}
 }
 
 void EmuHost::loadGameFile(const std::filesystem::path& gameFile, const bool alert) {
-	if (alert) { BVS.raiseWindow(); }
-	if (HDM.validateGameFile(gameFile)) {
+	if (alert) { BVS->raiseWindow(); }
+	if (HDM->validateGameFile(gameFile)) {
 		replaceGuest(false);
 	}
 }

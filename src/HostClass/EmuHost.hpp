@@ -12,6 +12,10 @@
 
 #include <SDL3/SDL_init.h>
 
+class HomeDirManager;
+class BasicVideoSpec;
+class BasicAudioSpec;
+
 class EmuInterface;
 class FrameLimiter;
 
@@ -30,6 +34,10 @@ class EmuHost final {
 	std::unique_ptr<FrameLimiter> Limiter;
 
 public:
+	static HomeDirManager* HDM;
+	static BasicVideoSpec* BVS;
+	static BasicAudioSpec* BAS;
+
 	std::mutex Mutex;
 
 private:
@@ -40,9 +48,20 @@ private:
 	void replaceGuest(const bool);
 
 public:
-	static auto& create(const std::filesystem::path& gamePath) noexcept {
+	static auto* create(const std::filesystem::path& gamePath) noexcept {
 		static EmuHost self(gamePath);
-		return self;
+		return &self;
+	}
+
+	static bool assignComponents(
+		HomeDirManager* const pHDM,
+		BasicVideoSpec* const pBVS,
+		BasicAudioSpec* const pBAS
+	) noexcept{
+		HDM = pHDM;
+		BVS = pBVS;
+		BAS = pBAS;
+		return !(HDM && BVS && BAS);
 	}
 
 	void pauseSystem(const bool state) const noexcept;

@@ -33,16 +33,20 @@ class HomeDirManager final {
 		mDirectories{};
 
 	GameValidator checkGame{};
-	bool errorEncountered{};
 
-public:
-	static auto& create(const char* const org, const char* const app) noexcept {
-		static HomeDirManager self(org, app);
-		return self;
+	static bool& errorState() noexcept {
+		static bool errorEncountered{};
+		return errorEncountered;
 	}
 
-	void setErrorState(const bool state) noexcept { errorEncountered = state; }
-	bool getErrorState()           const noexcept { return errorEncountered;  }
+public:
+	static auto* create(const char* const org, const char* const app) noexcept {
+		static HomeDirManager self(org, app);
+		return errorState() ? nullptr : &self;
+	}
+
+	static void setErrorState(const bool state) noexcept { errorState() = state; }
+	static bool getErrorState()                 noexcept { return errorState();  }
 
 	static bool showErrorBox(const char* const, const char* const) noexcept;
 
@@ -69,5 +73,3 @@ public:
 /*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
-
-extern HomeDirManager& HDM;

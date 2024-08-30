@@ -19,6 +19,11 @@
 /*==================================================================*/
 
 u32 EmuInterface::mGlobalState{ EmuState::NORMAL };
+
+HomeDirManager* EmuInterface::HDM{};
+BasicVideoSpec* EmuInterface::BVS{};
+BasicAudioSpec* EmuInterface::BAS{};
+
 EmuInterface::~EmuInterface() noexcept {
 	subSystemState(EmuState::PAUSED);
 }
@@ -29,8 +34,8 @@ std::filesystem::path* Chip8_CoreInterface::sPermaRegsPath{};
 std::filesystem::path* Chip8_CoreInterface::sSavestatePath{};
 
 Chip8_CoreInterface::Chip8_CoreInterface() noexcept {
-	sPermaRegsPath = HDM.addSystemDir("permaRegs", "CHIP8");
-	sSavestatePath = HDM.addSystemDir("savestate", "CHIP8");
+	sPermaRegsPath = HDM->addSystemDir("permaRegs", "CHIP8");
+	sSavestatePath = HDM->addSystemDir("savestate", "CHIP8");
 	if (!sPermaRegsPath || !sSavestatePath) { setCoreState(EmuState::FAILED); }
 }
 
@@ -66,7 +71,9 @@ void Chip8_CoreInterface::instructionErrorML(const u32 HI, const u32 LO) {
 void Chip8_CoreInterface::copyGameToMemory(u8* dest, const u32 offset) {
 	std::copy_n(
 		std::execution::unseq,
-		HDM.getFileData(), HDM.getFileSize(), dest + offset
+		HDM->getFileData(),
+		HDM->getFileSize(),
+		dest + offset
 	);
 }
 

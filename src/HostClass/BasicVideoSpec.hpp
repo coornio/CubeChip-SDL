@@ -31,8 +31,6 @@ class BasicVideoSpec final {
 	bool enableBuzzGlow{};
 	bool enableScanLine{};
 
-	bool errorEncountered{};
-
 	SDL_FRect frameBack{};
 	SDL_FRect frameRect{};
 
@@ -42,14 +40,19 @@ class BasicVideoSpec final {
 	s32  perimeterWidth{};
 	s32  frameMultiplier{ 2 };
 
-public:
-	static auto& create() noexcept {
-		static BasicVideoSpec self;
-		return self;
+	static bool& errorState() noexcept {
+		static bool errorEncountered{};
+		return errorEncountered;
 	}
 
-	void setErrorState(const bool state) noexcept { errorEncountered = state; }
-	bool getErrorState()           const noexcept { return errorEncountered; }
+public:
+	static auto* create() noexcept {
+		static BasicVideoSpec self;
+		return errorState() ? nullptr : &self;
+	}
+
+	static void setErrorState(const bool state) noexcept { errorState() = state; }
+	static bool getErrorState()                 noexcept { return errorState();  }
 
 	static bool showErrorBox(const char* const) noexcept;
 	static bool showErrorBox(const char* const, const char* const) noexcept;
@@ -102,5 +105,3 @@ private:
 /*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
-
-extern BasicVideoSpec& BVS;

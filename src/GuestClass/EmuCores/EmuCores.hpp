@@ -25,11 +25,30 @@ enum EmuState : u8 {
 	FAILED = 0x8, // failed core init
 };
 
+class HomeDirManager;
+class BasicVideoSpec;
+class BasicAudioSpec;
+
 class EmuInterface {
 	static u32 mGlobalState;
 
+protected:
+	static HomeDirManager* HDM;
+	static BasicVideoSpec* BVS;
+	static BasicAudioSpec* BAS;
+
 public:
 	virtual ~EmuInterface() noexcept;
+
+	static void assignComponents(
+		HomeDirManager* const pHDM,
+		BasicVideoSpec* const pBVS,
+		BasicAudioSpec* const pBAS
+	) noexcept {
+		HDM = pHDM;
+		BVS = pBVS;
+		BAS = pBAS;
+	}
 
 	static void addSystemState(const EmuState state) noexcept { mGlobalState |=  state; }
 	static void subSystemState(const EmuState state) noexcept { mGlobalState &= ~state; }

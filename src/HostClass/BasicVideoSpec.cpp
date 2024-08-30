@@ -9,6 +9,10 @@
 
 #include "BasicVideoSpec.hpp"
 
+/*==================================================================*/
+	#pragma region BasicVideoSpec Singleton Class
+/*==================================================================*/
+
 BasicVideoSpec::BasicVideoSpec() noexcept
 	: enableBuzzGlow{ true }
 {
@@ -214,3 +218,7 @@ void BasicVideoSpec::quitWindow() noexcept {
 		window = nullptr;
 	}
 }
+
+/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
+	#pragma endregion
+/*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/

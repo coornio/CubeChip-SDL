@@ -31,14 +31,15 @@ enum BIC_Button {
 class BasicKeyboard final {
 	std::array<Uint8, SDL_NUM_SCANCODES> oldState{};
 
-	BasicKeyboard() = default;
+	BasicKeyboard() noexcept = default;
+	~BasicKeyboard() noexcept = default;
 	BasicKeyboard(const BasicKeyboard&) = delete;
 	BasicKeyboard& operator=(const BasicKeyboard&) = delete;
 
 public:
-	static BasicKeyboard& create() {
-		static BasicKeyboard _self;
-		return _self;
+	static auto* create() {
+		static BasicKeyboard self;
+		return &self;
 	}
 
 	void updateCopy();
@@ -88,9 +89,9 @@ class BasicMouse final {
 	BasicMouse& operator=(const BasicMouse&) = delete;
 
 public:
-	static BasicMouse& create() {
-		static BasicMouse _self;
-		return _self;
+	static auto* create() {
+		static BasicMouse self;
+		return &self;
 	}
 
 	void updateCopy();

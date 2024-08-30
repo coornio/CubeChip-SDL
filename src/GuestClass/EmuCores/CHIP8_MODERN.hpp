@@ -25,8 +25,7 @@ public:
 	}
 
 public:
-	explicit CHIP8_MODERN() noexcept;
-	~CHIP8_MODERN() noexcept;
+	CHIP8_MODERN() noexcept;
 
 	void processFrame() override;
 
@@ -52,17 +51,13 @@ private:
 	std::array<u8, cTotalMemory + 31>
 		mMemoryBank{};
 
-	// Write memory at saved index + offset, using given value
 	void writeMemoryI(const u32 value, const u32 pos) noexcept {
-		//mMemoryBank[mRegisterI + pos & cTotalMemory - 1u] = value & 0xFF;
 		const auto index{ mRegisterI + pos };
 		if (!(index & cTotalMemory)) [[likely]]
 			{ mMemoryBank[index] = value & 0xFF; }
 	}
 
-	// Read memory at saved index + offset
 	auto readMemoryI(const u32 pos) const noexcept {
-		//return mMemoryBank[mRegisterI + pos & cTotalMemory - 1u];
 		return mMemoryBank[mRegisterI + pos];
 	}
 

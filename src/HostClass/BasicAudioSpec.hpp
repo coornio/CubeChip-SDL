@@ -26,21 +26,24 @@ class BasicAudioSpec final {
 	s16 volume{};
 	s16 amplitude{};
 
-	bool errorEncountered{};
-
 	SDL_AudioSpec     audiospec{};
 	SDL_AudioDeviceID device{};
 	SDL_AudioStream*  stream{};
 
-public:
-	static auto& create() noexcept {
-		static BasicAudioSpec self;
-		return self;
+	static bool& errorState() noexcept {
+		static bool errorEncountered{};
+		return errorEncountered;
 	}
 
-	void setErrorState(const bool state) noexcept { errorEncountered = state; }
-	bool getErrorState()           const noexcept { return errorEncountered; }
+public:
+	static auto* create() noexcept {
+		static BasicAudioSpec self;
+		return errorState() ? nullptr : &self;
+	}
 
+	static void setErrorState(const bool state) noexcept { errorState() = state; }
+	static bool getErrorState()                 noexcept { return errorState();  }
+	
 	void pushAudioData(const void*, usz);
 
 	s32  getFrequency()  const noexcept { return outFrequency; }
@@ -55,5 +58,3 @@ public:
 /*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
-
-extern BasicAudioSpec& BAS;

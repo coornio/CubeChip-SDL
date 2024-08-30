@@ -42,9 +42,9 @@ class BasicLogger final {
 	}
 
 public:
-	static auto& create() noexcept {
+	static auto* create() noexcept {
 		static BasicLogger self;
-		return self;
+		return &self;
 	}
 
 	bool initLogFile(const std::string&, const std::filesystem::path&) noexcept;
