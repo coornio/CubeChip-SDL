@@ -13,7 +13,16 @@
 
 #include "../Types.hpp"
 
+/*==================================================================*/
+	#pragma region BasicVideoSpec Singleton Class
+/*==================================================================*/
+
 class BasicVideoSpec final {
+	BasicVideoSpec() noexcept;
+	~BasicVideoSpec() noexcept;
+	BasicVideoSpec(const BasicVideoSpec&) = delete;
+	BasicVideoSpec& operator=(const BasicVideoSpec&) = delete;
+
 	SDL_Window*   window{};
 	SDL_Renderer* renderer{};
 	SDL_Texture*  texture{};
@@ -22,7 +31,7 @@ class BasicVideoSpec final {
 	bool enableBuzzGlow{};
 	bool enableScanLine{};
 
-	bool errorTriggered{};
+	bool errorEncountered{};
 
 	SDL_FRect frameBack{};
 	SDL_FRect frameRect{};
@@ -34,10 +43,13 @@ class BasicVideoSpec final {
 	s32  frameMultiplier{ 2 };
 
 public:
-	BasicVideoSpec() noexcept;
-	~BasicVideoSpec();
+	static auto& create() noexcept {
+		static BasicVideoSpec self;
+		return self;
+	}
 
-	bool getSelfStatus() const noexcept { return errorTriggered; }
+	void setErrorState(const bool state) noexcept { errorEncountered = state; }
+	bool getErrorState()           const noexcept { return errorEncountered; }
 
 	static bool showErrorBox(const char* const) noexcept;
 	static bool showErrorBox(const char* const, const char* const) noexcept;
@@ -86,3 +98,9 @@ private:
 	void quitRenderer() noexcept;
 	void quitTexture() noexcept;
 };
+
+/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
+	#pragma endregion
+/*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
+
+extern BasicVideoSpec& BVS;

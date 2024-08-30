@@ -10,8 +10,6 @@
 
 #include "BasicLogger.hpp"
 
-BasicLogger& blogger::blog{ BasicLogger::create() };
-
 /*==================================================================*/
 	#pragma region BasicLogger Singleton Class
 /*==================================================================*/

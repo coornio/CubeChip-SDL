@@ -42,9 +42,9 @@ class BasicLogger final {
 	}
 
 public:
-	static BasicLogger& create() noexcept {
-		static BasicLogger _self;
-		return _self;
+	static auto& create() noexcept {
+		static BasicLogger self;
+		return self;
 	}
 
 	bool initLogFile(const std::string&, const std::filesystem::path&) noexcept;
@@ -56,6 +56,4 @@ public:
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
-namespace blogger { // basic logger class
-	extern BasicLogger& blog;
-}
+extern BasicLogger& blog;

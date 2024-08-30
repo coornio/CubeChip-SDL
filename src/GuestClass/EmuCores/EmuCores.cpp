@@ -10,14 +10,15 @@
 
 #include "EmuCores.hpp"
 
+#include "../../Assistants/BasicLogger.hpp"
+
 #include "../../HostClass/HomeDirManager.hpp"
 #include "../../HostClass/BasicVideoSpec.hpp"
 #include "../../HostClass/BasicAudioSpec.hpp"
 
-#include "../../Assistants/BasicLogger.hpp"
-using namespace blogger;
+/*==================================================================*/
 
-u32 EmuInterface::mGlobalState = EmuState::NORMAL;
+u32 EmuInterface::mGlobalState{ EmuState::NORMAL };
 EmuInterface::~EmuInterface() noexcept {
 	subSystemState(EmuState::PAUSED);
 }
@@ -27,15 +28,7 @@ EmuInterface::~EmuInterface() noexcept {
 std::filesystem::path* Chip8_CoreInterface::sPermaRegsPath{};
 std::filesystem::path* Chip8_CoreInterface::sSavestatePath{};
 
-Chip8_CoreInterface::Chip8_CoreInterface(
-	HomeDirManager& ref_HDM,
-	BasicVideoSpec& ref_BVS,
-	BasicAudioSpec& ref_BAS
-) noexcept
-	: HDM{ ref_HDM }
-	, BVS{ ref_BVS }
-	, BAS{ ref_BAS }
-{
+Chip8_CoreInterface::Chip8_CoreInterface() noexcept {
 	sPermaRegsPath = HDM.addSystemDir("permaRegs", "CHIP8");
 	sSavestatePath = HDM.addSystemDir("savestate", "CHIP8");
 	if (!sPermaRegsPath || !sSavestatePath) { setCoreState(EmuState::FAILED); }

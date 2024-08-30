@@ -12,49 +12,41 @@
 
 #include <SDL3/SDL_init.h>
 
-class HomeDirManager;
-class BasicVideoSpec;
-class BasicAudioSpec;
-
-class FrameLimiter;
 class EmuInterface;
+class FrameLimiter;
 
 /*==================================================================*/
-	#pragma region VM_Host Singleton Class
+	#pragma region EmuHost Singleton Class
 /*==================================================================*/
 
-class VM_Host final {
+class EmuHost final {
+	EmuHost(const std::filesystem::path&) noexcept;
+	~EmuHost() noexcept;
 
-	using FilePath = std::filesystem::path;
+	EmuHost(const EmuHost&) = delete;
+	EmuHost& operator=(const EmuHost&) = delete;
 
 	std::unique_ptr<EmuInterface> iGuest;
 	std::unique_ptr<FrameLimiter> Limiter;
 
-	std::unique_ptr<HomeDirManager> HDM;
-	std::unique_ptr<BasicVideoSpec> BVS;
-	std::unique_ptr<BasicAudioSpec> BAS;
+public:
+	std::mutex Mutex;
 
+private:
 	bool runBenchmark{};
 	bool forceFileCfg{};
-
-	bool errorTriggered{};
 
 	bool initGameCore() noexcept;
 	void replaceGuest(const bool);
 
-	VM_Host(const FilePath&) noexcept;
-	VM_Host(const VM_Host&) = delete;
-	VM_Host& operator=(const VM_Host&) = delete;
-
 public:
-	std::mutex Mutex;
-
-	bool getSelfStatus() const noexcept { return errorTriggered; }
-
-	static VM_Host* initialize(const FilePath&) noexcept;
+	static auto& create(const std::filesystem::path& gamePath) noexcept {
+		static EmuHost self(gamePath);
+		return self;
+	}
 
 	void pauseSystem(const bool state) const noexcept;
-	void loadGameFile(const FilePath&, const bool = false);
+	void loadGameFile(const std::filesystem::path&, const bool = false);
 
 	SDL_AppResult runFrame();
 };

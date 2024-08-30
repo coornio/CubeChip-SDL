@@ -25,7 +25,7 @@ BasicAudioSpec::BasicAudioSpec() noexcept
 	SDL_ResumeAudioDevice(device);
 }
 
-BasicAudioSpec::~BasicAudioSpec() {
+BasicAudioSpec::~BasicAudioSpec() noexcept {
 	SDL_QuitSubSystem(SDL_INIT_AUDIO);
 }
 

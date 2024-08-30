@@ -63,7 +63,7 @@
     <ClCompile Include="src\HostClass\HomeDirManager.cpp">
       <Filter>Source Files\VM Host</Filter>
     </ClCompile>
-    <ClCompile Include="src\HostClass\HostFunctions.cpp">
+    <ClCompile Include="src\HostClass\EmuHost.cpp">
       <Filter>Source Files\VM Host</Filter>
     </ClCompile>
     <ClCompile Include="src\Assistants\BasicInput.cpp">
@@ -95,7 +95,7 @@
     <ClInclude Include="src\HostClass\BasicVideoSpec.hpp">
       <Filter>Header Files\VM Host</Filter>
     </ClInclude>
-    <ClInclude Include="src\HostClass\Host.hpp">
+    <ClInclude Include="src\HostClass\EmuHost.hpp">
       <Filter>Header Files\VM Host</Filter>
     </ClInclude>
     <ClInclude Include="src\HostClass\HomeDirManager.hpp">

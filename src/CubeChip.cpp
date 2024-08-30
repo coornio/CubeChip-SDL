@@ -14,12 +14,22 @@
 #include <shellapi.h>
 #endif
 
+#include "Assistants/BasicLogger.hpp"
+#include "Assistants/BasicInput.hpp"
+
 #include "HostClass/HomeDirManager.hpp"
 #include "HostClass/BasicVideoSpec.hpp"
 #include "HostClass/BasicAudioSpec.hpp"
-#include "Assistants/BasicInput.hpp"
 
-#include "HostClass/Host.hpp"
+#include "HostClass/EmuHost.hpp"
+
+/*==================================================================*/
+
+BasicLogger& blog{ BasicLogger::create() };
+
+HomeDirManager& HDM{ HomeDirManager::create(nullptr, "CubeChip") };
+BasicVideoSpec& BVS{ BasicVideoSpec::create() };
+BasicAudioSpec& BAS{ BasicAudioSpec::create() };
 
 /*==================================================================*/
 
@@ -51,26 +61,28 @@ SDL_AppResult SDL_AppInit(void **Host, int argc, char* argv[]) {
 #endif
 	SDL_SetHint(SDL_HINT_APP_NAME, "CubeChip");
 
+	if (HDM.getErrorState() || BVS.getErrorState() || BAS.getErrorState()) {
+		return SDL_APP_FAILURE;
+	}
+
 #if 0
 	setlocale(LC_CTYPE, "");
 	LPWSTR* wargv{}; int wargc{};
 	wargv = CommandLineToArgvW(GetCommandLineW(), &wargc);
 	if (!wargv) { return SDL_APP_FAILURE; }
 
-	*Host = VM_Host::initialize(wargc <= 1 ? L"" : wargv[1]);
+	*Host = &EmuHost::create(wargc <= 1 ? L"" : wargv[1]);
 	LocalFree(wargv);
 #else
-	*Host = VM_Host::initialize(argc <= 1 ? "" : argv[1]);
+	*Host = &EmuHost::create(argc <= 1 ? "" : argv[1]);
 #endif
-
-	if (Host) { return SDL_APP_CONTINUE; }
-	else      { return SDL_APP_FAILURE;  }
+	return SDL_APP_CONTINUE;
 }
 
 /*==================================================================*/
 
 SDL_AppResult SDL_AppIterate(void* pHost) {
-	auto& Host{ *static_cast<VM_Host*>(pHost) };
+	auto& Host{ *static_cast<EmuHost*>(pHost) };
 
 	Host.Mutex.lock();
 	switch (Host.runFrame()) {
@@ -91,7 +103,7 @@ SDL_AppResult SDL_AppIterate(void* pHost) {
 /*==================================================================*/
 
 SDL_AppResult SDL_AppEvent(void* pHost, const SDL_Event* Event) {
-	auto& Host{ *static_cast<VM_Host*>(pHost) };
+	auto& Host{ *static_cast<EmuHost*>(pHost) };
 
 	switch (Event->type) {
 		case SDL_EVENT_QUIT:

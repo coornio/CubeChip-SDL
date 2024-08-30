@@ -25,11 +25,7 @@ public:
 	}
 
 public:
-	explicit CHIP8_MODERN(
-		HomeDirManager&,
-		BasicVideoSpec&,
-		BasicAudioSpec&
-	) noexcept;
+	explicit CHIP8_MODERN() noexcept;
 	~CHIP8_MODERN() noexcept;
 
 	void processFrame() override;

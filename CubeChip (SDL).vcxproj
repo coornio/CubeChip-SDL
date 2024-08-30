@@ -30,7 +30,7 @@
     <ClCompile Include="src\GuestClass\HexInput.cpp" />
     <ClCompile Include="src\HostClass\BasicAudioSpec.cpp" />
     <ClCompile Include="src\HostClass\BasicVideoSpec.cpp" />
-    <ClCompile Include="src\HostClass\HostFunctions.cpp" />
+    <ClCompile Include="src\HostClass\EmuHost.cpp" />
     <ClCompile Include="src\HostClass\HomeDirManager.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -50,7 +50,7 @@
     <ClInclude Include="src\HostClass\BasicAudioSpec.hpp" />
     <ClInclude Include="src\HostClass\BasicVideoSpec.hpp" />
     <ClInclude Include="src\HostClass\HomeDirManager.hpp" />
-    <ClInclude Include="src\HostClass\Host.hpp" />
+    <ClInclude Include="src\HostClass\EmuHost.hpp" />
     <ClInclude Include="src\Types.hpp" />
     <ClInclude Include="src\_nlohmann\json.hpp" />
     <ClInclude Include="src\_nlohmann\json_fwd.hpp" />

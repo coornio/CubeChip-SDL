@@ -15,51 +15,39 @@
 #include "../Assistants/BasicInput.hpp"
 #include "../Assistants/FrameLimiter.hpp"
 
-#include "Host.hpp"
+#include "EmuHost.hpp"
 #include "../GuestClass/EmuCores/EmuCores.hpp"
 #include "../GuestClass/GameFileChecker.hpp"
 
-using namespace blogger;
 using namespace bic;
 
 /*==================================================================*/
 	#pragma region VM_Host Singleton Class
 /*==================================================================*/
 
-VM_Host::VM_Host(const FilePath& gamePath) noexcept
+EmuHost::~EmuHost() noexcept = default;
+EmuHost::EmuHost(const std::filesystem::path& gamePath) noexcept
 	: Limiter{ std::make_unique<FrameLimiter>() }
-	, HDM    { std::make_unique<HomeDirManager>(nullptr, "CubeChip") }
-	, BVS    { std::make_unique<BasicVideoSpec>() }
-	, BAS    { std::make_unique<BasicAudioSpec>() }
 {
-	errorTriggered = (HDM->getSelfStatus() || BVS->getSelfStatus() || BAS->getSelfStatus());
-
-	if (!getSelfStatus()) {
-		HDM->setValidator(GameFileChecker::validate);
-		loadGameFile(gamePath);
-	}
+	HDM.setValidator(GameFileChecker::validate);
+	loadGameFile(gamePath);
 }
 
-VM_Host* VM_Host::initialize(const FilePath& gamePath) noexcept {
-	static VM_Host self(gamePath);
-	return self.getSelfStatus() ? nullptr : &self;
-}
-
-bool VM_Host::initGameCore() noexcept {
-	iGuest = GameFileChecker::initGameCore(*HDM, *BVS, *BAS);
+bool EmuHost::initGameCore() noexcept {
+	iGuest = GameFileChecker::initGameCore();
 	return iGuest ? true : false;
 }
 
-SDL_AppResult VM_Host::runFrame() {
+SDL_AppResult EmuHost::runFrame() {
 	using namespace bic;
 
 	if (!Limiter->checkTime()) [[likely]] { return SDL_APP_CONTINUE; }
 
 	if (kb.isPressed(KEY(RIGHT))) {
-		BAS->changeVolume(+15);
+		BAS.changeVolume(+15);
 	}
 	if (kb.isPressed(KEY(LEFT))) {
-		BAS->changeVolume(-15);
+		BAS.changeVolume(-15);
 	}
 
 	if (iGuest) {
@@ -74,11 +62,11 @@ SDL_AppResult VM_Host::runFrame() {
 		if (kb.isPressed(KEY(RSHIFT))) {
 			if (runBenchmark) {
 				runBenchmark = false;
-				BVS->changeTitle(HDM->getFileStem().c_str());
+				BVS.changeTitle(HDM.getFileStem().c_str());
 				std::cout << "\33[1;1H\33[3J" << std::endl;
 			} else {
 				runBenchmark = true;
-				BVS->changeTitle(std::to_string(iGuest->fetchCPF()));
+				BVS.changeTitle(std::to_string(iGuest->fetchCPF()));
 				std::cout << "\33[1;1H\33[2J"
 					<< "Cycle time:    .    ms"
 					<< "\nTime since last frame: "
@@ -90,18 +78,18 @@ SDL_AppResult VM_Host::runFrame() {
 		}
 
 		if (kb.isPressed(KEY(PAGEDOWN))){
-			BVS->changeFrameMultiplier(-1);
+			BVS.changeFrameMultiplier(-1);
 		}
 		if (kb.isPressed(KEY(PAGEUP))) {
-			BVS->changeFrameMultiplier(+1);
+			BVS.changeFrameMultiplier(+1);
 		}
 
 		if (runBenchmark) [[likely]] {
 			if (kb.isPressed(KEY(UP))) {
-				BVS->changeTitle(std::to_string(iGuest->changeCPF(+50'000)));
+				BVS.changeTitle(std::to_string(iGuest->changeCPF(+50'000)));
 			}
 			if (kb.isPressed(KEY(DOWN))){
-				BVS->changeTitle(std::to_string(iGuest->changeCPF(-50'000)));
+				BVS.changeTitle(std::to_string(iGuest->changeCPF(-50'000)));
 			}
 
 			iGuest->processFrame();
@@ -130,7 +118,7 @@ SDL_AppResult VM_Host::runFrame() {
 		}
 	}
 
-	BVS->renderPresent();
+	BVS.renderPresent();
 
 	bic::kb.updateCopy();
 	bic::mb.updateCopy();
@@ -138,32 +126,32 @@ SDL_AppResult VM_Host::runFrame() {
 	return SDL_APP_CONTINUE;
 }
 
-void VM_Host::replaceGuest(const bool disable) {
+void EmuHost::replaceGuest(const bool disable) {
 	bic::kb.updateCopy();
 	bic::mb.updateCopy();
 
 	if (disable) {
-		BVS->resetWindow();
+		BVS.resetWindow();
 		GameFileChecker::deleteGameCore();
 	}
 
 	if (initGameCore()) {
 		Limiter->setLimiter(iGuest->fetchFramerate());
-		BVS->changeTitle(HDM->getFileStem().c_str());
+		BVS.changeTitle(HDM.getFileStem().c_str());
 	} else {
 		Limiter->setLimiter(30.0f);
-		HDM->clearCachedFileData();
+		HDM.clearCachedFileData();
 	}
 }
 
-void VM_Host::loadGameFile(const FilePath& gameFile, const bool alert) {
-	if (alert) { BVS->raiseWindow(); }
-	if (HDM->validateGameFile(gameFile)) {
+void EmuHost::loadGameFile(const std::filesystem::path& gameFile, const bool alert) {
+	if (alert) { BVS.raiseWindow(); }
+	if (HDM.validateGameFile(gameFile)) {
 		replaceGuest(false);
 	}
 }
 
-void VM_Host::pauseSystem(const bool state) const noexcept {
+void EmuHost::pauseSystem(const bool state) const noexcept {
 	if (state) {
 		EmuInterface::addSystemState(EmuState::HIDDEN);
 	} else {

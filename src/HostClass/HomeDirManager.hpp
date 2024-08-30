@@ -12,10 +12,15 @@
 #include <filesystem>
 
 /*==================================================================*/
-	#pragma region HomeDirManager Class
+	#pragma region HomeDirManager Singleton Class
 /*==================================================================*/
 
 class HomeDirManager final {
+	HomeDirManager(const char* const org, const char* const app) noexcept;
+	~HomeDirManager() noexcept = default;
+	HomeDirManager(const HomeDirManager&) = delete;
+	HomeDirManager& operator=(const HomeDirManager&) = delete;
+
 	using GameValidator = bool (*)(const std::size_t, const std::string&, const std::string&);
 
 	std::filesystem::path mFilePath{};
@@ -28,12 +33,16 @@ class HomeDirManager final {
 		mDirectories{};
 
 	GameValidator checkGame{};
-	bool errorTriggered{};
+	bool errorEncountered{};
 
 public:
-	HomeDirManager(const char* const org, const char* const app) noexcept;
+	static auto& create(const char* const org, const char* const app) noexcept {
+		static HomeDirManager self(org, app);
+		return self;
+	}
 
-	bool getSelfStatus() const noexcept { return errorTriggered; }
+	void setErrorState(const bool state) noexcept { errorEncountered = state; }
+	bool getErrorState()           const noexcept { return errorEncountered;  }
 
 	static bool showErrorBox(const char* const, const char* const) noexcept;
 
@@ -60,3 +69,5 @@ public:
 /*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
+
+extern HomeDirManager& HDM;

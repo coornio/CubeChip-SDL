@@ -10,14 +10,10 @@
 #include "../../HostClass/BasicVideoSpec.hpp"
 #include "../../HostClass/BasicAudioSpec.hpp"
 
+/*==================================================================*/
+
 CHIP8_MODERN::~CHIP8_MODERN() = default;
-CHIP8_MODERN::CHIP8_MODERN(
-	HomeDirManager& ref_HDM,
-	BasicVideoSpec& ref_BVS,
-	BasicAudioSpec& ref_BAS
-) noexcept
-	: Chip8_CoreInterface{ ref_HDM, ref_BVS, ref_BAS }
-{
+CHIP8_MODERN::CHIP8_MODERN() noexcept {
 	if (getCoreState() != EmuState::FAILED) {
 
 		copyGameToMemory(mMemoryBank.data(), cGameLoadPos);

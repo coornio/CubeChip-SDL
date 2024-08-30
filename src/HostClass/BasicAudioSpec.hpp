@@ -10,24 +10,36 @@
 
 #include "../Types.hpp"
 
+/*==================================================================*/
+	#pragma region BasicAudioSpec Singleton Class
+/*==================================================================*/
+
 class BasicAudioSpec final {
+	BasicAudioSpec() noexcept;
+	~BasicAudioSpec() noexcept;
+	BasicAudioSpec(const BasicAudioSpec&) = delete;
+	BasicAudioSpec& operator=(const BasicAudioSpec&) = delete;
+
 	static constexpr
 	u32 outFrequency{ 48'000 };
 
 	s16 volume{};
 	s16 amplitude{};
 
-	bool errorTriggered{};
+	bool errorEncountered{};
 
 	SDL_AudioSpec     audiospec{};
 	SDL_AudioDeviceID device{};
 	SDL_AudioStream*  stream{};
 
 public:
-	BasicAudioSpec() noexcept;
-	~BasicAudioSpec();
+	static auto& create() noexcept {
+		static BasicAudioSpec self;
+		return self;
+	}
 
-	bool getSelfStatus() const noexcept { return errorTriggered; }
+	void setErrorState(const bool state) noexcept { errorEncountered = state; }
+	bool getErrorState()           const noexcept { return errorEncountered; }
 
 	void pushAudioData(const void*, usz);
 
@@ -39,3 +51,9 @@ public:
 	void setVolume(s32) noexcept;
 	void changeVolume(s32) noexcept;
 };
+
+/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
+	#pragma endregion
+/*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
+
+extern BasicAudioSpec& BAS;

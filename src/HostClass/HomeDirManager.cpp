@@ -12,7 +12,6 @@
 #include "../Assistants/SHA1.hpp"
 #include "../Assistants/PathGetters.hpp"
 #include "../Assistants/BasicLogger.hpp"
-using namespace blogger;
 
 #include <SDL3/SDL_messagebox.h>
 
@@ -27,7 +26,7 @@ static auto getFileModTime(const std::filesystem::path& filePath) noexcept {
 
 HomeDirManager::HomeDirManager(const char* const org, const char* const app) noexcept {
 	if (!getHomePath(org, app)) {
-		errorTriggered = true;
+		setErrorState(true);
 		showErrorBox("Filesystem Error", "Unable to get home directory!");
 	} else {
 		blog.initLogFile("program.log", getHomePath());

@@ -42,10 +42,6 @@ enum class GameCoreType {
 
 class EmuInterface;
 
-class HomeDirManager;
-class BasicVideoSpec;
-class BasicAudioSpec;
-
 class GameFileChecker final {
 	 GameFileChecker() = delete;
 	~GameFileChecker() = delete;
@@ -68,9 +64,7 @@ class GameFileChecker final {
 	) noexcept;
 
 	[[nodiscard]]
-	static std::unique_ptr<EmuInterface> constructCore(
-		HomeDirManager&, BasicVideoSpec&, BasicAudioSpec&
-	) noexcept;
+	static std::unique_ptr<EmuInterface> constructCore() noexcept;
 
 public:
 	static bool validate(
@@ -80,15 +74,13 @@ public:
 	) noexcept;
 
 	[[nodiscard]]
-	static std::unique_ptr<EmuInterface> initGameCore(
-		HomeDirManager&, BasicVideoSpec&, BasicAudioSpec&
-	) noexcept;
+	static std::unique_ptr<EmuInterface> initGameCore() noexcept;
 
 	static void deleteGameCore()  noexcept;
 
 	[[nodiscard]]
-	static auto getGameCore()  noexcept;
+	static auto getGameCoreType()  noexcept;
 
 	[[nodiscard]]
-	static bool hasGameCore()  noexcept;
+	static bool hasGameCoreType()  noexcept;
 };

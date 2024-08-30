@@ -11,7 +11,6 @@
 using json = nlohmann::json;
 
 #include "../Assistants/BasicLogger.hpp"
-using namespace blogger;
 
 #include "GameFileChecker.hpp"
 
@@ -30,58 +29,56 @@ void GameFileChecker::deleteGameCore() noexcept {
 	sEmuCore = GameCoreType::INVALID;
 }
 
-auto GameFileChecker::getGameCore()  noexcept { return sEmuCore; }
+auto GameFileChecker::getGameCoreType() noexcept { return sEmuCore; }
 
-bool GameFileChecker::hasGameCore()  noexcept { return sEmuCore != GameCoreType::INVALID; }
+bool GameFileChecker::hasGameCoreType() noexcept { return sEmuCore != GameCoreType::INVALID; }
 
 /*==================================================================*/
 
-std::unique_ptr<EmuInterface> GameFileChecker::constructCore(
-	HomeDirManager& HDM, BasicVideoSpec& BVS, BasicAudioSpec& BAS
-) noexcept {
+std::unique_ptr<EmuInterface> GameFileChecker::constructCore() noexcept {
 	try {
 		switch (sEmuCore) {
 			case GameCoreType::XOCHIP:
-				//return std::make_unique<XOCHIP>(HDM, BVS, BAS);
+				//return std::make_unique<XOCHIP>();
 
 			case GameCoreType::CHIP8E:
-				//return std::make_unique<CHIP8E>(HDM, BVS, BAS);
+				//return std::make_unique<CHIP8E>();
 
 			case GameCoreType::CHIP8X:
-				//return std::make_unique<CHIP8X>(HDM, BVS, BAS);
+				//return std::make_unique<CHIP8X>();
 
 			case GameCoreType::CHIP8_2P:
-				//return std::make_unique<CHIP8_2P>(HDM, BVS, BAS);
+				//return std::make_unique<CHIP8_2P>();
 
 			case GameCoreType::CHIP8_4P:
-				//return std::make_unique<CHIP8_4P>(HDM, BVS, BAS);
+				//return std::make_unique<CHIP8_4P>();
 
 			case GameCoreType::CHIP8_LEGACY:
-				//return std::make_unique<CHIP8_LEGACY>(HDM, BVS, BAS);
+				//return std::make_unique<CHIP8_LEGACY>();
 
 			case GameCoreType::SCHIP_LEGACY:
-				//return std::make_unique<SCHIP_LEGACY>(HDM, BVS, BAS);
+				//return std::make_unique<SCHIP_LEGACY>();
 
 			case GameCoreType::CHIP8_MODERN:
-				return std::make_unique<CHIP8_MODERN>(HDM, BVS, BAS);
+				return std::make_unique<CHIP8_MODERN>();
 
 			case GameCoreType::SCHIP_MODERN:
-				//return std::make_unique<SCHIP_MODERN>(HDM, BVS, BAS);
+				//return std::make_unique<SCHIP_MODERN>();
 
 			case GameCoreType::CHIP8X_HIRES:
-				//return std::make_unique<CHIP8X_HIRES>(HDM, BVS, BAS);
+				//return std::make_unique<CHIP8X_HIRES>();
 
 			case GameCoreType::CHIP8X_SCHIP:
-				//return std::make_unique<CHIP8X_SCHIP>(HDM, BVS, BAS);
+				//return std::make_unique<CHIP8X_SCHIP>();
 
 			case GameCoreType::HWCHIP64:
-				//return std::make_unique<HWCHIP64>(HDM, BVS, BAS);
+				//return std::make_unique<HWCHIP64>();
 
 			case GameCoreType::MEGACHIP:
-				//return std::make_unique<MEGACHIP>(HDM, BVS, BAS);
+				//return std::make_unique<MEGACHIP>();
 
 			case GameCoreType::GIGACHIP:
-				//return std::make_unique<GIGACHIP>(HDM, BVS, BAS);
+				//return std::make_unique<GIGACHIP>();
 
 			default:
 			case GameCoreType::INVALID:
@@ -93,14 +90,12 @@ std::unique_ptr<EmuInterface> GameFileChecker::constructCore(
 	}
 }
 
-std::unique_ptr<EmuInterface> GameFileChecker::initGameCore(
-	HomeDirManager& HDM, BasicVideoSpec& BVS, BasicAudioSpec& BAS
-) noexcept {
-	std::unique_ptr<EmuInterface> tempCore{ constructCore(HDM, BVS, BAS) };
+std::unique_ptr<EmuInterface> GameFileChecker::initGameCore() noexcept {
+	auto tempCore{ constructCore() };
 
 	if (tempCore) {
 		if (tempCore->isCoreStopped()) {
-			if (hasGameCore()) {
+			if (hasGameCoreType()) {
 				blog.newEntry(BLOG::ERROR, "Failed critical Game Core initialization requirements!");
 				deleteGameCore();
 			}

@@ -17,10 +17,6 @@
 #include <memory>
 #include <string>
 
-class HomeDirManager;
-class BasicVideoSpec;
-class BasicAudioSpec;
-
 enum EmuState : u8 {
 	NORMAL = 0x0, // normal operation
 	HIDDEN = 0x1, // window is hidden
@@ -62,10 +58,6 @@ class Chip8_CoreInterface : public EmuInterface {
 	static std::filesystem::path* sSavestatePath;
 
 protected:
-	HomeDirManager& HDM;
-	BasicVideoSpec& BVS;
-	BasicAudioSpec& BAS;
-
 	struct PlatformQuirks final {
 		bool clearVF{};
 		bool jmpRegX{};
@@ -144,11 +136,7 @@ protected:
 	void copyFontToMemory(u8* dest, const u32 offset, const u32 size);
 
 public:
-	explicit Chip8_CoreInterface(
-		HomeDirManager& ref_HDM,
-		BasicVideoSpec& ref_BVS,
-		BasicAudioSpec& ref_BAS
-	) noexcept;
+	explicit Chip8_CoreInterface() noexcept;
 
 	virtual void processFrame() override = 0;
 

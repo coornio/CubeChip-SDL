@@ -18,7 +18,7 @@ BasicVideoSpec::BasicVideoSpec() noexcept
 	resetWindow();
 }
 
-BasicVideoSpec::~BasicVideoSpec() {
+BasicVideoSpec::~BasicVideoSpec() noexcept {
 	SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }
 
@@ -28,7 +28,7 @@ void BasicVideoSpec::createWindow(const s32 window_W, const s32 window_H) {
 	window = SDL_CreateWindow(nullptr, window_W, window_H, 0);
 
 	if (!window) {
-		errorTriggered = true;
+		setErrorState(true);
 		showErrorBox("Failed to create SDL_Window!");
 	}
 }
@@ -39,7 +39,7 @@ void BasicVideoSpec::createRenderer() {
 	renderer = SDL_CreateRenderer(window, nullptr);
 	
 	if (!renderer) {
-		errorTriggered = true;
+		setErrorState(true);
 		showErrorBox("Failed to create SDL_Renderer!");
 	}
 }
@@ -58,7 +58,7 @@ void BasicVideoSpec::createTexture(s32 texture_W, s32 texture_H) {
 	);
 
 	if (!texture) {
-		errorTriggered = true;
+		setErrorState(true);
 		showErrorBox("Failed to create SDL_Texture!");
 	} else {
 		SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
