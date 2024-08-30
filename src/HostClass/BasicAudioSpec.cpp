@@ -11,6 +11,10 @@
 static constexpr s32 VOL_MAX{ 255 };
 static constexpr s32 VOL_MIN{   0 };
 
+/*==================================================================*/
+	#pragma region BasicAudioSpec Singleton Class
+/*==================================================================*/
+
 BasicAudioSpec::BasicAudioSpec() noexcept
 	: audiospec{ SDL_AUDIO_S16, 1, outFrequency }
 {
@@ -42,3 +46,7 @@ void BasicAudioSpec::changeVolume(const s32 delta) noexcept {
 	volume    = static_cast<s16>(std::clamp(volume + delta, VOL_MIN, VOL_MAX));
 	amplitude = static_cast<s16>(16 * volume);
 }
+
+/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
+#pragma endregion
+/*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/

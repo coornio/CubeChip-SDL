@@ -30,14 +30,14 @@ class EmuHost final {
 	EmuHost(const EmuHost&) = delete;
 	EmuHost& operator=(const EmuHost&) = delete;
 
-	std::unique_ptr<EmuInterface> iGuest;
-	std::unique_ptr<FrameLimiter> Limiter;
-
-public:
 	static HomeDirManager* HDM;
 	static BasicVideoSpec* BVS;
 	static BasicAudioSpec* BAS;
 
+	std::unique_ptr<EmuInterface> iGuest;
+	std::unique_ptr<FrameLimiter> Limiter;
+
+public:
 	std::mutex Mutex;
 
 private:

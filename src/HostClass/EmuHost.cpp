@@ -7,13 +7,13 @@
 #include <iostream>
 #include <iomanip>
 
-#include "HomeDirManager.hpp"
-#include "BasicVideoSpec.hpp"
-#include "BasicAudioSpec.hpp"
-
 #include "../Assistants/BasicLogger.hpp"
 #include "../Assistants/BasicInput.hpp"
 #include "../Assistants/FrameLimiter.hpp"
+
+#include "HomeDirManager.hpp"
+#include "BasicVideoSpec.hpp"
+#include "BasicAudioSpec.hpp"
 
 #include "EmuHost.hpp"
 #include "../GuestClass/EmuCores/EmuCores.hpp"
