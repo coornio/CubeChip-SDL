@@ -350,7 +350,7 @@ public:
 			if (value == 0) {
 				throw std::domain_error("division by zero");
 			} else {
-				elem = std::fmod(elem, value);;
+				elem = std::fmod(elem, value);
 			}
 		}
 		return temp;

@@ -60,13 +60,13 @@ public:
 	bool checkTime(bool mode = SLEEP);
 
 	auto getElapsedMillisSince() const noexcept {
-		using millis = std::chrono::milliseconds;
-		return duration_cast<millis>(getElapsedTime()).count();
+		using tmillis = std::chrono::milliseconds;
+		return duration_cast<tmillis>(getElapsedTime()).count();
 	}
 
 	auto getElapsedMicrosSince() const noexcept {
-		using micros = std::chrono::microseconds;
-		return duration_cast<micros>(getElapsedTime()).count();
+		using tmicros = std::chrono::microseconds;
+		return duration_cast<tmicros>(getElapsedTime()).count();
 	}
 
 	auto getValidFrameCounter() const noexcept { return validFrameCnt; }

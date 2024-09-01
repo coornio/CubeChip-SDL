@@ -60,7 +60,7 @@ void EmuHost::printStatistics() const {
 		std::cout
 			<< "\33[1;12H" << std::setfill(' ') << std::setw(9)
 			<< std::right << std::fixed << std::setprecision(4)
-			<< Limiter->getElapsedMicrosSince() / 1e3
+			<< Limiter->getElapsedMicrosSince() / 1e3f
 
 			<< "\33[2;12H" << std::setfill(' ') << std::setw(9)
 			<< std::right << std::fixed << std::setprecision(4)
@@ -68,7 +68,7 @@ void EmuHost::printStatistics() const {
 
 			<< "\33[3;12H" << std::setfill(' ') << std::setw(8)
 			<< std::right << std::fixed << std::setprecision(2)
-			<< iGuest->changeCPF(Limiter->isKeepingPace() ? +5000 : -5000) * iGuest->fetchFramerate() / 1e6
+			<< iGuest->changeCPF(Limiter->isKeepingPace() ? +5000 : -5000) * iGuest->fetchFramerate() / 1e6f
 			<< std::endl;
 	}
 }
