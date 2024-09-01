@@ -66,7 +66,7 @@ public:
 	}
 
 	void pauseSystem(const bool state) const noexcept;
-	void loadGameFile(const std::filesystem::path&, const bool = false);
+	void loadGameFile(const std::filesystem::path&);
 
 	void processFrame();
 };

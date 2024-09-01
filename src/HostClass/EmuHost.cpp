@@ -101,8 +101,8 @@ void EmuHost::replaceCore() {
 
 /*==================================================================*/
 
-void EmuHost::loadGameFile(const std::filesystem::path& gameFile, const bool alert) {
-	if (alert) { BVS->raiseWindow(); }
+void EmuHost::loadGameFile(const std::filesystem::path& gameFile) {
+	BVS->raiseWindow();
 	if (HDM->validateGameFile(gameFile)) {
 		replaceCore();
 	}

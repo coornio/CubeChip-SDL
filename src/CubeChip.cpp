@@ -101,7 +101,7 @@ SDL_AppResult SDL_AppEvent(void* pHost, const SDL_Event* Event) {
 			return SDL_APP_SUCCESS;
 
 		case SDL_EVENT_DROP_FILE:
-			Host.loadGameFile(Event->drop.data, true);
+			Host.loadGameFile(Event->drop.data);
 			break;
 
 		case SDL_EVENT_WINDOW_MINIMIZED:
