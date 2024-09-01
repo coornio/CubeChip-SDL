@@ -36,7 +36,7 @@ void HexInput::updateKeyStates() noexcept {
 	mKeysCurr = 0;
 
 	for (const auto& mapping : mCustomBinds) {
-		if (bic::kb.areAnyHeld(mapping.key, mapping.alt)) {
+		if (binput::kb.areAnyHeld(mapping.key, mapping.alt)) {
 			mKeysCurr |= 1 << mapping.idx;
 		}
 	}

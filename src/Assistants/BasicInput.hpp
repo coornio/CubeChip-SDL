@@ -133,7 +133,7 @@ public:
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
-namespace bic { // basic input class
+namespace binput {
 	extern BasicKeyboard& kb;
 	extern BasicMouse&    mb;
 }

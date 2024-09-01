@@ -10,8 +10,6 @@
 #include <mutex>
 #include <filesystem>
 
-#include <SDL3/SDL_init.h>
-
 class HomeDirManager;
 class BasicVideoSpec;
 class BasicAudioSpec;
@@ -41,11 +39,14 @@ public:
 	std::mutex Mutex;
 
 private:
-	bool runBenchmark{};
-	bool forceFileCfg{};
+	bool unlimitedMode{};
 
-	bool initGameCore() noexcept;
-	void replaceGuest(const bool);
+	void toggleUnlimited();
+	void printStatistics() const;
+	void checkForHotkeys();
+
+	void discardCore();
+	void replaceCore();
 
 public:
 	static auto* create(const std::filesystem::path& gamePath) noexcept {
@@ -57,7 +58,7 @@ public:
 		HomeDirManager* const pHDM,
 		BasicVideoSpec* const pBVS,
 		BasicAudioSpec* const pBAS
-	) noexcept{
+	) noexcept {
 		HDM = pHDM;
 		BVS = pBVS;
 		BAS = pBAS;
@@ -67,7 +68,7 @@ public:
 	void pauseSystem(const bool state) const noexcept;
 	void loadGameFile(const std::filesystem::path&, const bool = false);
 
-	SDL_AppResult runFrame();
+	void processFrame();
 };
 
 /*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/

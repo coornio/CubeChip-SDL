@@ -22,7 +22,11 @@ CHIP8_MODERN::CHIP8_MODERN() noexcept {
 		mFramerate      = cRefreshRate;
 		mCyclesPerFrame = Quirk.waitVblank ? cInstSpeedHi : 6000000;
 
-		initPlatform();
+		setDisplayResolution(64, 32);
+
+		BVS->setBackColor(cBitsColor[0]);
+		BVS->createTexture(mDisplayW, mDisplayH);
+		BVS->setAspectRatio(512, 256, +2);
 	}
 }
 
@@ -277,11 +281,4 @@ void CHIP8_MODERN::renderVideoData() {
 		}
 	);
 	BVS->unlockTexture();
-}
-
-void CHIP8_MODERN::initPlatform() {
-	setDisplayResolution(64, 32);
-	BVS->setBackColor(cBitsColor[0]);
-	BVS->createTexture(mDisplayW, mDisplayH);
-	BVS->setAspectRatio(512, 256, +2);
 }

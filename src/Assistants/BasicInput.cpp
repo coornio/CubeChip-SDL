@@ -13,8 +13,6 @@
 	#pragma region BasicKeyboard Singleton Class
 /*==================================================================*/
 
-BasicKeyboard& bic::kb{ *BasicKeyboard::create() };
-
 void BasicKeyboard::updateCopy() {
 	std::copy_n(
 		std::execution::par_unseq,
@@ -31,8 +29,6 @@ void BasicKeyboard::updateCopy() {
 /*==================================================================*/
 	#pragma region BasicMouse Singleton Class
 /*==================================================================*/
-
-BasicMouse& bic::mb{ *BasicMouse::create() };
 
 void BasicMouse::updateCopy() {
 	const auto oldX{ posX };

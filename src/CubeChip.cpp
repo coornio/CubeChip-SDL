@@ -25,9 +25,9 @@
 
 /*==================================================================*/
 
-BasicLogger&   blog{   *BasicLogger::create() };
-BasicKeyboard&   kb{ *BasicKeyboard::create() };
-BasicMouse&      mb{    *BasicMouse::create() };
+BasicLogger&         blog{   *BasicLogger::create() };
+BasicKeyboard& binput::kb{ *BasicKeyboard::create() };
+BasicMouse&    binput::mb{    *BasicMouse::create() };
 
 /*==================================================================*/
 
@@ -83,51 +83,36 @@ SDL_AppResult SDL_AppInit(void **Host, int argc, char* argv[]) {
 
 SDL_AppResult SDL_AppIterate(void* pHost) {
 	auto& Host{ *static_cast<EmuHost*>(pHost) };
+	const std::lock_guard lock{ Host.Mutex };
 
-	Host.Mutex.lock();
-	switch (Host.runFrame()) {
-		case SDL_APP_SUCCESS:
-			Host.Mutex.unlock();
-			return SDL_APP_SUCCESS;
+	Host.processFrame();
 
-		case SDL_APP_CONTINUE:
-			Host.Mutex.unlock();
-			return SDL_APP_CONTINUE;
-
-		case SDL_APP_FAILURE:
-			Host.Mutex.unlock();
-			return SDL_APP_FAILURE;
-	}
+	return SDL_APP_CONTINUE;
 }
 
 /*==================================================================*/
 
 SDL_AppResult SDL_AppEvent(void* pHost, const SDL_Event* Event) {
 	auto& Host{ *static_cast<EmuHost*>(pHost) };
+	const std::lock_guard lock{ Host.Mutex };
 
 	switch (Event->type) {
 		case SDL_EVENT_QUIT:
 			return SDL_APP_SUCCESS;
 
 		case SDL_EVENT_DROP_FILE:
-			Host.Mutex.lock();
 			Host.loadGameFile(Event->drop.data, true);
-			Host.Mutex.unlock();
 			break;
 
 		case SDL_EVENT_WINDOW_MINIMIZED:
-			Host.Mutex.lock();
 			Host.pauseSystem(true);
-			Host.Mutex.unlock();
 			break;
 
 		case SDL_EVENT_WINDOW_RESTORED:
-			Host.Mutex.lock();
 			Host.pauseSystem(false);
-			Host.Mutex.unlock();
 			break;
 	}
-	
+
 	return SDL_APP_CONTINUE;
 }
 

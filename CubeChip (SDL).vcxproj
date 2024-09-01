@@ -187,6 +187,7 @@
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
+      <AdditionalOptions>-Wunknown-pragmas %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

@@ -13,6 +13,7 @@
 
 class CHIP8_MODERN final : public Chip8_CoreInterface {
 	static constexpr u32 cTotalMemory{ 0x1000u };
+	static constexpr u32 cSafezoneOOB{ 0x0031u };
 	static constexpr u32 cGameLoadPos{ 0x0200u };
 	static constexpr u32 cStartOffset{ 0x0200u };
 	static constexpr f32 cRefreshRate{ 60.000f };
@@ -48,7 +49,7 @@ private:
 	std::array<u8, 2048>
 		mDisplayBuffer{};
 
-	std::array<u8, cTotalMemory + 31>
+	std::array<u8, cTotalMemory + cSafezoneOOB>
 		mMemoryBank{};
 
 	void writeMemoryI(const u32 value, const u32 pos) noexcept {
@@ -62,8 +63,6 @@ private:
 	}
 
 private:
-	void initPlatform();
-
 	void renderAudioData();
 	void renderVideoData();
 
