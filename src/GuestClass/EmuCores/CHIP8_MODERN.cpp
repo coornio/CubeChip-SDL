@@ -238,7 +238,7 @@ void CHIP8_MODERN::instructionLoop() {
 
 f32  CHIP8_MODERN::calcAudioTone() const {
 	return (160.0f + 8.0f * (
-		(mProgCounter >> 1) + mStackBank[mStackTop] + 1 & 0x3E)
+		(mProgCounter >> 1) + mStackTop + 1 & 0x3E)
 	) / BAS->getFrequency();
 }
 
