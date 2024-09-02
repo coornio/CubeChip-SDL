@@ -188,6 +188,11 @@
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
+      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
+      <OmitFramePointers>
+      </OmitFramePointers>
+      <EnableFiberSafeOptimizations>false</EnableFiberSafeOptimizations>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <AdditionalOptions>-Wno-unknown-pragmas -Wno-switch %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
