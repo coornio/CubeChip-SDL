@@ -308,7 +308,7 @@ private:
 
 	void drawByte(
 		s32 X, s32 Y,
-		const usz DATA
+		const u32 DATA
 	) {
 		switch (DATA) {
 			[[unlikely]]
@@ -319,7 +319,7 @@ private:
 			case 0b10000000:
 				if (Quirk.wrapSprite) { X &= mDisplayWb; }
 				if (X < mDisplayW) {
-					if (!(mDisplayBuffer[Y * mDisplayW + X] ^= 1))
+					if (!((mDisplayBuffer[Y * mDisplayW + X] ^= 0x8) & 0x8))
 						{ mRegisterV[0xF] = 1; }
 				}
 				return;
@@ -329,9 +329,9 @@ private:
 				if (Quirk.wrapSprite) { X &= mDisplayWb; }
 				else if (X >= mDisplayW) { return; }
 
-				for (auto B{ 0 }; B < 8; ++X &= mDisplayWb) {
-					if (DATA & 0x80 >> B++) {
-						if (!(mDisplayBuffer[Y * mDisplayW + X] ^= 1))
+				for (auto B{ 0 }; B < 8; ++B, ++X &= mDisplayWb) {
+					if (DATA & 0x80 >> B) {
+						if (!((mDisplayBuffer[Y * mDisplayW + X] ^= 0x8) & 0x8))
 							{ mRegisterV[0xF] = 1; }
 					}
 					if (!Quirk.wrapSprite && X == mDisplayWb) { return; }

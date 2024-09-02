@@ -272,38 +272,35 @@ void CHIP8_MODERN::renderAudioData() {
 
 void CHIP8_MODERN::renderVideoData() {
 	std::array<u32, cScreenSizeX * cScreenSizeY>
-		pixelData;
+		pixelColorData;
 
-	/*
+	std::transform(
+		std::execution::unseq,
+		mDisplayBuffer.begin(),
+		mDisplayBuffer.end(),
+		pixelColorData.begin(),
+		isPixelTrailing()
+		? [](const u32 pixel) noexcept {
+			static constexpr u32 layer[4]{ 0xFF, 0xE7, 0x6F, 0x37 };
+			const auto alpha{ layer[std::countl_zero(pixel) & 0x3] };
+			return alpha << 24 | cBitsColor[pixel != 0];
+		}
+		: [](const u32 pixel) noexcept {
+			return 0xFF000000 | cBitsColor[pixel != 0];
+		}
+	);
+
 	if (isPixelTrailing()) {
 		std::transform(
 			std::execution::unseq,
 			mDisplayBuffer.begin(),
 			mDisplayBuffer.end(),
-			pixelData.begin(),
-			[](auto& pixel) noexcept {
-				static constexpr u8 layer[5]{ 0xFF, 0xE8, 0x7B, 0x38 };
-				const auto alpha{ layer[std::countl_zero(pixel) & 3] };
-				const auto color{ alpha << 24 | cBitsColor[pixel != 0] };
-	
-				pixel = (pixel & 0x8) | (pixel >> 1);
-				
-				return color;
-			}
-		);
-	}
-	else
-	*/
-	{
-		std::transform(
-			std::execution::unseq,
 			mDisplayBuffer.begin(),
-			mDisplayBuffer.end(),
-			pixelData.begin(),
-			[](const auto pixel) noexcept {
-				return 0xFF000000 | cBitsColor[pixel];
+			[](const u32 pixel) noexcept {
+				return (pixel & 0x8) | (pixel >> 1);
 			}
 		);
 	}
-	BVS->modifyTexture(pixelData);
+
+	BVS->modifyTexture(pixelColorData);
 }
