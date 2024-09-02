@@ -8,6 +8,7 @@
 
 #include <SDL3/SDL.h>
 
+#include <span>
 #include <string>
 #include <utility>
 
@@ -86,6 +87,7 @@ public:
 	[[nodiscard]]
 	u32* lockTexture();
 	void unlockTexture();
+	void modifyTexture(const std::span<u32>);
 
 	void setTextureAlpha(usz);
 	void setAspectRatio(s32, s32, s32);

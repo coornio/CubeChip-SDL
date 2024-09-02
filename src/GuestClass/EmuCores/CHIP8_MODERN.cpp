@@ -22,10 +22,10 @@ CHIP8_MODERN::CHIP8_MODERN() noexcept {
 		mFramerate      = cRefreshRate;
 		mCyclesPerFrame = Quirk.waitVblank ? cInstSpeedHi : 6000000;
 
-		setDisplayResolution(64, 32);
+		setDisplayResolution(cScreenSizeX, cScreenSizeY);
 
 		BVS->setBackColor(cBitsColor[0]);
-		BVS->createTexture(mDisplayW, mDisplayH);
+		BVS->createTexture(cScreenSizeX, cScreenSizeY);
 		BVS->setAspectRatio(512, 256, +2);
 	}
 }
@@ -238,8 +238,8 @@ void CHIP8_MODERN::instructionLoop() {
 
 f32  CHIP8_MODERN::calcAudioTone() const {
 	return (160.0f + 8.0f * (
-		(mProgCounter >> 1) + mStackTop + 1 & 0x3E)
-	) / BAS->getFrequency();
+		(mProgCounter >> 1) + mStackTop + 1 & 0x3E
+	)) / BAS->getFrequency();
 }
 
 void CHIP8_MODERN::nextInstruction() {
@@ -271,14 +271,39 @@ void CHIP8_MODERN::renderAudioData() {
 }
 
 void CHIP8_MODERN::renderVideoData() {
-	std::transform(
-		std::execution::unseq,
-		mDisplayBuffer.begin(),
-		mDisplayBuffer.end(),
-		BVS->lockTexture(),
-		[](const auto pixel) noexcept {
-			return 0xFF000000 | cBitsColor[pixel];
-		}
-	);
-	BVS->unlockTexture();
+	std::array<u32, cScreenSizeX * cScreenSizeY>
+		pixelData;
+
+	/*
+	if (isPixelTrailing()) {
+		std::transform(
+			std::execution::unseq,
+			mDisplayBuffer.begin(),
+			mDisplayBuffer.end(),
+			pixelData.begin(),
+			[](auto& pixel) noexcept {
+				static constexpr u8 layer[5]{ 0xFF, 0xE8, 0x7B, 0x38 };
+				const auto alpha{ layer[std::countl_zero(pixel) & 3] };
+				const auto color{ alpha << 24 | cBitsColor[pixel != 0] };
+	
+				pixel = (pixel & 0x8) | (pixel >> 1);
+				
+				return color;
+			}
+		);
+	}
+	else
+	*/
+	{
+		std::transform(
+			std::execution::unseq,
+			mDisplayBuffer.begin(),
+			mDisplayBuffer.end(),
+			pixelData.begin(),
+			[](const auto pixel) noexcept {
+				return 0xFF000000 | cBitsColor[pixel];
+			}
+		);
+	}
+	BVS->modifyTexture(pixelData);
 }

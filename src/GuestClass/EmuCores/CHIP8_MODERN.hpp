@@ -17,6 +17,8 @@ class CHIP8_MODERN final : public Chip8_CoreInterface {
 	static constexpr u32 cGameLoadPos{ 0x0200u };
 	static constexpr u32 cStartOffset{ 0x0200u };
 	static constexpr f32 cRefreshRate{ 60.000f };
+	static constexpr s32 cScreenSizeX{     64  };
+	static constexpr s32 cScreenSizeY{     32  };
 	static constexpr s32 cInstSpeedHi{     30  };
 	static constexpr s32 cInstSpeedLo{     11  };
 
@@ -46,7 +48,7 @@ private:
 	u8  mStackTop{};
 	u16 mRegisterI{};
 
-	std::array<u8, 2048>
+	std::array<u8, cScreenSizeX * cScreenSizeY>
 		mDisplayBuffer{};
 
 	std::array<u8, cTotalMemory + cSafezoneOOB>
@@ -438,14 +440,14 @@ private:
 		for (auto idx{ 0 }; idx <= X; ++idx)
 			{ writeMemoryI(mRegisterV[idx], idx); }
 		if (!Quirk.idxRegNoInc) [[likely]]
-			{ (mRegisterI += X + 1 & 0xFF) &= 0xFFF; }
+			{ mRegisterI = mRegisterI + X + 1 & 0xFFF; }
 	}
 	// FX65 - load V0..VX from RAM at I..I+X
 	void instruction_Fx65(const s32 X) {
 		for (auto idx{ 0 }; idx <= X; ++idx)
 			{ mRegisterV[idx] = readMemoryI(idx); }
 		if (!Quirk.idxRegNoInc) [[likely]]
-			{ (mRegisterI += X + 1 & 0xFF) &= 0xFFF; }
+			{ mRegisterI = mRegisterI + X + 1 & 0xFFF; }
 	}
 
 /*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/

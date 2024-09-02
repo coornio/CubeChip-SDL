@@ -5,6 +5,7 @@
 */
 
 #include <stdexcept>
+#include <execution>
 #include <algorithm>
 
 #include "BasicVideoSpec.hpp"
@@ -106,6 +107,16 @@ u32* BasicVideoSpec::lockTexture() {
 }
 void BasicVideoSpec::unlockTexture() {
 	SDL_UnlockTexture(texture);
+}
+
+void BasicVideoSpec::modifyTexture(const std::span<u32> pixelData) {
+	std::copy(
+		std::execution::unseq,
+		pixelData.begin(),
+		pixelData.end(),
+		lockTexture()
+	);
+	unlockTexture();
 }
 
 void BasicVideoSpec::setTextureAlpha(const usz alpha) {
