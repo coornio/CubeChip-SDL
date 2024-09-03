@@ -30,25 +30,7 @@ CHIP8_MODERN::CHIP8_MODERN() noexcept {
 	}
 }
 
-void CHIP8_MODERN::processFrame() {
-	if (isSystemStopped()) { return; }
-	else [[likely]] { ++mTotalFrames; }
-
-	Input.updateKeyStates();
-
-	if (mDelayTimer) { --mDelayTimer; }
-	if (mSoundTimer) { --mSoundTimer; }
-
-	handlePreFrameInterrupt();
-
-	instructionLoop();
-
-	handleEndFrameInterrupt();
-
-	renderAudioData();
-
-	renderVideoData();
-}
+/*==================================================================*/
 
 void CHIP8_MODERN::handlePreFrameInterrupt() noexcept {
 	switch (mInterruptType)
@@ -87,7 +69,12 @@ void CHIP8_MODERN::handleEndFrameInterrupt() noexcept {
 	}
 }
 
-void CHIP8_MODERN::instructionLoop() {
+void CHIP8_MODERN::handleTimerTick() noexcept {
+	if (mDelayTimer) { --mDelayTimer; }
+	if (mSoundTimer) { --mSoundTimer; }
+}
+
+void CHIP8_MODERN::instructionLoop() noexcept {
 
 	auto cycleCount{ 0 };
 	for (; cycleCount < mCyclesPerFrame; ++cycleCount) {
@@ -105,7 +92,7 @@ void CHIP8_MODERN::instructionLoop() {
 						instruction_00EE();
 						break;
 					[[unlikely]]
-					default: instructionErrorML(HI, LO);
+					default: instructionError(HI, LO);
 				}
 				break;
 			case 0x1:
@@ -236,23 +223,6 @@ void CHIP8_MODERN::instructionLoop() {
 	mTotalCycles += cycleCount;
 }
 
-f32  CHIP8_MODERN::calcAudioTone() const {
-	return (160.0f + 8.0f * (
-		(mProgCounter >> 1) + mStackTop + 1 & 0x3E
-	)) / BAS->getFrequency();
-}
-
-void CHIP8_MODERN::nextInstruction() {
-	mProgCounter += 2;
-}
-
-void CHIP8_MODERN::jumpProgramTo(const u32 next) {
-	const auto NNN{ next & 0xFFF };
-	if (mProgCounter - 2u == NNN) [[unlikely]] {
-		setInterrupt(Interrupt::SOUND);
-	} else { mProgCounter = NNN & 0xFFF; }
-}
-
 void CHIP8_MODERN::renderAudioData() {
 	std::vector<s16> audioBuffer(static_cast<usz>(BAS->getFrequency() / cRefreshRate));
 
@@ -271,15 +241,7 @@ void CHIP8_MODERN::renderAudioData() {
 }
 
 void CHIP8_MODERN::renderVideoData() {
-	std::array<u32, cScreenSizeX * cScreenSizeY>
-		pixelColorData;
-
-	std::transform(
-		std::execution::unseq,
-		mDisplayBuffer.begin(),
-		mDisplayBuffer.end(),
-		pixelColorData.begin(),
-		isPixelTrailing()
+	BVS->modifyTexture<u8>(mDisplayBuffer, isPixelTrailing()
 		? [](const u32 pixel) noexcept {
 			static constexpr u32 layer[4]{ 0xFF, 0xE7, 0x6F, 0x37 };
 			const auto alpha{ layer[std::countl_zero(pixel) & 0x3] };
@@ -290,17 +252,54 @@ void CHIP8_MODERN::renderVideoData() {
 		}
 	);
 
-	if (isPixelTrailing()) {
-		std::transform(
-			std::execution::unseq,
-			mDisplayBuffer.begin(),
-			mDisplayBuffer.end(),
-			mDisplayBuffer.begin(),
-			[](const u32 pixel) noexcept {
-				return (pixel & 0x8) | (pixel >> 1);
-			}
-		);
-	}
+	//std::array<u32, cScreenSizeX * cScreenSizeY>
+	//	pixelColorData;
+	//
+	//std::transform(
+	//	std::execution::unseq,
+	//	mDisplayBuffer.begin(),
+	//	mDisplayBuffer.end(),
+	//	pixelColorData.begin(),
+	//	isPixelTrailing()
+	//	? [](const u32 pixel) noexcept {
+	//		static constexpr u32 layer[4]{ 0xFF, 0xE7, 0x6F, 0x37 };
+	//		const auto alpha{ layer[std::countl_zero(pixel) & 0x3] };
+	//		return alpha << 24 | cBitsColor[pixel != 0];
+	//	}
+	//	: [](const u32 pixel) noexcept {
+	//		return 0xFF000000 | cBitsColor[pixel != 0];
+	//	}
+	//);
+	//BVS->modifyTexture(pixelColorData);
 
-	BVS->modifyTexture(pixelColorData);
+	std::transform(
+		std::execution::unseq,
+		mDisplayBuffer.begin(),
+		mDisplayBuffer.end(),
+		mDisplayBuffer.begin(),
+		[](const u32 pixel) noexcept {
+			return (pixel & 0x8) | (pixel >> 1);
+		}
+	);
+}
+
+/*==================================================================*/
+
+f32  CHIP8_MODERN::calcAudioTone() const noexcept {
+	return (160.0f + 8.0f * (
+		(mProgCounter >> 1) + mStackTop + 1 & 0x3E
+	)) / BAS->getFrequency();
+}
+
+void CHIP8_MODERN::nextInstruction() noexcept {
+	mProgCounter += 2;
+}
+
+void CHIP8_MODERN::jumpProgramTo(const u32 next) noexcept {
+	const auto NNN{ next & 0xFFF };
+	if (mProgCounter - 2u != NNN) [[likely]] {
+		mProgCounter = NNN & 0xFFF;
+	} else {
+		triggerInterrupt(Interrupt::SOUND);
+	}
 }

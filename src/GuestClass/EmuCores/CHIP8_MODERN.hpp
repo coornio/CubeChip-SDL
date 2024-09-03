@@ -22,16 +22,6 @@ class CHIP8_MODERN final : public Chip8_CoreInterface {
 	static constexpr s32 cInstSpeedHi{     30  };
 	static constexpr s32 cInstSpeedLo{     11  };
 
-public:
-	static constexpr bool testGameSize(const usz size) noexcept {
-		return size + cGameLoadPos <= cTotalMemory;
-	}
-
-public:
-	CHIP8_MODERN() noexcept;
-
-	void processFrame() override;
-
 private:
 	u8  mRegisterV[16]{};
 	u16 mStackBank[16]{};
@@ -64,27 +54,35 @@ private:
 		return mMemoryBank[mRegisterI + pos];
 	}
 
+public:
+	CHIP8_MODERN() noexcept;
+
+	static constexpr bool testGameSize(const usz size) noexcept {
+		return size + cGameLoadPos <= cTotalMemory;
+	}
+
 private:
-	void renderAudioData();
-	void renderVideoData();
+	void handlePreFrameInterrupt() noexcept override;
+	void handleEndFrameInterrupt() noexcept override;
 
-	void instructionLoop();
-	void nextInstruction();
+	void handleTimerTick() noexcept override;
+	void instructionLoop() noexcept override;
 
-	void handlePreFrameInterrupt() noexcept;
-	void handleEndFrameInterrupt() noexcept;
+	void renderAudioData() override;
+	void renderVideoData() override;
 
-	f32  calcAudioTone() const;
-	void jumpProgramTo(u32);
+	f32  calcAudioTone() const noexcept;
+	void nextInstruction() noexcept;
+	void jumpProgramTo(const u32 next) noexcept;
 
 /*==================================================================*/
 	#pragma region 0 instruction branch
 /*==================================================================*/
 
 	// 00E0 - erase whole display
-	void instruction_00E0() {
+	void instruction_00E0() noexcept {
 		if (Quirk.waitVblank) [[unlikely]]
-			{ setInterrupt(Interrupt::FRAME); }
+			{ triggerInterrupt(Interrupt::FRAME); }
 		std::fill(
 			std::execution::unseq,
 			mDisplayBuffer.begin(),
@@ -93,7 +91,7 @@ private:
 		);
 	}
 	// 00EE - return from subroutine
-	void instruction_00EE() {
+	void instruction_00EE() noexcept {
 		mProgCounter = mStackBank[--mStackTop & 0xF];
 	}
 
@@ -106,7 +104,7 @@ private:
 /*==================================================================*/
 
 	// 1NNN - jump to NNN
-	void instruction_1NNN(const s32 NNN) {
+	void instruction_1NNN(const s32 NNN) noexcept {
 		jumpProgramTo(NNN);
 	}
 
@@ -119,7 +117,7 @@ private:
 /*==================================================================*/
 
 	// 2NNN - call subroutine at NNN
-	void instruction_2NNN(const s32 NNN) {
+	void instruction_2NNN(const s32 NNN) noexcept {
 		mStackBank[mStackTop++ & 0xF] = mProgCounter;
 		jumpProgramTo(NNN);
 	}
@@ -133,7 +131,7 @@ private:
 /*==================================================================*/
 
 	// 3XNN - skip next instruction if VX == NN
-	void instruction_3xNN(const s32 X, const s32 NN) {
+	void instruction_3xNN(const s32 X, const s32 NN) noexcept {
 		if (mRegisterV[X] == NN) { nextInstruction(); }
 	}
 
@@ -146,7 +144,7 @@ private:
 /*==================================================================*/
 
 	// 4XNN - skip next instruction if VX != NN
-	void instruction_4xNN(const s32 X, const s32 NN) {
+	void instruction_4xNN(const s32 X, const s32 NN) noexcept {
 		if (mRegisterV[X] != NN) { nextInstruction(); }
 	}
 
@@ -159,7 +157,7 @@ private:
 /*==================================================================*/
 
 	// 5XY0 - skip next instruction if VX == VY
-	void instruction_5xy0(const s32 X, const s32 Y) {
+	void instruction_5xy0(const s32 X, const s32 Y) noexcept {
 		if (mRegisterV[X] == mRegisterV[Y]) { nextInstruction(); }
 	}
 
@@ -172,7 +170,7 @@ private:
 /*==================================================================*/
 
 	// 6XNN - set VX = NN
-	void instruction_6xNN(const s32 X, const s32 NN) {
+	void instruction_6xNN(const s32 X, const s32 NN) noexcept {
 		mRegisterV[X] = static_cast<u8>(NN);
 	}
 
@@ -185,7 +183,7 @@ private:
 /*==================================================================*/
 
 	// 7XNN - set VX = VX + NN
-	void instruction_7xNN(const s32 X, const s32 NN) {
+	void instruction_7xNN(const s32 X, const s32 NN) noexcept {
 		mRegisterV[X] += static_cast<u8>(NN);
 	}
 
@@ -198,48 +196,48 @@ private:
 /*==================================================================*/
 
 	// 8XY0 - set VX = VY
-	void instruction_8xy0(const s32 X, const s32 Y) {
+	void instruction_8xy0(const s32 X, const s32 Y) noexcept {
 		mRegisterV[X] = mRegisterV[Y];
 	}
 	// 8XY1 - set VX = VX | VY
-	void instruction_8xy1(const s32 X, const s32 Y) {
+	void instruction_8xy1(const s32 X, const s32 Y) noexcept {
 		mRegisterV[X] |= mRegisterV[Y];
 	}
 	// 8XY2 - set VX = VX & VY
-	void instruction_8xy2(const s32 X, const s32 Y) {
+	void instruction_8xy2(const s32 X, const s32 Y) noexcept {
 		mRegisterV[X] &= mRegisterV[Y];
 	}
 	// 8XY3 - set VX = VX ^ VY
-	void instruction_8xy3(const s32 X, const s32 Y) {
+	void instruction_8xy3(const s32 X, const s32 Y) noexcept {
 		mRegisterV[X] ^= mRegisterV[Y];
 	}
 	// 8XY4 - set VX = VX + VY, VF = carry
-	void instruction_8xy4(const s32 X, const s32 Y) {
+	void instruction_8xy4(const s32 X, const s32 Y) noexcept {
 		const auto sum{ mRegisterV[X] + mRegisterV[Y] };
 		mRegisterV[X]   = static_cast<u8>(sum);
 		mRegisterV[0xF] = static_cast<u8>(sum >> 8);
 	}
 	// 8XY5 - set VX = VX - VY, VF = !borrow
-	void instruction_8xy5(const s32 X, const s32 Y) {
+	void instruction_8xy5(const s32 X, const s32 Y) noexcept {
 		const bool nborrow{ mRegisterV[X] >= mRegisterV[Y] };
 		mRegisterV[X]   = mRegisterV[X] - mRegisterV[Y];
 		mRegisterV[0xF] = nborrow;
 	}
 	// 8XY7 - set VX = VY - VX, VF = !borrow
-	void instruction_8xy7(const s32 X, const s32 Y) {
+	void instruction_8xy7(const s32 X, const s32 Y) noexcept {
 		const bool nborrow{ mRegisterV[Y] >= mRegisterV[X] };
 		mRegisterV[X]   = mRegisterV[Y] - mRegisterV[X];
 		mRegisterV[0xF] = nborrow;
 	}
 	// 8XY6 - set VX = VY >> 1, VF = carry
-	void instruction_8xy6(const s32 X, const s32 Y) {
+	void instruction_8xy6(const s32 X, const s32 Y) noexcept {
 		if (!Quirk.shiftVX) { mRegisterV[X] = mRegisterV[Y]; }
 		const bool lsb{ (mRegisterV[X] & 1) == 1 };
 		mRegisterV[X]   = mRegisterV[X] >> 1;
 		mRegisterV[0xF] = lsb;
 	}
 	// 8XYE - set VX = VY << 1, VF = carry
-	void instruction_8xyE(const s32 X, const s32 Y) {
+	void instruction_8xyE(const s32 X, const s32 Y) noexcept {
 		if (!Quirk.shiftVX) { mRegisterV[X] = mRegisterV[Y]; }
 		const bool msb{ (mRegisterV[X] >> 7) == 1 };
 		mRegisterV[X]   = mRegisterV[X] << 1;
@@ -255,7 +253,7 @@ private:
 /*==================================================================*/
 
 	// 9XY0 - skip next instruction if VX != VY
-	void instruction_9xy0(const s32 X, const s32 Y) {
+	void instruction_9xy0(const s32 X, const s32 Y) noexcept {
 		if (mRegisterV[X] != mRegisterV[Y]) { nextInstruction(); }
 	}
 
@@ -268,7 +266,7 @@ private:
 /*==================================================================*/
 
 	// ANNN - set I = NNN
-	void instruction_ANNN(const s32 NNN) {
+	void instruction_ANNN(const s32 NNN) noexcept {
 		mRegisterI = NNN & 0xFFF;
 	}
 
@@ -281,7 +279,7 @@ private:
 /*==================================================================*/
 
 	// BXNN - jump to NNN + V0
-	void instruction_BNNN(const s32 NNN) {
+	void instruction_BNNN(const s32 NNN) noexcept {
 		jumpProgramTo(NNN + mRegisterV[0]);
 	}
 
@@ -294,7 +292,7 @@ private:
 /*==================================================================*/
 
 	// CXNN - set VX = rnd(256) & NN
-	void instruction_CxNN(const s32 X, const s32 NN) {
+	void instruction_CxNN(const s32 X, const s32 NN) noexcept {
 		mRegisterV[X] = static_cast<u8>(Wrand.get() & NN);
 	}
 
@@ -309,7 +307,7 @@ private:
 	void drawByte(
 		s32 X, s32 Y,
 		const u32 DATA
-	) {
+	) noexcept {
 		switch (DATA) {
 			[[unlikely]]
 			case 0b00000000:
@@ -341,9 +339,9 @@ private:
 	}
 
 	// DXYN - draw N sprite rows at VX and VY
-	void instruction_DxyN(const s32 X, const s32 Y, const s32 N) {
+	void instruction_DxyN(const s32 X, const s32 Y, const s32 N) noexcept {
 		if (Quirk.waitVblank) [[unlikely]]
-			{ setInterrupt(Interrupt::FRAME); }
+			{ triggerInterrupt(Interrupt::FRAME); }
 
 		auto pX{ mRegisterV[X] & mDisplayWb };
 		auto pY{ mRegisterV[Y] & mDisplayHb };
@@ -387,11 +385,11 @@ private:
 /*==================================================================*/
 
 	// EX9E - skip next instruction if key VX down (p1)
-	void instruction_Ex9E(const s32 X) {
+	void instruction_Ex9E(const s32 X) noexcept {
 		if ( Input.keyHeld_P1(mRegisterV[X])) { nextInstruction(); }
 	}
 	// EXA1 - skip next instruction if key VX up (p1)
-	void instruction_ExA1(const s32 X) {
+	void instruction_ExA1(const s32 X) noexcept {
 		if (!Input.keyHeld_P1(mRegisterV[X])) { nextInstruction(); }
 	}
 
@@ -404,46 +402,46 @@ private:
 /*==================================================================*/
 
 	// FX07 - set VX = delay timer
-	void instruction_Fx07(const s32 X) {
+	void instruction_Fx07(const s32 X) noexcept {
 		mRegisterV[X] = mDelayTimer;
 	}
 	// FX0A - set VX = key, wait for keypress
-	void instruction_Fx0A(const s32 X) {
-		setInterrupt(Interrupt::INPUT);
+	void instruction_Fx0A(const s32 X) noexcept {
+		triggerInterrupt(Interrupt::INPUT);
 		mInputReg = static_cast<u8>(X);
 	}
 	// FX15 - set delay timer = VX
-	void instruction_Fx15(const s32 X) {
+	void instruction_Fx15(const s32 X) noexcept {
 		mDelayTimer = mRegisterV[X];
 	}
 	// FX18 - set sound timer = VX
-	void instruction_Fx18(const s32 X) {
+	void instruction_Fx18(const s32 X) noexcept {
 		mAudioTone  = calcAudioTone();
 		mSoundTimer = mRegisterV[X] + (mRegisterV[X] == 1);
 	}
 	// FX1E - set I = I + VX
-	void instruction_Fx1E(const s32 X) {
+	void instruction_Fx1E(const s32 X) noexcept {
 		(mRegisterI += mRegisterV[X]) &= 0xFFF;
 	}
 	// FX29 - point I to 5 byte hex sprite from value in VX
-	void instruction_Fx29(const s32 X) {
+	void instruction_Fx29(const s32 X) noexcept {
 		mRegisterI = (mRegisterV[X] & 0xF) * 5;
 	}
 	// FX33 - store BCD of VX to RAM at I, I+1, I+2
-	void instruction_Fx33(const s32 X) {
+	void instruction_Fx33(const s32 X) noexcept {
 		writeMemoryI(mRegisterV[X] / 100,     0);
 		writeMemoryI(mRegisterV[X] / 10 % 10, 1);
 		writeMemoryI(mRegisterV[X]      % 10, 2);
 	}
 	// FX55 - store V0..VX to RAM at I..I+X
-	void instruction_Fx55(const s32 X) {
+	void instruction_Fx55(const s32 X) noexcept {
 		for (auto idx{ 0 }; idx <= X; ++idx)
 			{ writeMemoryI(mRegisterV[idx], idx); }
 		if (!Quirk.idxRegNoInc) [[likely]]
 			{ mRegisterI = mRegisterI + X + 1 & 0xFFF; }
 	}
 	// FX65 - load V0..VX from RAM at I..I+X
-	void instruction_Fx65(const s32 X) {
+	void instruction_Fx65(const s32 X) noexcept {
 		for (auto idx{ 0 }; idx <= X; ++idx)
 			{ mRegisterV[idx] = readMemoryI(idx); }
 		if (!Quirk.idxRegNoInc) [[likely]]

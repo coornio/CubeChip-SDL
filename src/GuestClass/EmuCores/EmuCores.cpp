@@ -5,7 +5,7 @@
 */
 
 #include <fstream>
-#include <sstream>
+#include <format>
 #include <iomanip>
 
 #include "EmuCores.hpp"
@@ -39,36 +39,45 @@ Chip8_CoreInterface::Chip8_CoreInterface() noexcept {
 	if (!sPermaRegsPath || !sSavestatePath) { setCoreState(EmuState::FAILED); }
 }
 
-void Chip8_CoreInterface::setInterrupt(const Interrupt type) {
+void Chip8_CoreInterface::processFrame() {
+	if (isSystemStopped()) { return; }
+	else [[likely]] { ++mTotalFrames; }
+
+	Input.updateKeyStates();
+
+	handleTimerTick();
+	handlePreFrameInterrupt();
+	instructionLoop();
+	handleEndFrameInterrupt();
+
+	renderAudioData();
+	renderVideoData();
+}
+
+void Chip8_CoreInterface::triggerInterrupt(const Interrupt type) noexcept {
 	mInterruptType  = type;
 	mCyclesPerFrame = -std::abs(mCyclesPerFrame);
 }
 
-void Chip8_CoreInterface::operationError(std::string_view msg) {
-	blog.newEntry(BLOG::INFO, msg.data());
-	setInterrupt(Interrupt::ERROR);
+void Chip8_CoreInterface::triggerCritError(const std::string& msg) noexcept {
+	blog.newEntry(BLOG::INFO, msg);
+	triggerInterrupt(Interrupt::ERROR);
 }
 
-std::string Chip8_CoreInterface::formatOpcode(const u32 HI, const u32 LO) const {
-	std::stringstream out;
-	out << std::setfill('0') << std::setw(2)
-		<< std::uppercase    << std::hex << HI
-		<< std::setfill('0') << std::setw(2)
-		<< std::uppercase    << std::hex << LO;
-	return out.str();
+std::string Chip8_CoreInterface::formatOpcode(const u32 OP) const noexcept {
+	char buffer[4];
+	std::format_to(buffer, "{:04X}", OP);
+	return buffer;
 }
 
-void Chip8_CoreInterface::instructionError(const u32 HI, const u32 LO) {
-	blog.newEntry(BLOG::INFO, "Unknown instruction: " + formatOpcode(HI, LO));
-	setInterrupt(Interrupt::ERROR);
+void Chip8_CoreInterface::instructionError(const u32 HI, const u32 LO) noexcept {
+	blog.newEntry(BLOG::INFO, "Unknown instruction: " + formatOpcode(HI << 8 | LO));
+	triggerInterrupt(Interrupt::ERROR);
 }
 
-void Chip8_CoreInterface::instructionErrorML(const u32 HI, const u32 LO) {
-	blog.newEntry(BLOG::INFO, "ML routines unsupported: " + formatOpcode(HI, LO));
-	setInterrupt(Interrupt::ERROR);
-}
-
-void Chip8_CoreInterface::copyGameToMemory(u8* dest, const u32 offset) {
+void Chip8_CoreInterface::copyGameToMemory(
+	u8* dest, const u32 offset
+) noexcept {
 	std::copy_n(
 		std::execution::unseq,
 		HDM->getFileData(),
@@ -77,7 +86,9 @@ void Chip8_CoreInterface::copyGameToMemory(u8* dest, const u32 offset) {
 	);
 }
 
-void Chip8_CoreInterface::copyFontToMemory(u8* dest, const u32 offset, const u32 size) {
+void Chip8_CoreInterface::copyFontToMemory(
+	u8* dest, const u32 offset, const u32 size
+) noexcept {
 	std::copy_n(
 		std::execution::unseq,
 		cFontData, size, dest + offset

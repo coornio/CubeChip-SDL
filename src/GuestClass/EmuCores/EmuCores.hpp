@@ -145,20 +145,28 @@ protected:
 	Well512  Wrand;
 	HexInput Input;
 
-	std::string formatOpcode(const u32 HI, const u32 LO) const;
+	std::string formatOpcode(const u32 OP) const noexcept;
 
-	void setInterrupt(Interrupt);
-	void operationError(std::string_view);
-	void instructionError(const u32 HI, const u32 LO);
-	void instructionErrorML(const u32 HI, const u32 LO);
+	void triggerInterrupt(const Interrupt type) noexcept;
+	void triggerCritError(const std::string& msg) noexcept;
+	void instructionError(const u32 HI, const u32 LO) noexcept;
 
-	void copyGameToMemory(u8* dest, const u32 offset);
-	void copyFontToMemory(u8* dest, const u32 offset, const u32 size);
+	void copyGameToMemory(u8* dest, const u32 offset) noexcept;
+	void copyFontToMemory(u8* dest, const u32 offset, const u32 size) noexcept;
+
+	virtual void handlePreFrameInterrupt() noexcept = 0;
+	virtual void handleEndFrameInterrupt() noexcept = 0;
+
+	virtual void handleTimerTick() noexcept = 0;
+	virtual void instructionLoop() noexcept = 0;
+
+	virtual void renderAudioData() = 0;
+	virtual void renderVideoData() = 0;
 
 public:
 	explicit Chip8_CoreInterface() noexcept;
 
-	virtual void processFrame() override = 0;
+	virtual void processFrame() override;
 
 	u32 getTotalFrames() const noexcept override { return mTotalFrames; }
 	u64 getTotalCycles() const noexcept override { return mTotalCycles; }
