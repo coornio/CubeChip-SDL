@@ -11,6 +11,7 @@
 #include <span>
 #include <string>
 #include <utility>
+#include <execution>
 
 #include "../Types.hpp"
 

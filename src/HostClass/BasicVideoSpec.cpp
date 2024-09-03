@@ -5,7 +5,6 @@
 */
 
 #include <stdexcept>
-#include <execution>
 #include <algorithm>
 
 #include "BasicVideoSpec.hpp"

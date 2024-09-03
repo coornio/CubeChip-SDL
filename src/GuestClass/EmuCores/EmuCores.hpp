@@ -166,7 +166,7 @@ protected:
 public:
 	explicit Chip8_CoreInterface() noexcept;
 
-	virtual void processFrame() override;
+	void processFrame() override;
 
 	u32 getTotalFrames() const noexcept override { return mTotalFrames; }
 	u64 getTotalCycles() const noexcept override { return mTotalCycles; }
