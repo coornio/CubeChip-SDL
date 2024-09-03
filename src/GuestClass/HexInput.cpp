@@ -60,7 +60,7 @@ bool HexInput::keyPressed(Uint8& returnKey, const Uint32 tickCount) noexcept {
 		mTickLast  = tickCount;
 		mTickSpan  = validKeys != mKeysLoop ? 20 : 5;
 		mKeysLoop  = validKeys & ~(validKeys - 1);
-		returnKey  = static_cast<Uint8>(std::countr_zero(mKeysLoop));
+		returnKey  = std::countr_zero(mKeysLoop);
 	}
 	return pressKeys;
 }
