@@ -109,11 +109,11 @@ void BasicVideoSpec::unlockTexture() {
 	SDL_UnlockTexture(texture);
 }
 
-void BasicVideoSpec::modifyTexture(const std::span<u32> pixelData) {
-	std::copy(
+void BasicVideoSpec::modifyTexture(const std::span<u32> colorData) {
+	std::move(
 		std::execution::unseq,
-		pixelData.begin(),
-		pixelData.end(),
+		colorData.begin(),
+		colorData.end(),
 		lockTexture()
 	);
 	unlockTexture();

@@ -87,7 +87,19 @@ public:
 	[[nodiscard]]
 	u32* lockTexture();
 	void unlockTexture();
-	void modifyTexture(const std::span<u32>);
+	void modifyTexture(const std::span<u32> colorData);
+
+	template <typename T, typename Lambda>
+	void modifyTexture(const std::span<T> pixelData, Lambda&& function) {
+		std::transform(
+			std::execution::unseq,
+			pixelData.begin(),
+			pixelData.end(),
+			lockTexture(),
+			function
+		);
+		unlockTexture();
+	}
 
 	void setTextureAlpha(usz);
 	void setAspectRatio(s32, s32, s32);
