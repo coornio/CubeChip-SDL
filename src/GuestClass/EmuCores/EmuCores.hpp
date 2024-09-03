@@ -167,8 +167,10 @@ public:
 	f32 fetchFramerate() const noexcept override { return mFramerate; }
 
 	s32 changeCPF(const s32 delta) noexcept override {
-		const auto newCPF{ std::abs(mCyclesPerFrame) + delta };
-		if (newCPF > 0) { mCyclesPerFrame = newCPF; }
+		if (stateRunning() && !stateWaiting()) {
+			mCyclesPerFrame += mCyclesPerFrame > 0
+				? delta : -delta;
+		}
 		return mCyclesPerFrame;
 	}
 
