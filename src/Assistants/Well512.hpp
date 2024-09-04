@@ -26,7 +26,7 @@ public:
 		}
 	}
 
-	result_type get() noexcept {
+	result_type get() {
 		result_type a, b, c, d;
 
 		a = mState[mIndex];
@@ -42,5 +42,5 @@ public:
 		return mState[mIndex];
 	}
 
-	result_type operator()() noexcept { return get(); }
+	result_type operator()() { return get(); }
 };

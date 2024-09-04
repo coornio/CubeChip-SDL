@@ -35,7 +35,7 @@ bool GameFileChecker::hasGameCoreType() noexcept { return sEmuCore != GameCoreTy
 
 /*==================================================================*/
 
-std::unique_ptr<EmuInterface> GameFileChecker::constructCore() noexcept {
+std::unique_ptr<EmuInterface> GameFileChecker::constructCore() {
 	try {
 		switch (sEmuCore) {
 			case GameCoreType::XOCHIP:

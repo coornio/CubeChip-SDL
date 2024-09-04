@@ -8,6 +8,7 @@
 
 #include <array>
 #include <utility>
+#include <execution>
 
 #include "EmuCores.hpp"
 

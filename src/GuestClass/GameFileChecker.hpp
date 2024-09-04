@@ -64,7 +64,7 @@ class GameFileChecker final {
 	) noexcept;
 
 	[[nodiscard]]
-	static std::unique_ptr<EmuInterface> constructCore() noexcept;
+	static std::unique_ptr<EmuInterface> constructCore() ;
 
 public:
 	static bool validate(

@@ -64,13 +64,13 @@ void Chip8_CoreInterface::triggerCritError(const std::string& msg) noexcept {
 	triggerInterrupt(Interrupt::ERROR);
 }
 
-std::string Chip8_CoreInterface::formatOpcode(const u32 OP) const noexcept {
+std::string Chip8_CoreInterface::formatOpcode(const u32 OP) const {
 	char buffer[4];
 	std::format_to(buffer, "{:04X}", OP);
 	return buffer;
 }
 
-void Chip8_CoreInterface::instructionError(const u32 HI, const u32 LO) noexcept {
+void Chip8_CoreInterface::instructionError(const u32 HI, const u32 LO) {
 	blog.newEntry(BLOG::INFO, "Unknown instruction: " + formatOpcode(HI << 8 | LO));
 	triggerInterrupt(Interrupt::ERROR);
 }

@@ -145,11 +145,11 @@ protected:
 	Well512  Wrand;
 	HexInput Input;
 
-	std::string formatOpcode(const u32 OP) const noexcept;
+	std::string formatOpcode(const u32 OP) const;
 
 	void triggerInterrupt(const Interrupt type) noexcept;
 	void triggerCritError(const std::string& msg) noexcept;
-	void instructionError(const u32 HI, const u32 LO) noexcept;
+	void instructionError(const u32 HI, const u32 LO);
 
 	void copyGameToMemory(u8* dest, const u32 offset) noexcept;
 	void copyFontToMemory(u8* dest, const u32 offset, const u32 size) noexcept;

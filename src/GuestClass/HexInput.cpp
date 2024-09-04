@@ -29,7 +29,7 @@ void HexInput::loadCustomBinds(std::vector<KeyInfo>&& binds) {
 	mKeysPrev = mKeysCurr = mKeysLock = 0;
 }
 
-void HexInput::updateKeyStates() noexcept {
+void HexInput::updateKeyStates() {
 	if (!mCustomBinds.size()) { return; }
 
 	mKeysPrev = mKeysCurr;
@@ -44,7 +44,7 @@ void HexInput::updateKeyStates() noexcept {
 	mKeysLoop &= mKeysLock &= ~(mKeysPrev ^ mKeysCurr);
 }
 
-bool HexInput::keyPressed(Uint8& returnKey, const Uint32 tickCount) noexcept {
+bool HexInput::keyPressed(Uint8& returnKey, const Uint32 tickCount) {
 	if (!mCustomBinds.size()) { return false; }
 
 	if (tickCount >= mTickLast + mTickSpan) {
