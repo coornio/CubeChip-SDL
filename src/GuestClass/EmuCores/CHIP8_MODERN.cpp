@@ -248,7 +248,7 @@ void CHIP8_MODERN::renderVideoData() {
 			return alpha << 24 | cBitsColor[pixel != 0];
 		}
 		: [](const u32 pixel) noexcept {
-			return 0xFF000000 | cBitsColor[pixel != 0];
+			return 0xFF000000 | cBitsColor[pixel >> 3];
 		}
 	);
 

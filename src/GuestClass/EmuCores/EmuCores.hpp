@@ -121,9 +121,9 @@ protected:
 
 	u8 mCoreState{ EmuState::NORMAL };
 
-	void addCoreState(const EmuState state) noexcept { mCoreState |= state; }
+	void addCoreState(const EmuState state) noexcept { mCoreState |=  state; }
 	void subCoreState(const EmuState state) noexcept { mCoreState &= ~state; }
-	void xorCoreState(const EmuState state) noexcept { mCoreState ^= state; }
+	void xorCoreState(const EmuState state) noexcept { mCoreState ^=  state; }
 
 	void setCoreState(const EmuState state) noexcept { mCoreState = state; }
 	auto getCoreState()               const noexcept { return mCoreState;  }
