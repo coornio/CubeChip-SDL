@@ -252,33 +252,15 @@ void CHIP8_MODERN::renderVideoData() {
 		}
 	);
 
-	//std::array<u32, cScreenSizeX * cScreenSizeY>
-	//	pixelColorData;
-	//
-	//std::transform(
-	//	std::execution::unseq,
-	//	mDisplayBuffer.begin(),
-	//	mDisplayBuffer.end(),
-	//	pixelColorData.begin(),
-	//	isPixelTrailing()
-	//	? [](const u32 pixel) noexcept {
-	//		static constexpr u32 layer[4]{ 0xFF, 0xE7, 0x6F, 0x37 };
-	//		const auto alpha{ layer[std::countl_zero(pixel) & 0x3] };
-	//		return alpha << 24 | cBitsColor[pixel != 0];
-	//	}
-	//	: [](const u32 pixel) noexcept {
-	//		return 0xFF000000 | cBitsColor[pixel != 0];
-	//	}
-	//);
-	//BVS->modifyTexture(pixelColorData);
-
 	std::transform(
 		std::execution::unseq,
 		mDisplayBuffer.begin(),
 		mDisplayBuffer.end(),
 		mDisplayBuffer.begin(),
 		[](const u32 pixel) noexcept {
-			return (pixel & 0x8) | (pixel >> 1);
+			return static_cast<u8>(
+				(pixel & 0x8) | (pixel >> 1)
+			);
 		}
 	);
 }

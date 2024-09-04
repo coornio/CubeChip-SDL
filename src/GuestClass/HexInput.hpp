@@ -34,7 +34,7 @@ public:
 
 	void updateKeyStates();
 
-	bool keyPressed(Uint8& returnKey, Uint32 tickCount);
+	bool keyPressed(Uint8& returnKey, Uint32 tickCount) noexcept;
 	bool keyHeld_P1(Uint32 keyIndex) const noexcept;
 	bool keyHeld_P2(Uint32 keyIndex) const noexcept;
 };
