@@ -7,6 +7,14 @@
 #include <stdexcept>
 #include <algorithm>
 
+#include <SDL3/SDL_platform_defines.h>
+
+#ifdef SDL_PLATFORM_WIN32
+
+	#include <dwmapi.h>
+	#pragma comment (lib, "Dwmapi")
+#endif
+
 #include "BasicVideoSpec.hpp"
 
 /*==================================================================*/
@@ -34,6 +42,24 @@ void BasicVideoSpec::createWindow(const s32 window_W, const s32 window_H) {
 	if (!window) {
 		setErrorState(true);
 		showErrorBox("Failed to create SDL_Window!");
+	} else {
+		const auto windowHandle{
+			static_cast<HWND>(SDL_GetPointerProperty(
+				SDL_GetWindowProperties(window),
+				SDL_PROP_WINDOW_WIN32_HWND_POINTER,
+				nullptr
+			))
+		};
+
+		if (windowHandle) {
+			const auto windowRound{ DWMWCP_DONOTROUND };
+			DwmSetWindowAttribute(
+				windowHandle,
+				DWMWA_WINDOW_CORNER_PREFERENCE,
+				&windowRound,
+				sizeof(windowRound)
+			);
+		}
 	}
 }
 
