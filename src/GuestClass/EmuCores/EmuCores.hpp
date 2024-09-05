@@ -60,8 +60,8 @@ public:
 
 	virtual u32 getTotalFrames() const noexcept = 0;
 	virtual u64 getTotalCycles() const noexcept = 0;
-	virtual s32 fetchCPF()       const noexcept = 0;
-	virtual f32 fetchFramerate() const noexcept = 0;
+	virtual s32 getCPF()       const noexcept = 0;
+	virtual f32 getFramerate() const noexcept = 0;
 	virtual s32 changeCPF(const s32 delta) noexcept = 0;
 
 	[[nodiscard]]
@@ -171,8 +171,8 @@ public:
 	u32 getTotalFrames() const noexcept override { return mTotalFrames; }
 	u64 getTotalCycles() const noexcept override { return mTotalCycles; }
 
-	s32 fetchCPF()       const noexcept override { return mCyclesPerFrame; }
-	f32 fetchFramerate() const noexcept override { return mFramerate; }
+	s32 getCPF()       const noexcept override { return mCyclesPerFrame; }
+	f32 getFramerate() const noexcept override { return mFramerate; }
 
 	s32 changeCPF(const s32 delta) noexcept override {
 		if (stateRunning() && !stateWaiting()) {

@@ -20,7 +20,7 @@ CHIP8_MODERN::CHIP8_MODERN() noexcept {
 
 		mProgCounter    = cStartOffset;
 		mFramerate      = cRefreshRate;
-		mCyclesPerFrame = Quirk.waitVblank ? cInstSpeedHi : 6000000;
+		mCyclesPerFrame = Quirk.waitVblank ? cInstSpeedHi : cInstSpeedLo;
 
 		setDisplayResolution(cScreenSizeX, cScreenSizeY);
 

@@ -71,7 +71,8 @@ public:
 
 	auto getValidFrameCounter() const noexcept { return validFrameCnt; }
 	auto getElapsedMillisLast() const noexcept { return timeVariation; }
-	auto getRemainder()         const noexcept { return timeFrequency - timeVariation; }
+	auto getFramespan()         const noexcept { return timeFrequency; }
+	auto getRemainder()         const noexcept { return timeVariation - timeFrequency; }
 	auto getPercentage()        const noexcept { return timeVariation / timeFrequency; }
 	bool isKeepingPace()        const noexcept { return timeOvershoot < timeFrequency && !lastFrameLost; }
 };
