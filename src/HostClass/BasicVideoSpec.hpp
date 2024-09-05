@@ -56,8 +56,7 @@ public:
 	static void setErrorState(const bool state) noexcept { errorState() = state; }
 	static bool getErrorState()                 noexcept { return errorState();  }
 
-	static bool showErrorBox(const char* const) noexcept;
-	static bool showErrorBox(const char* const, const char* const) noexcept;
+	static void showErrorBox(const char* const) noexcept;
 
 	void setBackColor (
 		const u32 color

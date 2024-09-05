@@ -65,8 +65,8 @@ void Chip8_CoreInterface::triggerCritError(const std::string& msg) noexcept {
 }
 
 std::string Chip8_CoreInterface::formatOpcode(const u32 OP) const {
-	char buffer[4];
-	std::format_to(buffer, "{:04X}", OP);
+	char buffer[5];
+	std::format_to(buffer, "{:04X}{}", OP, '\0');
 	return buffer;
 }
 

@@ -5,7 +5,8 @@
 */
 
 #include <iostream>
-#include <iomanip>
+#include <format>
+#include <cmath>
 
 #include "../Assistants/BasicLogger.hpp"
 #include "../Assistants/BasicInput.hpp"
@@ -40,36 +41,29 @@ EmuHost::EmuHost(const std::filesystem::path& gamePath) noexcept
 /*==================================================================*/
 
 void EmuHost::toggleUnlimited() {
-	if (unlimitedMode) {
-		unlimitedMode = false;
-		std::cout << "\33[1;1H\33[3J" << std::endl;
-	} else {
-		unlimitedMode = true;
-		std::cout << "\33[1;1H\33[2J"
-				  << "Frame time:\33[10Cms\n"
-				  << "Time since:\33[10Cms\n"
-				  << " ::   MIPS:"
-				  << std::endl;
-	}
+	unlimitedMode = !unlimitedMode;
+	if (!unlimitedMode) { std::cout << "\n\n\n"; }
 }
 
 void EmuHost::printStatistics() const {
-	if (!unlimitedMode) { return; }
+	if (!unlimitedMode || iGuest->isSystemStopped()) { return; }
 
 	if (Limiter->getValidFrameCounter() & 0x1) {
-		std::cout
-			<< "\33[1;12H" << std::setfill(' ') << std::setw(9)
-			<< std::right << std::fixed << std::setprecision(4)
-			<< Limiter->getElapsedMicrosSince() / 1e3f
+		const auto currentFrameTime{ Limiter->getElapsedMicrosSince() / 1000.0f };
+		const auto totalElapsedTime{ currentFrameTime + Limiter->getRemainder() };
 
-			<< "\33[2;12H" << std::setfill(' ') << std::setw(9)
-			<< std::right << std::fixed << std::setprecision(4)
-			<< Limiter->getElapsedMillisLast()
+		const auto frameTimeDelta{ totalElapsedTime * 1.03f / Limiter->getFramespan() };
+		const auto workCycleDelta{ 1e5f * std::sin((1 - frameTimeDelta) * 1.5707963f) };
 
-			<< "\33[3;12H" << std::setfill(' ') << std::setw(8)
-			<< std::right << std::fixed << std::setprecision(2)
-			<< iGuest->changeCPF(Limiter->isKeepingPace() ? +5000 : -5000) * iGuest->fetchFramerate() / 1e6f
-			<< std::endl;
+		std::cout << std::format(
+			"Frame time:{:9.4f} ms\n"
+			"Time since:{:9.4f} ms\n"
+			" ::   MIPS:{:8.2f}\33[3F",
+			currentFrameTime,
+			Limiter->getElapsedMillisLast(),
+			iGuest->changeCPF(static_cast<s32>(workCycleDelta))
+				* iGuest->getFramerate() / 1'000'000.0f
+		) << std::endl;
 	}
 }
 
@@ -94,7 +88,7 @@ void EmuHost::replaceCore() {
 	iGuest = GameFileChecker::initGameCore();
 
 	if (iGuest) {
-		Limiter->setLimiter(iGuest->fetchFramerate());
+		Limiter->setLimiter(iGuest->getFramerate());
 		BVS->changeTitle(HDM->getFileStem().c_str());
 	}
 }

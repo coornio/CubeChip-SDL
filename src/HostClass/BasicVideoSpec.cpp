@@ -10,7 +10,6 @@
 #include <SDL3/SDL_platform_defines.h>
 
 #ifdef SDL_PLATFORM_WIN32
-
 	#include <dwmapi.h>
 	#pragma comment (lib, "Dwmapi")
 #endif
@@ -24,9 +23,17 @@
 BasicVideoSpec::BasicVideoSpec() noexcept
 	: enableBuzzGlow{ true }
 {
-	SDL_InitSubSystem(SDL_INIT_VIDEO);
+	if (!SDL_InitSubSystem(SDL_INIT_VIDEO)) {
+		showErrorBox("Failed SDL_INIT_VIDEO!");
+		return;
+	}
+
 	createWindow(0, 0);
+	if (getErrorState()) { return; }
+
 	createRenderer();
+	if (getErrorState()) { return; }
+
 	resetWindow();
 }
 
@@ -40,7 +47,6 @@ void BasicVideoSpec::createWindow(const s32 window_W, const s32 window_H) {
 	window = SDL_CreateWindow(nullptr, window_W, window_H, 0);
 
 	if (!window) {
-		setErrorState(true);
 		showErrorBox("Failed to create SDL_Window!");
 	} else {
 		const auto windowHandle{
@@ -69,7 +75,6 @@ void BasicVideoSpec::createRenderer() {
 	renderer = SDL_CreateRenderer(window, nullptr);
 	
 	if (!renderer) {
-		setErrorState(true);
 		showErrorBox("Failed to create SDL_Renderer!");
 	}
 }
@@ -88,7 +93,6 @@ void BasicVideoSpec::createTexture(s32 texture_W, s32 texture_H) {
 	);
 
 	if (!texture) {
-		setErrorState(true);
 		showErrorBox("Failed to create SDL_Texture!");
 	} else {
 		SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
@@ -102,12 +106,12 @@ void BasicVideoSpec::changeTitle(const std::string& name) {
 	SDL_SetWindowTitle(window, windowTitle.c_str());
 }
 
-bool BasicVideoSpec::showErrorBox(const char* const title) noexcept {
-	return showErrorBox(title, SDL_GetError());
-}
-
-bool BasicVideoSpec::showErrorBox(const char* const title, const char* const message) noexcept {
-	return SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title, message, nullptr);
+void BasicVideoSpec::showErrorBox(const char* const title) noexcept {
+	setErrorState(true);
+	SDL_ShowSimpleMessageBox(
+		SDL_MESSAGEBOX_ERROR, title,
+		SDL_GetError(), nullptr
+	);
 }
 
 void BasicVideoSpec::raiseWindow() {
