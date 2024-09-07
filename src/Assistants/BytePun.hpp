@@ -6,26 +6,22 @@
 
 #pragma once
 
-#include "../Concepts.hpp"
-
 #include <cstdint>
 #include <cstddef>
 
-template<typename T> requires integral<T>
+template<typename T> requires std::is_integral_v<T>
 class BytePun {
 	T mInt{};
+
 public:
 	BytePun(const T value) : mInt{ value } {}
 	operator T() const { return mInt; }
 
-	auto& operator[](std::size_t const idx) {
-		return (reinterpret_cast<std::uint8_t*>(&mInt))[idx];
+	auto* operator[](std::size_t const idx) {
+		return reinterpret_cast<std::uint8_t*>(&mInt + idx);
 	}
-	auto const& operator[](std::size_t const idx) const {
-		return (reinterpret_cast<std::uint8_t const*>(&mInt))[idx];
-	}
-	auto operator()(std::size_t const idx) const {
-		return (reinterpret_cast<std::uint8_t const*>(&mInt))[idx];
+	auto const* operator[](std::size_t const idx) const {
+		return reinterpret_cast<std::uint8_t const*>(&mInt + idx);
 	}
 
 	BytePun& operator+=(const arithmetic auto rhs) { mInt += rhs; return *this; }

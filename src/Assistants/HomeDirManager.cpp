@@ -15,7 +15,7 @@
 
 #include <SDL3/SDL_messagebox.h>
 
-static auto getFileModTime(const std::filesystem::path& filePath) noexcept {
+static auto getFileModTime(const fsPath& filePath) noexcept {
 	std::error_code error;
 	return std::filesystem::last_write_time(filePath, error);
 }
@@ -26,29 +26,29 @@ static auto getFileModTime(const std::filesystem::path& filePath) noexcept {
 
 HomeDirManager::HomeDirManager(const char* const org, const char* const app) noexcept {
 	if (!getHomePath(org, app)) {
-		setErrorState(true);
 		showErrorBox("Filesystem Error", "Unable to get home directory!");
 	} else {
 		blog.initLogFile("program.log", getHomePath());
 	}
 }
 
-bool HomeDirManager::showErrorBox(const char* const title, const char* const message) noexcept {
-	return SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title, message, nullptr);
+void HomeDirManager::showErrorBox(const char* const title, const char* const message) noexcept {
+	setErrorState(true);
+	SDL_ShowSimpleMessageBox(
+		SDL_MESSAGEBOX_ERROR, title,
+		message, nullptr
+	);
 }
 
-auto HomeDirManager::addSystemDir(
-	const std::filesystem::path& sub,
-	const std::filesystem::path& sys
-) noexcept -> std::filesystem::path* {
+fsPath* HomeDirManager::addSystemDir(const fsPath& sub, const fsPath& sys) noexcept {
 	if (sub.empty()) { return nullptr; }
 	
-	const std::filesystem::path newDir{ getHomePath() / sys / sub };
+	const fsPath newDir{ getHomePath() / sys / sub };
 
 	auto it = std::find_if(
 		std::execution::unseq,
 		mDirectories.begin(), mDirectories.end(),
-		[&newDir](const auto& dirEntry) {
+		[&newDir](const fsPath& dirEntry) {
 			return dirEntry == newDir;
 		}
 	);
@@ -73,7 +73,7 @@ void HomeDirManager::clearCachedFileData() noexcept {
 	mFileData.resize(0);
 }
 
-bool HomeDirManager::validateGameFile(const std::filesystem::path gamePath) noexcept {
+bool HomeDirManager::validateGameFile(const fsPath gamePath) noexcept {
 	if (gamePath.empty()) { return false; }
 	namespace fs = std::filesystem;
 	std::error_code error;

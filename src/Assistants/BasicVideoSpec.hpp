@@ -13,7 +13,7 @@
 #include <utility>
 #include <execution>
 
-#include "../Types.hpp"
+#include "Typedefs.hpp"
 
 /*==================================================================*/
 	#pragma region BasicVideoSpec Singleton Class

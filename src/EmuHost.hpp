@@ -8,7 +8,8 @@
 
 #include <memory>
 #include <mutex>
-#include <filesystem>
+
+#include "Assistants/Typedefs.hpp"
 
 class HomeDirManager;
 class BasicVideoSpec;
@@ -22,7 +23,7 @@ class FrameLimiter;
 /*==================================================================*/
 
 class EmuHost final {
-	EmuHost(const std::filesystem::path&) noexcept;
+	EmuHost(const fsPath&) noexcept;
 	~EmuHost() noexcept;
 
 	EmuHost(const EmuHost&) = delete;
@@ -49,7 +50,7 @@ private:
 	void replaceCore();
 
 public:
-	static auto* create(const std::filesystem::path& gamePath) noexcept {
+	static auto* create(const fsPath& gamePath) noexcept {
 		static EmuHost self(gamePath);
 		return &self;
 	}
@@ -66,7 +67,7 @@ public:
 	}
 
 	void pauseSystem(const bool state) const noexcept;
-	void loadGameFile(const std::filesystem::path&);
+	void loadGameFile(const fsPath&);
 
 	void processFrame();
 };

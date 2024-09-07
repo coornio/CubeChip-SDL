@@ -8,17 +8,16 @@
 #include <format>
 #include <cmath>
 
-#include "../Assistants/BasicLogger.hpp"
-#include "../Assistants/BasicInput.hpp"
-#include "../Assistants/FrameLimiter.hpp"
-
-#include "HomeDirManager.hpp"
-#include "BasicVideoSpec.hpp"
-#include "BasicAudioSpec.hpp"
+#include "Assistants/BasicLogger.hpp"
+#include "Assistants/BasicInput.hpp"
+#include "Assistants/FrameLimiter.hpp"
+#include "Assistants/HomeDirManager.hpp"
+#include "Assistants/BasicVideoSpec.hpp"
+#include "Assistants/BasicAudioSpec.hpp"
 
 #include "EmuHost.hpp"
-#include "../GuestClass/EmuCores/EmuCores.hpp"
-#include "../GuestClass/GameFileChecker.hpp"
+#include "EmuInterface/EmuInterface.hpp"
+#include "EmuInterface/GameFileChecker.hpp"
 
 /*==================================================================*/
 	#pragma region VM_Host Singleton Class
@@ -29,7 +28,7 @@ BasicVideoSpec* EmuHost::BVS{};
 BasicAudioSpec* EmuHost::BAS{};
 
 EmuHost::~EmuHost() noexcept = default;
-EmuHost::EmuHost(const std::filesystem::path& gamePath) noexcept
+EmuHost::EmuHost(const fsPath& gamePath) noexcept
 	: Limiter{ std::make_unique<FrameLimiter>() }
 {
 	EmuInterface::assignComponents(HDM, BVS, BAS);
@@ -52,7 +51,7 @@ void EmuHost::printStatistics() const {
 		const auto currentFrameTime{ Limiter->getElapsedMicrosSince() / 1000.0f };
 		const auto totalElapsedTime{ currentFrameTime + Limiter->getRemainder() };
 
-		const auto frameTimeDelta{ totalElapsedTime * 1.03f / Limiter->getFramespan() };
+		const auto frameTimeDelta{ totalElapsedTime * 1.04f / Limiter->getFramespan() };
 		const auto workCycleDelta{ 1e5f * std::sin((1 - frameTimeDelta) * 1.5707963f) };
 
 		std::cout << std::format(
@@ -95,7 +94,7 @@ void EmuHost::replaceCore() {
 
 /*==================================================================*/
 
-void EmuHost::loadGameFile(const std::filesystem::path& gameFile) {
+void EmuHost::loadGameFile(const fsPath& gameFile) {
 	BVS->raiseWindow();
 	if (HDM->validateGameFile(gameFile)) {
 		replaceCore();

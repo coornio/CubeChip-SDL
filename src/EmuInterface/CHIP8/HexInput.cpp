@@ -6,7 +6,7 @@
 
 #include <bit>
 
-#include "../Assistants/BasicInput.hpp"
+#include "../../Assistants/BasicInput.hpp"
 
 #include "HexInput.hpp"
 

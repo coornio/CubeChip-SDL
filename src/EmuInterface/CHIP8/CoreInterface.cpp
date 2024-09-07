@@ -4,36 +4,32 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include <fstream>
+//#include <fstream>
 #include <format>
-#include <iomanip>
-
-#include "EmuCores.hpp"
 
 #include "../../Assistants/BasicLogger.hpp"
+#include "../../Assistants/HomeDirManager.hpp"
+#include "../../Assistants/BasicVideoSpec.hpp"
+#include "../../Assistants/BasicAudioSpec.hpp"
+#include "../../Assistants/Well512.hpp"
 
-#include "../../HostClass/HomeDirManager.hpp"
-#include "../../HostClass/BasicVideoSpec.hpp"
-#include "../../HostClass/BasicAudioSpec.hpp"
+#include "CoreInterface.hpp"
 
-/*==================================================================*/
-
-u32 EmuInterface::mGlobalState{ EmuState::NORMAL };
-
-HomeDirManager* EmuInterface::HDM{};
-BasicVideoSpec* EmuInterface::BVS{};
-BasicAudioSpec* EmuInterface::BAS{};
-
-EmuInterface::~EmuInterface() noexcept {
-	subSystemState(EmuState::PAUSED);
-}
+#include "HexInput.hpp"
 
 /*==================================================================*/
 
 std::filesystem::path* Chip8_CoreInterface::sPermaRegsPath{};
 std::filesystem::path* Chip8_CoreInterface::sSavestatePath{};
 
+HexInput* Chip8_CoreInterface::Input{};
+
 Chip8_CoreInterface::Chip8_CoreInterface() noexcept {
+	static HexInput sInput;
+	Input = &sInput;
+
+	Input->loadPresetBinds();
+
 	sPermaRegsPath = HDM->addSystemDir("permaRegs", "CHIP8");
 	sSavestatePath = HDM->addSystemDir("savestate", "CHIP8");
 	if (!sPermaRegsPath || !sSavestatePath) { setCoreState(EmuState::FAILED); }
@@ -43,7 +39,7 @@ void Chip8_CoreInterface::processFrame() {
 	if (isSystemStopped()) { return; }
 	else [[likely]] { ++mTotalFrames; }
 
-	Input.updateKeyStates();
+	Input->updateKeyStates();
 
 	handleTimerTick();
 	handlePreFrameInterrupt();

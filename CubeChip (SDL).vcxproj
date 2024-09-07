@@ -19,39 +19,41 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\Assistants\BasicAudioSpec.cpp" />
     <ClCompile Include="src\Assistants\BasicInput.cpp" />
     <ClCompile Include="src\Assistants\BasicLogger.cpp" />
+    <ClCompile Include="src\Assistants\BasicVideoSpec.cpp" />
     <ClCompile Include="src\Assistants\FrameLimiter.cpp" />
+    <ClCompile Include="src\Assistants\HomeDirManager.cpp" />
     <ClCompile Include="src\Assistants\SHA1.cpp" />
     <ClCompile Include="src\CubeChip.cpp" />
-    <ClCompile Include="src\GuestClass\EmuCores\CHIP8_MODERN.cpp" />
-    <ClCompile Include="src\GuestClass\EmuCores\EmuCores.cpp" />
-    <ClCompile Include="src\GuestClass\GameFileChecker.cpp" />
-    <ClCompile Include="src\GuestClass\HexInput.cpp" />
-    <ClCompile Include="src\HostClass\BasicAudioSpec.cpp" />
-    <ClCompile Include="src\HostClass\BasicVideoSpec.cpp" />
-    <ClCompile Include="src\HostClass\EmuHost.cpp" />
-    <ClCompile Include="src\HostClass\HomeDirManager.cpp" />
+    <ClCompile Include="src\EmuHost.cpp" />
+    <ClCompile Include="src\EmuInterface\CHIP8\CoreInterface.cpp" />
+    <ClCompile Include="src\EmuInterface\CHIP8\Cores\CHIP8_MODERN.cpp" />
+    <ClCompile Include="src\EmuInterface\CHIP8\HexInput.cpp" />
+    <ClCompile Include="src\EmuInterface\EmuInterface.cpp" />
+    <ClCompile Include="src\EmuInterface\GameFileChecker.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Assistants\BasicAudioSpec.hpp" />
     <ClInclude Include="src\Assistants\BasicInput.hpp" />
     <ClInclude Include="src\Assistants\BasicLogger.hpp" />
+    <ClInclude Include="src\Assistants\BasicVideoSpec.hpp" />
     <ClInclude Include="src\Assistants\BytePun.hpp" />
+    <ClInclude Include="src\Assistants\Concepts.hpp" />
     <ClInclude Include="src\Assistants\FrameLimiter.hpp" />
+    <ClInclude Include="src\Assistants\HomeDirManager.hpp" />
+    <ClInclude Include="src\Assistants\Map2D.hpp" />
     <ClInclude Include="src\Assistants\PathGetters.hpp" />
     <ClInclude Include="src\Assistants\SHA1.hpp" />
-    <ClInclude Include="src\Assistants\Map2D.hpp" />
+    <ClInclude Include="src\Assistants\Typedefs.hpp" />
     <ClInclude Include="src\Assistants\Well512.hpp" />
-    <ClInclude Include="src\Concepts.hpp" />
-    <ClInclude Include="src\GuestClass\EmuCores\CHIP8_MODERN.hpp" />
-    <ClInclude Include="src\GuestClass\EmuCores\EmuCores.hpp" />
-    <ClInclude Include="src\GuestClass\GameFileChecker.hpp" />
-    <ClInclude Include="src\GuestClass\HexInput.hpp" />
-    <ClInclude Include="src\HostClass\BasicAudioSpec.hpp" />
-    <ClInclude Include="src\HostClass\BasicVideoSpec.hpp" />
-    <ClInclude Include="src\HostClass\HomeDirManager.hpp" />
-    <ClInclude Include="src\HostClass\EmuHost.hpp" />
-    <ClInclude Include="src\Types.hpp" />
+    <ClInclude Include="src\EmuHost.hpp" />
+    <ClInclude Include="src\EmuInterface\CHIP8\CoreInterface.hpp" />
+    <ClInclude Include="src\EmuInterface\CHIP8\Cores\CHIP8_MODERN.hpp" />
+    <ClInclude Include="src\EmuInterface\CHIP8\HexInput.hpp" />
+    <ClInclude Include="src\EmuInterface\EmuInterface.hpp" />
+    <ClInclude Include="src\EmuInterface\GameFileChecker.hpp" />
     <ClInclude Include="src\_nlohmann\json.hpp" />
     <ClInclude Include="src\_nlohmann\json_fwd.hpp" />
   </ItemGroup>
@@ -209,7 +211,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>SDL3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <Profile>true</Profile>
-      <LinkTimeCodeGeneration>PGOptimization</LinkTimeCodeGeneration>
+      <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

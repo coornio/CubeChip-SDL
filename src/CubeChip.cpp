@@ -16,12 +16,11 @@
 
 #include "Assistants/BasicLogger.hpp"
 #include "Assistants/BasicInput.hpp"
+#include "Assistants/HomeDirManager.hpp"
+#include "Assistants/BasicVideoSpec.hpp"
+#include "Assistants/BasicAudioSpec.hpp"
 
-#include "HostClass/HomeDirManager.hpp"
-#include "HostClass/BasicVideoSpec.hpp"
-#include "HostClass/BasicAudioSpec.hpp"
-
-#include "HostClass/EmuHost.hpp"
+#include "EmuHost.hpp"
 
 /*==================================================================*/
 

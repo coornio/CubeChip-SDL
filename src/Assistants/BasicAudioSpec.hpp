@@ -8,7 +8,7 @@
 
 #include <SDL3/SDL.h>
 
-#include "../Types.hpp"
+#include "Typedefs.hpp"
 
 /*==================================================================*/
 	#pragma region BasicAudioSpec Singleton Class

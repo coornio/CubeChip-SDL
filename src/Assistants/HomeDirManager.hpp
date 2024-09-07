@@ -6,10 +6,10 @@
 
 #pragma once
 
-#include <cstddef>
 #include <string>
 #include <vector>
-#include <filesystem>
+
+#include "Typedefs.hpp"
 
 /*==================================================================*/
 	#pragma region HomeDirManager Singleton Class
@@ -23,13 +23,13 @@ class HomeDirManager final {
 
 	using GameValidator = bool (*)(const std::size_t, const std::string&, const std::string&);
 
-	std::filesystem::path mFilePath{};
-	std::string           mFileSHA1{};
+	fsPath      mFilePath{};
+	std::string mFileSHA1{};
 
 	std::vector<char>
 		mFileData{};
 
-	std::vector<std::filesystem::path>
+	std::vector<fsPath>
 		mDirectories{};
 
 	GameValidator checkGame{};
@@ -48,12 +48,12 @@ public:
 	static void setErrorState(const bool state) noexcept { errorState() = state; }
 	static bool getErrorState()                 noexcept { return errorState();  }
 
-	static bool showErrorBox(const char* const, const char* const) noexcept;
+	static void showErrorBox(const char* const, const char* const) noexcept;
 
-	auto addSystemDir(
-		const std::filesystem::path& sub,
-		const std::filesystem::path& sys = {}
-	) noexcept -> std::filesystem::path*;
+	fsPath* addSystemDir(
+		const fsPath& sub,
+		const fsPath& sys = {}
+	) noexcept;
 
 	auto getFullPath() const noexcept { return mFilePath; }
 	auto getFilePath() const noexcept { return mFilePath.string(); }
@@ -67,7 +67,7 @@ public:
 	void setValidator(GameValidator func) noexcept { checkGame = func; }
 
 	void clearCachedFileData() noexcept;
-	bool validateGameFile(const std::filesystem::path) noexcept;
+	bool validateGameFile(const fsPath) noexcept;
 };
 
 /*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/

@@ -4,7 +4,7 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-//#include <fstream>
+//#include <memory>
 //#include <iostream>
 
 #include "../_nlohmann/json.hpp"
@@ -15,7 +15,7 @@ using json = nlohmann::json;
 #include "GameFileChecker.hpp"
 
 
-#include "EmuCores/CHIP8_MODERN.hpp"
+#include "CHIP8/Cores/CHIP8_MODERN.hpp"
 
 /*==================================================================*/
 

@@ -6,78 +6,18 @@
 
 #pragma once
 
-#include "../../Assistants/Well512.hpp"
-#include "../../Assistants/Map2D.hpp"
-#include "../../Types.hpp"
-
-#include "../GameFileChecker.hpp"
-#include "../HexInput.hpp"
-
-#include <filesystem>
-#include <utility>
-#include <memory>
-#include <string>
-
-enum EmuState : u8 {
-	NORMAL = 0x0, // normal operation
-	HIDDEN = 0x1, // window is hidden
-	PAUSED = 0x2, // paused by hotkey
-	HALTED = 0x4, // normal/error end
-	FAILED = 0x8, // failed core init
-};
-
-class HomeDirManager;
-class BasicVideoSpec;
-class BasicAudioSpec;
-
-class EmuInterface {
-	static u32 mGlobalState;
-
-protected:
-	static HomeDirManager* HDM;
-	static BasicVideoSpec* BVS;
-	static BasicAudioSpec* BAS;
-
-public:
-	virtual ~EmuInterface() noexcept;
-
-	static void assignComponents(
-		HomeDirManager* const pHDM,
-		BasicVideoSpec* const pBVS,
-		BasicAudioSpec* const pBAS
-	) noexcept {
-		HDM = pHDM;
-		BVS = pBVS;
-		BAS = pBAS;
-	}
-
-	static void addSystemState(const EmuState state) noexcept { mGlobalState |=  state; }
-	static void subSystemState(const EmuState state) noexcept { mGlobalState &= ~state; }
-	static void xorSystemState(const EmuState state) noexcept { mGlobalState ^=  state; }
-
-	static void setSystemState(const EmuState state) noexcept { mGlobalState  =  state; }
-	static auto getSystemState()                     noexcept { return mGlobalState;    }
-
-	virtual u32 getTotalFrames() const noexcept = 0;
-	virtual u64 getTotalCycles() const noexcept = 0;
-	virtual s32 getCPF()       const noexcept = 0;
-	virtual f32 getFramerate() const noexcept = 0;
-	virtual s32 changeCPF(const s32 delta) noexcept = 0;
-
-	[[nodiscard]]
-	virtual bool isSystemStopped() const noexcept = 0;
-	virtual bool isCoreStopped()   const noexcept = 0;
-
-	virtual void processFrame() = 0;
-};
+#include "../EmuInterface.hpp"
 
 /*==================================================================*/
 
 class Chip8_CoreInterface : public EmuInterface {
+
+protected:
 	static std::filesystem::path* sPermaRegsPath;
 	static std::filesystem::path* sSavestatePath;
 
-protected:
+	static HexInput* Input;
+
 	struct PlatformQuirks final {
 		bool clearVF{};
 		bool jmpRegX{};
@@ -142,9 +82,6 @@ protected:
 	void isManualRefresh(const bool state) noexcept { mManualRefresh = state; }
 	void isPixelTrailing(const bool state) noexcept { mPixelTrailing = state; }
 
-	Well512  Wrand;
-	HexInput Input;
-
 	std::string formatOpcode(const u32 OP) const;
 
 	void triggerInterrupt(const Interrupt type) noexcept;
@@ -199,6 +136,7 @@ public:
 		mInterruptType == Interrupt::INPUT
 	); }
 
+protected:
 	static constexpr u8 cFontData[]{
 		0x60, 0xA0, 0xA0, 0xA0, 0xC0, // 0
 		0x40, 0xC0, 0x40, 0x40, 0xE0, // 1
