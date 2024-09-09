@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "../CoreInterface.hpp"
+#include "../Chip8_CoreInterface.hpp"
 
 class CHIP8_MODERN final : public Chip8_CoreInterface {
 	static constexpr u32 cTotalMemory{ 0x1000u };

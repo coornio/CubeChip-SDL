@@ -10,6 +10,8 @@
 #include <cstddef>
 #include <filesystem>
 
+#include <SDL3/SDL_scancode.h>
+
 using f64 = long double;
 using f32 = float;
 

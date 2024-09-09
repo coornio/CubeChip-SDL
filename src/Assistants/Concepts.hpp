@@ -7,6 +7,7 @@
 #pragma once
 
 #include <type_traits>
+#include <concepts>
 
 template<class T>
 concept integral = std::is_integral_v<T>;

@@ -49,9 +49,8 @@ void EmuHost::printStatistics() const {
 
 	if (Limiter->getValidFrameCounter() & 0x1) {
 		const auto currentFrameTime{ Limiter->getElapsedMicrosSince() / 1000.0f };
-		const auto totalElapsedTime{ currentFrameTime + Limiter->getRemainder() };
 
-		const auto frameTimeDelta{ totalElapsedTime * 1.04f / Limiter->getFramespan() };
+		const auto frameTimeDelta{ currentFrameTime * 1.04f / Limiter->getFramespan() };
 		const auto workCycleDelta{ 1e5f * std::sin((1 - frameTimeDelta) * 1.5707963f) };
 
 		std::cout << std::format(
@@ -132,10 +131,10 @@ void EmuHost::checkForHotkeys() {
 	using namespace binput;
 
 	if (kb.isPressed(KEY(RIGHT))) {
-		BAS->changeVolume(+15);
+		//BAS->changeVolume(+15);
 	}
 	if (kb.isPressed(KEY(LEFT))) {
-		BAS->changeVolume(-15);
+		//BAS->changeVolume(-15);
 	}
 
 	if (iGuest) {

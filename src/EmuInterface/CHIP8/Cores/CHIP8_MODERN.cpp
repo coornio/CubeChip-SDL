@@ -4,16 +4,9 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include <array>
-#include <utility>
-#include <execution>
-
-#include "../../../Assistants/HomeDirManager.hpp"
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/BasicAudioSpec.hpp"
 #include "../../../Assistants/Well512.hpp"
-
-#include "../HexInput.hpp"
 
 #include "CHIP8_MODERN.hpp"
 
@@ -60,7 +53,7 @@ void CHIP8_MODERN::handleEndFrameInterrupt() noexcept {
 	switch (mInterruptType)
 	{
 		case Interrupt::INPUT:
-			if (Input->keyPressed(mRegisterV[mInputReg], mTotalFrames)) {
+			if (keyPressed(mRegisterV[mInputReg], mTotalFrames)) {
 				mInterruptType  = Interrupt::CLEAR;
 				mCyclesPerFrame = std::abs(mCyclesPerFrame);
 				mAudioTone      = calcAudioTone();
@@ -231,12 +224,12 @@ void CHIP8_MODERN::instructionLoop() noexcept {
 }
 
 void CHIP8_MODERN::renderAudioData() {
-	std::vector<s16> audioBuffer(static_cast<usz>(BAS->getFrequency() / cRefreshRate));
+	std::vector<s16> samplesBuffer(static_cast<usz>(ASB->getFrequency() / cRefreshRate));
 
 	if (mSoundTimer) {
-		const auto amplitute{ BAS->getAmplitude() };
-		for (auto& sample_s16 : audioBuffer) {
-			sample_s16 = mWavePhase > 0.5f ? amplitute : -amplitute;
+		const auto amplitute{ ASB->getVolume() * 16 };
+		for (auto& sample_s16 : samplesBuffer) {
+			sample_s16 = s16(mWavePhase > 0.5f ? amplitute : -amplitute);
 			mWavePhase = std::fmod(mWavePhase + mAudioTone, 1.0f);
 		}
 		BVS->setFrameColor(cBitsColor[0], cBitsColor[1]);
@@ -244,7 +237,8 @@ void CHIP8_MODERN::renderAudioData() {
 		mWavePhase = 0.0f;
 		BVS->setFrameColor(cBitsColor[0], cBitsColor[0]);
 	}
-	BAS->pushAudioData(audioBuffer.data(), audioBuffer.size());
+
+	ASB->pushAudioData(std::span{ samplesBuffer });
 }
 
 void CHIP8_MODERN::renderVideoData() {
@@ -277,7 +271,7 @@ void CHIP8_MODERN::renderVideoData() {
 f32  CHIP8_MODERN::calcAudioTone() const noexcept {
 	return (160.0f + 8.0f * (
 		(mProgCounter >> 1) + mStackTop + 1 & 0x3E
-	)) / BAS->getFrequency();
+	)) / ASB->getFrequency();
 }
 
 void CHIP8_MODERN::nextInstruction() noexcept {
@@ -604,11 +598,11 @@ void CHIP8_MODERN::jumpProgramTo(const u32 next) noexcept {
 
 	// EX9E - skip next instruction if key VX down (p1)
 	void CHIP8_MODERN::instruction_Ex9E(const s32 X) noexcept {
-		if ( Input->keyHeld_P1(mRegisterV[X])) { nextInstruction(); }
+		if (keyHeld_P1(mRegisterV[X])) { nextInstruction(); }
 	}
 	// EXA1 - skip next instruction if key VX up (p1)
 	void CHIP8_MODERN::instruction_ExA1(const s32 X) noexcept {
-		if (!Input->keyHeld_P1(mRegisterV[X])) { nextInstruction(); }
+		if (!keyHeld_P1(mRegisterV[X])) { nextInstruction(); }
 	}
 
 /*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/

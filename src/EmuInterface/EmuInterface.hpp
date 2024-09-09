@@ -6,14 +6,21 @@
 
 #pragma once
 
+#include <execution>
+#include <utility>
+#include <memory>
+#include <string>
+#include <vector>
+#include <format>
+#include <array>
+#include <span>
+#include <bit>
+
 #include "../Assistants/Typedefs.hpp"
 
 #include "GameFileChecker.hpp"
 
-#include <filesystem>
-#include <utility>
-#include <memory>
-#include <string>
+/*==================================================================*/
 
 enum EmuState : u8 {
 	NORMAL = 0x0, // normal operation
@@ -23,11 +30,19 @@ enum EmuState : u8 {
 	FAILED = 0x8, // failed core init
 };
 
+struct SimpleKeyMapping {
+	u32          idx; // index value associated with entry
+	SDL_Scancode key; // primary key mapping
+	SDL_Scancode alt; // alternative key mapping
+};
+
 class HomeDirManager;
 class BasicVideoSpec;
 class BasicAudioSpec;
+class AudioSpecBlock;
 class Well512;
-class HexInput;
+
+/*==================================================================*/
 
 class EmuInterface {
 	static u32 mGlobalState;

@@ -4,12 +4,9 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include "EmuInterface.hpp"
-
-//#include "../Assistants/HomeDirManager.hpp"
-//#include "../Assistants/BasicVideoSpec.hpp"
-//#include "../Assistants/BasicAudioSpec.hpp"
 #include "../Assistants/Well512.hpp"
+
+#include "EmuInterface.hpp"
 
 /*==================================================================*/
 

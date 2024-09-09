@@ -11,12 +11,31 @@
 /*==================================================================*/
 
 class Chip8_CoreInterface : public EmuInterface {
+	u32  mTickLast{};
+	u32  mTickSpan{};
+
+	u32  mKeysCurr{}; // bitfield of key states in current frame
+	u32  mKeysPrev{}; // bitfield of key states in previous frame
+	u32  mKeysLock{}; // bitfield of keys excluded from input checks
+	u32  mKeysLoop{}; // bitfield of keys repeating input on Fx0A
 
 protected:
-	static std::filesystem::path* sPermaRegsPath;
-	static std::filesystem::path* sSavestatePath;
+	void loadPresetBinds();
+	void loadCustomBinds(std::span<const SimpleKeyMapping> binds);
 
-	static HexInput* Input;
+	void updateKeyStates();
+
+	bool keyPressed(Uint8& returnKey, Uint32 tickCount) noexcept;
+	bool keyHeld_P1(Uint32 keyIndex) const noexcept;
+	bool keyHeld_P2(Uint32 keyIndex) const noexcept;
+
+protected:
+	static fsPath* sPermaRegsPath;
+	static fsPath* sSavestatePath;
+
+	std::unique_ptr<AudioSpecBlock> ASB;
+
+	std::vector<SimpleKeyMapping> mCustomBinds;
 
 	struct PlatformQuirks final {
 		bool clearVF{};
@@ -47,7 +66,6 @@ protected:
 	u32  mTotalFrames{};
 
 	s32  mCyclesPerFrame{};
-	s32  boost{};
 
 	s32 mDisplaySize{};
 	s32 mDisplayW{},  mDisplayH{};
@@ -101,7 +119,8 @@ protected:
 	virtual void renderVideoData() = 0;
 
 public:
-	explicit Chip8_CoreInterface() noexcept;
+	Chip8_CoreInterface() noexcept;
+	~Chip8_CoreInterface() noexcept;
 
 	void processFrame() override;
 

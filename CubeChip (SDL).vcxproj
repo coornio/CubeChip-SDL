@@ -28,9 +28,10 @@
     <ClCompile Include="src\Assistants\SHA1.cpp" />
     <ClCompile Include="src\CubeChip.cpp" />
     <ClCompile Include="src\EmuHost.cpp" />
-    <ClCompile Include="src\EmuInterface\CHIP8\CoreInterface.cpp" />
+    <ClCompile Include="src\EmuInterface\BYTEPUSHER\BytePusher_CoreInterface.cpp" />
+    <ClCompile Include="src\EmuInterface\BYTEPUSHER\Cores\BYTEPUSHER_STANDARD.cpp" />
+    <ClCompile Include="src\EmuInterface\CHIP8\Chip8_CoreInterface.cpp" />
     <ClCompile Include="src\EmuInterface\CHIP8\Cores\CHIP8_MODERN.cpp" />
-    <ClCompile Include="src\EmuInterface\CHIP8\HexInput.cpp" />
     <ClCompile Include="src\EmuInterface\EmuInterface.cpp" />
     <ClCompile Include="src\EmuInterface\GameFileChecker.cpp" />
   </ItemGroup>
@@ -49,9 +50,10 @@
     <ClInclude Include="src\Assistants\Typedefs.hpp" />
     <ClInclude Include="src\Assistants\Well512.hpp" />
     <ClInclude Include="src\EmuHost.hpp" />
-    <ClInclude Include="src\EmuInterface\CHIP8\CoreInterface.hpp" />
+    <ClInclude Include="src\EmuInterface\BYTEPUSHER\BytePusher_CoreInterface.hpp" />
+    <ClInclude Include="src\EmuInterface\BYTEPUSHER\Cores\BYTEPUSHER_STANDARD.hpp" />
+    <ClInclude Include="src\EmuInterface\CHIP8\Chip8_CoreInterface.hpp" />
     <ClInclude Include="src\EmuInterface\CHIP8\Cores\CHIP8_MODERN.hpp" />
-    <ClInclude Include="src\EmuInterface\CHIP8\HexInput.hpp" />
     <ClInclude Include="src\EmuInterface\EmuInterface.hpp" />
     <ClInclude Include="src\EmuInterface\GameFileChecker.hpp" />
     <ClInclude Include="src\_nlohmann\json.hpp" />
@@ -81,8 +83,9 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>ClangCL</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
+    <EnableASAN>false</EnableASAN>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -167,10 +170,10 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <LanguageStandard_C>stdclatest</LanguageStandard_C>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <DisableSpecificWarnings>4324;4619;4061;4062;4365;4623;4625;4626;4668;4710;4711;4820;5026;5027;5031;5032;5045;4514;4464;5219;4800;%(DisableSpecificWarnings)</DisableSpecificWarnings>
-      <AdditionalOptions>-Wno-unknown-pragmas -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-pre-c++14-compat -Wno-unsafe-buffer-usage -Wno-exit-time-destructors -Wno-covered-switch-default -Wno-implicit-int-float-conversion -Wno-switch -Wno-sign-conversion -Wno-ctad-maybe-unsupported -Wno-global-constructors %(AdditionalOptions)</AdditionalOptions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -211,7 +214,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>SDL3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <Profile>true</Profile>
-      <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <LinkTimeCodeGeneration>PGOptimization</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

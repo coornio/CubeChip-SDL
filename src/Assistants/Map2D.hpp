@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "../Concepts.hpp"
+#include "Concepts.hpp"
 
 #include <span>
 #include <cmath>
@@ -477,8 +477,8 @@ public:
 	const T& back()  const { return pData[size() - 1]; }
 	const T* data()  const { return pData.get(); }
 
-	auto span()       { return std::span<      T>(data(), size()); }
-	auto span() const { return std::span<const T>(data(), size()); }
+	auto span()       { return std::span<      T>{ data(), size() }; }
+	auto span() const { return std::span<const T>{ data(), size() }; }
 
 public:
 	#pragma region Raw Accessors
@@ -535,8 +535,8 @@ private:
 		const T& back()  const { return mBegin[mLength - 1]; }
 		const T* data()  const { return mBegin; }
 
-		auto span()       { return std::span<      T>(mBegin, mLength); }
-		auto span() const { return std::span<const T>(mBegin, mLength); }
+		auto span()       { return std::span<      T>{ mBegin, mLength }; }
+		auto span() const { return std::span<const T>{ mBegin, mLength }; }
 
 	public:
 		#pragma region Ctor

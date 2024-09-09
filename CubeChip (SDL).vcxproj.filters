@@ -9,36 +9,11 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
-    <Filter Include="Source Files\VM Guest">
-      <UniqueIdentifier>{217c32bf-c950-40b7-abef-d917d52dfaf8}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\VM Host">
-      <UniqueIdentifier>{55eec7ad-6111-4e66-9747-5b22c9d19866}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\Assistants">
       <UniqueIdentifier>{89a55c14-1a9b-486e-9b28-16af4d258b1c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\VM Guest">
-      <UniqueIdentifier>{09a9cfb4-654e-4332-ae95-5c22954b4e8a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\VM Host">
-      <UniqueIdentifier>{1c981b47-958b-49a8-86b4-09631b1d8ea9}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Assistants">
-      <UniqueIdentifier>{64995951-dc58-467d-bf16-43bc435fef07}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\_nlohmann">
       <UniqueIdentifier>{55d4d668-6f28-4b99-9a19-8f349a95197e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\VM Guest\EmuCores">
-      <UniqueIdentifier>{adc5a6be-595d-46a9-9d99-8f8938de479f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\EmuCores">
-      <UniqueIdentifier>{363dd659-8f39-4b20-b452-3626fdb1bc8b}</UniqueIdentifier>
     </Filter>
     <Filter Include="to_be_removed">
       <UniqueIdentifier>{5efef33a-fd49-4994-9c98-d0080b4b7d89}</UniqueIdentifier>
@@ -46,25 +21,49 @@
     <Filter Include="to_be_removed\InstructionSets">
       <UniqueIdentifier>{f124b1ff-b297-4745-ade8-c28e4686f1c8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\EmuInterface">
+      <UniqueIdentifier>{6fc556f9-a527-48ce-9095-97e687e85301}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\EmuInterface\BYTEPUSHER">
+      <UniqueIdentifier>{50b2b878-0361-496d-b28e-3dcc64dffb62}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\EmuInterface\CHIP8">
+      <UniqueIdentifier>{d0abc864-8f99-421f-90c9-a99afdd60b41}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\EmuInterface\CHIP8\Cores">
+      <UniqueIdentifier>{a31d04cb-4539-415a-9bab-f85e2fb0f2b7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\EmuInterface\BYTEPUSHER\Cores">
+      <UniqueIdentifier>{44cc83bd-e290-42f5-8205-b991ff8a4345}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\CubeChip.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\GuestClass\HexInput.cpp">
-      <Filter>Source Files\VM Guest</Filter>
+    <ClCompile Include="src\EmuHost.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\HostClass\BasicAudioSpec.cpp">
-      <Filter>Source Files\VM Host</Filter>
+    <ClCompile Include="src\EmuInterface\BYTEPUSHER\Cores\BYTEPUSHER_STANDARD.cpp">
+      <Filter>Source Files\EmuInterface\BYTEPUSHER\Cores</Filter>
     </ClCompile>
-    <ClCompile Include="src\HostClass\BasicVideoSpec.cpp">
-      <Filter>Source Files\VM Host</Filter>
+    <ClCompile Include="src\EmuInterface\CHIP8\Cores\CHIP8_MODERN.cpp">
+      <Filter>Source Files\EmuInterface\CHIP8\Cores</Filter>
     </ClCompile>
-    <ClCompile Include="src\HostClass\HomeDirManager.cpp">
-      <Filter>Source Files\VM Host</Filter>
+    <ClCompile Include="src\EmuInterface\BYTEPUSHER\BytePusher_CoreInterface.cpp">
+      <Filter>Source Files\EmuInterface\BYTEPUSHER</Filter>
     </ClCompile>
-    <ClCompile Include="src\HostClass\EmuHost.cpp">
-      <Filter>Source Files\VM Host</Filter>
+    <ClCompile Include="src\EmuInterface\CHIP8\Chip8_CoreInterface.cpp">
+      <Filter>Source Files\EmuInterface\CHIP8</Filter>
+    </ClCompile>
+    <ClCompile Include="src\EmuInterface\GameFileChecker.cpp">
+      <Filter>Source Files\EmuInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="src\EmuInterface\EmuInterface.cpp">
+      <Filter>Source Files\EmuInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Assistants\BasicAudioSpec.cpp">
+      <Filter>Source Files\Assistants</Filter>
     </ClCompile>
     <ClCompile Include="src\Assistants\BasicInput.cpp">
       <Filter>Source Files\Assistants</Filter>
@@ -72,82 +71,85 @@
     <ClCompile Include="src\Assistants\BasicLogger.cpp">
       <Filter>Source Files\Assistants</Filter>
     </ClCompile>
+    <ClCompile Include="src\Assistants\BasicVideoSpec.cpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClCompile>
     <ClCompile Include="src\Assistants\FrameLimiter.cpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Assistants\HomeDirManager.cpp">
       <Filter>Source Files\Assistants</Filter>
     </ClCompile>
     <ClCompile Include="src\Assistants\SHA1.cpp">
       <Filter>Source Files\Assistants</Filter>
     </ClCompile>
-    <ClCompile Include="src\GuestClass\EmuCores\CHIP8_MODERN.cpp">
-      <Filter>Source Files\EmuCores</Filter>
-    </ClCompile>
-    <ClCompile Include="src\GuestClass\EmuCores\EmuCores.cpp">
-      <Filter>Source Files\EmuCores</Filter>
-    </ClCompile>
-    <ClCompile Include="src\GuestClass\GameFileChecker.cpp">
-      <Filter>Source Files\VM Guest</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\HostClass\BasicAudioSpec.hpp">
-      <Filter>Header Files\VM Host</Filter>
-    </ClInclude>
-    <ClInclude Include="src\HostClass\BasicVideoSpec.hpp">
-      <Filter>Header Files\VM Host</Filter>
-    </ClInclude>
-    <ClInclude Include="src\HostClass\EmuHost.hpp">
-      <Filter>Header Files\VM Host</Filter>
-    </ClInclude>
-    <ClInclude Include="src\HostClass\HomeDirManager.hpp">
-      <Filter>Header Files\VM Host</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Assistants\Well512.hpp">
-      <Filter>Header Files\Assistants</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Assistants\FrameLimiter.hpp">
-      <Filter>Header Files\Assistants</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Assistants\BasicInput.hpp">
-      <Filter>Header Files\Assistants</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Assistants\BasicLogger.hpp">
-      <Filter>Header Files\Assistants</Filter>
-    </ClInclude>
-    <ClInclude Include="src\GuestClass\HexInput.hpp">
-      <Filter>Header Files\VM Guest</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Assistants\SHA1.hpp">
-      <Filter>Header Files\Assistants</Filter>
-    </ClInclude>
     <ClInclude Include="src\_nlohmann\json_fwd.hpp">
       <Filter>Header Files\_nlohmann</Filter>
     </ClInclude>
     <ClInclude Include="src\_nlohmann\json.hpp">
       <Filter>Header Files\_nlohmann</Filter>
     </ClInclude>
-    <ClInclude Include="src\Assistants\Map2D.hpp">
-      <Filter>Header Files\Assistants</Filter>
+    <ClInclude Include="src\EmuInterface\BYTEPUSHER\Cores\BYTEPUSHER_STANDARD.hpp">
+      <Filter>Source Files\EmuInterface\BYTEPUSHER\Cores</Filter>
+    </ClInclude>
+    <ClInclude Include="src\EmuInterface\CHIP8\Cores\CHIP8_MODERN.hpp">
+      <Filter>Source Files\EmuInterface\CHIP8\Cores</Filter>
+    </ClInclude>
+    <ClInclude Include="src\EmuInterface\BYTEPUSHER\BytePusher_CoreInterface.hpp">
+      <Filter>Source Files\EmuInterface\BYTEPUSHER</Filter>
+    </ClInclude>
+    <ClInclude Include="src\EmuInterface\CHIP8\Chip8_CoreInterface.hpp">
+      <Filter>Source Files\EmuInterface\CHIP8</Filter>
+    </ClInclude>
+    <ClInclude Include="src\EmuInterface\GameFileChecker.hpp">
+      <Filter>Source Files\EmuInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="src\EmuInterface\EmuInterface.hpp">
+      <Filter>Source Files\EmuInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\BasicAudioSpec.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\BasicInput.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\BasicLogger.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\BasicVideoSpec.hpp">
+      <Filter>Source Files\Assistants</Filter>
     </ClInclude>
     <ClInclude Include="src\Assistants\BytePun.hpp">
-      <Filter>Header Files\Assistants</Filter>
+      <Filter>Source Files\Assistants</Filter>
     </ClInclude>
-    <ClInclude Include="src\Concepts.hpp">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\Assistants\Concepts.hpp">
+      <Filter>Source Files\Assistants</Filter>
     </ClInclude>
-    <ClInclude Include="src\Types.hpp">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\Assistants\FrameLimiter.hpp">
+      <Filter>Source Files\Assistants</Filter>
     </ClInclude>
-    <ClInclude Include="src\GuestClass\EmuCores\CHIP8_MODERN.hpp">
-      <Filter>Header Files\VM Guest\EmuCores</Filter>
-    </ClInclude>
-    <ClInclude Include="src\GuestClass\EmuCores\EmuCores.hpp">
-      <Filter>Header Files\VM Guest\EmuCores</Filter>
-    </ClInclude>
-    <ClInclude Include="src\GuestClass\GameFileChecker.hpp">
-      <Filter>Header Files\VM Guest</Filter>
+    <ClInclude Include="src\Assistants\Map2D.hpp">
+      <Filter>Source Files\Assistants</Filter>
     </ClInclude>
     <ClInclude Include="src\Assistants\PathGetters.hpp">
-      <Filter>Header Files\Assistants</Filter>
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\SHA1.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\Typedefs.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\Well512.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\HomeDirManager.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\EmuHost.hpp">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -27,7 +27,8 @@ enum class GameFileType {
 	gc8, // GIGACHIP
 	xo8, // XO-CHIP
 	hwc, // HYPERWAVE-CHIP
-	bnc, // benchmark
+	bnc,
+	BytePusher,
 };
 
 enum class GameCoreType {
@@ -38,6 +39,7 @@ enum class GameCoreType {
 	CHIP8_MODERN, SCHIP_MODERN,
 	CHIP8X_HIRES, CHIP8X_SCHIP,
 	HWCHIP64, MEGACHIP, GIGACHIP,
+	BYTEPUSHER_STANDARD
 };
 
 class EmuInterface;

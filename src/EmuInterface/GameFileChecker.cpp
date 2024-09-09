@@ -17,6 +17,8 @@ using json = nlohmann::json;
 
 #include "CHIP8/Cores/CHIP8_MODERN.hpp"
 
+#include "BYTEPUSHER/Cores/BYTEPUSHER_STANDARD.hpp"
+
 /*==================================================================*/
 
 GameCoreType   GameFileChecker::sEmuCore{};
@@ -80,6 +82,9 @@ std::unique_ptr<EmuInterface> GameFileChecker::constructCore() {
 			case GameCoreType::GIGACHIP:
 				//return std::make_unique<GIGACHIP>();
 
+			case GameCoreType::BYTEPUSHER_STANDARD:
+				return std::make_unique<BYTEPUSHER_STANDARD>();
+
 			default:
 			case GameCoreType::INVALID:
 				return nullptr;
@@ -142,6 +147,7 @@ bool GameFileChecker::validate(
 		{".xo8", GameFileType::xo8},
 		{".hwc", GameFileType::hwc},
 		{".bnc", GameFileType::bnc},
+		{".BytePusher", GameFileType::BytePusher},
 	};
 
 	const auto it{ sExtMap.find(type) };
@@ -222,6 +228,7 @@ bool GameFileChecker::validate(
 				GameCoreType::CHIP8_2P
 			); // patched!
 
+		case (GameFileType::bnc):
 		case (GameFileType::ch8):
 			return testGame(
 				CHIP8_MODERN::testGameSize(size),
@@ -235,10 +242,10 @@ bool GameFileChecker::validate(
 				GameCoreType::SCHIP_MODERN
 			);
 
-		case (GameFileType::bnc):
+		case (GameFileType::BytePusher):
 			return testGame(
-				CHIP8_MODERN::testGameSize(size),
-				GameCoreType::CHIP8_MODERN
+				BYTEPUSHER_STANDARD::testGameSize(size),
+				GameCoreType::BYTEPUSHER_STANDARD
 			);
 	}
 	return false;
