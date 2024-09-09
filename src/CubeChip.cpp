@@ -35,7 +35,7 @@ SDL_AppResult SDL_AppInit(void **Host, int argc, char* argv[]) {
 //             VS               OTHER
 #if !defined(NDEBUG) || defined(DEBUG)
 	{
-		printf("SDL3 test dated: d1/m9/y2024\n");
+		printf("SDL3 test dated: 8/9/2024 (dmy)\n");
 		const auto compiled{ SDL_VERSION };  /* hardcoded number from SDL headers */
 		const auto linked{ SDL_GetVersion() };  /* reported by linked SDL library */
 
@@ -91,7 +91,7 @@ SDL_AppResult SDL_AppIterate(void* pHost) {
 
 /*==================================================================*/
 
-SDL_AppResult SDL_AppEvent(void* pHost, const SDL_Event* Event) {
+SDL_AppResult SDL_AppEvent(void* pHost, SDL_Event* Event) {
 	auto& Host{ *static_cast<EmuHost*>(pHost) };
 	const std::lock_guard lock{ Host.Mutex };
 
