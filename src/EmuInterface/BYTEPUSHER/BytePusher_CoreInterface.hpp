@@ -19,18 +19,16 @@ protected:
 
 	std::vector<SimpleKeyMapping> mCustomBinds;
 
+	u32  getKeyStates() const;
 	void loadPresetBinds();
 	void loadCustomBinds(std::span<const SimpleKeyMapping> binds);
 
-	u32  getKeyStates() const;
-
-	u32  mCoreState{ EmuState::NORMAL };
-
-	f32  mFramerate{};
 	u64  mTotalCycles{};
 	u32  mTotalFrames{};
-	s32  mCyclesPerFrame{};
 
+	u32  mCoreState{};
+	f32  mFramerate{};
+	s32  mActiveCPF{};
 
 	void addCoreState(const EmuState state) noexcept { mCoreState |=  state; }
 	void subCoreState(const EmuState state) noexcept { mCoreState &= ~state; }
@@ -57,14 +55,10 @@ public:
 	u32  getTotalFrames() const noexcept override { return mTotalFrames; }
 	u64  getTotalCycles() const noexcept override { return mTotalCycles; }
 
-	s32  getCPF()       const noexcept override { return mCyclesPerFrame; }
+	s32  getCPF()       const noexcept override { return mActiveCPF; }
 	f32  getFramerate() const noexcept override { return mFramerate; }
 
-	s32  changeCPF(const s32 delta) noexcept override {
-		mCyclesPerFrame += mCyclesPerFrame > 0
-			? delta : -delta;
-		return mCyclesPerFrame;
-	}
+	s32  changeCPF(const s32) noexcept override { return mActiveCPF; }
 
 protected:
 	static constexpr u32 cBitsColor[]{

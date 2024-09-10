@@ -90,11 +90,11 @@ protected:
 
 /*==================================================================*/
 
-	u64  mTotalCycles{};
-	u32  mTotalFrames{};
+	u64 mTotalCycles{};
+	u32 mTotalFrames{};
 
-	s32  mActiveCPF{};
-	f32  mFramerate{};
+	s32 mActiveCPF{};
+	f32 mFramerate{};
 
 	Interrupt mInterrupt{};
 
@@ -106,7 +106,19 @@ protected:
 		mDisplayH = H; mDisplayHb = H - 1;
 	}
 
-	f32  mBuzzerTone{};
+	f32 mBuzzerTone{};
+
+	u32 mCurrentPC{};
+	u32 mRegisterI{};
+
+	u8  mDelayTimer{};
+	u8  mSoundTimer{};
+
+	u8  mStackTop{};
+	u8* mInputReg{};
+
+	u8  mRegisterV[16]{};
+	u32 mStackBank[16]{};
 
 /*==================================================================*/
 

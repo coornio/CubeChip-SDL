@@ -20,9 +20,9 @@ BYTEPUSHER_STANDARD::BYTEPUSHER_STANDARD() {
 		BVS->setBackColor(cBitsColor[0]);
 		BVS->setFrameColor(cBitsColor[0], cBitsColor[0]);
 		BVS->createTexture(cScreenSizeX, cScreenSizeY);
-		BVS->setAspectRatio(512, 512, -2);
+		BVS->setAspectRatio(cScreenSizeX, cScreenSizeY, -2);
 
-		mCyclesPerFrame = 0x10000;
+		mActiveCPF = 0x10000;
 		mFramerate = cRefreshRate;
 	}
 }
@@ -32,15 +32,16 @@ BYTEPUSHER_STANDARD::BYTEPUSHER_STANDARD() {
 void BYTEPUSHER_STANDARD::instructionLoop() noexcept {
 	const auto inputStates{ getKeyStates() };
 	      auto progPointer{ readData<3>(2) };
+
 	mMemoryBank[0] = static_cast<u8>(inputStates >> 0x8);
 	mMemoryBank[1] = static_cast<u8>(inputStates & 0xFF);
 	
-	for (auto cycleCount{ 0 }; cycleCount < mCyclesPerFrame; ++cycleCount) {
+	for (auto cycleCount{ 0 }; cycleCount < mActiveCPF; ++cycleCount) {
 		mMemoryBank[readData<3>(progPointer + 3)] =
 		mMemoryBank[readData<3>(progPointer + 0)];
 		progPointer = readData<3>(progPointer + 6);
 	}
-	mTotalCycles += mCyclesPerFrame;
+	mTotalCycles += mActiveCPF;
 }
 
 void BYTEPUSHER_STANDARD::renderAudioData() {

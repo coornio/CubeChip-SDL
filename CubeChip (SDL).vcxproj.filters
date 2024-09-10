@@ -21,20 +21,20 @@
     <Filter Include="to_be_removed\InstructionSets">
       <UniqueIdentifier>{f124b1ff-b297-4745-ade8-c28e4686f1c8}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\EmuInterface">
+    <Filter Include="Source Files\Systems">
       <UniqueIdentifier>{6fc556f9-a527-48ce-9095-97e687e85301}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\EmuInterface\BYTEPUSHER">
+    <Filter Include="Source Files\Systems\BYTEPUSHER">
       <UniqueIdentifier>{50b2b878-0361-496d-b28e-3dcc64dffb62}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\EmuInterface\CHIP8">
+    <Filter Include="Source Files\Systems\BYTEPUSHER\Cores">
+      <UniqueIdentifier>{44cc83bd-e290-42f5-8205-b991ff8a4345}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Systems\CHIP8">
       <UniqueIdentifier>{d0abc864-8f99-421f-90c9-a99afdd60b41}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\EmuInterface\CHIP8\Cores">
+    <Filter Include="Source Files\Systems\CHIP8\Cores">
       <UniqueIdentifier>{a31d04cb-4539-415a-9bab-f85e2fb0f2b7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\EmuInterface\BYTEPUSHER\Cores">
-      <UniqueIdentifier>{44cc83bd-e290-42f5-8205-b991ff8a4345}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -45,22 +45,22 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\EmuInterface\BYTEPUSHER\Cores\BYTEPUSHER_STANDARD.cpp">
-      <Filter>Source Files\EmuInterface\BYTEPUSHER\Cores</Filter>
+      <Filter>Source Files\Systems\BYTEPUSHER\Cores</Filter>
     </ClCompile>
     <ClCompile Include="src\EmuInterface\CHIP8\Cores\CHIP8_MODERN.cpp">
-      <Filter>Source Files\EmuInterface\CHIP8\Cores</Filter>
+      <Filter>Source Files\Systems\CHIP8\Cores</Filter>
     </ClCompile>
     <ClCompile Include="src\EmuInterface\BYTEPUSHER\BytePusher_CoreInterface.cpp">
-      <Filter>Source Files\EmuInterface\BYTEPUSHER</Filter>
+      <Filter>Source Files\Systems\BYTEPUSHER</Filter>
     </ClCompile>
     <ClCompile Include="src\EmuInterface\CHIP8\Chip8_CoreInterface.cpp">
-      <Filter>Source Files\EmuInterface\CHIP8</Filter>
+      <Filter>Source Files\Systems\CHIP8</Filter>
     </ClCompile>
     <ClCompile Include="src\EmuInterface\GameFileChecker.cpp">
-      <Filter>Source Files\EmuInterface</Filter>
+      <Filter>Source Files\Systems</Filter>
     </ClCompile>
     <ClCompile Include="src\EmuInterface\EmuInterface.cpp">
-      <Filter>Source Files\EmuInterface</Filter>
+      <Filter>Source Files\Systems</Filter>
     </ClCompile>
     <ClCompile Include="src\Assistants\BasicAudioSpec.cpp">
       <Filter>Source Files\Assistants</Filter>
@@ -92,22 +92,22 @@
       <Filter>Header Files\_nlohmann</Filter>
     </ClInclude>
     <ClInclude Include="src\EmuInterface\BYTEPUSHER\Cores\BYTEPUSHER_STANDARD.hpp">
-      <Filter>Source Files\EmuInterface\BYTEPUSHER\Cores</Filter>
+      <Filter>Source Files\Systems\BYTEPUSHER\Cores</Filter>
     </ClInclude>
     <ClInclude Include="src\EmuInterface\CHIP8\Cores\CHIP8_MODERN.hpp">
-      <Filter>Source Files\EmuInterface\CHIP8\Cores</Filter>
+      <Filter>Source Files\Systems\CHIP8\Cores</Filter>
     </ClInclude>
     <ClInclude Include="src\EmuInterface\BYTEPUSHER\BytePusher_CoreInterface.hpp">
-      <Filter>Source Files\EmuInterface\BYTEPUSHER</Filter>
+      <Filter>Source Files\Systems\BYTEPUSHER</Filter>
     </ClInclude>
     <ClInclude Include="src\EmuInterface\CHIP8\Chip8_CoreInterface.hpp">
-      <Filter>Source Files\EmuInterface\CHIP8</Filter>
+      <Filter>Source Files\Systems\CHIP8</Filter>
     </ClInclude>
     <ClInclude Include="src\EmuInterface\GameFileChecker.hpp">
-      <Filter>Source Files\EmuInterface</Filter>
+      <Filter>Source Files\Systems</Filter>
     </ClInclude>
     <ClInclude Include="src\EmuInterface\EmuInterface.hpp">
-      <Filter>Source Files\EmuInterface</Filter>
+      <Filter>Source Files\Systems</Filter>
     </ClInclude>
     <ClInclude Include="src\Assistants\BasicAudioSpec.hpp">
       <Filter>Source Files\Assistants</Filter>

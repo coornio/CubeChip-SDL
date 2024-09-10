@@ -22,10 +22,10 @@ CHIP8_MODERN::CHIP8_MODERN() {
 
 		BVS->setBackColor(cBitsColor[0]);
 		BVS->createTexture(cScreenSizeX, cScreenSizeY);
-		BVS->setAspectRatio(512, 256, +2);
+		BVS->setAspectRatio(cScreenSizeX * 8, cScreenSizeY * 8, +2);
 
-		mProgCounter    = cStartOffset;
-		mFramerate      = cRefreshRate;
+		mCurrentPC = cStartOffset;
+		mFramerate = cRefreshRate;
 		mActiveCPF = Quirk.waitVblank ? cInstSpeedHi : cInstSpeedLo;
 	}
 }
@@ -78,8 +78,8 @@ void CHIP8_MODERN::instructionLoop() noexcept {
 
 	auto cycleCount{ 0 };
 	for (; cycleCount < mActiveCPF; ++cycleCount) {
-		const auto HI{ mMemoryBank[mProgCounter + 0u] };
-		const auto LO{ mMemoryBank[mProgCounter + 1u] };
+		const auto HI{ mMemoryBank[mCurrentPC + 0u] };
+		const auto LO{ mMemoryBank[mCurrentPC + 1u] };
 		nextInstruction();
 
 		switch (HI >> 4) {
@@ -272,18 +272,18 @@ void CHIP8_MODERN::renderVideoData() {
 
 f32  CHIP8_MODERN::calcAudioTone() const noexcept {
 	return (160.0f + 8.0f * (
-		(mProgCounter >> 1) + mStackTop + 1 & 0x3E
+		(mCurrentPC >> 1) + mStackTop + 1 & 0x3E
 	)) / ASB->getFrequency();
 }
 
 void CHIP8_MODERN::nextInstruction() noexcept {
-	mProgCounter += 2;
+	mCurrentPC += 2;
 }
 
 void CHIP8_MODERN::jumpProgramTo(const u32 next) noexcept {
 	const auto NNN{ next & 0xFFF };
-	if (mProgCounter - 2u != NNN) [[likely]] {
-		mProgCounter = NNN & 0xFFF;
+	if (mCurrentPC - 2u != NNN) [[likely]] {
+		mCurrentPC = NNN & 0xFFF;
 	} else {
 		triggerInterrupt(Interrupt::SOUND);
 	}
@@ -305,7 +305,7 @@ void CHIP8_MODERN::jumpProgramTo(const u32 next) noexcept {
 	}
 	// 00EE - return from subroutine
 	void CHIP8_MODERN::instruction_00EE() noexcept {
-		mProgCounter = mStackBank[--mStackTop & 0xF];
+		mCurrentPC = mStackBank[--mStackTop & 0xF];
 	}
 
 	#pragma endregion
@@ -327,7 +327,7 @@ void CHIP8_MODERN::jumpProgramTo(const u32 next) noexcept {
 
 	// 2NNN - call subroutine at NNN
 	void CHIP8_MODERN::instruction_2NNN(const s32 NNN) noexcept {
-		mStackBank[mStackTop++ & 0xF] = mProgCounter;
+		mStackBank[mStackTop++ & 0xF] = mCurrentPC;
 		jumpProgramTo(NNN);
 	}
 
