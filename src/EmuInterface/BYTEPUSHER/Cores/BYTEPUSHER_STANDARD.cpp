@@ -13,9 +13,7 @@
 
 /*==================================================================*/
 
-BYTEPUSHER_STANDARD::BYTEPUSHER_STANDARD() noexcept
-	: mMemoryBank(cTotalMemory + cSafezoneOOB)
-{
+BYTEPUSHER_STANDARD::BYTEPUSHER_STANDARD() {
 	if (getSystemState() != EmuState::FAILED) {
 		copyGameToMemory(mMemoryBank.data());
 
@@ -37,37 +35,27 @@ void BYTEPUSHER_STANDARD::instructionLoop() noexcept {
 	mMemoryBank[0] = static_cast<u8>(inputStates >> 0x8);
 	mMemoryBank[1] = static_cast<u8>(inputStates & 0xFF);
 	
-	auto cycleCount{ 0 };
-	for (; cycleCount < mCyclesPerFrame; ++cycleCount) {
+	for (auto cycleCount{ 0 }; cycleCount < mCyclesPerFrame; ++cycleCount) {
 		mMemoryBank[readData<3>(progPointer + 3)] =
 		mMemoryBank[readData<3>(progPointer + 0)];
 		progPointer = readData<3>(progPointer + 6);
 	}
-	mTotalCycles += cycleCount;
+	mTotalCycles += mCyclesPerFrame;
 }
 
 void BYTEPUSHER_STANDARD::renderAudioData() {
-	std::array<u8, cAudioLength> samplesBuffer{};
-
 	const std::span<u8, cAudioLength>
-		samplesOffset{ &mMemoryBank[readData<2>(6) << 8], cAudioLength };
+		samplesOffset{ mMemoryBank.data() + (readData<2>(6) << 8), 0 };
 
-	std::transform(
-		std::execution::unseq,
-		samplesOffset.begin(),
-		samplesOffset.end(),
-		samplesBuffer.data(),
-		[volume = ASB->getVolumeNorm()](const s8 sample) noexcept {
-			return static_cast<u8>(sample * volume);
-		}
-	);
+	std::vector<s8> samplesBuffer \
+		(samplesOffset.begin(), samplesOffset.end());
 
-	ASB->pushAudioData(std::span{ samplesBuffer });
+	ASB->pushAudioData<s8>(samplesBuffer);
 }
 
 void BYTEPUSHER_STANDARD::renderVideoData() {
-	const std::span<u8, cScreenSizeX * cScreenSizeY>
-		displayBuffer{ &mMemoryBank[readData<1>(5) << 16], cScreenSizeX * cScreenSizeY };
+	const std::span<u8, cScreenSizeT>
+		displayBuffer{ mMemoryBank.data() + (readData<1>(5) << 16), 0 };
 
 	BVS->modifyTexture<u8>(displayBuffer,
 		[](const u32 pixel) noexcept {

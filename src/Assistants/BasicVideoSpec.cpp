@@ -18,7 +18,6 @@
 
 /*==================================================================*/
 	#pragma region BasicVideoSpec Singleton Class
-/*==================================================================*/
 
 BasicVideoSpec::BasicVideoSpec() noexcept
 	: enableBuzzGlow{ true }
@@ -259,6 +258,5 @@ void BasicVideoSpec::quitWindow() noexcept {
 	}
 }
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/

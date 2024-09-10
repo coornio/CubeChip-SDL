@@ -8,16 +8,20 @@
 
 #include "../BytePusher_CoreInterface.hpp"
 
+/*==================================================================*/
+
 class BYTEPUSHER_STANDARD final : public BytePusher_CoreInterface {
-	static constexpr u32 cTotalMemory{ 0x1000000u };
-	static constexpr u32 cSafezoneOOB{       0x8u };
-	static constexpr f32 cRefreshRate{    60.000f };
-	static constexpr s32 cAudioLength{       256  };
-	static constexpr s32 cScreenSizeX{       256  };
-	static constexpr s32 cScreenSizeY{       256  };
+	static constexpr u32 cTotalMemory{  16777216 };
+	static constexpr u32 cSafezoneOOB{         8 };
+	static constexpr f32 cRefreshRate{    60.00f };
+	static constexpr s32 cAudioLength{       256 };
+	static constexpr s32 cScreenSizeX{       256 };
+	static constexpr s32 cScreenSizeY{       256 };
+	static constexpr s32 cScreenSizeT{ 256 * 256 };
 
 private:
-	std::vector<u8> mMemoryBank;
+	std::array<u8, cTotalMemory + cSafezoneOOB>
+		mMemoryBank{};
 
 	template<u32 T> requires (T >= 1 && T <= 3)
 	u32 readData(const u32 pos) const noexcept {
@@ -38,7 +42,7 @@ private:
 	void renderVideoData() override;
 
 public:
-	BYTEPUSHER_STANDARD() noexcept;
+	BYTEPUSHER_STANDARD();
 
 	static constexpr bool testGameSize(const usz size) noexcept {
 		return size <= cTotalMemory;

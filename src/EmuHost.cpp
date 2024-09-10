@@ -21,7 +21,6 @@
 
 /*==================================================================*/
 	#pragma region VM_Host Singleton Class
-/*==================================================================*/
 
 HomeDirManager* EmuHost::HDM{};
 BasicVideoSpec* EmuHost::BVS{};
@@ -29,7 +28,7 @@ BasicAudioSpec* EmuHost::BAS{};
 
 EmuHost::~EmuHost() noexcept = default;
 EmuHost::EmuHost(const fsPath& gamePath) noexcept
-	: Limiter{ std::make_unique<FrameLimiter>() }
+	: Limiter{ std::make_unique<FrameLimiter>(60.0f, true, false) }
 {
 	EmuInterface::assignComponents(HDM, BVS, BAS);
 	HDM->setValidator(GameFileChecker::validate);
@@ -131,10 +130,10 @@ void EmuHost::checkForHotkeys() {
 	using namespace binput;
 
 	if (kb.isPressed(KEY(RIGHT))) {
-		//BAS->changeVolume(+15);
+		BAS->changeGlobalVolume(+15);
 	}
 	if (kb.isPressed(KEY(LEFT))) {
-		//BAS->changeVolume(-15);
+		BAS->changeGlobalVolume(-15);
 	}
 
 	if (iGuest) {
@@ -159,6 +158,5 @@ void EmuHost::checkForHotkeys() {
 	}
 }
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/

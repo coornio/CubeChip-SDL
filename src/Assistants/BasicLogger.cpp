@@ -12,7 +12,6 @@
 
 /*==================================================================*/
 	#pragma region BasicLogger Singleton Class
-/*==================================================================*/
 
 bool BasicLogger::initLogFile(
 	const std::string&           filename,
@@ -59,6 +58,5 @@ void BasicLogger::newEntry(const BLOG type, const std::string& message) noexcept
 	}
 }
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/

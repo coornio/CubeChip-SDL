@@ -9,11 +9,12 @@
 #include <string>
 #include <filesystem>
 
+/*==================================================================*/
+
 enum class BLOG { INFO, WARN, ERROR, DEBUG };
 
 /*==================================================================*/
 	#pragma region BasicLogger Singleton Class
-/*==================================================================*/
 
 class BasicLogger final {
 	BasicLogger() = default;
@@ -52,7 +53,6 @@ public:
 	void newEntry(const BLOG type, const std::string&) noexcept;
 };
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 

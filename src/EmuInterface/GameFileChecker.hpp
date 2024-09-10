@@ -13,6 +13,8 @@
 
 #include "../_nlohmann/json_fwd.hpp"
 
+/*==================================================================*/
+
 enum class GameFileType {
 	c2x, // CHIP-8X 2-page
 	c4x, // CHIP-8X 4-page
@@ -41,6 +43,8 @@ enum class GameCoreType {
 	HWCHIP64, MEGACHIP, GIGACHIP,
 	BYTEPUSHER_STANDARD
 };
+
+/*==================================================================*/
 
 class EmuInterface;
 

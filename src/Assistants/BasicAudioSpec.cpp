@@ -5,24 +5,11 @@
 */
 
 #include "BasicAudioSpec.hpp"
-#include <SDL3/SDL_audio.h>
-#include <algorithm>
-
-static constexpr s32 VOL_MAX{ 255 };
-static constexpr s32 VOL_MIN{   0 };
 
 /*==================================================================*/
 	#pragma region BasicAudioSpec Singleton Class
-/*==================================================================*/
 
-BasicAudioSpec::BasicAudioSpec() {
-	//SDL_InitSubSystem(SDL_INIT_AUDIO);
-}
 
-BasicAudioSpec::~BasicAudioSpec() {
-	//SDL_QuitSubSystem(SDL_INIT_AUDIO);
-}
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
-#pragma endregion
+	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/

@@ -7,6 +7,8 @@
 #include "FrameLimiter.hpp"
 #include <cmath>
 
+/*==================================================================*/
+
 void FrameLimiter::setLimiter(
 	const float               framerate,
 	const std::optional<bool> firstpass,
@@ -17,6 +19,8 @@ void FrameLimiter::setLimiter(
 	if (lostframe) { skipLostFrame = *lostframe; }
 }
 
+/*==================================================================*/
+
 bool FrameLimiter::checkTime(const bool mode) {
 	if (isValidFrame()) { return true; }
 
@@ -25,6 +29,8 @@ bool FrameLimiter::checkTime(const bool mode) {
 	}
 	return false;
 }
+
+/*==================================================================*/
 
 bool FrameLimiter::isValidFrame() noexcept {
 	using namespace std::chrono;

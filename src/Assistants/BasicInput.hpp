@@ -13,6 +13,8 @@
 #include <array>
 #include <concepts>
 
+/*==================================================================*/
+
 #define KEY(i) SDL_SCANCODE_##i
 #define BTN(i) BIC_MOUSE_##i
 
@@ -26,7 +28,6 @@ enum BIC_Button {
 
 /*==================================================================*/
 	#pragma region BasicKeyboard Singleton Class
-/*==================================================================*/
 
 class BasicKeyboard final {
 	std::array<Uint8, SDL_NUM_SCANCODES> oldState{};
@@ -71,13 +72,11 @@ public:
 	}
 };
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 /*==================================================================*/
 	#pragma region BasicMouse Singleton Class
-/*==================================================================*/
 
 class BasicMouse final {
 	Uint32 curState{}, oldState{};
@@ -129,7 +128,6 @@ public:
 	}
 };
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 

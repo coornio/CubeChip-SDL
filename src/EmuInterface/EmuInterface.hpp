@@ -22,7 +22,7 @@
 
 /*==================================================================*/
 
-enum EmuState : u8 {
+enum EmuState {
 	NORMAL = 0x0, // normal operation
 	HIDDEN = 0x1, // window is hidden
 	PAUSED = 0x2, // paused by hotkey
@@ -79,6 +79,7 @@ public:
 	virtual u64 getTotalCycles() const noexcept = 0;
 	virtual s32 getCPF()       const noexcept = 0;
 	virtual f32 getFramerate() const noexcept = 0;
+
 	virtual s32 changeCPF(const s32 delta) noexcept = 0;
 
 	[[nodiscard]]

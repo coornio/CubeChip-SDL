@@ -11,6 +11,8 @@
 
 #include "Assistants/Typedefs.hpp"
 
+/*==================================================================*/
+
 class HomeDirManager;
 class BasicVideoSpec;
 class BasicAudioSpec;
@@ -20,7 +22,6 @@ class FrameLimiter;
 
 /*==================================================================*/
 	#pragma region EmuHost Singleton Class
-/*==================================================================*/
 
 class EmuHost final {
 	EmuHost(const fsPath&) noexcept;
@@ -72,6 +73,5 @@ public:
 	void processFrame();
 };
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/

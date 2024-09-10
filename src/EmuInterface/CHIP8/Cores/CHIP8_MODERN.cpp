@@ -12,7 +12,7 @@
 
 /*==================================================================*/
 
-CHIP8_MODERN::CHIP8_MODERN() noexcept {
+CHIP8_MODERN::CHIP8_MODERN() {
 	if (getCoreState() != EmuState::FAILED) {
 
 		copyGameToMemory(mMemoryBank.data(), cGameLoadPos);
@@ -26,45 +26,45 @@ CHIP8_MODERN::CHIP8_MODERN() noexcept {
 
 		mProgCounter    = cStartOffset;
 		mFramerate      = cRefreshRate;
-		mCyclesPerFrame = Quirk.waitVblank ? cInstSpeedHi : cInstSpeedLo;
+		mActiveCPF = Quirk.waitVblank ? cInstSpeedHi : cInstSpeedLo;
 	}
 }
 
 /*==================================================================*/
 
 void CHIP8_MODERN::handlePreFrameInterrupt() noexcept {
-	switch (mInterruptType)
+	switch (mInterrupt)
 	{
 		case Interrupt::FRAME:
-			mInterruptType  = Interrupt::CLEAR;
-			mCyclesPerFrame = std::abs(mCyclesPerFrame);
+			mInterrupt = Interrupt::CLEAR;
+			mActiveCPF = std::abs(mActiveCPF);
 			return;
 
 		case Interrupt::SOUND:
 			if (!mSoundTimer) {
-				mInterruptType = Interrupt::FINAL;
-				mCyclesPerFrame = 0;
+				mInterrupt = Interrupt::FINAL;
+				mActiveCPF = 0;
 			}
 			return;
 	}
 }
 
 void CHIP8_MODERN::handleEndFrameInterrupt() noexcept {
-	switch (mInterruptType)
+	switch (mInterrupt)
 	{
 		case Interrupt::INPUT:
-			if (keyPressed(mRegisterV[mInputReg], mTotalFrames)) {
-				mInterruptType  = Interrupt::CLEAR;
-				mCyclesPerFrame = std::abs(mCyclesPerFrame);
-				mAudioTone      = calcAudioTone();
-				mSoundTimer     = 2;
+			if (keyPressed(mInputReg, mTotalFrames)) {
+				mInterrupt  = Interrupt::CLEAR;
+				mActiveCPF  = std::abs(mActiveCPF);
+				mBuzzerTone = calcAudioTone();
+				mSoundTimer = 2;
 			}
 			return;
 
 		case Interrupt::ERROR:
 		case Interrupt::FINAL:
 			setCoreState(EmuState::HALTED);
-			mCyclesPerFrame = 0;
+			mActiveCPF = 0;
 			return;
 	}
 }
@@ -77,7 +77,7 @@ void CHIP8_MODERN::handleTimerTick() noexcept {
 void CHIP8_MODERN::instructionLoop() noexcept {
 
 	auto cycleCount{ 0 };
-	for (; cycleCount < mCyclesPerFrame; ++cycleCount) {
+	for (; cycleCount < mActiveCPF; ++cycleCount) {
 		const auto HI{ mMemoryBank[mProgCounter + 0u] };
 		const auto LO{ mMemoryBank[mProgCounter + 1u] };
 		nextInstruction();
@@ -209,10 +209,10 @@ void CHIP8_MODERN::instructionLoop() noexcept {
 						instruction_Fx33(HI & 0xF);
 						break;
 					case 0x55:
-						instruction_Fx55(HI & 0xF);
+						instruction_FN55(HI & 0xF);
 						break;
 					case 0x65:
-						instruction_Fx65(HI & 0xF);
+						instruction_FN65(HI & 0xF);
 						break;
 					[[unlikely]]
 					default: instructionError(HI, LO);
@@ -224,21 +224,23 @@ void CHIP8_MODERN::instructionLoop() noexcept {
 }
 
 void CHIP8_MODERN::renderAudioData() {
-	std::vector<s16> samplesBuffer(static_cast<usz>(ASB->getFrequency() / cRefreshRate));
+	std::vector<s8> samplesBuffer \
+		(static_cast<usz>(ASB->getSampleRate(cRefreshRate)));
+
+	static f32 wavePhase{};
 
 	if (mSoundTimer) {
-		const auto amplitute{ ASB->getVolume() * 16 };
-		for (auto& sample_s16 : samplesBuffer) {
-			sample_s16 = s16(mWavePhase > 0.5f ? amplitute : -amplitute);
-			mWavePhase = std::fmod(mWavePhase + mAudioTone, 1.0f);
+		for (auto& sample : samplesBuffer) {
+			sample    = static_cast<s8>(wavePhase > 0.5f ? 64 : -64);
+			wavePhase = std::fmod(wavePhase + mBuzzerTone, 1.0f);
 		}
 		BVS->setFrameColor(cBitsColor[0], cBitsColor[1]);
 	} else {
-		mWavePhase = 0.0f;
+		wavePhase = 0.0f;
 		BVS->setFrameColor(cBitsColor[0], cBitsColor[0]);
 	}
 
-	ASB->pushAudioData(std::span{ samplesBuffer });
+	ASB->pushAudioData<s8>(samplesBuffer);
 }
 
 void CHIP8_MODERN::renderVideoData() {
@@ -288,11 +290,7 @@ void CHIP8_MODERN::jumpProgramTo(const u32 next) noexcept {
 }
 
 /*==================================================================*/
-
-
-/*==================================================================*/
 	#pragma region 0 instruction branch
-/*==================================================================*/
 
 	// 00E0 - erase whole display
 	void CHIP8_MODERN::instruction_00E0() noexcept {
@@ -310,26 +308,22 @@ void CHIP8_MODERN::jumpProgramTo(const u32 next) noexcept {
 		mProgCounter = mStackBank[--mStackTop & 0xF];
 	}
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 /*==================================================================*/
 	#pragma region 1 instruction branch
-/*==================================================================*/
 
 	// 1NNN - jump to NNN
 	void CHIP8_MODERN::instruction_1NNN(const s32 NNN) noexcept {
 		jumpProgramTo(NNN);
 	}
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 /*==================================================================*/
 	#pragma region 2 instruction branch
-/*==================================================================*/
 
 	// 2NNN - call subroutine at NNN
 	void CHIP8_MODERN::instruction_2NNN(const s32 NNN) noexcept {
@@ -337,78 +331,66 @@ void CHIP8_MODERN::jumpProgramTo(const u32 next) noexcept {
 		jumpProgramTo(NNN);
 	}
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 /*==================================================================*/
 	#pragma region 3 instruction branch
-/*==================================================================*/
 
 	// 3XNN - skip next instruction if VX == NN
 	void CHIP8_MODERN::instruction_3xNN(const s32 X, const s32 NN) noexcept {
 		if (mRegisterV[X] == NN) { nextInstruction(); }
 	}
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 /*==================================================================*/
 	#pragma region 4 instruction branch
-/*==================================================================*/
 
 	// 4XNN - skip next instruction if VX != NN
 	void CHIP8_MODERN::instruction_4xNN(const s32 X, const s32 NN) noexcept {
 		if (mRegisterV[X] != NN) { nextInstruction(); }
 	}
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 /*==================================================================*/
 	#pragma region 5 instruction branch
-/*==================================================================*/
 
 	// 5XY0 - skip next instruction if VX == VY
 	void CHIP8_MODERN::instruction_5xy0(const s32 X, const s32 Y) noexcept {
 		if (mRegisterV[X] == mRegisterV[Y]) { nextInstruction(); }
 	}
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 /*==================================================================*/
 	#pragma region 6 instruction branch
-/*==================================================================*/
 
 	// 6XNN - set VX = NN
 	void CHIP8_MODERN::instruction_6xNN(const s32 X, const s32 NN) noexcept {
 		mRegisterV[X] = static_cast<u8>(NN);
 	}
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 /*==================================================================*/
 	#pragma region 7 instruction branch
-/*==================================================================*/
 
 	// 7XNN - set VX = VX + NN
 	void CHIP8_MODERN::instruction_7xNN(const s32 X, const s32 NN) noexcept {
 		mRegisterV[X] += static_cast<u8>(NN);
 	}
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 /*==================================================================*/
 	#pragma region 8 instruction branch
-/*==================================================================*/
 
 	// 8XY0 - set VX = VY
 	void CHIP8_MODERN::instruction_8xy0(const s32 X, const s32 Y) noexcept {
@@ -459,65 +441,55 @@ void CHIP8_MODERN::jumpProgramTo(const u32 next) noexcept {
 		mRegisterV[0xF] = msb;
 	}
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 /*==================================================================*/
 	#pragma region 9 instruction branch
-/*==================================================================*/
 
 	// 9XY0 - skip next instruction if VX != VY
 	void CHIP8_MODERN::instruction_9xy0(const s32 X, const s32 Y) noexcept {
 		if (mRegisterV[X] != mRegisterV[Y]) { nextInstruction(); }
 	}
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 /*==================================================================*/
 	#pragma region A instruction branch
-/*==================================================================*/
 
 	// ANNN - set I = NNN
 	void CHIP8_MODERN::instruction_ANNN(const s32 NNN) noexcept {
 		mRegisterI = NNN & 0xFFF;
 	}
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 /*==================================================================*/
 	#pragma region B instruction branch
-/*==================================================================*/
 
 	// BXNN - jump to NNN + V0
 	void CHIP8_MODERN::instruction_BNNN(const s32 NNN) noexcept {
 		jumpProgramTo(NNN + mRegisterV[0]);
 	}
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 /*==================================================================*/
 	#pragma region C instruction branch
-/*==================================================================*/
 
 	// CXNN - set VX = rnd(256) & NN
 	void CHIP8_MODERN::instruction_CxNN(const s32 X, const s32 NN) noexcept {
 		mRegisterV[X] = static_cast<u8>(Wrand->get() & NN);
 	}
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 /*==================================================================*/
 	#pragma region D instruction branch
-/*==================================================================*/
 
 	void CHIP8_MODERN::drawByte(s32 X, s32 Y, const u32 DATA) noexcept {
 		switch (DATA) {
@@ -588,13 +560,11 @@ void CHIP8_MODERN::jumpProgramTo(const u32 next) noexcept {
 		}
 	}
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 /*==================================================================*/
 	#pragma region E instruction branch
-/*==================================================================*/
 
 	// EX9E - skip next instruction if key VX down (p1)
 	void CHIP8_MODERN::instruction_Ex9E(const s32 X) noexcept {
@@ -605,13 +575,11 @@ void CHIP8_MODERN::jumpProgramTo(const u32 next) noexcept {
 		if (!keyHeld_P1(mRegisterV[X])) { nextInstruction(); }
 	}
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 /*==================================================================*/
 	#pragma region F instruction branch
-/*==================================================================*/
 
 	// FX07 - set VX = delay timer
 	void CHIP8_MODERN::instruction_Fx07(const s32 X) noexcept {
@@ -620,7 +588,7 @@ void CHIP8_MODERN::jumpProgramTo(const u32 next) noexcept {
 	// FX0A - set VX = key, wait for keypress
 	void CHIP8_MODERN::instruction_Fx0A(const s32 X) noexcept {
 		triggerInterrupt(Interrupt::INPUT);
-		mInputReg = static_cast<u8>(X);
+		mInputReg = &mRegisterV[X];
 	}
 	// FX15 - set delay timer = VX
 	void CHIP8_MODERN::instruction_Fx15(const s32 X) noexcept {
@@ -628,12 +596,12 @@ void CHIP8_MODERN::jumpProgramTo(const u32 next) noexcept {
 	}
 	// FX18 - set sound timer = VX
 	void CHIP8_MODERN::instruction_Fx18(const s32 X) noexcept {
-		mAudioTone  = calcAudioTone();
+		mBuzzerTone = calcAudioTone();
 		mSoundTimer = mRegisterV[X] + (mRegisterV[X] == 1);
 	}
 	// FX1E - set I = I + VX
 	void CHIP8_MODERN::instruction_Fx1E(const s32 X) noexcept {
-		(mRegisterI += mRegisterV[X]) &= 0xFFF;
+		mRegisterI = mRegisterI + mRegisterV[X] & 0xFFF;
 	}
 	// FX29 - point I to 5 byte hex sprite from value in VX
 	void CHIP8_MODERN::instruction_Fx29(const s32 X) noexcept {
@@ -645,22 +613,20 @@ void CHIP8_MODERN::jumpProgramTo(const u32 next) noexcept {
 		writeMemoryI(mRegisterV[X] / 10 % 10, 1);
 		writeMemoryI(mRegisterV[X]      % 10, 2);
 	}
-	// FX55 - store V0..VX to RAM at I..I+X
-	void CHIP8_MODERN::instruction_Fx55(const s32 X) noexcept {
+	// FN55 - store V0..VX to RAM at I..I+N
+	void CHIP8_MODERN::instruction_FN55(const s32 X) noexcept {
 		for (auto idx{ 0 }; idx <= X; ++idx)
 			{ writeMemoryI(mRegisterV[idx], idx); }
 		if (!Quirk.idxRegNoInc) [[likely]]
 			{ mRegisterI = mRegisterI + X + 1 & 0xFFF; }
 	}
-	// FX65 - load V0..VX from RAM at I..I+X
-	void CHIP8_MODERN::instruction_Fx65(const s32 X) noexcept {
+	// FN65 - load V0..VX from RAM at I..I+N
+	void CHIP8_MODERN::instruction_FN65(const s32 X) noexcept {
 		for (auto idx{ 0 }; idx <= X; ++idx)
 			{ mRegisterV[idx] = readMemoryI(idx); }
 		if (!Quirk.idxRegNoInc) [[likely]]
 			{ mRegisterI = mRegisterI + X + 1 & 0xFFF; }
 	}
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
-

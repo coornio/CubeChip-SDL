@@ -8,6 +8,8 @@
 
 #include "../Chip8_CoreInterface.hpp"
 
+/*==================================================================*/
+
 class CHIP8_MODERN final : public Chip8_CoreInterface {
 	static constexpr u32 cTotalMemory{ 0x1000u };
 	static constexpr u32 cSafezoneOOB{ 0x0020u };
@@ -23,17 +25,16 @@ private:
 	u8  mRegisterV[16]{};
 	u16 mStackBank[16]{};
 
-	f32  mWavePhase{};
-	f32  mAudioTone{};
+	u16 mProgCounter{};
+	u16 mRegisterI{};
 
 	u8  mDelayTimer{};
 	u8  mSoundTimer{};
 
-	u16 mProgCounter{};
-
-	u8  mInputReg{};
+	//u8  mInputReg{};
 	u8  mStackTop{};
-	u16 mRegisterI{};
+
+	u8* mInputReg{};
 
 	std::array<u8, cScreenSizeX * cScreenSizeY>
 		mDisplayBuffer{};
@@ -52,7 +53,7 @@ private:
 	}
 
 public:
-	CHIP8_MODERN() noexcept;
+	CHIP8_MODERN();
 
 	static constexpr bool testGameSize(const usz size) noexcept {
 		return size + cGameLoadPos <= cTotalMemory;
@@ -74,97 +75,80 @@ private:
 
 /*==================================================================*/
 	#pragma region 0 instruction branch
-/*==================================================================*/
 
 	// 00E0 - erase whole display
 	void instruction_00E0() noexcept;
 	// 00EE - return from subroutine
 	void instruction_00EE() noexcept;
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 /*==================================================================*/
 	#pragma region 1 instruction branch
-/*==================================================================*/
 
 	// 1NNN - jump to NNN
 	void instruction_1NNN(const s32 NNN) noexcept;
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 /*==================================================================*/
 	#pragma region 2 instruction branch
-/*==================================================================*/
 
 	// 2NNN - call subroutine at NNN
 	void instruction_2NNN(const s32 NNN) noexcept;
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 /*==================================================================*/
 	#pragma region 3 instruction branch
-/*==================================================================*/
 
 	// 3XNN - skip next instruction if VX == NN
 	void instruction_3xNN(const s32 X, const s32 NN) noexcept;
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 /*==================================================================*/
 	#pragma region 4 instruction branch
-/*==================================================================*/
 
 	// 4XNN - skip next instruction if VX != NN
 	void instruction_4xNN(const s32 X, const s32 NN) noexcept;
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 /*==================================================================*/
 	#pragma region 5 instruction branch
-/*==================================================================*/
 
 	// 5XY0 - skip next instruction if VX == VY
 	void instruction_5xy0(const s32 X, const s32 Y) noexcept;
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 /*==================================================================*/
 	#pragma region 6 instruction branch
-/*==================================================================*/
 
 	// 6XNN - set VX = NN
 	void instruction_6xNN(const s32 X, const s32 NN) noexcept;
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 /*==================================================================*/
 	#pragma region 7 instruction branch
-/*==================================================================*/
 
 	// 7XNN - set VX = VX + NN
 	void instruction_7xNN(const s32 X, const s32 NN) noexcept;
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 /*==================================================================*/
 	#pragma region 8 instruction branch
-/*==================================================================*/
 
 	// 8XY0 - set VX = VY
 	void instruction_8xy0(const s32 X, const s32 Y) noexcept;
@@ -185,83 +169,69 @@ private:
 	// 8XYE - set VX = VY << 1, VF = carry
 	void instruction_8xyE(const s32 X, const s32 Y) noexcept;
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 /*==================================================================*/
 	#pragma region 9 instruction branch
-/*==================================================================*/
 
 	// 9XY0 - skip next instruction if VX != VY
 	void instruction_9xy0(const s32 X, const s32 Y) noexcept;
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 /*==================================================================*/
 	#pragma region A instruction branch
-/*==================================================================*/
 
 	// ANNN - set I = NNN
 	void instruction_ANNN(const s32 NNN) noexcept;
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 /*==================================================================*/
 	#pragma region B instruction branch
-/*==================================================================*/
 
 	// BXNN - jump to NNN + V0
 	void instruction_BNNN(const s32 NNN) noexcept;
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 /*==================================================================*/
 	#pragma region C instruction branch
-/*==================================================================*/
 
 	// CXNN - set VX = rnd(256) & NN
 	void instruction_CxNN(const s32 X, const s32 NN) noexcept;
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 /*==================================================================*/
 	#pragma region D instruction branch
-/*==================================================================*/
 
 	void drawByte(s32 X, s32 Y, const u32 DATA) noexcept;
 
 	// DXYN - draw N sprite rows at VX and VY
 	void instruction_DxyN(const s32 X, const s32 Y, const s32 N) noexcept;
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 /*==================================================================*/
 	#pragma region E instruction branch
-/*==================================================================*/
 
 	// EX9E - skip next instruction if key VX down (p1)
 	void instruction_Ex9E(const s32 X) noexcept;
 	// EXA1 - skip next instruction if key VX up (p1)
 	void instruction_ExA1(const s32 X) noexcept;
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 /*==================================================================*/
 	#pragma region F instruction branch
-/*==================================================================*/
 
 	// FX07 - set VX = delay timer
 	void instruction_Fx07(const s32 X) noexcept;
@@ -277,12 +247,11 @@ private:
 	void instruction_Fx29(const s32 X) noexcept;
 	// FX33 - store BCD of VX to RAM at I, I+1, I+2
 	void instruction_Fx33(const s32 X) noexcept;
-	// FX55 - store V0..VX to RAM at I..I+X
-	void instruction_Fx55(const s32 X) noexcept;
-	// FX65 - load V0..VX from RAM at I..I+X
-	void instruction_Fx65(const s32 X) noexcept;
+	// FN55 - store V0..VN to RAM at I..I+N
+	void instruction_FN55(const s32 X) noexcept;
+	// FN65 - load V0..VN from RAM at I..I+N
+	void instruction_FN65(const s32 X) noexcept;
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 };

@@ -17,7 +17,6 @@
 
 /*==================================================================*/
 	#pragma region BasicVideoSpec Singleton Class
-/*==================================================================*/
 
 class BasicVideoSpec final {
 	BasicVideoSpec() noexcept;
@@ -90,7 +89,7 @@ public:
 	void modifyTexture(const std::span<u32> colorData);
 
 	template <typename T, typename Lambda>
-	void modifyTexture(const std::span<T> pixelData, Lambda&& function) {
+	void modifyTexture(const std::span<const T> pixelData, Lambda&& function) {
 		std::transform(
 			std::execution::unseq,
 			pixelData.begin(),
@@ -116,6 +115,5 @@ private:
 	void quitTexture() noexcept;
 };
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/

@@ -13,7 +13,6 @@
 
 /*==================================================================*/
 	#pragma region HomeDirManager Singleton Class
-/*==================================================================*/
 
 class HomeDirManager final {
 	HomeDirManager(const char* const org, const char* const app) noexcept;
@@ -70,6 +69,5 @@ public:
 	bool validateGameFile(const fsPath) noexcept;
 };
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/

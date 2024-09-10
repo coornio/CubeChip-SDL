@@ -14,6 +14,8 @@
 #include <optional>
 #include <algorithm>
 
+/*==================================================================*/
+
 class FrameLimiter final {
 	using chrono = std::chrono::steady_clock::time_point;
 	using millis = std::chrono::milliseconds;
@@ -34,6 +36,8 @@ class FrameLimiter final {
 	auto getElapsedTime() const noexcept {
 		return std::chrono::steady_clock::now() - timePastFrame;
 	}
+
+/*==================================================================*/
 
 public:
 	FrameLimiter(
@@ -56,6 +60,8 @@ public:
 		std::optional<bool> lostframe = std::nullopt
 	) noexcept;
 
+/*==================================================================*/
+
 	enum : bool { SPINLOCK, SLEEP };
 	bool checkTime(bool mode = SLEEP);
 
@@ -68,6 +74,8 @@ public:
 		using tmicros = std::chrono::microseconds;
 		return duration_cast<tmicros>(getElapsedTime()).count();
 	}
+
+/*==================================================================*/
 
 	auto getValidFrameCounter() const noexcept { return validFrameCnt; }
 	auto getElapsedMillisLast() const noexcept { return timeVariation; }

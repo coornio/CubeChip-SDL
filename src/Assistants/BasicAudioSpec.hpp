@@ -10,6 +10,7 @@
 #include <vector>
 #include <utility>
 #include <algorithm>
+#include <execution>
 
 #include <SDL3/SDL.h>
 
@@ -17,11 +18,10 @@
 
 /*==================================================================*/
 	#pragma region BasicAudioSpec Singleton Class
-/*==================================================================*/
 
 class BasicAudioSpec final {
-	BasicAudioSpec();
-	~BasicAudioSpec();
+	BasicAudioSpec() = default;
+	~BasicAudioSpec() = default;
 	BasicAudioSpec(const BasicAudioSpec&) = delete;
 	BasicAudioSpec& operator=(const BasicAudioSpec&) = delete;
 
@@ -30,17 +30,33 @@ class BasicAudioSpec final {
 		return errorEncountered;
 	}
 
+	static s32& globalVolume() noexcept {
+		static s32 globalVolume{ 15 * 11 };
+		return globalVolume;
+	}
+
 public:
 	static auto* create() noexcept {
 		static BasicAudioSpec self;
 		return errorState() ? nullptr : &self;
 	}
 
-	static void setErrorState(const bool state) noexcept { errorState() = state; }
 	static bool getErrorState()                 noexcept { return errorState();  }
+	static void setErrorState(const bool state) noexcept { errorState() = state; }
+
+	static auto getGlobalVolume()     noexcept { return globalVolume(); }
+	static auto getGlobalVolumeNorm() noexcept { return globalVolume() / 255.0f; }
+
+	static void setGlobalVolume(s32 value) noexcept {
+		auto& volume{ globalVolume() };
+		volume = std::clamp(value, 0, 255);
+	}
+	static void changeGlobalVolume(s32 delta) noexcept {
+		auto& volume{ globalVolume() };
+		volume = std::clamp(volume + delta, 0, 255);
+	}
 };
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
@@ -77,6 +93,10 @@ public:
 	auto getVolume()     const noexcept { return mVolume; }
 	auto getVolumeNorm() const noexcept { return mVolume / 255.0f; }
 
+	auto getSampleRate(f32 framerate) const noexcept {
+		return framerate ? mSpec.freq / framerate : 0.0f;
+	}
+
 	void setVolume(s32 value) noexcept {
 		mVolume = std::clamp(value, 0, 255);
 	}
@@ -89,9 +109,22 @@ public:
 	 * and implicitly converts type to appropriate byte count.
 	 * @param[in] samplesBuffer :: Span to array of audio samples.
 	 */
-	template <typename T, std::size_t N = std::dynamic_extent>
-	void pushAudioData(const std::span<T, N> samplesBuffer) const {
+	template <typename T>
+	void pushAudioData(const std::span<T> samplesBuffer) const {
 		if (!pStream || !mDevice) { return; }
+
+		const auto localVolume { getVolumeNorm() };
+		const auto globalVolume{ BasicAudioSpec::getGlobalVolumeNorm() };
+
+		std::transform(
+			std::execution::unseq,
+			samplesBuffer.begin(),
+			samplesBuffer.end(),
+			samplesBuffer.data(),
+			[localVolume, globalVolume](const T sample) noexcept {
+				return static_cast<T>(sample * localVolume * globalVolume);
+			}
+		);
 
 		SDL_PutAudioStreamData(pStream, samplesBuffer.data(),
 			static_cast<s32>(sizeof(T) * samplesBuffer.size())

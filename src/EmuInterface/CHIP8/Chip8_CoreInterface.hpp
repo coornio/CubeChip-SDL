@@ -11,6 +11,16 @@
 /*==================================================================*/
 
 class Chip8_CoreInterface : public EmuInterface {
+
+protected:
+	static fsPath* sPermaRegsPath;
+	static fsPath* sSavestatePath;
+
+	std::unique_ptr<AudioSpecBlock> ASB;
+
+	std::vector<SimpleKeyMapping> mCustomBinds;
+
+private:
 	u32  mTickLast{};
 	u32  mTickSpan{};
 
@@ -25,17 +35,11 @@ protected:
 
 	void updateKeyStates();
 
-	bool keyPressed(Uint8& returnKey, Uint32 tickCount) noexcept;
-	bool keyHeld_P1(Uint32 keyIndex) const noexcept;
-	bool keyHeld_P2(Uint32 keyIndex) const noexcept;
+	bool keyPressed(u8* returnKey, u32 tickCount) noexcept;
+	bool keyHeld_P1(u32 keyIndex) const noexcept;
+	bool keyHeld_P2(u32 keyIndex) const noexcept;
 
-protected:
-	static fsPath* sPermaRegsPath;
-	static fsPath* sSavestatePath;
-
-	std::unique_ptr<AudioSpecBlock> ASB;
-
-	std::vector<SimpleKeyMapping> mCustomBinds;
+/*==================================================================*/
 
 	struct PlatformQuirks final {
 		bool clearVF{};
@@ -48,6 +52,13 @@ protected:
 		bool wrapSprite{};
 	} Quirk;
 
+	struct PlatformTraits final {
+		u32  mCoreState{ EmuState::NORMAL };
+		bool mLoresExtended{};
+		bool mManualRefresh{};
+		bool mPixelTrailing{};
+	} Trait;
+
 	enum class Interrupt {
 		CLEAR, // no interrupt
 		FRAME, // single-frame
@@ -58,53 +69,52 @@ protected:
 		ERROR, // end state, error occured
 	};
 
-	Interrupt mInterruptType{};
+/*==================================================================*/
 
-	f32  mFramerate{};
+	void addCoreState(const EmuState state) noexcept { Trait.mCoreState |=  state; }
+	void subCoreState(const EmuState state) noexcept { Trait.mCoreState &= ~state; }
+	void xorCoreState(const EmuState state) noexcept { Trait.mCoreState ^=  state; }
 
-	u64  mTotalCycles{};
-	u32  mTotalFrames{};
-
-	s32  mCyclesPerFrame{};
-
-	s32 mDisplaySize{};
-	s32 mDisplayW{},  mDisplayH{};
-	s32 mDisplayWb{}, mDisplayHb{};
-
-	void setDisplayResolution(const s32 W, const s32 H) noexcept {
-		mDisplaySize = W * H;
-		mDisplayW = W; mDisplayWb = W - 1;
-		mDisplayH = H; mDisplayHb = H - 1;
-	}
-
-	u8 mCoreState{ EmuState::NORMAL };
-
-	void addCoreState(const EmuState state) noexcept { mCoreState |=  state; }
-	void subCoreState(const EmuState state) noexcept { mCoreState &= ~state; }
-	void xorCoreState(const EmuState state) noexcept { mCoreState ^=  state; }
-
-	void setCoreState(const EmuState state) noexcept { mCoreState = state; }
-	auto getCoreState()               const noexcept { return mCoreState;  }
+	void setCoreState(const EmuState state) noexcept { Trait.mCoreState = state; }
+	auto getCoreState()               const noexcept { return Trait.mCoreState;  }
 
 	bool isSystemStopped() const noexcept override { return getCoreState() || getSystemState(); }
 	bool isCoreStopped()   const noexcept override { return getCoreState(); }
 
-	bool mLoresExtended{};
-	bool mManualRefresh{};
-	bool mPixelTrailing{};
+	bool isLoresExtended() const noexcept { return Trait.mLoresExtended; }
+	bool isManualRefresh() const noexcept { return Trait.mManualRefresh; }
+	bool isPixelTrailing() const noexcept { return Trait.mPixelTrailing; }
+	void isLoresExtended(const bool state) noexcept { Trait.mLoresExtended = state; }
+	void isManualRefresh(const bool state) noexcept { Trait.mManualRefresh = state; }
+	void isPixelTrailing(const bool state) noexcept { Trait.mPixelTrailing = state; }
 
-	[[nodiscard]] bool isLoresExtended() const noexcept { return mLoresExtended; }
-	[[nodiscard]] bool isManualRefresh() const noexcept { return mManualRefresh; }
-	[[nodiscard]] bool isPixelTrailing() const noexcept { return mPixelTrailing; }
-	void isLoresExtended(const bool state) noexcept { mLoresExtended = state; }
-	void isManualRefresh(const bool state) noexcept { mManualRefresh = state; }
-	void isPixelTrailing(const bool state) noexcept { mPixelTrailing = state; }
+/*==================================================================*/
+
+	u64  mTotalCycles{};
+	u32  mTotalFrames{};
+
+	s32  mActiveCPF{};
+	f32  mFramerate{};
+
+	Interrupt mInterrupt{};
+
+	s32 mDisplayW{},  mDisplayH{};
+	s32 mDisplayWb{}, mDisplayHb{};
+
+	void setDisplayResolution(const s32 W, const s32 H) noexcept {
+		mDisplayW = W; mDisplayWb = W - 1;
+		mDisplayH = H; mDisplayHb = H - 1;
+	}
+
+	f32  mBuzzerTone{};
+
+/*==================================================================*/
 
 	std::string formatOpcode(const u32 OP) const;
+	void instructionError(const u32 HI, const u32 LO);
 
 	void triggerInterrupt(const Interrupt type) noexcept;
 	void triggerCritError(const std::string& msg) noexcept;
-	void instructionError(const u32 HI, const u32 LO);
 
 	void copyGameToMemory(u8* dest, const u32 offset) noexcept;
 	void copyFontToMemory(u8* dest, const u32 offset, const u32 size) noexcept;
@@ -127,32 +137,32 @@ public:
 	u32 getTotalFrames() const noexcept override { return mTotalFrames; }
 	u64 getTotalCycles() const noexcept override { return mTotalCycles; }
 
-	s32 getCPF()       const noexcept override { return mCyclesPerFrame; }
+	s32 getCPF()       const noexcept override { return mActiveCPF; }
 	f32 getFramerate() const noexcept override { return mFramerate; }
 
 	s32 changeCPF(const s32 delta) noexcept override {
 		if (stateRunning() && !stateWaiting()) {
-			mCyclesPerFrame += mCyclesPerFrame > 0
+			mActiveCPF += mActiveCPF > 0
 				? delta : -delta;
 		}
-		return mCyclesPerFrame;
+		return mActiveCPF;
 	}
 
 	bool stateRunning() const noexcept { return (
-		mInterruptType != Interrupt::FINAL &&
-		mInterruptType != Interrupt::ERROR
+		mInterrupt != Interrupt::FINAL &&
+		mInterrupt != Interrupt::ERROR
 	); }
 	bool stateStopped() const noexcept { return (
-		mInterruptType == Interrupt::FINAL ||
-		mInterruptType == Interrupt::ERROR
+		mInterrupt == Interrupt::FINAL ||
+		mInterrupt == Interrupt::ERROR
 	); }
 	bool stateWaitKey() const noexcept { return (
-		mInterruptType == Interrupt::INPUT
+		mInterrupt == Interrupt::INPUT
 	); }
 	bool stateWaiting() const noexcept { return (
-		mInterruptType == Interrupt::SOUND ||
-		mInterruptType == Interrupt::DELAY ||
-		mInterruptType == Interrupt::INPUT
+		mInterrupt == Interrupt::SOUND ||
+		mInterrupt == Interrupt::DELAY ||
+		mInterrupt == Interrupt::INPUT
 	); }
 
 protected:

@@ -11,7 +11,6 @@
 
 /*==================================================================*/
 	#pragma region BasicKeyboard Singleton Class
-/*==================================================================*/
 
 void BasicKeyboard::updateCopy() {
 	std::copy_n(
@@ -22,13 +21,11 @@ void BasicKeyboard::updateCopy() {
 	);
 }
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 /*==================================================================*/
 	#pragma region BasicMouse Singleton Class
-/*==================================================================*/
 
 void BasicMouse::updateCopy() {
 	const auto oldX{ posX };
@@ -38,6 +35,5 @@ void BasicMouse::updateCopy() {
 	relY = posY - oldY;
 }
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/

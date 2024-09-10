@@ -19,7 +19,7 @@ fsPath*   Chip8_CoreInterface::sPermaRegsPath{};
 fsPath*   Chip8_CoreInterface::sSavestatePath{};
 
 Chip8_CoreInterface::Chip8_CoreInterface() noexcept
-	: ASB{ std::make_unique<AudioSpecBlock>(SDL_AUDIO_S16, 1, 48'000) }
+	: ASB{ std::make_unique<AudioSpecBlock>(SDL_AUDIO_S8, 1, 48'000) }
 {
 	sSavestatePath = HDM->addSystemDir("savestate", "CHIP8");
 	if (!sSavestatePath) { setCoreState(EmuState::FAILED); }
@@ -65,7 +65,7 @@ void Chip8_CoreInterface::updateKeyStates() {
 	mKeysLoop &= mKeysLock &= ~(mKeysPrev ^ mKeysCurr);
 }
 
-bool Chip8_CoreInterface::keyPressed(Uint8& returnKey, const Uint32 tickCount) noexcept {
+bool Chip8_CoreInterface::keyPressed(u8* returnKey, const u32 tickCount) noexcept {
 	if (!mCustomBinds.size()) { return false; }
 
 	if (tickCount >= mTickLast + mTickSpan) {
@@ -81,16 +81,16 @@ bool Chip8_CoreInterface::keyPressed(Uint8& returnKey, const Uint32 tickCount) n
 		mTickLast  = tickCount;
 		mTickSpan  = validKeys != mKeysLoop ? 20 : 5;
 		mKeysLoop  = validKeys & ~(validKeys - 1);
-		returnKey  = std::countr_zero(mKeysLoop) & 0xFF;
+		*returnKey = std::countr_zero(mKeysLoop) & 0xFF;
 	}
 	return pressKeys;
 }
 
-bool Chip8_CoreInterface::keyHeld_P1(const Uint32 keyIndex) const noexcept {
+bool Chip8_CoreInterface::keyHeld_P1(const u32 keyIndex) const noexcept {
 	return mKeysCurr & ~mKeysLock & 0x01 << (keyIndex & 0xF);
 }
 
-bool Chip8_CoreInterface::keyHeld_P2(const Uint32 keyIndex) const noexcept {
+bool Chip8_CoreInterface::keyHeld_P2(const u32 keyIndex) const noexcept {
 	return mKeysCurr & ~mKeysLock & 0x10 << (keyIndex & 0xF);
 }
 
@@ -112,8 +112,8 @@ void Chip8_CoreInterface::processFrame() {
 }
 
 void Chip8_CoreInterface::triggerInterrupt(const Interrupt type) noexcept {
-	mInterruptType  = type;
-	mCyclesPerFrame = -std::abs(mCyclesPerFrame);
+	mInterrupt = type;
+	mActiveCPF = -std::abs(mActiveCPF);
 }
 
 void Chip8_CoreInterface::triggerCritError(const std::string& msg) noexcept {

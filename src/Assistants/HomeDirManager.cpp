@@ -15,6 +15,8 @@
 
 #include <SDL3/SDL_messagebox.h>
 
+/*==================================================================*/
+
 static auto getFileModTime(const fsPath& filePath) noexcept {
 	std::error_code error;
 	return std::filesystem::last_write_time(filePath, error);
@@ -22,7 +24,6 @@ static auto getFileModTime(const fsPath& filePath) noexcept {
 
 /*==================================================================*/
 	#pragma region HomeDirManager Class
-/*==================================================================*/
 
 HomeDirManager::HomeDirManager(const char* const org, const char* const app) noexcept {
 	if (!getHomePath(org, app)) {
@@ -122,6 +123,5 @@ bool HomeDirManager::validateGameFile(const fsPath gamePath) noexcept {
 	return gameApproved;
 }
 
-/*ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ*/
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
