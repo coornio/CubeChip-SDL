@@ -16,8 +16,8 @@
 #include "Assistants/BasicAudioSpec.hpp"
 
 #include "EmuHost.hpp"
-#include "EmuInterface/EmuInterface.hpp"
-#include "EmuInterface/GameFileChecker.hpp"
+#include "Systems/EmuInterface.hpp"
+#include "Systems/GameFileChecker.hpp"
 
 /*==================================================================*/
 	#pragma region VM_Host Singleton Class

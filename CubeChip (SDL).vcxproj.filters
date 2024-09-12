@@ -44,24 +44,6 @@
     <ClCompile Include="src\EmuHost.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\EmuInterface\BYTEPUSHER\Cores\BYTEPUSHER_STANDARD.cpp">
-      <Filter>Source Files\Systems\BYTEPUSHER\Cores</Filter>
-    </ClCompile>
-    <ClCompile Include="src\EmuInterface\CHIP8\Cores\CHIP8_MODERN.cpp">
-      <Filter>Source Files\Systems\CHIP8\Cores</Filter>
-    </ClCompile>
-    <ClCompile Include="src\EmuInterface\BYTEPUSHER\BytePusher_CoreInterface.cpp">
-      <Filter>Source Files\Systems\BYTEPUSHER</Filter>
-    </ClCompile>
-    <ClCompile Include="src\EmuInterface\CHIP8\Chip8_CoreInterface.cpp">
-      <Filter>Source Files\Systems\CHIP8</Filter>
-    </ClCompile>
-    <ClCompile Include="src\EmuInterface\GameFileChecker.cpp">
-      <Filter>Source Files\Systems</Filter>
-    </ClCompile>
-    <ClCompile Include="src\EmuInterface\EmuInterface.cpp">
-      <Filter>Source Files\Systems</Filter>
-    </ClCompile>
     <ClCompile Include="src\Assistants\BasicAudioSpec.cpp">
       <Filter>Source Files\Assistants</Filter>
     </ClCompile>
@@ -83,6 +65,24 @@
     <ClCompile Include="src\Assistants\SHA1.cpp">
       <Filter>Source Files\Assistants</Filter>
     </ClCompile>
+    <ClCompile Include="src\Systems\EmuInterface.cpp">
+      <Filter>Source Files\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Systems\GameFileChecker.cpp">
+      <Filter>Source Files\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Systems\CHIP8\Chip8_CoreInterface.cpp">
+      <Filter>Source Files\Systems\CHIP8</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Systems\CHIP8\Cores\CHIP8_MODERN.cpp">
+      <Filter>Source Files\Systems\CHIP8\Cores</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Systems\BYTEPUSHER\BytePusher_CoreInterface.cpp">
+      <Filter>Source Files\Systems\BYTEPUSHER</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Systems\BYTEPUSHER\Cores\BYTEPUSHER_STANDARD.cpp">
+      <Filter>Source Files\Systems\BYTEPUSHER\Cores</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\_nlohmann\json_fwd.hpp">
@@ -90,24 +90,6 @@
     </ClInclude>
     <ClInclude Include="src\_nlohmann\json.hpp">
       <Filter>Header Files\_nlohmann</Filter>
-    </ClInclude>
-    <ClInclude Include="src\EmuInterface\BYTEPUSHER\Cores\BYTEPUSHER_STANDARD.hpp">
-      <Filter>Source Files\Systems\BYTEPUSHER\Cores</Filter>
-    </ClInclude>
-    <ClInclude Include="src\EmuInterface\CHIP8\Cores\CHIP8_MODERN.hpp">
-      <Filter>Source Files\Systems\CHIP8\Cores</Filter>
-    </ClInclude>
-    <ClInclude Include="src\EmuInterface\BYTEPUSHER\BytePusher_CoreInterface.hpp">
-      <Filter>Source Files\Systems\BYTEPUSHER</Filter>
-    </ClInclude>
-    <ClInclude Include="src\EmuInterface\CHIP8\Chip8_CoreInterface.hpp">
-      <Filter>Source Files\Systems\CHIP8</Filter>
-    </ClInclude>
-    <ClInclude Include="src\EmuInterface\GameFileChecker.hpp">
-      <Filter>Source Files\Systems</Filter>
-    </ClInclude>
-    <ClInclude Include="src\EmuInterface\EmuInterface.hpp">
-      <Filter>Source Files\Systems</Filter>
     </ClInclude>
     <ClInclude Include="src\Assistants\BasicAudioSpec.hpp">
       <Filter>Source Files\Assistants</Filter>
@@ -150,6 +132,24 @@
     </ClInclude>
     <ClInclude Include="src\EmuHost.hpp">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\EmuInterface.hpp">
+      <Filter>Source Files\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\GameFileChecker.hpp">
+      <Filter>Source Files\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\CHIP8\Chip8_CoreInterface.hpp">
+      <Filter>Source Files\Systems\CHIP8</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\CHIP8\Cores\CHIP8_MODERN.hpp">
+      <Filter>Source Files\Systems\CHIP8\Cores</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\BYTEPUSHER\BytePusher_CoreInterface.hpp">
+      <Filter>Source Files\Systems\BYTEPUSHER</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\BYTEPUSHER\Cores\BYTEPUSHER_STANDARD.hpp">
+      <Filter>Source Files\Systems\BYTEPUSHER\Cores</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

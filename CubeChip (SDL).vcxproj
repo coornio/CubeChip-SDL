@@ -28,12 +28,12 @@
     <ClCompile Include="src\Assistants\SHA1.cpp" />
     <ClCompile Include="src\CubeChip.cpp" />
     <ClCompile Include="src\EmuHost.cpp" />
-    <ClCompile Include="src\EmuInterface\BYTEPUSHER\BytePusher_CoreInterface.cpp" />
-    <ClCompile Include="src\EmuInterface\BYTEPUSHER\Cores\BYTEPUSHER_STANDARD.cpp" />
-    <ClCompile Include="src\EmuInterface\CHIP8\Chip8_CoreInterface.cpp" />
-    <ClCompile Include="src\EmuInterface\CHIP8\Cores\CHIP8_MODERN.cpp" />
-    <ClCompile Include="src\EmuInterface\EmuInterface.cpp" />
-    <ClCompile Include="src\EmuInterface\GameFileChecker.cpp" />
+    <ClCompile Include="src\Systems\BYTEPUSHER\BytePusher_CoreInterface.cpp" />
+    <ClCompile Include="src\Systems\BYTEPUSHER\Cores\BYTEPUSHER_STANDARD.cpp" />
+    <ClCompile Include="src\Systems\CHIP8\Chip8_CoreInterface.cpp" />
+    <ClCompile Include="src\Systems\CHIP8\Cores\CHIP8_MODERN.cpp" />
+    <ClCompile Include="src\Systems\EmuInterface.cpp" />
+    <ClCompile Include="src\Systems\GameFileChecker.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Assistants\BasicAudioSpec.hpp" />
@@ -50,12 +50,12 @@
     <ClInclude Include="src\Assistants\Typedefs.hpp" />
     <ClInclude Include="src\Assistants\Well512.hpp" />
     <ClInclude Include="src\EmuHost.hpp" />
-    <ClInclude Include="src\EmuInterface\BYTEPUSHER\BytePusher_CoreInterface.hpp" />
-    <ClInclude Include="src\EmuInterface\BYTEPUSHER\Cores\BYTEPUSHER_STANDARD.hpp" />
-    <ClInclude Include="src\EmuInterface\CHIP8\Chip8_CoreInterface.hpp" />
-    <ClInclude Include="src\EmuInterface\CHIP8\Cores\CHIP8_MODERN.hpp" />
-    <ClInclude Include="src\EmuInterface\EmuInterface.hpp" />
-    <ClInclude Include="src\EmuInterface\GameFileChecker.hpp" />
+    <ClInclude Include="src\Systems\BYTEPUSHER\BytePusher_CoreInterface.hpp" />
+    <ClInclude Include="src\Systems\BYTEPUSHER\Cores\BYTEPUSHER_STANDARD.hpp" />
+    <ClInclude Include="src\Systems\CHIP8\Chip8_CoreInterface.hpp" />
+    <ClInclude Include="src\Systems\CHIP8\Cores\CHIP8_MODERN.hpp" />
+    <ClInclude Include="src\Systems\EmuInterface.hpp" />
+    <ClInclude Include="src\Systems\GameFileChecker.hpp" />
     <ClInclude Include="src\_nlohmann\json.hpp" />
     <ClInclude Include="src\_nlohmann\json_fwd.hpp" />
   </ItemGroup>
