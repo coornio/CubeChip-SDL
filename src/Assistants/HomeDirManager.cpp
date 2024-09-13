@@ -22,6 +22,11 @@ static auto getFileModTime(const fsPath& filePath) noexcept {
 	return std::filesystem::last_write_time(filePath, error);
 }
 
+static auto getFileSize(const fsPath& filePath) noexcept {
+	std::error_code error;
+	return std::filesystem::file_size(filePath, error);
+}
+
 /*==================================================================*/
 	#pragma region HomeDirManager Class
 

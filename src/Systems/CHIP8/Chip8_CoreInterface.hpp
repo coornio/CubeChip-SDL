@@ -57,6 +57,7 @@ protected:
 		bool mLoresExtended{};
 		bool mManualRefresh{};
 		bool mPixelTrailing{};
+		bool mBuzzerEnabled{};
 	} Trait;
 
 	enum class Interrupt {
@@ -67,6 +68,15 @@ protected:
 		INPUT, // wait for input and proceed
 		FINAL, // end state, all is well
 		ERROR, // end state, error occured
+	};
+
+	enum class Resolution {
+		ERROR,
+		HI, // 128 x  64 - 2:1
+		LO, //  64 x  32 - 2:1
+		TP, //  64 x  64 - 2:1
+		FP, //  64 x 128 - 2:1
+		MC, // 256 x 192 - 4:3
 	};
 
 /*==================================================================*/
@@ -84,9 +94,11 @@ protected:
 	bool isLoresExtended() const noexcept { return Trait.mLoresExtended; }
 	bool isManualRefresh() const noexcept { return Trait.mManualRefresh; }
 	bool isPixelTrailing() const noexcept { return Trait.mPixelTrailing; }
+	bool isBuzzerEnabled() const noexcept { return Trait.mBuzzerEnabled; }
 	void isLoresExtended(const bool state) noexcept { Trait.mLoresExtended = state; }
 	void isManualRefresh(const bool state) noexcept { Trait.mManualRefresh = state; }
 	void isPixelTrailing(const bool state) noexcept { Trait.mPixelTrailing = state; }
+	void isBuzzerEnabled(const bool state) noexcept { Trait.mBuzzerEnabled = state; }
 
 /*==================================================================*/
 
@@ -107,14 +119,15 @@ protected:
 	}
 
 	f32 mBuzzerTone{};
+	u32 mPlanarMask{ 0x1 };
 
 	u32 mCurrentPC{};
 	u32 mRegisterI{};
 
-	u8  mDelayTimer{};
-	u8  mSoundTimer{};
+	u32 mDelayTimer{};
+	u32 mSoundTimer{};
 
-	u8  mStackTop{};
+	u32 mStackTop{};
 	u8* mInputReg{};
 
 	u8  mRegisterV[16]{};
@@ -128,17 +141,24 @@ protected:
 	void triggerInterrupt(const Interrupt type) noexcept;
 	void triggerCritError(const std::string& msg) noexcept;
 
+	bool setPermaRegs(const s32 X) noexcept;
+	bool getPermaRegs(const s32 X) noexcept;
+
 	void copyGameToMemory(u8* dest, const u32 offset) noexcept;
 	void copyFontToMemory(u8* dest, const u32 offset, const u32 size) noexcept;
 
-	virtual void handlePreFrameInterrupt() noexcept = 0;
-	virtual void handleEndFrameInterrupt() noexcept = 0;
+	virtual void handlePreFrameInterrupt() noexcept;
+	virtual void handleEndFrameInterrupt() noexcept;
 
 	virtual void handleTimerTick() noexcept = 0;
 	virtual void instructionLoop() noexcept = 0;
 
 	virtual void renderAudioData() = 0;
 	virtual void renderVideoData() = 0;
+
+	virtual void prepDisplayArea(const Resolution mode) = 0;
+
+	f32  calcBuzzerTone() const noexcept;
 
 public:
 	Chip8_CoreInterface() noexcept;

@@ -16,6 +16,7 @@ using json = nlohmann::json;
 
 
 #include "CHIP8/Cores/CHIP8_MODERN.hpp"
+#include "CHIP8/Cores/XOCHIP.hpp"
 
 #include "BYTEPUSHER/Cores/BYTEPUSHER_STANDARD.hpp"
 
@@ -41,7 +42,7 @@ std::unique_ptr<EmuInterface> GameFileChecker::constructCore() {
 	try {
 		switch (sEmuCore) {
 			case GameCoreType::XOCHIP:
-				//return std::make_unique<XOCHIP>();
+				return std::make_unique<XOCHIP>();
 
 			case GameCoreType::CHIP8E:
 				//return std::make_unique<CHIP8E>();
@@ -202,8 +203,7 @@ bool GameFileChecker::validate(
 
 		case (GameFileType::xo8):
 			return testGame(
-				true,
-				//XOCHIP::testGameSize(size),
+				XOCHIP::testGameSize(size),
 				GameCoreType::XOCHIP
 			);
 

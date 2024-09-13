@@ -96,6 +96,53 @@ bool Chip8_CoreInterface::keyHeld_P2(const u32 keyIndex) const noexcept {
 
 /*==================================================================*/
 
+void Chip8_CoreInterface::handlePreFrameInterrupt() noexcept {
+	switch (mInterrupt)
+	{
+		case Interrupt::FRAME:
+			mInterrupt = Interrupt::CLEAR;
+			mActiveCPF = std::abs(mActiveCPF);
+			return;
+
+		case Interrupt::SOUND:
+			if (!mSoundTimer) {
+				mInterrupt = Interrupt::FINAL;
+				mActiveCPF = 0;
+			}
+			return;
+
+		case Interrupt::DELAY:
+			if (!mSoundTimer) {
+				mInterrupt = Interrupt::CLEAR;
+				mActiveCPF = std::abs(mActiveCPF);
+			}
+			return;
+	}
+}
+
+void Chip8_CoreInterface::handleEndFrameInterrupt() noexcept {
+	switch (mInterrupt)
+	{
+		case Interrupt::INPUT:
+			if (keyPressed(mInputReg, mTotalFrames)) {
+				mInterrupt  = Interrupt::CLEAR;
+				mActiveCPF  = std::abs(mActiveCPF);
+				mBuzzerTone = calcBuzzerTone();
+				mSoundTimer = 2;
+				isBuzzerEnabled(true);
+			}
+			return;
+
+		case Interrupt::ERROR:
+		case Interrupt::FINAL:
+			setCoreState(EmuState::HALTED);
+			mActiveCPF = 0;
+			return;
+	}
+}
+
+/*==================================================================*/
+
 void Chip8_CoreInterface::processFrame() {
 	if (isSystemStopped()) { return; }
 	else [[likely]] { ++mTotalFrames; }
@@ -111,15 +158,7 @@ void Chip8_CoreInterface::processFrame() {
 	renderVideoData();
 }
 
-void Chip8_CoreInterface::triggerInterrupt(const Interrupt type) noexcept {
-	mInterrupt = type;
-	mActiveCPF = -std::abs(mActiveCPF);
-}
-
-void Chip8_CoreInterface::triggerCritError(const std::string& msg) noexcept {
-	blog.newEntry(BLOG::INFO, msg);
-	triggerInterrupt(Interrupt::ERROR);
-}
+/*==================================================================*/
 
 std::string Chip8_CoreInterface::formatOpcode(const u32 OP) const {
 	char buffer[5];
@@ -131,6 +170,105 @@ void Chip8_CoreInterface::instructionError(const u32 HI, const u32 LO) {
 	blog.newEntry(BLOG::INFO, "Unknown instruction: " + formatOpcode(HI << 8 | LO));
 	triggerInterrupt(Interrupt::ERROR);
 }
+
+void Chip8_CoreInterface::triggerInterrupt(const Interrupt type) noexcept {
+	mInterrupt = type;
+	mActiveCPF = -std::abs(mActiveCPF);
+}
+
+void Chip8_CoreInterface::triggerCritError(const std::string& msg) noexcept {
+	blog.newEntry(BLOG::INFO, msg);
+	triggerInterrupt(Interrupt::ERROR);
+}
+
+/*==================================================================*/
+
+bool Chip8_CoreInterface::setPermaRegs(const s32 X) noexcept {
+	const auto path{ *sPermaRegsPath / HDM->getFileSHA1() };
+
+	if (std::filesystem::exists(path)) {
+		if (!std::filesystem::is_regular_file(path)) {
+			blog.newEntry(BLOG::ERROR, "SHA1 file is malformed: " + path.string());
+			return true;
+		}
+
+		char tempV[16]{};
+		std::ifstream in(path, std::ios::binary);
+
+		if (in.is_open()) {
+			in.seekg(0, std::ios::end);
+			const auto totalBytes{ in.tellg() };
+			in.seekg(0, std::ios::beg);
+
+			in.read(tempV, std::min<std::streamsize>(totalBytes, X));
+			in.close();
+		} else {
+			blog.newEntry(BLOG::ERROR, "Could not open SHA1 file to read: " + path.string());
+			return true;
+		}
+
+		std::copy_n(mRegisterV, X, tempV);
+
+		std::ofstream out(path, std::ios::binary);
+		if (out.is_open()) {
+			out.write(tempV, 16);
+			out.close();
+		} else {
+			blog.newEntry(BLOG::ERROR, "Could not open SHA1 file to write: " + path.string());
+			return true;
+		}
+	} else {
+		std::ofstream out(path, std::ios::binary);
+		if (out.is_open()) {
+			out.write(reinterpret_cast<const char*>(mRegisterV), X);
+			if (X < 16) {
+				const char padding[16]{};
+				out.write(padding, 16 - X);
+			}
+			out.close();
+		} else {
+			blog.newEntry(BLOG::ERROR, "Could not open SHA1 file to write: " + path.string());
+			return true;
+		}
+	}
+	return false;
+}
+
+bool Chip8_CoreInterface::getPermaRegs(const s32 X) noexcept {
+	const auto path{ *sPermaRegsPath / HDM->getFileSHA1() };
+
+	if (std::filesystem::exists(path)) {
+		if (!std::filesystem::is_regular_file(path)) {
+			blog.newEntry(BLOG::ERROR, "SHA1 file is malformed: " + path.string());
+			return true;
+		}
+
+		std::ifstream in(path, std::ios::binary);
+		if (in.is_open()) {
+			in.seekg(0, std::ios::end);
+			const auto totalBytes{ static_cast<s32>(in.tellg()) };
+			in.seekg(0, std::ios::beg);
+
+			in.read(reinterpret_cast<char*>(mRegisterV), std::min(totalBytes, X));
+			in.close();
+
+			if (totalBytes < X) {
+				std::fill_n(mRegisterV + totalBytes, X - totalBytes, u8());
+			}
+		} else {
+			blog.newEntry(BLOG::ERROR, "Could not open SHA1 file to read: " + path.string());
+			return true;
+		}
+	} else {
+		std::fill_n(
+			std::execution::unseq,
+			mRegisterV, X, u8{}
+		);
+	}
+	return false;
+}
+
+/*==================================================================*/
 
 void Chip8_CoreInterface::copyGameToMemory(
 	u8* dest, const u32 offset
@@ -150,4 +288,12 @@ void Chip8_CoreInterface::copyFontToMemory(
 		std::execution::unseq,
 		cFontData, size, dest + offset
 	);
+}
+
+/*==================================================================*/
+
+f32  Chip8_CoreInterface::calcBuzzerTone() const noexcept {
+	return (160.0f + 8.0f * (
+		(mCurrentPC >> 1) + mStackTop + 1 & 0x3E
+	)) / ASB->getFrequency();
 }

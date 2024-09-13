@@ -83,6 +83,9 @@
     <ClCompile Include="src\Systems\BYTEPUSHER\Cores\BYTEPUSHER_STANDARD.cpp">
       <Filter>Source Files\Systems\BYTEPUSHER\Cores</Filter>
     </ClCompile>
+    <ClCompile Include="src\Systems\CHIP8\Cores\XOCHIP.cpp">
+      <Filter>Source Files\Systems\CHIP8\Cores</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\_nlohmann\json_fwd.hpp">
@@ -150,6 +153,9 @@
     </ClInclude>
     <ClInclude Include="src\Systems\BYTEPUSHER\Cores\BYTEPUSHER_STANDARD.hpp">
       <Filter>Source Files\Systems\BYTEPUSHER\Cores</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\CHIP8\Cores\XOCHIP.hpp">
+      <Filter>Source Files\Systems\CHIP8\Cores</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

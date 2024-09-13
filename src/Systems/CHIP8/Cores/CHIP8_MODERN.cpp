@@ -32,43 +32,6 @@ CHIP8_MODERN::CHIP8_MODERN() {
 
 /*==================================================================*/
 
-void CHIP8_MODERN::handlePreFrameInterrupt() noexcept {
-	switch (mInterrupt)
-	{
-		case Interrupt::FRAME:
-			mInterrupt = Interrupt::CLEAR;
-			mActiveCPF = std::abs(mActiveCPF);
-			return;
-
-		case Interrupt::SOUND:
-			if (!mSoundTimer) {
-				mInterrupt = Interrupt::FINAL;
-				mActiveCPF = 0;
-			}
-			return;
-	}
-}
-
-void CHIP8_MODERN::handleEndFrameInterrupt() noexcept {
-	switch (mInterrupt)
-	{
-		case Interrupt::INPUT:
-			if (keyPressed(mInputReg, mTotalFrames)) {
-				mInterrupt  = Interrupt::CLEAR;
-				mActiveCPF  = std::abs(mActiveCPF);
-				mBuzzerTone = calcAudioTone();
-				mSoundTimer = 2;
-			}
-			return;
-
-		case Interrupt::ERROR:
-		case Interrupt::FINAL:
-			setCoreState(EmuState::HALTED);
-			mActiveCPF = 0;
-			return;
-	}
-}
-
 void CHIP8_MODERN::handleTimerTick() noexcept {
 	if (mDelayTimer) { --mDelayTimer; }
 	if (mSoundTimer) { --mSoundTimer; }
@@ -231,7 +194,7 @@ void CHIP8_MODERN::renderAudioData() {
 
 	if (mSoundTimer) {
 		for (auto& sample : samplesBuffer) {
-			sample    = static_cast<s8>(wavePhase > 0.5f ? 64 : -64);
+			sample    = static_cast<s8>(wavePhase > 0.5f ? 16 : -16);
 			wavePhase = std::fmod(wavePhase + mBuzzerTone, 1.0f);
 		}
 		BVS->setFrameColor(cBitsColor[0], cBitsColor[1]);
@@ -269,12 +232,6 @@ void CHIP8_MODERN::renderVideoData() {
 }
 
 /*==================================================================*/
-
-f32  CHIP8_MODERN::calcAudioTone() const noexcept {
-	return (160.0f + 8.0f * (
-		(mCurrentPC >> 1) + mStackTop + 1 & 0x3E
-	)) / ASB->getFrequency();
-}
 
 void CHIP8_MODERN::nextInstruction() noexcept {
 	mCurrentPC += 2;
@@ -583,7 +540,7 @@ void CHIP8_MODERN::jumpProgramTo(const u32 next) noexcept {
 
 	// FX07 - set VX = delay timer
 	void CHIP8_MODERN::instruction_Fx07(const s32 X) noexcept {
-		mRegisterV[X] = mDelayTimer;
+		mRegisterV[X] = static_cast<u8>(mDelayTimer);
 	}
 	// FX0A - set VX = key, wait for keypress
 	void CHIP8_MODERN::instruction_Fx0A(const s32 X) noexcept {
@@ -592,11 +549,11 @@ void CHIP8_MODERN::jumpProgramTo(const u32 next) noexcept {
 	}
 	// FX15 - set delay timer = VX
 	void CHIP8_MODERN::instruction_Fx15(const s32 X) noexcept {
-		mDelayTimer = mRegisterV[X];
+		mDelayTimer = static_cast<u8>(mRegisterV[X]);
 	}
 	// FX18 - set sound timer = VX
 	void CHIP8_MODERN::instruction_Fx18(const s32 X) noexcept {
-		mBuzzerTone = calcAudioTone();
+		mBuzzerTone = calcBuzzerTone();
 		mSoundTimer = mRegisterV[X] + (mRegisterV[X] == 1);
 	}
 	// FX1E - set I = I + VX
@@ -614,18 +571,18 @@ void CHIP8_MODERN::jumpProgramTo(const u32 next) noexcept {
 		writeMemoryI(mRegisterV[X]      % 10, 2);
 	}
 	// FN55 - store V0..VX to RAM at I..I+N
-	void CHIP8_MODERN::instruction_FN55(const s32 X) noexcept {
-		for (auto idx{ 0 }; idx <= X; ++idx)
+	void CHIP8_MODERN::instruction_FN55(const s32 N) noexcept {
+		for (auto idx{ 0 }; idx <= N; ++idx)
 			{ writeMemoryI(mRegisterV[idx], idx); }
 		if (!Quirk.idxRegNoInc) [[likely]]
-			{ mRegisterI = mRegisterI + X + 1 & 0xFFF; }
+			{ mRegisterI = mRegisterI + N + 1 & 0xFFF; }
 	}
 	// FN65 - load V0..VX from RAM at I..I+N
-	void CHIP8_MODERN::instruction_FN65(const s32 X) noexcept {
-		for (auto idx{ 0 }; idx <= X; ++idx)
+	void CHIP8_MODERN::instruction_FN65(const s32 N) noexcept {
+		for (auto idx{ 0 }; idx <= N; ++idx)
 			{ mRegisterV[idx] = readMemoryI(idx); }
 		if (!Quirk.idxRegNoInc) [[likely]]
-			{ mRegisterI = mRegisterI + X + 1 & 0xFFF; }
+			{ mRegisterI = mRegisterI + N + 1 & 0xFFF; }
 	}
 
 	#pragma endregion

@@ -1149,24 +1149,19 @@ private:
 	};
 	#pragma endregion
 
-private:
-	#pragma region Main Ctor
-	explicit Map2D(const paramS rows, const paramS cols)
-		: mRows{ rows }
-		, mCols{ cols }
-		, pData{ std::make_unique<T[]>(rows * cols) }
-	{}
-	#pragma endregion
-
 public:
 	#pragma region Trivial Ctor
 	Map2D() : Map2D{ 1, 1 } {}
 
-	Map2D(const integral auto rows, const integral auto cols)
-		: Map2D{
-			std::max<paramS>(1, std::abs(rows)),
-			std::max<paramS>(1, std::abs(cols))
-		}
+	Map2D(const paramS rows, const paramS cols)
+		: mRows{ std::max(1, std::abs(rows)) }
+		, mCols{ std::max(1, std::abs(cols)) }
+		, pData{ std::make_unique<T[]>(mRows * mCols) }
+	{}
+	Map2D(const paramU rows, const paramU cols)
+		: mRows{ rows }
+		, mCols{ cols }
+		, pData{ std::make_unique<T[]>(mRows * mCols) }
 	{}
 	#pragma endregion
 	

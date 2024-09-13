@@ -6,24 +6,38 @@
 
 #pragma once
 
+#include "../../../Assistants/Map2D.hpp"
+
 #include "../Chip8_CoreInterface.hpp"
 
 /*==================================================================*/
 
-class CHIP8_MODERN final : public Chip8_CoreInterface {
-	static constexpr u32 cTotalMemory{  4096 };
+class XOCHIP final : public Chip8_CoreInterface {
+	static constexpr u32 cTotalMemory{ 65536 };
 	static constexpr u32 cSafezoneOOB{    32 };
 	static constexpr u32 cGameLoadPos{   512 };
 	static constexpr u32 cStartOffset{   512 };
 	static constexpr f32 cRefreshRate{ 60.0f };
 	static constexpr s32 cScreenSizeX{    64 };
 	static constexpr s32 cScreenSizeY{    32 };
-	static constexpr s32 cInstSpeedHi{    30 };
-	static constexpr s32 cInstSpeedLo{    11 };
+	static constexpr s32 cInstSpeedHi{ 50000 };
+	static constexpr s32 cInstSpeedLo{  1000 };
 
 private:
-	std::array<u8, cScreenSizeX * cScreenSizeY>
-		mDisplayBuffer{};
+	std::array<u32, 16> mBitsColor{};
+
+	void setColorBit332(const s32 bit, const s32 color) noexcept;
+
+/*==================================================================*/
+
+	std::array<u8, 16> mSamplePattern{};
+
+	f32 mAudioStep{};
+	f32 mAudioTone{};
+
+/*==================================================================*/
+
+	Map2D<u8> mDisplayBuffer[4];
 
 	std::array<u8, cTotalMemory + cSafezoneOOB>
 		mMemoryBank{};
@@ -38,8 +52,12 @@ private:
 		return mMemoryBank[mRegisterI + pos];
 	}
 
+/*==================================================================*/
+
+	auto  NNNN() const noexcept { return mMemoryBank[mCurrentPC] << 8 | mMemoryBank[mCurrentPC + 1]; }
+
 public:
-	CHIP8_MODERN();
+	XOCHIP();
 
 	static constexpr bool testGameSize(const usz size) noexcept {
 		return size + cGameLoadPos <= cTotalMemory;
@@ -52,18 +70,38 @@ private:
 	void renderAudioData() override;
 	void renderVideoData() override;
 
-	void prepDisplayArea(const Resolution) override {}
+	void prepDisplayArea(const Resolution mode) override;
 
 	void nextInstruction() noexcept;
+	void skipInstruction() noexcept;
 	void jumpProgramTo(const u32 next) noexcept;
+
+	void scrollDisplayUP(const s32 N);
+	void scrollDisplayDN(const s32 N);
+	void scrollDisplayLT(const s32);
+	void scrollDisplayRT(const s32);
 
 /*==================================================================*/
 	#pragma region 0 instruction branch
 
+	// 00DN - scroll selected color plane N lines down
+	void instruction_00CN(const s32 N) noexcept;
+	// 00DN - scroll selected color plane N lines up
+	void instruction_00DN(const s32 N) noexcept;
 	// 00E0 - erase whole display
 	void instruction_00E0() noexcept;
 	// 00EE - return from subroutine
 	void instruction_00EE() noexcept;
+	// 00FB - scroll selected color plane 4 pixels right
+	void instruction_00FB() noexcept;
+	// 00FC - scroll selected color plane 4 pixels left
+	void instruction_00FC() noexcept;
+	// 00FD - stop signal
+	void instruction_00FD() noexcept;
+	// 00FE - display == 64*32, erase the screen
+	void instruction_00FE() noexcept;
+	// 00FF - display == 128*64, erase the screen
+	void instruction_00FF() noexcept;
 
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
@@ -109,6 +147,12 @@ private:
 
 	// 5XY0 - skip next instruction if VX == VY
 	void instruction_5xy0(const s32 X, const s32 Y) noexcept;
+	// 5XY2 - store range of registers to memory *XOCHIP*
+	void instruction_5xy2(const s32 X, const s32 Y) noexcept;
+	// 5XY3 - load range of registers from memory *XOCHIP*
+	void instruction_5xy3(const s32 X, const s32 Y) noexcept;
+	// 5XY4 - load range of colors from memory *EXPERIMENTAL*
+	void instruction_5xy4(const s32 X, const s32 Y) noexcept;
 
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
@@ -195,7 +239,7 @@ private:
 /*==================================================================*/
 	#pragma region D instruction branch
 
-	void drawByte(s32 X, s32 Y, const u32 DATA) noexcept;
+	void drawByte(s32 X, s32 Y, const s32 P, const u32 DATA) noexcept;
 
 	// DXYN - draw N sprite rows at VX and VY
 	void instruction_DxyN(const s32 X, const s32 Y, const s32 N) noexcept;
@@ -217,6 +261,12 @@ private:
 /*==================================================================*/
 	#pragma region F instruction branch
 
+	// F000 - set I = NEXT NNNN then skip instruction
+	void instruction_F000() noexcept;
+	// F002 - load 16-byte audio pattern from RAM at I
+	void instruction_F002() noexcept;
+	// FN01 - set plane drawing to N
+	void instruction_FN01(const s32 N) noexcept;
 	// FX07 - set VX = delay timer
 	void instruction_Fx07(const s32 X) noexcept;
 	// FX0A - set VX = key, wait for keypress
@@ -229,12 +279,20 @@ private:
 	void instruction_Fx1E(const s32 X) noexcept;
 	// FX29 - point I to 5 byte hex sprite from value in VX
 	void instruction_Fx29(const s32 X) noexcept;
+	// FX30 - point I to 10 byte hex sprite from value in VX
+	void instruction_Fx30(const s32 X) noexcept;
 	// FX33 - store BCD of VX to RAM at I, I+1, I+2
 	void instruction_Fx33(const s32 X) noexcept;
+	// FX3A - set sound pitch = VX
+	void instruction_Fx3A(const s32 X) noexcept;
 	// FN55 - store V0..VN to RAM at I..I+N
 	void instruction_FN55(const s32 N) noexcept;
 	// FN65 - load V0..VN from RAM at I..I+N
 	void instruction_FN65(const s32 N) noexcept;
+	// FN75 - store V0..VN to the P flags
+	void instruction_FN75(const s32 N) noexcept;
+	// FN85 - load V0..VN from the P flags
+	void instruction_FN85(const s32 N) noexcept;
 
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
