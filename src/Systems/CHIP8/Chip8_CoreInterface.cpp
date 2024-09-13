@@ -286,7 +286,7 @@ void Chip8_CoreInterface::copyFontToMemory(
 ) noexcept {
 	std::copy_n(
 		std::execution::unseq,
-		cFontData, size, dest + offset
+		cFontData.begin(), size, dest + offset
 	);
 }
 

@@ -13,10 +13,7 @@
 /*==================================================================*/
 
 XOCHIP::XOCHIP()
-	
-	: mAudioStep{ 4'000.0f / 128.0f / ASB->getFrequency() }
-	, mAudioTone{ mAudioStep }
-	, mDisplayBuffer{
+	: mDisplayBuffer{
 		{cScreenSizeY, cScreenSizeX},
 		{cScreenSizeY, cScreenSizeX},
 		{cScreenSizeY, cScreenSizeX},
@@ -37,7 +34,7 @@ XOCHIP::XOCHIP()
 
 		std::copy_n(
 			std::execution::unseq,
-			cBitsColor, 16,
+			cBitsColor.data(), 16,
 			mBitsColor.data()
 		);
 
@@ -273,20 +270,22 @@ void XOCHIP::renderAudioData() {
 
 	static f32 wavePhase{};
 
-
 	if (mSoundTimer) {
 		if (isBuzzerEnabled()) {
 			for (auto& sample : samplesBuffer) {
-				sample = static_cast<s8>(wavePhase > 0.5f ? 16 : -16);
+				sample    = static_cast<s8>(wavePhase > 0.5f ? 16 : -16);
 				wavePhase = std::fmod(wavePhase + mBuzzerTone, 1.0f);
 			}
 			BVS->setFrameColor(cBitsColor[0], cBitsColor[1]);
 		} else {
+			const auto audioStep{ std::pow(2.0f, (mAudioPitch - 64.0f) / 48.0f) };
+			const auto audioTone{ 31.25f / ASB->getFrequency() * audioStep };
+
 			for (auto& sample : samplesBuffer) {
 				const auto step{ static_cast<s32>(std::clamp(wavePhase * 128.0f, 0.0f, 127.0f)) };
 				const auto mask{ 1 << (7 ^ step & 7) };
-				sample = mSamplePattern[step >> 3] & mask ? 16 : -16;
-				wavePhase = std::fmod(wavePhase + mAudioTone, 1.0f);
+				sample    = mPatternBuf[step >> 3] & mask ? 16 : -16;
+				wavePhase = std::fmod(wavePhase + audioTone, 1.0f);
 			}
 			BVS->setFrameColor(cBitsColor[0], cBitsColor[0]);
 		}
@@ -770,7 +769,7 @@ void XOCHIP::scrollDisplayRT(const s32) {
 	// F002 - load 16-byte audio pattern from RAM at I
 	void XOCHIP::instruction_F002() noexcept {
 		for (auto idx{ 0 }; idx < 16; ++idx) {
-			mSamplePattern[idx] = readMemoryI(idx);
+			mPatternBuf[idx] = readMemoryI(idx);
 		}
 		isBuzzerEnabled(false);
 	}
@@ -816,8 +815,7 @@ void XOCHIP::scrollDisplayRT(const s32) {
 	}
 	// FX3A - set sound pitch = VX
 	void XOCHIP::instruction_Fx3A(const s32 X) noexcept {
-		const auto stepValue{ (mRegisterV[X] - 64.0f) / 48.0f };
-		mAudioTone = mAudioStep * std::pow(2.0f, stepValue);
+		mAudioPitch = mRegisterV[X];
 		isBuzzerEnabled(false);
 	}
 	// FN55 - store V0..VX to RAM at I..I+N
