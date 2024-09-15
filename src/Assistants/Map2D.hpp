@@ -583,7 +583,7 @@ private:
 		 */
 		RowProxy& wipeAll() requires arithmetic<T> {
 			std::fill(
-				std::execution::par_unseq,
+				std::execution::unseq,
 				begin(), end(), T()
 			);
 			return *this;
@@ -610,12 +610,12 @@ private:
 				if (_cols) {
 					if (_cols < 0) {
 						std::fill(
-							std::execution::par_unseq,
+							std::execution::unseq,
 							end() + _cols, end(), T()
 						);
 					} else {
 						std::fill(
-							std::execution::par_unseq,
+							std::execution::unseq,
 							begin(), begin() + _cols, T()
 						);
 					}
@@ -641,12 +641,12 @@ private:
 			if (_cols) {
 				if (_cols < 0) {
 					std::rotate(
-						std::execution::par_unseq,
+						std::execution::unseq,
 						begin(), begin() + std::abs(_cols) % mLength, end()
 					);
 				} else {
 					std::rotate(
-						std::execution::par_unseq,
+						std::execution::unseq,
 						begin(), end() - std::abs(_cols) % mLength, end()
 					);
 				}
@@ -683,7 +683,7 @@ private:
 		 */
 		RowProxy& reverse() {
 			std::reverse(
-				std::execution::par_unseq,
+				std::execution::unseq,
 				begin(), end()
 			);
 			return *this;
@@ -740,7 +740,7 @@ private:
 			const arithmetic auto& value
 		) requires arithmetic<T> {
 			std::fill(
-				std::execution::par_unseq,
+				std::execution::unseq,
 				begin(), end(), static_cast<T>(value)
 			);
 			return *this;
@@ -751,7 +751,7 @@ private:
 			if (this == &other) [[unlikely]] return *this;
 			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
 			std::copy(
-				std::execution::par_unseq,
+				std::execution::unseq,
 				other.begin(), other.begin() + len, mBegin
 			);
 			return *this;
@@ -761,7 +761,7 @@ private:
 		) requires arithmetic<T> {
 			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
 			std::move(
-				std::execution::par_unseq,
+				std::execution::unseq,
 				other.begin(), other.begin() + len, mBegin
 			);
 			return *this;
@@ -771,7 +771,7 @@ private:
 		) requires arithmetic<T> {
 			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
 			std::copy(
-				std::execution::par_unseq,
+				std::execution::unseq,
 				other.begin(), other.begin() + len, mBegin
 			);
 			return *this;
@@ -1174,7 +1174,7 @@ public:
 		}
 	{
 		std::copy(
-			std::execution::par_unseq,
+			std::execution::unseq,
 			other.mBegin(), other.mEnd(), mBegin()
 		);
 	}
@@ -1185,7 +1185,7 @@ public:
 	Map2D& operator=(const Map2D& other) { // copy assignment
 		if (this != &other && size() == other.size()) {
 			std::copy(
-				std::execution::par_unseq,
+				std::execution::unseq,
 				other.mBegin(), other.mEnd(), mBegin()
 			);
 			mRows = other.lenY(); mCols = other.lenX();
@@ -1359,7 +1359,7 @@ public:
 	) requires arithmetic<T> {
 		const auto _len{ std::min(size(), other.size())};
 		std::copy_n(
-			std::execution::par_unseq,
+			std::execution::unseq,
 			other.mBegin(), _len, mBegin()
 		);
 		return *this;
@@ -1383,7 +1383,7 @@ public:
 	) requires arithmetic<T> {
 		const auto _len{ static_cast<paramU>(std::abs(len)) };
 		std::copy_n(
-			std::execution::par_unseq,
+			std::execution::unseq,
 			other, std::min(_len, size()), mBegin()
 		);
 		return *this;
@@ -1444,7 +1444,7 @@ private:
 			const auto srcIdx{ pData.get() + row * mCols };
 			const auto dstIdx{ pCopy.get() + row * cols };
 			std::move(
-				std::execution::par_unseq,
+				std::execution::unseq,
 				srcIdx, srcIdx + minCols, dstIdx
 			);
 		}
@@ -1478,7 +1478,7 @@ public:
 	 */
 	Map2D& wipeAll() requires arithmetic<T> {
 		std::fill(
-			std::execution::par_unseq,
+			std::execution::unseq,
 			mBegin(), mEnd(), T()
 		);
 		return *this;
@@ -1508,12 +1508,12 @@ public:
 			if (_rows) {
 				if (_rows < 0) {
 					std::fill(
-						std::execution::par_unseq,
+						std::execution::unseq,
 						mEnd() + _rows * mCols, mEnd(), T()
 					);
 				} else {
 					std::fill(
-						std::execution::par_unseq,
+						std::execution::unseq,
 						mBegin(), mBegin() + _rows * mCols, T()
 					);
 				}
@@ -1547,12 +1547,12 @@ public:
 		if (_rows % mRows) {
 			if (_rows < 0) {
 				std::rotate(
-					std::execution::par_unseq,
+					std::execution::unseq,
 					mBegin(), mBegin() - _rows * mCols, mEnd()
 				);
 			} else {
 				std::rotate(
-					std::execution::par_unseq,
+					std::execution::unseq,
 					mBegin(), mEnd() - _rows * mCols, mEnd()
 				);
 			}
@@ -1596,7 +1596,7 @@ public:
 	 */
 	Map2D& reverse() {
 		std::reverse(
-			std::execution::par_unseq,
+			std::execution::unseq,
 			mBegin(), mEnd()
 		);
 		return *this;
@@ -1624,7 +1624,7 @@ public:
 	Map2D& reverseX() {
 		for (auto& row : *this) {
 			std::reverse(
-				std::execution::par_unseq,
+				std::execution::unseq,
 				row.begin(), row.end()
 			);
 		}

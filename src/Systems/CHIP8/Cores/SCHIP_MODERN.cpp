@@ -16,7 +16,6 @@ SCHIP_MODERN::SCHIP_MODERN()
 	: mDisplayBuffer{ {cScreenSizeY, cScreenSizeX} }
 {
 	if (getCoreState() != EmuState::FAILED) {
-		//Quirk.wrapSprite = true;
 
 		copyGameToMemory(mMemoryBank.data(), cGameLoadPos);
 		copyFontToMemory(mMemoryBank.data(), 0x0, 0xF0);
