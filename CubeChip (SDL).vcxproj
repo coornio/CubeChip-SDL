@@ -47,6 +47,7 @@
     <ClInclude Include="src\Assistants\HomeDirManager.hpp" />
     <ClInclude Include="src\Assistants\Map2D.hpp" />
     <ClInclude Include="src\Assistants\PathGetters.hpp" />
+    <ClInclude Include="src\Assistants\RangeIterator.hpp" />
     <ClInclude Include="src\Assistants\SHA1.hpp" />
     <ClInclude Include="src\Assistants\Typedefs.hpp" />
     <ClInclude Include="src\Assistants\Well512.hpp" />
