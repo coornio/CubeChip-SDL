@@ -16,6 +16,8 @@ SCHIP_MODERN::SCHIP_MODERN()
 	: mDisplayBuffer{ {cScreenSizeY, cScreenSizeX} }
 {
 	if (getCoreState() != EmuState::FAILED) {
+		Quirk.shiftVX = true;
+		Quirk.idxRegNoInc = true;
 
 		copyGameToMemory(mMemoryBank.data(), cGameLoadPos);
 		copyFontToMemory(mMemoryBank.data(), 0x0, 0xF0);
@@ -576,7 +578,7 @@ void SCHIP_MODERN::scrollDisplayRT() {
 				{
 					drawByte(pX + 0, tY, readMemoryI(tN + 0));
 					drawByte(pX + 8, tY, readMemoryI(tN + 1));
-					if (!Quirk.wrapSprite && pY == mDisplayHb) { break; }
+					if (!Quirk.wrapSprite && tY == mDisplayHb) { break; }
 					else { tN += 2; ++tY &= mDisplayHb; }
 				}
 				break;
@@ -586,7 +588,7 @@ void SCHIP_MODERN::scrollDisplayRT() {
 				for (auto tN{ 0 }, tY{ pY }; tN < N;)
 				{
 					drawByte(pX, tY, readMemoryI(tN));
-					if (!Quirk.wrapSprite && pY == mDisplayHb) { break; }
+					if (!Quirk.wrapSprite && tY == mDisplayHb) { break; }
 					else { tN += 1; ++tY &= mDisplayHb; }
 				}
 				break;
@@ -627,7 +629,7 @@ void SCHIP_MODERN::scrollDisplayRT() {
 		mSoundTimer = mRegisterV[X] + (mRegisterV[X] == 1);
 	}
 	void SCHIP_MODERN::instruction_Fx1E(const s32 X) noexcept {
-		mRegisterI = mRegisterI + mRegisterV[X] & 0xFFF;
+		mRegisterI = mRegisterI + mRegisterV[X] & 0xFFFF;
 	}
 	void SCHIP_MODERN::instruction_Fx29(const s32 X) noexcept {
 		mRegisterI = (mRegisterV[X] & 0xF) * 5;
@@ -644,13 +646,13 @@ void SCHIP_MODERN::scrollDisplayRT() {
 		for (auto idx{ 0 }; idx <= N; ++idx)
 			{ writeMemoryI(mRegisterV[idx], idx); }
 		if (!Quirk.idxRegNoInc) [[likely]]
-			{ mRegisterI = mRegisterI + N + 1 & 0xFFF; }
+			{ mRegisterI = mRegisterI + N + 1 & 0xFFFF; }
 	}
 	void SCHIP_MODERN::instruction_FN65(const s32 N) noexcept {
 		for (auto idx{ 0 }; idx <= N; ++idx)
 			{ mRegisterV[idx] = readMemoryI(idx); }
 		if (!Quirk.idxRegNoInc) [[likely]]
-			{ mRegisterI = mRegisterI + N + 1 & 0xFFF; }
+			{ mRegisterI = mRegisterI + N + 1 & 0xFFFF; }
 	}
 	void SCHIP_MODERN::instruction_FN75(const s32 N) noexcept {
 		if (setPermaRegs(N + 1)) [[unlikely]]

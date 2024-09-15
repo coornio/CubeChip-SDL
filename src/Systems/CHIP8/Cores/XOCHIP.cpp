@@ -683,24 +683,24 @@ void XOCHIP::scrollDisplayRT() {
 			mRegisterV[0xF] = 0;
 
 			if (N == 0) {
-				for (auto P{ 0 }, I{ 0 }; P < 4; ++P) {
+				for (auto P{ 0 }, I{ 0 }; P < 4; ++P, I += 32) {
 					if (!(mPlanarMask & 1 << P)) { continue; }
 
-					for (auto tN{ 0 }, tY{ pY }; tN < 16; ++tN) {
-						drawByte(pX + 0, tY, P, readMemoryI(I + 0));
-						drawByte(pX + 8, tY, P, readMemoryI(I + 1));
+					for (auto tN{ 0 }, tY{ pY }; tN < 32;) {
+						drawByte(pX + 0, tY, P, readMemoryI(I + tN + 0));
+						drawByte(pX + 8, tY, P, readMemoryI(I + tN + 1));
 						if (!Quirk.wrapSprite && tY == mDisplayHb) { break; }
-						else { I += 2; ++tY &= mDisplayHb; }
+						else { tN += 2; ++tY &= mDisplayHb; }
 					}
 				}
 			} else [[likely]] {
-				for (auto P{ 0 }, I{ 0 }; P < 4; ++P) {
+				for (auto P{ 0 }, I{ 0 }; P < 4; ++P, I += N) {
 					if (!(mPlanarMask & 1 << P)) { continue; }
 
-					for (auto tN{ 0 }, tY{ pY }; tN < N; ++tN) {
-						drawByte(pX, tY, P, readMemoryI(I));
+					for (auto tN{ 0 }, tY{ pY }; tN < N;) {
+						drawByte(pX, tY, P, readMemoryI(I + tN));
 						if (!Quirk.wrapSprite && tY == mDisplayHb) { break; }
-						else { I += 1; ++tY &= mDisplayHb; }
+						else { tN += 1; ++tY &= mDisplayHb; }
 					}
 				}
 			}
