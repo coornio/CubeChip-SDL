@@ -55,6 +55,7 @@ private:
 	void prepDisplayArea(const Resolution) override {}
 
 	void nextInstruction() noexcept;
+	void skipInstruction() noexcept;
 	void jumpProgramTo(const u32 next) noexcept;
 
 /*==================================================================*/
@@ -177,7 +178,7 @@ private:
 /*==================================================================*/
 	#pragma region B instruction branch
 
-	// BXNN - jump to NNN + V0
+	// BNNN - jump to NNN + V0
 	void instruction_BNNN(const s32 NNN) noexcept;
 
 	#pragma endregion
