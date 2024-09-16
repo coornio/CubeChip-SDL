@@ -8,6 +8,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <concepts>
 
 class Well512 {
 	using result_type = std::uint32_t;
@@ -27,7 +28,7 @@ public:
 	}
 
 	template<typename T>
-	T get() {
+	T get() requires std::is_arithmetic_v<T> {
 		result_type a, b, c, d;
 
 		a = mState[mIndex];
