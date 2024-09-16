@@ -27,6 +27,8 @@ public:
 		}
 	}
 
+	operator result_type() { return get<result_type>(); }
+
 	template<typename T>
 	T get() requires std::is_arithmetic_v<T> {
 		result_type a, b, c, d;
@@ -43,6 +45,4 @@ public:
 		mState[mIndex] = a ^ b ^ d ^ a << 2 ^ b << 18 ^ c << 28;
 		return static_cast<T>(mState[mIndex]);
 	}
-
-	result_type operator()() { return get<result_type>(); }
 };
