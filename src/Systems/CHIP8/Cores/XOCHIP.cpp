@@ -676,32 +676,37 @@ void XOCHIP::scrollDisplayRT() {
 	void XOCHIP::instruction_DxyN(const s32 X, const s32 Y, const s32 N) noexcept {
 		if (!mPlanarMask) {
 			mRegisterV[0xF] = 0;
-		} else {
-			const auto pX{ mRegisterV[X] & mDisplayWb };
-			const auto pY{ mRegisterV[Y] & mDisplayHb };
+			return;
+		}
 
-			mRegisterV[0xF] = 0;
+		const auto pX{ mRegisterV[X] & mDisplayWb };
+		const auto pY{ mRegisterV[Y] & mDisplayHb };
 
-			if (N == 0) {
-				for (auto P{ 0 }, I{ 0 }; P < 4; ++P, I += 32) {
-					if (!(mPlanarMask & 1 << P)) { continue; }
+		mRegisterV[0xF] = 0;
 
-					for (auto tN{ 0 }, tY{ pY }; tN < 32;) {
-						drawByte(pX + 0, tY, P, readMemoryI(I + tN + 0));
-						drawByte(pX + 8, tY, P, readMemoryI(I + tN + 1));
+		if (N == 0) {
+			for (auto P{ 0 }, I{ 0 }; P < 4; ++P) {
+				if (mPlanarMask & 1 << P) {
+					for (auto tN{ 0 }, tY{ pY }; tN < 16; ++tN) {
+						drawByte(pX + 0, tY, P, readMemoryI(I + tN * 2 + 0));
+						drawByte(pX + 8, tY, P, readMemoryI(I + tN * 2 + 1));
+
 						if (!Quirk.wrapSprite && tY == mDisplayHb) { break; }
-						else { tN += 2; ++tY &= mDisplayHb; }
+						else { ++tY &= mDisplayHb; }
 					}
+					I += 32;
 				}
-			} else [[likely]] {
-				for (auto P{ 0 }, I{ 0 }; P < 4; ++P, I += N) {
-					if (!(mPlanarMask & 1 << P)) { continue; }
-
-					for (auto tN{ 0 }, tY{ pY }; tN < N;) {
+			}
+		} else [[likely]] {
+			for (auto P{ 0 }, I{ 0 }; P < 4; ++P) {
+				if (mPlanarMask & 1 << P) {
+					for (auto tN{ 0 }, tY{ pY }; tN < N; ++tN) {
 						drawByte(pX, tY, P, readMemoryI(I + tN));
+
 						if (!Quirk.wrapSprite && tY == mDisplayHb) { break; }
-						else { tN += 1; ++tY &= mDisplayHb; }
+						else { ++tY &= mDisplayHb; }
 					}
+					I += N;
 				}
 			}
 		}
