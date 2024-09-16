@@ -21,7 +21,7 @@ SCHIP_LEGACY::SCHIP_LEGACY()
 			std::execution::unseq,
 			mMemoryBank.begin(),
 			mMemoryBank.end(),
-			[this]() { return Wrand->get<u8>(); }
+			[]() { return Wrand->get<u8>(); }
 		);
 
 		copyGameToMemory(mMemoryBank.data(), cGameLoadPos);

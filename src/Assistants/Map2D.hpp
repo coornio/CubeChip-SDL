@@ -1159,8 +1159,8 @@ public:
 		, pData{ std::make_unique<T[]>(mRows * mCols) }
 	{}
 	Map2D(const paramU rows, const paramU cols)
-		: mRows{ rows }
-		, mCols{ cols }
+		: mRows{ static_cast<paramS>(rows) }
+		, mCols{ static_cast<paramS>(cols) }
 		, pData{ std::make_unique<T[]>(mRows * mCols) }
 	{}
 	#pragma endregion

@@ -100,7 +100,6 @@ void BasicVideoSpec::createTexture(s32 texture_W, s32 texture_H) {
 }
 
 void BasicVideoSpec::changeTitle(const std::string& name) {
-	static constexpr char emuVersion[]{ "[06.06.24]" };
 	std::string windowTitle{ "CubeChip :: " + name };
 	SDL_SetWindowTitle(window, windowTitle.c_str());
 }

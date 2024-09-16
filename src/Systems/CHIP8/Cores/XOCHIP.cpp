@@ -283,7 +283,7 @@ void XOCHIP::renderAudioData() {
 
 			for (auto& sample : samplesBuffer) {
 				const auto step{ static_cast<s32>(std::clamp(wavePhase * 128.0f, 0.0f, 127.0f)) };
-				const auto mask{ 1 << (7 ^ step & 7) };
+				const auto mask{ 1 << (7 ^ (step & 7)) };
 				sample    = mPatternBuf[step >> 3] & mask ? 16 : -16;
 				wavePhase = std::fmod(wavePhase + audioTone, 1.0f);
 			}
