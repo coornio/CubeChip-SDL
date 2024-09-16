@@ -54,7 +54,7 @@ protected:
 
 	struct PlatformTraits final {
 		u32  mCoreState{ EmuState::NORMAL };
-		bool mLoresExtended{};
+		bool mDisplayLarger{};
 		bool mManualRefresh{};
 		bool mPixelTrailing{};
 		bool mBuzzerEnabled{};
@@ -91,11 +91,11 @@ protected:
 	bool isSystemStopped() const noexcept override { return getCoreState() || getSystemState(); }
 	bool isCoreStopped()   const noexcept override { return getCoreState(); }
 
-	bool isLoresExtended() const noexcept { return Trait.mLoresExtended; }
+	bool isDisplayLarger() const noexcept { return Trait.mDisplayLarger; }
 	bool isManualRefresh() const noexcept { return Trait.mManualRefresh; }
 	bool isPixelTrailing() const noexcept { return Trait.mPixelTrailing; }
 	bool isBuzzerEnabled() const noexcept { return Trait.mBuzzerEnabled; }
-	void isLoresExtended(const bool state) noexcept { Trait.mLoresExtended = state; }
+	void isDisplayLarger(const bool state) noexcept { Trait.mDisplayLarger = state; }
 	void isManualRefresh(const bool state) noexcept { Trait.mManualRefresh = state; }
 	void isPixelTrailing(const bool state) noexcept { Trait.mPixelTrailing = state; }
 	void isBuzzerEnabled(const bool state) noexcept { Trait.mBuzzerEnabled = state; }

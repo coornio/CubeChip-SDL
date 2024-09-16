@@ -62,7 +62,6 @@ private:
 	void skipInstruction() noexcept;
 	void jumpProgramTo(const u32 next) noexcept;
 
-	void scrollDisplayUP(const s32 N);
 	void scrollDisplayDN(const s32 N);
 	void scrollDisplayLT();
 	void scrollDisplayRT();
@@ -251,19 +250,19 @@ private:
 	void instruction_Fx18(const s32 X) noexcept;
 	// FX1E - set I = I + VX
 	void instruction_Fx1E(const s32 X) noexcept;
-	// FX29 - point I to 5 byte hex sprite from value in VX
+	// FX29 - set I to 5-byte hex sprite from VX
 	void instruction_Fx29(const s32 X) noexcept;
-	// FX30 - point I to 10 byte hex sprite from value in VX
+	// FX30 - set I to 10-byte hex sprite from VX
 	void instruction_Fx30(const s32 X) noexcept;
-	// FX33 - store BCD of VX to RAM at I, I+1, I+2
+	// FX33 - store BCD of VX to RAM at I..I+2
 	void instruction_Fx33(const s32 X) noexcept;
 	// FN55 - store V0..VN to RAM at I..I+N
 	void instruction_FN55(const s32 N) noexcept;
 	// FN65 - load V0..VN from RAM at I..I+N
 	void instruction_FN65(const s32 N) noexcept;
-	// FN75 - store V0..VN to the P flags
+	// FN75 - store V0..VN to the permanent regs
 	void instruction_FN75(const s32 N) noexcept;
-	// FN85 - load V0..VN from the P flags
+	// FN85 - load V0..VN from the permanent regs
 	void instruction_FN85(const s32 N) noexcept;
 
 	#pragma endregion

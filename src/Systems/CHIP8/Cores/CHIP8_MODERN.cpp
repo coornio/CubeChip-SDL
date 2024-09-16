@@ -421,7 +421,7 @@ void CHIP8_MODERN::jumpProgramTo(const u32 next) noexcept {
 	#pragma region C instruction branch
 
 	void CHIP8_MODERN::instruction_CxNN(const s32 X, const s32 NN) noexcept {
-		mRegisterV[X] = static_cast<u8>(Wrand->get() & NN);
+		mRegisterV[X] = Wrand->get<u8>() & NN;
 	}
 
 	#pragma endregion

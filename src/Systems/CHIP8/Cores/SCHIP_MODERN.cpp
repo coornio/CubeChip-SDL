@@ -16,8 +16,6 @@ SCHIP_MODERN::SCHIP_MODERN()
 	: mDisplayBuffer{ {cScreenSizeY, cScreenSizeX} }
 {
 	if (getCoreState() != EmuState::FAILED) {
-		Quirk.shiftVX = true;
-		Quirk.idxRegNoInc = true;
 
 		copyGameToMemory(mMemoryBank.data(), cGameLoadPos);
 		copyFontToMemory(mMemoryBank.data(), 0x0, 0xF0);
@@ -57,12 +55,6 @@ void SCHIP_MODERN::instructionLoop() noexcept {
 					case 0x00C8: case 0x00C9: case 0x00CA: case 0x00CB:
 					case 0x00CC: case 0x00CD: case 0x00CE: case 0x00CF:
 						instruction_00CN(LO & 0xF);
-						break;
-					case 0x00D0: case 0x00D1: case 0x00D2: case 0x00D3:
-					case 0x00D4: case 0x00D5: case 0x00D6: case 0x00D7:
-					case 0x00D8: case 0x00D9: case 0x00DA: case 0x00DB:
-					case 0x00DC: case 0x00DD: case 0x00DE: case 0x00DF:
-						instruction_00DN(LO & 0xF);
 						break;
 					case 0x00E0:
 						instruction_00E0();
@@ -272,10 +264,10 @@ void SCHIP_MODERN::renderVideoData() {
 }
 
 void SCHIP_MODERN::prepDisplayArea(const Resolution mode) {
-	isLoresExtended(mode != Resolution::LO);
+	isDisplayLarger(mode != Resolution::LO);
 
-	const auto W{ isLoresExtended() ? 128 : 64 };
-	const auto H{ isLoresExtended() ?  64 : 32 };
+	const auto W{ isDisplayLarger() ? 128 : 64 };
+	const auto H{ isDisplayLarger() ?  64 : 32 };
 
 	BVS->createTexture(W, H);
 	setDisplayResolution(W, H);
@@ -302,9 +294,6 @@ void SCHIP_MODERN::jumpProgramTo(const u32 next) noexcept {
 	}
 }
 
-void SCHIP_MODERN::scrollDisplayUP(const s32 N) {
-	mDisplayBuffer[0].shift(-N, 0);
-}
 void SCHIP_MODERN::scrollDisplayDN(const s32 N) {
 	mDisplayBuffer[0].shift(+N, 0);
 }
@@ -322,11 +311,6 @@ void SCHIP_MODERN::scrollDisplayRT() {
 		if (Quirk.waitScroll) [[unlikely]]
 			{ triggerInterrupt(Interrupt::FRAME); }
 		if (N) { scrollDisplayDN(N); }
-	}
-	void SCHIP_MODERN::instruction_00DN(const s32 N) noexcept {
-		if (Quirk.waitScroll) [[unlikely]]
-			{ triggerInterrupt(Interrupt::FRAME); }
-		if (N) { scrollDisplayUP(N); }
 	}
 	void SCHIP_MODERN::instruction_00E0() noexcept {
 		if (Quirk.waitVblank) [[unlikely]]
@@ -514,7 +498,7 @@ void SCHIP_MODERN::scrollDisplayRT() {
 	#pragma region C instruction branch
 
 	void SCHIP_MODERN::instruction_CxNN(const s32 X, const s32 NN) noexcept {
-		mRegisterV[X] = static_cast<u8>(Wrand->get() & NN);
+		mRegisterV[X] = Wrand->get<u8>() & NN;
 	}
 
 	#pragma endregion
@@ -629,7 +613,7 @@ void SCHIP_MODERN::scrollDisplayRT() {
 		mSoundTimer = mRegisterV[X] + (mRegisterV[X] == 1);
 	}
 	void SCHIP_MODERN::instruction_Fx1E(const s32 X) noexcept {
-		mRegisterI = mRegisterI + mRegisterV[X] & 0xFFFF;
+		mRegisterI = mRegisterI + mRegisterV[X] & 0xFFF;
 	}
 	void SCHIP_MODERN::instruction_Fx29(const s32 X) noexcept {
 		mRegisterI = (mRegisterV[X] & 0xF) * 5;
@@ -646,13 +630,13 @@ void SCHIP_MODERN::scrollDisplayRT() {
 		for (auto idx{ 0 }; idx <= N; ++idx)
 			{ writeMemoryI(mRegisterV[idx], idx); }
 		if (!Quirk.idxRegNoInc) [[likely]]
-			{ mRegisterI = mRegisterI + N + 1 & 0xFFFF; }
+			{ mRegisterI = mRegisterI + N + 1 & 0xFFF; }
 	}
 	void SCHIP_MODERN::instruction_FN65(const s32 N) noexcept {
 		for (auto idx{ 0 }; idx <= N; ++idx)
 			{ mRegisterV[idx] = readMemoryI(idx); }
 		if (!Quirk.idxRegNoInc) [[likely]]
-			{ mRegisterI = mRegisterI + N + 1 & 0xFFFF; }
+			{ mRegisterI = mRegisterI + N + 1 & 0xFFF; }
 	}
 	void SCHIP_MODERN::instruction_FN75(const s32 N) noexcept {
 		if (setPermaRegs(N + 1)) [[unlikely]]

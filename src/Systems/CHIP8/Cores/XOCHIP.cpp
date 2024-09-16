@@ -322,10 +322,10 @@ void XOCHIP::renderVideoData() {
 }
 
 void XOCHIP::prepDisplayArea(const Resolution mode) {
-	isLoresExtended(mode != Resolution::LO);
+	isDisplayLarger(mode != Resolution::LO);
 
-	const auto W{ isLoresExtended() ? 128 : 64 };
-	const auto H{ isLoresExtended() ?  64 : 32 };
+	const auto W{ isDisplayLarger() ? 128 : 64 };
+	const auto H{ isDisplayLarger() ?  64 : 32 };
 
 	BVS->createTexture(W, H);
 	setDisplayResolution(W, H);
@@ -630,7 +630,7 @@ void XOCHIP::scrollDisplayRT() {
 	#pragma region C instruction branch
 
 	void XOCHIP::instruction_CxNN(const s32 X, const s32 NN) noexcept {
-		mRegisterV[X] = static_cast<u8>(Wrand->get() & NN);
+		mRegisterV[X] = Wrand->get<u8>() & NN;
 	}
 
 	#pragma endregion

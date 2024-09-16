@@ -26,7 +26,8 @@ public:
 		}
 	}
 
-	result_type get() {
+	template<typename T>
+	T get() {
 		result_type a, b, c, d;
 
 		a = mState[mIndex];
@@ -39,8 +40,8 @@ public:
 		mIndex = mIndex + 15 & 0xF;
 		a = mState[mIndex];
 		mState[mIndex] = a ^ b ^ d ^ a << 2 ^ b << 18 ^ c << 28;
-		return mState[mIndex];
+		return static_cast<T>(mState[mIndex]);
 	}
 
-	result_type operator()() { return get(); }
+	result_type operator()() { return get<result_type>(); }
 };

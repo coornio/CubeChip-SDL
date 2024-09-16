@@ -228,9 +228,9 @@ private:
 	void instruction_Fx18(const s32 X) noexcept;
 	// FX1E - set I = I + VX
 	void instruction_Fx1E(const s32 X) noexcept;
-	// FX29 - point I to 5 byte hex sprite from value in VX
+	// FX29 - set I to 5-byte hex sprite from VX
 	void instruction_Fx29(const s32 X) noexcept;
-	// FX33 - store BCD of VX to RAM at I, I+1, I+2
+	// FX33 - store BCD of VX to RAM at I..I+2
 	void instruction_Fx33(const s32 X) noexcept;
 	// FN55 - store V0..VN to RAM at I..I+N
 	void instruction_FN55(const s32 N) noexcept;
