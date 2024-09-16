@@ -32,6 +32,7 @@
     <ClCompile Include="src\Systems\BYTEPUSHER\Cores\BYTEPUSHER_STANDARD.cpp" />
     <ClCompile Include="src\Systems\CHIP8\Chip8_CoreInterface.cpp" />
     <ClCompile Include="src\Systems\CHIP8\Cores\CHIP8_MODERN.cpp" />
+    <ClCompile Include="src\Systems\CHIP8\Cores\SCHIP_LEGACY.cpp" />
     <ClCompile Include="src\Systems\CHIP8\Cores\SCHIP_MODERN.cpp" />
     <ClCompile Include="src\Systems\CHIP8\Cores\XOCHIP.cpp" />
     <ClCompile Include="src\Systems\EmuInterface.cpp" />
@@ -57,6 +58,7 @@
     <ClInclude Include="src\Systems\BYTEPUSHER\Cores\BYTEPUSHER_STANDARD.hpp" />
     <ClInclude Include="src\Systems\CHIP8\Chip8_CoreInterface.hpp" />
     <ClInclude Include="src\Systems\CHIP8\Cores\CHIP8_MODERN.hpp" />
+    <ClInclude Include="src\Systems\CHIP8\Cores\SCHIP_LEGACY.hpp" />
     <ClInclude Include="src\Systems\CHIP8\Cores\SCHIP_MODERN.hpp" />
     <ClInclude Include="src\Systems\CHIP8\Cores\XOCHIP.hpp" />
     <ClInclude Include="src\Systems\EmuInterface.hpp" />
