@@ -238,8 +238,8 @@ bool GameFileChecker::validate(
 
 		case (GameFileType::sc8):
 			return testGame(
-				SCHIP_LEGACY::testGameSize(size),
-				GameCoreType::SCHIP_LEGACY
+				SCHIP_MODERN::testGameSize(size),
+				GameCoreType::SCHIP_MODERN
 			);
 
 		case (GameFileType::BytePusher):
