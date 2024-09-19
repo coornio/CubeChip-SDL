@@ -42,11 +42,6 @@ SCHIP_LEGACY::SCHIP_LEGACY()
 
 /*==================================================================*/
 
-void SCHIP_LEGACY::handleTimerTick() noexcept {
-	if (mDelayTimer) { --mDelayTimer; }
-	if (mSoundTimer) { --mSoundTimer; }
-}
-
 void SCHIP_LEGACY::instructionLoop() noexcept {
 
 	auto cycleCount{ 0 };
@@ -280,23 +275,6 @@ void SCHIP_LEGACY::prepDisplayArea(const Resolution mode) {
 
 /*==================================================================*/
 
-void SCHIP_LEGACY::nextInstruction() noexcept {
-	mCurrentPC += 2;
-}
-
-void SCHIP_LEGACY::skipInstruction() noexcept {
-	mCurrentPC += 2;
-}
-
-void SCHIP_LEGACY::jumpProgramTo(const u32 next) noexcept {
-	const auto NNN{ next & 0xFFF };
-	if (mCurrentPC - 2u != NNN) [[likely]] {
-		mCurrentPC = NNN & 0xFFF;
-	} else {
-		triggerInterrupt(Interrupt::SOUND);
-	}
-}
-
 void SCHIP_LEGACY::scrollDisplayDN(const s32 N) {
 	mDisplayBuffer[0].shift(+N, 0);
 }
@@ -311,7 +289,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 	#pragma region 0 instruction branch
 
 	void SCHIP_LEGACY::instruction_00CN(const s32 N) noexcept {
-		if (N) { scrollDisplayDN(N); }
+		scrollDisplayDN(N);
 	}
 	void SCHIP_LEGACY::instruction_00E0() noexcept {
 		triggerInterrupt(Interrupt::FRAME);
@@ -345,7 +323,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 	#pragma region 1 instruction branch
 
 	void SCHIP_LEGACY::instruction_1NNN(const s32 NNN) noexcept {
-		jumpProgramTo(NNN);
+		performProgJump(NNN);
 	}
 
 	#pragma endregion
@@ -356,7 +334,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 
 	void SCHIP_LEGACY::instruction_2NNN(const s32 NNN) noexcept {
 		mStackBank[mStackTop++ & 0xF] = mCurrentPC;
-		jumpProgramTo(NNN);
+		performProgJump(NNN);
 	}
 
 	#pragma endregion
@@ -480,7 +458,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 	#pragma region B instruction branch
 
 	void SCHIP_LEGACY::instruction_BXNN(const s32 X, const s32 NNN) noexcept {
-		jumpProgramTo(NNN + mRegisterV[X]);
+		performProgJump(NNN + mRegisterV[X]);
 	}
 
 	#pragma endregion
@@ -661,15 +639,15 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 	void SCHIP_LEGACY::instruction_FN65(const s32 N) noexcept {
 		for (auto idx{ 0 }; idx <= N; ++idx)
 			{ mRegisterV[idx] = readMemoryI(idx); }
-		if (Quirk.idxRegMinus) [[likely]]
+		if (Quirk.idxRegMinus) [[unlikely]]
 			{ mRegisterI = mRegisterI + N & 0xFFF; }
 	}
 	void SCHIP_LEGACY::instruction_FN75(const s32 N) noexcept {
-		if (setPermaRegs(N + 1)) [[unlikely]]
+		if (setPermaRegs(std::min(N, 7) + 1)) [[unlikely]]
 			{ triggerCritError("Error :: Failed writing persistent registers!"); }
 	}
 	void SCHIP_LEGACY::instruction_FN85(const s32 N) noexcept {
-		if (getPermaRegs(N + 1)) [[unlikely]]
+		if (getPermaRegs(std::min(N, 7) + 1)) [[unlikely]]
 			{ triggerCritError("Error :: Failed reading persistent registers!"); }
 	}
 

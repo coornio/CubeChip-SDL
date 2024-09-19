@@ -46,11 +46,6 @@ XOCHIP::XOCHIP()
 
 /*==================================================================*/
 
-void XOCHIP::handleTimerTick() noexcept {
-	if (mDelayTimer) { --mDelayTimer; }
-	if (mSoundTimer) { --mSoundTimer; }
-}
-
 void XOCHIP::instructionLoop() noexcept {
 
 	auto cycleCount{ 0 };
@@ -347,21 +342,8 @@ void XOCHIP::setColorBit332(const s32 bit, const s32 color) noexcept {
 
 /*==================================================================*/
 
-void XOCHIP::nextInstruction() noexcept {
-	mCurrentPC += 2;
-}
-
 void XOCHIP::skipInstruction() noexcept {
 	mCurrentPC += NNNN() == 0xF000 ? 4 : 2;
-}
-
-void XOCHIP::jumpProgramTo(const u32 next) noexcept {
-	const auto NNN{ next & 0xFFF };
-	if (mCurrentPC - 2u != NNN) [[likely]] {
-		mCurrentPC = NNN & 0xFFF;
-	} else {
-		triggerInterrupt(Interrupt::SOUND);
-	}
 }
 
 void XOCHIP::scrollDisplayUP(const s32 N) {
@@ -446,7 +428,7 @@ void XOCHIP::scrollDisplayRT() {
 	#pragma region 1 instruction branch
 
 	void XOCHIP::instruction_1NNN(const s32 NNN) noexcept {
-		jumpProgramTo(NNN);
+		performProgJump(NNN);
 	}
 
 	#pragma endregion
@@ -457,7 +439,7 @@ void XOCHIP::scrollDisplayRT() {
 
 	void XOCHIP::instruction_2NNN(const s32 NNN) noexcept {
 		mStackBank[mStackTop++ & 0xF] = mCurrentPC;
-		jumpProgramTo(NNN);
+		performProgJump(NNN);
 	}
 
 	#pragma endregion
@@ -620,7 +602,7 @@ void XOCHIP::scrollDisplayRT() {
 	#pragma region B instruction branch
 
 	void XOCHIP::instruction_BNNN(const s32 NNN) noexcept {
-		jumpProgramTo(NNN + mRegisterV[0]);
+		performProgJump(NNN + mRegisterV[0]);
 	}
 
 	#pragma endregion

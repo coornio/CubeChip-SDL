@@ -57,16 +57,11 @@ public:
 
 	static void showErrorBox(const char* const) noexcept;
 
-	void setBackColor (
-		const u32 color
-	) noexcept {
+	void setBackColor(const u32 color) noexcept {
 		frameBackColor = color;
 	}
 
-	void setFrameColor(
-		const u32 color_off,
-		const u32 color_on
-	) noexcept {
+	void setFrameColor(const u32 color_off, const u32 color_on) noexcept {
 		frameRectColor[0] = color_off;
 		frameRectColor[1] = color_on;
 	}
@@ -86,14 +81,35 @@ public:
 	[[nodiscard]]
 	u32* lockTexture();
 	void unlockTexture();
+
 	void modifyTexture(const std::span<u32> colorData);
 
 	template <typename T, typename Lambda>
-	void modifyTexture(const std::span<const T> pixelData, Lambda&& function) {
+	void modifyTexture(
+		const std::span<const T> pixelData,
+		Lambda&& function
+	) {
 		std::transform(
 			std::execution::unseq,
 			pixelData.begin(),
 			pixelData.end(),
+			lockTexture(),
+			function
+		);
+		unlockTexture();
+	}
+
+	template <typename T, typename Lambda>
+	void modifyTexture(
+		const std::span<const T> pixelData1,
+		const std::span<const T> pixelData2,
+		Lambda&& function
+	) {
+		std::transform(
+			std::execution::unseq,
+			pixelData1.begin(),
+			pixelData1.end(),
+			pixelData2.begin(),
 			lockTexture(),
 			function
 		);

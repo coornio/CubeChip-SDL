@@ -12,38 +12,88 @@
 
 /*==================================================================*/
 
-class SCHIP_MODERN final : public Chip8_CoreInterface {
-	static constexpr u32 cTotalMemory{  4096 };
-	static constexpr u32 cSafezoneOOB{    32 };
-	static constexpr u32 cGameLoadPos{   512 };
-	static constexpr u32 cStartOffset{   512 };
-	static constexpr f32 cRefreshRate{ 60.0f };
-	static constexpr s32 cScreenSizeX{    64 };
-	static constexpr s32 cScreenSizeY{    32 };
-	static constexpr s32 cInstSpeedHi{    45 };
-	static constexpr s32 cInstSpeedLo{    30 };
+class MEGACHIP final : public Chip8_CoreInterface {
+	static constexpr u32 cTotalMemory{ 16777216 };
+	static constexpr u32 cSafezoneOOB{       32 };
+	static constexpr u32 cGameLoadPos{      512 };
+	static constexpr u32 cStartOffset{      512 };
+	static constexpr f32 cRefreshRate{    64.0f };
+	static constexpr s32 cScreenSizeX{      128 };
+	static constexpr s32 cScreenSizeY{       64 };
+	static constexpr s32 cScreenMegaX{      256 };
+	static constexpr s32 cScreenMegaY{      192 };
+	static constexpr s32 cInstSpeedHi{       45 };
+	static constexpr s32 cInstSpeedLo{       30 };
 
 /*==================================================================*/
 
 	Map2D<u8> mDisplayBuffer[1];
 
+	Map2D<u32> mForegroundBuffer;
+	Map2D<u32> mBackgroundBuffer;
+	Map2D<u8>  mCollisionMap;
+	Map2D<u32> mColorPalette;
+
+	std::array<u32, 10> mFontColor{};
+
+	struct Texture {
+		s32 W{}, H{};
+		s32 collide{ 0xFF };
+		f32 opacity{ 1.0f };
+	} mTexture;
+
+	u32 blendPixel(const u32 srcPixel, const u32 dstPixel) const noexcept;
+
+	enum BlendMode {
+		NORMAL       = 0,
+		LINEAR_DODGE = 4,
+		MULTIPLY     = 5,
+	};
+
+	f32(*fpBlendAlgorithm)(const f32 src, const f32 dst) noexcept {};
+
+	void setNewBlendAlgorithm(const s32 mode) noexcept;
+	void scrapAllVideoBuffers();
+	void flushAllVideoBuffers();
+	void blendAndFlushBuffers() const;
+
+	u32 mTrackStartIdx{};
+	s32 mTrackTotalLen{};
+	f64 mTrackStepping{};
+	f64 mTrackPosition{};
+
+	void resetAudioTrack() noexcept;
+	void startAudioTrack(const bool repeat) noexcept;
+
 	std::array<u8, cTotalMemory + cSafezoneOOB>
 		mMemoryBank{};
 
+	void writeMemory(const u32 value, const u32 pos) noexcept {
+		if (pos < cTotalMemory) [[likely]]
+			{ mMemoryBank[pos] = value & 0xFF; }
+	}
+
 	void writeMemoryI(const u32 value, const u32 pos) noexcept {
 		const auto index{ mRegisterI + pos };
-		if (!(index & cTotalMemory)) [[likely]]
+		if (index < cTotalMemory) [[likely]]
 			{ mMemoryBank[index] = value & 0xFF; }
 	}
 
+	auto readMemory(const u32 pos) const noexcept {
+		return pos >= cTotalMemory ? u8{ 0xFF } : mMemoryBank[pos];
+	}
+
 	auto readMemoryI(const u32 pos) const noexcept {
-		return mMemoryBank[mRegisterI + pos];
+		const auto index{ mRegisterI + pos };
+		return pos >= cTotalMemory ? u8{ 0xFF } : mMemoryBank[index];
 	}
 
 /*==================================================================*/
 
+	auto  NNNN() const noexcept { return mMemoryBank[mCurrentPC] << 8 | mMemoryBank[mCurrentPC + 1]; }
+
 public:
-	SCHIP_MODERN();
+	MEGACHIP();
 
 	static constexpr bool testGameSize(const usz size) noexcept {
 		return size + cGameLoadPos <= cTotalMemory;
@@ -57,17 +107,23 @@ private:
 
 	void prepDisplayArea(const Resolution mode) override;
 
+	void skipInstruction() noexcept override;
+
+	void scrollDisplayUP(const s32 N);
 	void scrollDisplayDN(const s32 N);
 	void scrollDisplayLT();
 	void scrollDisplayRT();
+
+	void scrollBuffersUP(const s32 N);
+	void scrollBuffersDN(const s32 N);
+	void scrollBuffersLT();
+	void scrollBuffersRT();
 
 /*==================================================================*/
 	#pragma region 0 instruction branch
 
 	// 00DN - scroll plane N lines down
 	void instruction_00CN(const s32 N) noexcept;
-	// 00DN - scroll plane N lines up
-	void instruction_00DN(const s32 N) noexcept;
 	// 00E0 - erase whole display
 	void instruction_00E0() noexcept;
 	// 00EE - return from subroutine
@@ -78,10 +134,35 @@ private:
 	void instruction_00FC() noexcept;
 	// 00FD - stop signal
 	void instruction_00FD() noexcept;
-	// 00FE - display res == 64x32, erase whole display
+	// 00FE - display res == 64x32
 	void instruction_00FE() noexcept;
-	// 00FF - display res == 128x64, erase whole display
+	// 00FF - display res == 128x64
 	void instruction_00FF() noexcept;
+
+	// 00DN - scroll plane N lines up
+	void instruction_00BN(const s32 N) noexcept;
+	// 0010 - disable mega mode
+	void instruction_0010() noexcept;
+	// 0011 - enable mega mode
+	void instruction_0011() noexcept;
+	// 01NN - set I to NN'NNNN
+	void instruction_01NN(const s32 NN) noexcept;
+	// 02NN - load NN palette colors from RAM at I
+	void instruction_02NN(const s32 NN) noexcept;
+	// 03NN - set sprite width to NN
+	void instruction_03NN(const s32 NN) noexcept;
+	// 04NN - set sprite height to NN
+	void instruction_04NN(const s32 NN) noexcept;
+	// 05NN - set screen brightness to NN
+	void instruction_05NN(const s32 NN) noexcept;
+	// 060N - start digital sound from RAM at I, repeat if N == 0
+	void instruction_060N(const s32 N) noexcept;
+	// 0700 - stop digital sound
+	void instruction_0700() noexcept;
+	// 080N - set blend mode to N
+	void instruction_080N(const s32 N) noexcept;
+	// 09NN - set collision color to palette entry NN
+	void instruction_09NN(const s32 NN) noexcept;
 
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
@@ -166,10 +247,10 @@ private:
 	void instruction_8xy5(const s32 X, const s32 Y) noexcept;
 	// 8XY7 - set VX = VY - VX, VF = !borrow
 	void instruction_8xy7(const s32 X, const s32 Y) noexcept;
-	// 8XY6 - set VX = VY >> 1, VF = carry
-	void instruction_8xy6(const s32 X, const s32 Y) noexcept;
-	// 8XYE - set VX = VY << 1, VF = carry
-	void instruction_8xyE(const s32 X, const s32 Y) noexcept;
+	// 8XY6 - set VX = VX >> 1, VF = carry
+	void instruction_8xy6(const s32 X, const s32  ) noexcept;
+	// 8XYE - set VX = VX << 1, VF = carry
+	void instruction_8xyE(const s32 X, const s32  ) noexcept;
 
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
@@ -195,8 +276,8 @@ private:
 /*==================================================================*/
 	#pragma region B instruction branch
 
-	// BNNN - jump to NNN + V0
-	void instruction_BNNN(const s32 NNN) noexcept;
+	// BXNN - jump to NNN + VX
+	void instruction_BXNN(const s32 X, const s32 NNN) noexcept;
 
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
@@ -213,7 +294,8 @@ private:
 /*==================================================================*/
 	#pragma region D instruction branch
 
-	void drawByte(s32 X, s32 Y, const u32 DATA) noexcept;
+	bool drawSingleBytes(const s32 X, const s32 Y, const s32 WIDTH, const s32 DATA) noexcept;
+	bool drawDoubleBytes(const s32 X, const s32 Y, const s32 WIDTH, const s32 DATA) noexcept;
 
 	// DXYN - draw N sprite rows at VX and VY
 	void instruction_DxyN(const s32 X, const s32 Y, const s32 N) noexcept;

@@ -62,7 +62,6 @@ public:
 	}
 
 private:
-	void handleTimerTick() noexcept override;
 	void instructionLoop() noexcept override;
 
 	void renderAudioData() override;
@@ -70,9 +69,7 @@ private:
 
 	void prepDisplayArea(const Resolution mode) override;
 
-	void nextInstruction() noexcept;
-	void skipInstruction() noexcept;
-	void jumpProgramTo(const u32 next) noexcept;
+	void skipInstruction() noexcept override;
 
 	void scrollDisplayUP(const s32 N);
 	void scrollDisplayDN(const s32 N);

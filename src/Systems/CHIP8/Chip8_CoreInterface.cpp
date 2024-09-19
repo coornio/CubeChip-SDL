@@ -141,6 +141,28 @@ void Chip8_CoreInterface::handleEndFrameInterrupt() noexcept {
 	}
 }
 
+void Chip8_CoreInterface::handleTimerTick() noexcept {
+	if (mDelayTimer) { --mDelayTimer; }
+	if (mSoundTimer) { --mSoundTimer; }
+}
+
+void Chip8_CoreInterface::nextInstruction() noexcept {
+	mCurrentPC += 2;
+}
+
+void Chip8_CoreInterface::skipInstruction() noexcept {
+	mCurrentPC += 2;
+}
+
+void Chip8_CoreInterface::performProgJump(const u32 next) noexcept {
+	const auto NNN{ next & 0xFFF };
+	if (mCurrentPC - 2u != NNN) [[likely]] {
+		mCurrentPC = NNN & 0xFFF;
+	} else {
+		triggerInterrupt(Interrupt::SOUND);
+	}
+}
+
 /*==================================================================*/
 
 void Chip8_CoreInterface::processFrame() {

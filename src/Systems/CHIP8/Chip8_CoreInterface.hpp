@@ -150,13 +150,16 @@ protected:
 	virtual void handlePreFrameInterrupt() noexcept;
 	virtual void handleEndFrameInterrupt() noexcept;
 
-	virtual void handleTimerTick() noexcept = 0;
+	virtual void handleTimerTick() noexcept;
 	virtual void instructionLoop() noexcept = 0;
+
+	virtual void nextInstruction() noexcept;
+	virtual void skipInstruction() noexcept;
+	virtual void performProgJump(const u32 next) noexcept;
+	virtual void prepDisplayArea(const Resolution mode) = 0;
 
 	virtual void renderAudioData() = 0;
 	virtual void renderVideoData() = 0;
-
-	virtual void prepDisplayArea(const Resolution mode) = 0;
 
 	f32  calcBuzzerTone() const noexcept;
 

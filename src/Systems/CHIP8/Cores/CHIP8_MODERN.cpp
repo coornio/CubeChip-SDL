@@ -32,11 +32,6 @@ CHIP8_MODERN::CHIP8_MODERN() {
 
 /*==================================================================*/
 
-void CHIP8_MODERN::handleTimerTick() noexcept {
-	if (mDelayTimer) { --mDelayTimer; }
-	if (mSoundTimer) { --mSoundTimer; }
-}
-
 void CHIP8_MODERN::instructionLoop() noexcept {
 
 	auto cycleCount{ 0 };
@@ -232,25 +227,6 @@ void CHIP8_MODERN::renderVideoData() {
 }
 
 /*==================================================================*/
-
-void CHIP8_MODERN::nextInstruction() noexcept {
-	mCurrentPC += 2;
-}
-
-void CHIP8_MODERN::skipInstruction() noexcept {
-	mCurrentPC += 2;
-}
-
-void CHIP8_MODERN::jumpProgramTo(const u32 next) noexcept {
-	const auto NNN{ next & 0xFFF };
-	if (mCurrentPC - 2u != NNN) [[likely]] {
-		mCurrentPC = NNN & 0xFFF;
-	} else {
-		triggerInterrupt(Interrupt::SOUND);
-	}
-}
-
-/*==================================================================*/
 	#pragma region 0 instruction branch
 
 	void CHIP8_MODERN::instruction_00E0() noexcept {
@@ -274,7 +250,7 @@ void CHIP8_MODERN::jumpProgramTo(const u32 next) noexcept {
 	#pragma region 1 instruction branch
 
 	void CHIP8_MODERN::instruction_1NNN(const s32 NNN) noexcept {
-		jumpProgramTo(NNN);
+		performProgJump(NNN);
 	}
 
 	#pragma endregion
@@ -285,7 +261,7 @@ void CHIP8_MODERN::jumpProgramTo(const u32 next) noexcept {
 
 	void CHIP8_MODERN::instruction_2NNN(const s32 NNN) noexcept {
 		mStackBank[mStackTop++ & 0xF] = mCurrentPC;
-		jumpProgramTo(NNN);
+		performProgJump(NNN);
 	}
 
 	#pragma endregion
@@ -411,7 +387,7 @@ void CHIP8_MODERN::jumpProgramTo(const u32 next) noexcept {
 	#pragma region B instruction branch
 
 	void CHIP8_MODERN::instruction_BNNN(const s32 NNN) noexcept {
-		jumpProgramTo(NNN + mRegisterV[0]);
+		performProgJump(NNN + mRegisterV[0]);
 	}
 
 	#pragma endregion

@@ -34,11 +34,6 @@ SCHIP_MODERN::SCHIP_MODERN()
 
 /*==================================================================*/
 
-void SCHIP_MODERN::handleTimerTick() noexcept {
-	if (mDelayTimer) { --mDelayTimer; }
-	if (mSoundTimer) { --mSoundTimer; }
-}
-
 void SCHIP_MODERN::instructionLoop() noexcept {
 
 	auto cycleCount{ 0 };
@@ -277,23 +272,6 @@ void SCHIP_MODERN::prepDisplayArea(const Resolution mode) {
 
 /*==================================================================*/
 
-void SCHIP_MODERN::nextInstruction() noexcept {
-	mCurrentPC += 2;
-}
-
-void SCHIP_MODERN::skipInstruction() noexcept {
-	mCurrentPC += 2;
-}
-
-void SCHIP_MODERN::jumpProgramTo(const u32 next) noexcept {
-	const auto NNN{ next & 0xFFF };
-	if (mCurrentPC - 2u != NNN) [[likely]] {
-		mCurrentPC = NNN & 0xFFF;
-	} else {
-		triggerInterrupt(Interrupt::SOUND);
-	}
-}
-
 void SCHIP_MODERN::scrollDisplayDN(const s32 N) {
 	mDisplayBuffer[0].shift(+N, 0);
 }
@@ -351,7 +329,7 @@ void SCHIP_MODERN::scrollDisplayRT() {
 	#pragma region 1 instruction branch
 
 	void SCHIP_MODERN::instruction_1NNN(const s32 NNN) noexcept {
-		jumpProgramTo(NNN);
+		performProgJump(NNN);
 	}
 
 	#pragma endregion
@@ -362,7 +340,7 @@ void SCHIP_MODERN::scrollDisplayRT() {
 
 	void SCHIP_MODERN::instruction_2NNN(const s32 NNN) noexcept {
 		mStackBank[mStackTop++ & 0xF] = mCurrentPC;
-		jumpProgramTo(NNN);
+		performProgJump(NNN);
 	}
 
 	#pragma endregion
@@ -488,7 +466,7 @@ void SCHIP_MODERN::scrollDisplayRT() {
 	#pragma region B instruction branch
 
 	void SCHIP_MODERN::instruction_BNNN(const s32 NNN) noexcept {
-		jumpProgramTo(NNN + mRegisterV[0]);
+		performProgJump(NNN + mRegisterV[0]);
 	}
 
 	#pragma endregion
