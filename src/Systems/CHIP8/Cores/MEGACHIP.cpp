@@ -17,13 +17,6 @@ MEGACHIP::MEGACHIP()
 {
 	if (getCoreState() != EmuState::FAILED) {
 
-		std::generate(
-			std::execution::unseq,
-			mMemoryBank.begin(),
-			mMemoryBank.end(),
-			[]() { return Wrand->get<u8>(); }
-		);
-
 		copyGameToMemory(mMemoryBank.data(), cGameLoadPos);
 		copyFontToMemory(mMemoryBank.data(), 0x0, 0xB4);
 
@@ -37,6 +30,7 @@ MEGACHIP::MEGACHIP()
 
 		prepDisplayArea(Resolution::LO);
 		setNewBlendAlgorithm(BlendMode::NORMAL);
+		initializeFontColors();
 	}
 }
 
@@ -365,18 +359,18 @@ void MEGACHIP::prepDisplayArea(const Resolution mode) {
 
 		BVS->setBackColor(mColorPalette.at_raw(0));
 		BVS->createTexture(cScreenMegaX, cScreenMegaY);
-		BVS->setAspectRatio(cScreenMegaX * 2, cScreenMegaY * 2, -2);
+		BVS->setAspectRatio(cScreenMegaX * cResMegaMult, cScreenMegaY * cResMegaMult, -2);
 		BVS->setTextureAlpha(0xFF);
 
 		Quirk.waitVblank = false;
-		mActiveCPF = 3000;
+		mActiveCPF = cInstSpeedMC;
 	}
 	else {
 		setDisplayResolution(cScreenSizeX, cScreenSizeY);
 
 		BVS->setBackColor(cBitsColor[0]);
 		BVS->createTexture(cScreenSizeX, cScreenSizeY);
-		BVS->setAspectRatio(cScreenSizeX * 4, cScreenSizeY * 4, +2);
+		BVS->setAspectRatio(cScreenSizeX * cResSizeMult, cScreenSizeY * cResSizeMult, +2);
 		BVS->setTextureAlpha(0xFF);
 
 		Quirk.waitVblank = !isDisplayLarger();
@@ -405,7 +399,21 @@ void MEGACHIP::scrollDisplayRT() {
 
 /*==================================================================*/
 
-u32 MEGACHIP::blendPixel(const u32 srcPixel, const u32 dstPixel) const noexcept {
+void MEGACHIP::initializeFontColors() noexcept {
+	for (auto i{ 0 }; i < 10; ++i) {
+		const auto mult{ 1.0f - 0.045f * i };
+		const auto R{ 0xFF * mult * 1.03f };
+		const auto G{ 0xFF * mult * 1.14f };
+		const auto B{ 0xFF * mult * 1.21f };
+
+		mFontColor[i] = 0xFF000000
+			| static_cast<u32>(std::min(std::round(R), 255.0f)) << 16
+			| static_cast<u32>(std::min(std::round(G), 255.0f)) <<  8
+			| static_cast<u32>(std::min(std::round(B), 255.0f));
+	}
+}
+
+u32  MEGACHIP::blendPixel(const u32 srcPixel, const u32 dstPixel) const noexcept {
 	static constexpr f32 minF{ 1.0f / 255.0f };
 	struct ColorF { f32 A, R, G, B; };
 	ColorF src, dst;
@@ -848,25 +856,25 @@ void MEGACHIP::scrollBuffersRT() {
 			{ triggerInterrupt(Interrupt::FRAME); }
 
 		if (isManualRefresh()) {
-			s32 VX{ mRegisterV[X] };
-			s32 VY{ mRegisterV[Y] };
+			const auto originX{ mRegisterV[X] + 0 };
+			const auto originY{ mRegisterV[Y] + 0 };
 
 			mRegisterV[0xF] = 0;
 
-			if (!Quirk.wrapSprite && VY >= mDisplayH) { return; }
+			if (!Quirk.wrapSprite && originY >= mDisplayH) { return; }
 			if (mRegisterI >= 0xF0) [[likely]] { goto paintTexture; }
 
-			for (auto H{ 0 }, _Y{ VY }; H < N; ++H, ++_Y &= mDisplayWb)
+			for (auto rowN{ 0 }, offsetY{ originY }; rowN < N; ++rowN)
 			{
-				if (Quirk.wrapSprite && _Y >= mDisplayH) { continue; }
-				const auto bytePixel{ readMemoryI(H) };
+				if (Quirk.wrapSprite && offsetY >= mDisplayH) { continue; }
+				const auto octoPixelBatch{ readMemoryI(rowN) };
 
-				for (auto W{ 7 }, _X{ VX }; W >= 0; --W, ++_X &= mDisplayWb)
+				for (auto colN{ 7 }, offsetX{ originX }; colN >= 0; --colN)
 				{
-					if (bytePixel >> W & 0x1)
+					if (octoPixelBatch >> colN & 0x1)
 					{
-						auto& collideCoord{ mCollisionMap.at_raw(_Y, _X) };
-						auto& backbufCoord{ mBackgroundBuffer.at_raw(_Y, _X) };
+						auto& collideCoord{ mCollisionMap.at_raw(offsetY, offsetX) };
+						auto& backbufCoord{ mBackgroundBuffer.at_raw(offsetY, offsetX) };
 
 						if (collideCoord) [[unlikely]] {
 							collideCoord = 0;
@@ -874,27 +882,29 @@ void MEGACHIP::scrollBuffersRT() {
 							mRegisterV[0xF] = 1;
 						} else {
 							collideCoord = 254;
-							backbufCoord = mFontColor[H];
+							backbufCoord = mFontColor[rowN];
 						}
 					}
-					if (!Quirk.wrapSprite && _X == mDisplayWb) { break; }
+					if (!Quirk.wrapSprite && offsetX == mDisplayWb) { break; }
+					else { ++offsetX &= mDisplayWb; }
 				}
-				if (!Quirk.wrapSprite && _Y == mDisplayWb) { break; }
+				if (!Quirk.wrapSprite && offsetY == mDisplayWb) { break; }
+				else { ++offsetY &= mDisplayWb; }
 			}
 			return;
 
 		paintTexture:
-			for (auto H{ 0 }, _Y{ VY }; H < mTexture.H; ++H, ++_Y &= mDisplayWb)
+			for (auto rowN{ 0 }, offsetY{ originY }; rowN < mTexture.H; ++rowN)
 			{
-				if (Quirk.wrapSprite && _Y >= mDisplayH) { continue; }
-				auto I = H * mTexture.W;
+				if (Quirk.wrapSprite && offsetY >= mDisplayH) { continue; }
+				auto I = rowN * mTexture.W;
 
-				for (auto W{ 0 }, _X{ VX }; W < mTexture.W; ++W, ++_X &= mDisplayWb)
+				for (auto colN{ 0 }, offsetX{ originX }; colN < mTexture.W; ++colN, ++I)
 				{
-					if (const auto sourceColorIdx{ readMemoryI(I++) }; sourceColorIdx)
+					if (const auto sourceColorIdx{ readMemoryI(I) }; sourceColorIdx)
 					{
-						auto& collideCoord{ mCollisionMap.at_raw(_Y, _X) };
-						auto& backbufCoord{ mBackgroundBuffer.at_raw(_Y, _X) };
+						auto& collideCoord{ mCollisionMap.at_raw(offsetY, offsetX) };
+						auto& backbufCoord{ mBackgroundBuffer.at_raw(offsetY, offsetX) };
 
 						if (collideCoord == mTexture.collide)
 							[[unlikely]] { mRegisterV[0xF] = 1; }
@@ -904,15 +914,17 @@ void MEGACHIP::scrollBuffersRT() {
 							mColorPalette.at_raw(sourceColorIdx),
 							backbufCoord);
 					}
-					if (!Quirk.wrapSprite && _X == mDisplayWb) { break; }
+					if (!Quirk.wrapSprite && offsetX == mDisplayWb) { break; }
+					else { ++offsetX &= mDisplayWb; }
 				}
-				if (!Quirk.wrapSprite && _Y == mDisplayWb) { break; }
+				if (!Quirk.wrapSprite && offsetY == mDisplayWb) { break; }
+				else { ++offsetY &= mDisplayWb; }
 			}
 		} else {
 			if (isDisplayLarger()) {
-				const s32 offsetX{ 8 - (mRegisterV[X] & 7) };
-				const s32 originX{ mRegisterV[X] & 0x78 };
-				const s32 originY{ mRegisterV[Y] & 0x3F };
+				const auto offsetX{ 8 - (mRegisterV[X] & 7) };
+				const auto originX{ mRegisterV[X] & 0x78 };
+				const auto originY{ mRegisterV[Y] & 0x3F };
 
 				mRegisterV[0xF] = 0;
 
@@ -940,23 +952,22 @@ void MEGACHIP::scrollBuffersRT() {
 				}
 			}
 			else {
-				const s32 offsetX{ 8 - (mRegisterV[X] * 2 & 7) };
-				const s32 originX{ mRegisterV[X] * 2 & 0x78 };
-				const s32 originY{ mRegisterV[Y] * 2 & 0x3F };
-				const s32 lengthN{ N == 0 ? 16 : N };
+				const auto offsetX{ 8 - (mRegisterV[X] * 2 & 7) };
+				const auto originX{ mRegisterV[X] * 2 & 0x78 };
+				const auto originY{ mRegisterV[Y] * 2 & 0x3F };
+				const auto lengthN{ N == 0 ? 16 : N };
 
 				mRegisterV[0xF] = 0;
 
 				for (auto rowN{ 0 }; rowN < lengthN; ++rowN) {
 					const auto offsetY{ originY + rowN * 2 };
 
-					mRegisterV[0xF] += drawDoubleBytes(
+					mRegisterV[0xF] |= drawDoubleBytes(
 						originX, offsetY, offsetX ? 24 : 16,
 						bitBloat(readMemoryI(rowN)) << offsetX
 					);
 					if (offsetY == 0x3E) { break; }
 				}
-				mRegisterV[0xF] = mRegisterV[0xF] != 0;
 			}
 		}
 	}

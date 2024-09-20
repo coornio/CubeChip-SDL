@@ -31,7 +31,7 @@ SCHIP_LEGACY::SCHIP_LEGACY()
 
 		BVS->setBackColor(cBitsColor[0]);
 		BVS->createTexture(cScreenSizeX, cScreenSizeY);
-		BVS->setAspectRatio(cScreenSizeX * 4, cScreenSizeY * 4, +2);
+		BVS->setAspectRatio(cScreenSizeX * cResSizeMult, cScreenSizeY * cResSizeMult, +2);
 
 		mCurrentPC = cStartOffset;
 		mFramerate = cRefreshRate;
@@ -533,9 +533,9 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 			{ triggerInterrupt(Interrupt::FRAME); }
 
 		if (isDisplayLarger()) {
-			const s32 offsetX{ 8 - (mRegisterV[X] & 7) };
-			const s32 originX{ mRegisterV[X] & 0x78 };
-			const s32 originY{ mRegisterV[Y] & 0x3F };
+			const auto offsetX{ 8 - (mRegisterV[X] & 7) };
+			const auto originX{ mRegisterV[X] & 0x78 };
+			const auto originY{ mRegisterV[Y] & 0x3F };
 
 			mRegisterV[0xF] = 0;
 
@@ -563,23 +563,22 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 			}
 		}
 		else {
-			const s32 offsetX{ 8 - (mRegisterV[X] * 2 & 7) };
-			const s32 originX{ mRegisterV[X] * 2 & 0x78 };
-			const s32 originY{ mRegisterV[Y] * 2 & 0x3F };
-			const s32 lengthN{ N == 0 ? 16 : N };
+			const auto offsetX{ 8 - (mRegisterV[X] * 2 & 7) };
+			const auto originX{ mRegisterV[X] * 2 & 0x78 };
+			const auto originY{ mRegisterV[Y] * 2 & 0x3F };
+			const auto lengthN{ N == 0 ? 16 : N };
 
 			mRegisterV[0xF] = 0;
 
 			for (auto rowN{ 0 }; rowN < lengthN; ++rowN) {
 				const auto offsetY{ originY + rowN * 2 };
 
-				mRegisterV[0xF] += drawDoubleBytes(
+				mRegisterV[0xF] |= drawDoubleBytes(
 					originX, offsetY, offsetX ? 24 : 16,
 					bitBloat(readMemoryI(rowN)) << offsetX
 				);
 				if (offsetY == 0x3E) { break; }
 			}
-			mRegisterV[0xF] = mRegisterV[0xF] != 0;
 		}
 	}
 

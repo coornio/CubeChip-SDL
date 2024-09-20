@@ -16,6 +16,8 @@ class CHIP8_MODERN final : public Chip8_CoreInterface {
 	static constexpr u32 cGameLoadPos{   512 };
 	static constexpr u32 cStartOffset{   512 };
 	static constexpr f32 cRefreshRate{ 60.0f };
+
+	static constexpr s32 cResSizeMult{     8 };
 	static constexpr s32 cScreenSizeX{    64 };
 	static constexpr s32 cScreenSizeY{    32 };
 	static constexpr s32 cInstSpeedHi{    30 };

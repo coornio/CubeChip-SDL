@@ -22,7 +22,7 @@ CHIP8_MODERN::CHIP8_MODERN() {
 
 		BVS->setBackColor(cBitsColor[0]);
 		BVS->createTexture(cScreenSizeX, cScreenSizeY);
-		BVS->setAspectRatio(cScreenSizeX * 8, cScreenSizeY * 8, +2);
+		BVS->setAspectRatio(cScreenSizeX * cResSizeMult, cScreenSizeY * cResSizeMult, +2);
 
 		mCurrentPC = cStartOffset;
 		mFramerate = cRefreshRate;

@@ -30,7 +30,7 @@ XOCHIP::XOCHIP()
 
 		BVS->setBackColor(cBitsColor[0]);
 		BVS->createTexture(cScreenSizeX, cScreenSizeY);
-		BVS->setAspectRatio(cScreenSizeX * 8, cScreenSizeY * 8, +2);
+		BVS->setAspectRatio(cScreenSizeX * cResSizeMult, cScreenSizeY * cResSizeMult, +2);
 
 		std::copy_n(
 			std::execution::unseq,

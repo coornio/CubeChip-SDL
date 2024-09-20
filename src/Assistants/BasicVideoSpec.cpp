@@ -146,7 +146,7 @@ void BasicVideoSpec::modifyTexture(const std::span<u32> colorData) {
 	unlockTexture();
 }
 
-void BasicVideoSpec::setTextureAlpha(const usz alpha) {
+void BasicVideoSpec::setTextureAlpha(const u32 alpha) {
 	SDL_SetTextureAlphaMod(texture, static_cast<u8>(alpha));
 }
 

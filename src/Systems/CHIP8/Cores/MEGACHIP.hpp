@@ -17,17 +17,22 @@ class MEGACHIP final : public Chip8_CoreInterface {
 	static constexpr u32 cSafezoneOOB{       32 };
 	static constexpr u32 cGameLoadPos{      512 };
 	static constexpr u32 cStartOffset{      512 };
-	static constexpr f32 cRefreshRate{    64.0f };
+	static constexpr f32 cRefreshRate{    50.0f };
+
+	static constexpr s32 cResSizeMult{        4 };
 	static constexpr s32 cScreenSizeX{      128 };
 	static constexpr s32 cScreenSizeY{       64 };
-	static constexpr s32 cScreenMegaX{      256 };
-	static constexpr s32 cScreenMegaY{      192 };
 	static constexpr s32 cInstSpeedHi{       45 };
 	static constexpr s32 cInstSpeedLo{       30 };
 
+	static constexpr s32 cResMegaMult{        2 };
+	static constexpr s32 cScreenMegaX{      256 };
+	static constexpr s32 cScreenMegaY{      192 };
+	static constexpr s32 cInstSpeedMC{     4000 };
+
 /*==================================================================*/
 
-	Map2D<u8> mDisplayBuffer[1];
+	Map2D<u8>  mDisplayBuffer[1];
 
 	Map2D<u32> mForegroundBuffer;
 	Map2D<u32> mBackgroundBuffer;
@@ -35,6 +40,8 @@ class MEGACHIP final : public Chip8_CoreInterface {
 	Map2D<u32> mColorPalette;
 
 	std::array<u32, 10> mFontColor{};
+
+	void initializeFontColors() noexcept;
 
 	struct Texture {
 		s32 W{}, H{};

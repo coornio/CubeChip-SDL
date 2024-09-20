@@ -116,7 +116,7 @@ public:
 		unlockTexture();
 	}
 
-	void setTextureAlpha(usz);
+	void setTextureAlpha(u32);
 	void setAspectRatio(s32, s32, s32);
 
 private:
