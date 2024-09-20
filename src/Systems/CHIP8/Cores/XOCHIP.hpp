@@ -26,7 +26,7 @@ class XOCHIP final : public Chip8_CoreInterface {
 	static constexpr s32 cInstSpeedLo{  1000 };
 
 private:
-	std::array<u32, 16> mBitsColor{};
+	std::array<u32, 16> mBitColors{};
 
 	void setColorBit332(const s32 bit, const s32 color) noexcept;
 

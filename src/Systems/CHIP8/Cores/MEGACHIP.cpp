@@ -316,7 +316,7 @@ void MEGACHIP::renderAudioData() {
 				}
 			}
 		}
-		BVS->setFrameColor(0xFF202020, 0xFF202020);
+		BVS->setFrameColor(0x202020, 0x202020);
 	} else {
 		static f32 wavePhase{};
 
@@ -325,10 +325,10 @@ void MEGACHIP::renderAudioData() {
 				sample = static_cast<s8>(wavePhase > 0.5f ? 16 : -16);
 				wavePhase = std::fmod(wavePhase + mBuzzerTone, 1.0f);
 			}
-			BVS->setFrameColor(cBitsColor[0], cBitsColor[1]);
+			BVS->setFrameColor(sBitColors[0], sBitColors[1]);
 		} else {
 			wavePhase = 0.0f;
-			BVS->setFrameColor(cBitsColor[0], cBitsColor[0]);
+			BVS->setFrameColor(sBitColors[0], sBitColors[0]);
 		}
 	}
 
@@ -341,11 +341,11 @@ void MEGACHIP::renderVideoData() {
 	BVS->modifyTexture<u8>(mDisplayBuffer[0].span(), isPixelTrailing()
 		? [](const u32 pixel) noexcept {
 			static constexpr u32 layer[4]{ 0xFF, 0xE7, 0x6F, 0x37 };
-			const auto alpha{ layer[std::countl_zero(pixel) & 0x3] };
-			return alpha << 24 | cBitsColor[pixel != 0];
+			const auto opacity{ layer[std::countl_zero(pixel) & 0x3] };
+			return opacity << 24 | sBitColors[pixel != 0];
 		}
 		: [](const u32 pixel) noexcept {
-			return 0xFF000000 | cBitsColor[pixel >> 3];
+			return 0xFF000000 | sBitColors[pixel >> 3];
 		}
 	);
 }
@@ -368,7 +368,7 @@ void MEGACHIP::prepDisplayArea(const Resolution mode) {
 	else {
 		setDisplayResolution(cScreenSizeX, cScreenSizeY);
 
-		BVS->setBackColor(cBitsColor[0]);
+		BVS->setBackColor(sBitColors[0]);
 		BVS->createTexture(cScreenSizeX, cScreenSizeY);
 		BVS->setAspectRatio(cScreenSizeX * cResSizeMult, cScreenSizeY * cResSizeMult, +2);
 		BVS->setTextureAlpha(0xFF);

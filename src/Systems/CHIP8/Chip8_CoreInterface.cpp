@@ -17,6 +17,8 @@
 
 fsPath*   Chip8_CoreInterface::sPermaRegsPath{};
 fsPath*   Chip8_CoreInterface::sSavestatePath{};
+std::array<u8, 240> Chip8_CoreInterface::sFontsData{ Chip8_CoreInterface::cFontsData };
+std::array<u32, 16> Chip8_CoreInterface::sBitColors{ Chip8_CoreInterface::cBitColors };
 
 Chip8_CoreInterface::Chip8_CoreInterface() noexcept
 	: ASB{ std::make_unique<AudioSpecBlock>(SDL_AUDIO_S8, 1, 48'000) }
@@ -308,7 +310,16 @@ void Chip8_CoreInterface::copyFontToMemory(
 ) noexcept {
 	std::copy_n(
 		std::execution::unseq,
-		cFontData.begin(), size, dest + offset
+		sFontsData.begin(), size, dest + offset
+	);
+}
+
+void Chip8_CoreInterface::copyColorsToCore(
+	u32* dest, const u32 size
+) noexcept {
+	std::copy_n(
+		std::execution::unseq,
+		sBitColors.begin(), size, dest
 	);
 }
 

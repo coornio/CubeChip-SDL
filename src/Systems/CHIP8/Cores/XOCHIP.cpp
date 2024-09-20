@@ -25,18 +25,13 @@ XOCHIP::XOCHIP()
 
 		copyGameToMemory(mMemoryBank.data(), cGameLoadPos);
 		copyFontToMemory(mMemoryBank.data(), 0x0, 0x50);
+		copyColorsToCore(mBitColors.data(), mBitColors.size());
 
 		setDisplayResolution(cScreenSizeX, cScreenSizeY);
 
-		BVS->setBackColor(cBitsColor[0]);
+		BVS->setBackColor(mBitColors[0]);
 		BVS->createTexture(cScreenSizeX, cScreenSizeY);
 		BVS->setAspectRatio(cScreenSizeX * cResSizeMult, cScreenSizeY * cResSizeMult, +2);
-
-		std::copy_n(
-			std::execution::unseq,
-			cBitsColor.data(), 16,
-			mBitsColor.data()
-		);
 
 		mCurrentPC = cStartOffset;
 		mFramerate = cRefreshRate;
@@ -271,7 +266,7 @@ void XOCHIP::renderAudioData() {
 				sample    = static_cast<s8>(wavePhase > 0.5f ? 16 : -16);
 				wavePhase = std::fmod(wavePhase + mBuzzerTone, 1.0f);
 			}
-			BVS->setFrameColor(cBitsColor[0], cBitsColor[1]);
+			BVS->setFrameColor(mBitColors[0], mBitColors[1]);
 		} else {
 			const auto audioStep{ std::pow(2.0f, (mAudioPitch - 64.0f) / 48.0f) };
 			const auto audioTone{ 31.25f / ASB->getFrequency() * audioStep };
@@ -282,12 +277,12 @@ void XOCHIP::renderAudioData() {
 				sample    = mPatternBuf[step >> 3] & mask ? 16 : -16;
 				wavePhase = std::fmod(wavePhase + audioTone, 1.0f);
 			}
-			BVS->setFrameColor(cBitsColor[0], cBitsColor[0]);
+			BVS->setFrameColor(mBitColors[0], mBitColors[0]);
 		}
 	} else {
 		wavePhase = 0.0f;
 		isBuzzerEnabled(false);
-		BVS->setFrameColor(cBitsColor[0], cBitsColor[0]);
+		BVS->setFrameColor(mBitColors[0], mBitColors[0]);
 	}
 
 	ASB->pushAudioData<s8>(samplesBuffer);
@@ -311,7 +306,7 @@ void XOCHIP::renderVideoData() {
 
 	BVS->modifyTexture<u8>(textureBuffer,
 		[this](const u32 pixel) noexcept {
-			return 0xFF000000 | mBitsColor[pixel];
+			return 0xFF000000 | mBitColors[pixel];
 		}
 	);
 }
@@ -335,7 +330,7 @@ void XOCHIP::setColorBit332(const s32 bit, const s32 color) noexcept {
 	static constexpr u8 map3b[]{ 0x00, 0x20, 0x40, 0x60, 0x80, 0xA0, 0xC0, 0xFF };
 	static constexpr u8 map2b[]{ 0x00,             0x60,       0xA0,       0xFF };
 
-	mBitsColor[bit & 0xF] = map3b[color >> 5 & 0x7] << 16 // red
+	mBitColors[bit & 0xF] = map3b[color >> 5 & 0x7] << 16 // red
 						  | map3b[color >> 2 & 0x7] <<  8 // green
 						  | map2b[color      & 0x3];      // blue
 }
@@ -506,7 +501,7 @@ void XOCHIP::scrollDisplayRT() {
 				setColorBit332(X - Z, readMemoryI(Z));
 			}
 		}
-		BVS->setBackColor(mBitsColor[0]);
+		BVS->setBackColor(mBitColors[0]);
 	}
 
 	#pragma endregion
