@@ -46,7 +46,7 @@ void BYTEPUSHER_STANDARD::instructionLoop() noexcept {
 
 void BYTEPUSHER_STANDARD::renderAudioData() {
 	const std::span<u8, cAudioLength>
-		samplesOffset{ mMemoryBank.data() + (readData<2>(6) << 8), 0 };
+		samplesOffset{ mMemoryBank.data() + (readData<2>(6) << 8), cAudioLength };
 
 	std::vector<s8> samplesBuffer \
 		(samplesOffset.begin(), samplesOffset.end());
@@ -56,7 +56,7 @@ void BYTEPUSHER_STANDARD::renderAudioData() {
 
 void BYTEPUSHER_STANDARD::renderVideoData() {
 	const std::span<u8, cScreenSizeT>
-		displayBuffer{ mMemoryBank.data() + (readData<1>(5) << 16), 0 };
+		displayBuffer{ mMemoryBank.data() + (readData<1>(5) << 16), cScreenSizeT };
 
 	BVS->modifyTexture<u8>(displayBuffer,
 		[](const u32 pixel) noexcept {
