@@ -3,7 +3,6 @@ project(CubeChip)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -41,6 +40,9 @@ add_executable(CubeChip
   src/Systems/BYTEPUSHER/BytePusher_CoreInterface.cpp
   src/Systems/BYTEPUSHER/Cores/BYTEPUSHER_STANDARD.cpp
 
+  src/Systems/GAMEBOY/GameBoy_CoreInterface.cpp
+  src/Systems/GAMEBOY/Cores/GAMEBOY_CLASSIC.cpp
+
   src/Systems/CHIP8/Chip8_CoreInterface.cpp
   src/Systems/CHIP8/Cores/CHIP8_MODERN.cpp
   src/Systems/CHIP8/Cores/SCHIP_MODERN.cpp
@@ -61,5 +63,5 @@ endif()
 if(MSVC)
   target_compile_options(CubeChip PRIVATE /W4 /std:c++latest)
 else()
-  target_compile_options(CubeChip PRIVATE -Wall -Wextra --std=c++23)
+  target_compile_options(CubeChip PRIVATE -Wall -Wextra -stdlib=libc++ --std=c++23)
 endif()

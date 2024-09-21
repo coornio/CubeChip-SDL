@@ -36,6 +36,12 @@
     <Filter Include="Source Files\Systems\CHIP8\Cores">
       <UniqueIdentifier>{a31d04cb-4539-415a-9bab-f85e2fb0f2b7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Systems\GAMEBOY">
+      <UniqueIdentifier>{00a2d494-a57a-4ba3-9210-3d04cb91f4e5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Systems\GAMEBOY\Cores">
+      <UniqueIdentifier>{5b33560e-ded9-4795-ba66-939d71046c56}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\CubeChip.cpp">
@@ -94,6 +100,12 @@
     </ClCompile>
     <ClCompile Include="src\Systems\CHIP8\Cores\MEGACHIP.cpp">
       <Filter>Source Files\Systems\CHIP8\Cores</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Systems\GAMEBOY\GameBoy_CoreInterface.cpp">
+      <Filter>Source Files\Systems\GAMEBOY</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Systems\GAMEBOY\Cores\GAMEBOY_CLASSIC.cpp">
+      <Filter>Source Files\Systems\GAMEBOY\Cores</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -177,6 +189,12 @@
     </ClInclude>
     <ClInclude Include="src\Systems\CHIP8\Cores\MEGACHIP.hpp">
       <Filter>Source Files\Systems\CHIP8\Cores</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\GAMEBOY\GameBoy_CoreInterface.hpp">
+      <Filter>Source Files\Systems\GAMEBOY</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\GAMEBOY\Cores\GAMEBOY_CLASSIC.hpp">
+      <Filter>Source Files\Systems\GAMEBOY\Cores</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

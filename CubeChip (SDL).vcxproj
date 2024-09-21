@@ -37,6 +37,8 @@
     <ClCompile Include="src\Systems\CHIP8\Cores\SCHIP_MODERN.cpp" />
     <ClCompile Include="src\Systems\CHIP8\Cores\XOCHIP.cpp" />
     <ClCompile Include="src\Systems\EmuInterface.cpp" />
+    <ClCompile Include="src\Systems\GAMEBOY\Cores\GAMEBOY_CLASSIC.cpp" />
+    <ClCompile Include="src\Systems\GAMEBOY\GameBoy_CoreInterface.cpp" />
     <ClCompile Include="src\Systems\GameFileChecker.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -64,6 +66,8 @@
     <ClInclude Include="src\Systems\CHIP8\Cores\SCHIP_MODERN.hpp" />
     <ClInclude Include="src\Systems\CHIP8\Cores\XOCHIP.hpp" />
     <ClInclude Include="src\Systems\EmuInterface.hpp" />
+    <ClInclude Include="src\Systems\GAMEBOY\Cores\GAMEBOY_CLASSIC.hpp" />
+    <ClInclude Include="src\Systems\GAMEBOY\GameBoy_CoreInterface.hpp" />
     <ClInclude Include="src\Systems\GameFileChecker.hpp" />
     <ClInclude Include="src\_nlohmann\json.hpp" />
     <ClInclude Include="src\_nlohmann\json_fwd.hpp" />

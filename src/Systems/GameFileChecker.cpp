@@ -22,6 +22,8 @@ using json = nlohmann::json;
 
 #include "BYTEPUSHER/Cores/BYTEPUSHER_STANDARD.hpp"
 
+#include "GAMEBOY/Cores/GAMEBOY_CLASSIC.hpp"
+
 /*==================================================================*/
 
 GameCoreType   GameFileChecker::sEmuCore{};
