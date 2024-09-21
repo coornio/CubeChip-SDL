@@ -94,7 +94,7 @@ public:
 	auto getVolumeNorm() const noexcept { return mVolume / 255.0f; }
 
 	auto getSampleRate(f32 framerate) const noexcept {
-		return framerate ? mSpec.freq / framerate : 0.0f;
+		return std::fabs(framerate) > 1e-6f ? mSpec.freq / framerate : 0.0f;
 	}
 
 	void setVolume(s32 value) noexcept {

@@ -52,7 +52,7 @@ class MEGACHIP final : public Chip8_CoreInterface {
 	u32 blendPixel(const u32 srcPixel, const u32 dstPixel) const noexcept;
 
 	enum BlendMode {
-		NORMAL       = 0,
+		ALPHA_BLEND  = 0,
 		LINEAR_DODGE = 4,
 		MULTIPLY     = 5,
 	};

@@ -412,23 +412,23 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 	}
 	void SCHIP_LEGACY::instruction_8xy5(const s32 X, const s32 Y) noexcept {
 		const bool nborrow{ mRegisterV[X] >= mRegisterV[Y] };
-		mRegisterV[X]   = mRegisterV[X] - mRegisterV[Y];
-		mRegisterV[0xF] = nborrow;
+		mRegisterV[X]   = static_cast<u8>(mRegisterV[X] - mRegisterV[Y]);
+		mRegisterV[0xF] = static_cast<u8>(nborrow);
 	}
 	void SCHIP_LEGACY::instruction_8xy7(const s32 X, const s32 Y) noexcept {
 		const bool nborrow{ mRegisterV[Y] >= mRegisterV[X] };
-		mRegisterV[X]   = mRegisterV[Y] - mRegisterV[X];
-		mRegisterV[0xF] = nborrow;
+		mRegisterV[X]   = static_cast<u8>(mRegisterV[Y] - mRegisterV[X]);
+		mRegisterV[0xF] = static_cast<u8>(nborrow);
 	}
 	void SCHIP_LEGACY::instruction_8xy6(const s32 X, const s32  ) noexcept {
 		const bool lsb{ (mRegisterV[X] & 1) == 1 };
-		mRegisterV[X]   = mRegisterV[X] >> 1;
-		mRegisterV[0xF] = lsb;
+		mRegisterV[X]   = static_cast<u8>(mRegisterV[X] >> 1);
+		mRegisterV[0xF] = static_cast<u8>(lsb);
 	}
 	void SCHIP_LEGACY::instruction_8xyE(const s32 X, const s32  ) noexcept {
 		const bool msb{ (mRegisterV[X] >> 7) == 1 };
-		mRegisterV[X]   = mRegisterV[X] << 1;
-		mRegisterV[0xF] = msb;
+		mRegisterV[X]   = static_cast<u8>(mRegisterV[X] << 1);
+		mRegisterV[0xF] = static_cast<u8>(msb);
 	}
 
 	#pragma endregion
@@ -537,13 +537,13 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 			const auto originX{ mRegisterV[X] & 0x78 };
 			const auto originY{ mRegisterV[Y] & 0x3F };
 
-			mRegisterV[0xF] = 0;
+			auto collisions{ 0 };
 
 			if (N == 0) {
 				for (auto rowN{ 0 }; rowN < 16; ++rowN) {
 					const auto offsetY{ originY + rowN };
 
-					mRegisterV[0xF] += drawSingleBytes(
+					collisions += drawSingleBytes(
 						originX, offsetY, offsetX ? 24 : 16,
 						(readMemoryI(2 * rowN + 0) << 8 | \
 						 readMemoryI(2 * rowN + 1)) << offsetX
@@ -554,13 +554,14 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 				for (auto rowN{ 0 }; rowN < N; ++rowN) {
 					const auto offsetY{ originY + rowN };
 
-					mRegisterV[0xF] += drawSingleBytes(
+					collisions += drawSingleBytes(
 						originX, offsetY, offsetX ? 16 : 8,
 						readMemoryI(rowN) << offsetX
 					);
 					if (offsetY == 0x3F) { break; }
 				}
 			}
+			mRegisterV[0xF] = static_cast<u8>(collisions);
 		}
 		else {
 			const auto offsetX{ 8 - (mRegisterV[X] * 2 & 7) };
@@ -568,17 +569,19 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 			const auto originY{ mRegisterV[Y] * 2 & 0x3F };
 			const auto lengthN{ N == 0 ? 16 : N };
 
-			mRegisterV[0xF] = 0;
+			auto collisions{ 0 };
 
 			for (auto rowN{ 0 }; rowN < lengthN; ++rowN) {
 				const auto offsetY{ originY + rowN * 2 };
 
-				mRegisterV[0xF] |= drawDoubleBytes(
+				collisions += drawDoubleBytes(
 					originX, offsetY, offsetX ? 24 : 16,
 					bitBloat(readMemoryI(rowN)) << offsetX
 				);
+
 				if (offsetY == 0x3E) { break; }
 			}
+			mRegisterV[0xF] = static_cast<u8>(collisions != 0);
 		}
 	}
 

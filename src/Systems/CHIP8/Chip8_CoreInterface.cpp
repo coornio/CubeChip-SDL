@@ -306,7 +306,7 @@ void Chip8_CoreInterface::copyGameToMemory(
 }
 
 void Chip8_CoreInterface::copyFontToMemory(
-	u8* dest, const u32 offset, const u32 size
+	u8* dest, const u32 offset, const usz size
 ) noexcept {
 	std::copy_n(
 		std::execution::unseq,
@@ -315,7 +315,7 @@ void Chip8_CoreInterface::copyFontToMemory(
 }
 
 void Chip8_CoreInterface::copyColorsToCore(
-	u32* dest, const u32 size
+	u32* dest, const usz size
 ) noexcept {
 	std::copy_n(
 		std::execution::unseq,

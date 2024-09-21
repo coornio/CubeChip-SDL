@@ -145,8 +145,8 @@ protected:
 	bool getPermaRegs(const s32 X) noexcept;
 
 	void copyGameToMemory(u8* dest, const u32 offset) noexcept;
-	void copyFontToMemory(u8* dest, const u32 offset, const u32 size) noexcept;
-	void copyColorsToCore(u32* dest, const u32 size) noexcept;
+	void copyFontToMemory(u8* dest, const u32 offset, const usz size) noexcept;
+	void copyColorsToCore(u32* dest, const usz size) noexcept;
 
 	virtual void handlePreFrameInterrupt() noexcept;
 	virtual void handleEndFrameInterrupt() noexcept;
@@ -166,7 +166,7 @@ protected:
 
 public:
 	Chip8_CoreInterface() noexcept;
-	~Chip8_CoreInterface() noexcept;
+	~Chip8_CoreInterface() noexcept override;
 
 	void processFrame() override;
 

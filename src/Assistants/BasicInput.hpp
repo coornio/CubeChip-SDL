@@ -30,7 +30,7 @@ enum BIC_Button {
 	#pragma region BasicKeyboard Singleton Class
 
 class BasicKeyboard final {
-	std::array<Uint8, SDL_NUM_SCANCODES> oldState{};
+	std::array<Uint8, SDL_SCANCODE_COUNT> oldState{};
 
 	BasicKeyboard() noexcept = default;
 	~BasicKeyboard() noexcept = default;

@@ -17,11 +17,13 @@
 
 /*==================================================================*/
 
+[[maybe_unused]]
 static auto getFileModTime(const fsPath& filePath) noexcept {
 	std::error_code error;
 	return std::filesystem::last_write_time(filePath, error);
 }
 
+[[maybe_unused]]
 static auto getFileSize(const fsPath& filePath) noexcept {
 	std::error_code error;
 	return std::filesystem::file_size(filePath, error);

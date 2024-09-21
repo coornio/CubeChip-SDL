@@ -418,25 +418,25 @@ void SCHIP_MODERN::scrollDisplayRT() {
 	}
 	void SCHIP_MODERN::instruction_8xy5(const s32 X, const s32 Y) noexcept {
 		const bool nborrow{ mRegisterV[X] >= mRegisterV[Y] };
-		mRegisterV[X]   = mRegisterV[X] - mRegisterV[Y];
-		mRegisterV[0xF] = nborrow;
+		mRegisterV[X]   = static_cast<u8>(mRegisterV[X] - mRegisterV[Y]);
+		mRegisterV[0xF] = static_cast<u8>(nborrow);
 	}
 	void SCHIP_MODERN::instruction_8xy7(const s32 X, const s32 Y) noexcept {
 		const bool nborrow{ mRegisterV[Y] >= mRegisterV[X] };
-		mRegisterV[X]   = mRegisterV[Y] - mRegisterV[X];
-		mRegisterV[0xF] = nborrow;
+		mRegisterV[X]   = static_cast<u8>(mRegisterV[Y] - mRegisterV[X]);
+		mRegisterV[0xF] = static_cast<u8>(nborrow);
 	}
 	void SCHIP_MODERN::instruction_8xy6(const s32 X, const s32 Y) noexcept {
 		if (!Quirk.shiftVX) { mRegisterV[X] = mRegisterV[Y]; }
 		const bool lsb{ (mRegisterV[X] & 1) == 1 };
-		mRegisterV[X]   = mRegisterV[X] >> 1;
-		mRegisterV[0xF] = lsb;
+		mRegisterV[X]   = static_cast<u8>(mRegisterV[X] >> 1);
+		mRegisterV[0xF] = static_cast<u8>(lsb);
 	}
 	void SCHIP_MODERN::instruction_8xyE(const s32 X, const s32 Y) noexcept {
 		if (!Quirk.shiftVX) { mRegisterV[X] = mRegisterV[Y]; }
 		const bool msb{ (mRegisterV[X] >> 7) == 1 };
-		mRegisterV[X]   = mRegisterV[X] << 1;
-		mRegisterV[0xF] = msb;
+		mRegisterV[X]   = static_cast<u8>(mRegisterV[X] << 1);
+		mRegisterV[0xF] = static_cast<u8>(msb);
 	}
 
 	#pragma endregion

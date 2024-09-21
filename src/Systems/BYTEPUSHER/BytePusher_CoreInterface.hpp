@@ -48,7 +48,7 @@ protected:
 
 public:
 	BytePusher_CoreInterface() noexcept;
-	~BytePusher_CoreInterface() noexcept;
+	~BytePusher_CoreInterface() noexcept override;
 
 	void processFrame() override;
 

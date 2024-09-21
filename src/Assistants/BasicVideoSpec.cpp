@@ -10,8 +10,11 @@
 #include <SDL3/SDL_platform_defines.h>
 
 #ifdef SDL_PLATFORM_WIN32
+	#pragma warning(push)
+	#pragma warning(disable : 5039)
 	#include <dwmapi.h>
 	#pragma comment (lib, "Dwmapi")
+	#pragma warning(pop)
 #endif
 
 #include "BasicVideoSpec.hpp"
@@ -23,7 +26,7 @@ BasicVideoSpec::BasicVideoSpec() noexcept
 	: enableBuzzGlow{ true }
 {
 	if (!SDL_InitSubSystem(SDL_INIT_VIDEO)) {
-		showErrorBox("Failed SDL_INIT_VIDEO!");
+		showErrorBox("Failed SDL_INIT_VIDEO");
 		return;
 	}
 
@@ -46,20 +49,20 @@ void BasicVideoSpec::createWindow(const s32 window_W, const s32 window_H) {
 	window = SDL_CreateWindow(nullptr, window_W, window_H, 0);
 
 	if (!window) {
-		showErrorBox("Failed to create SDL_Window!");
+		showErrorBox("Failed to create SDL_Window");
 	} else {
 		const auto windowHandle{
-			static_cast<HWND>(SDL_GetPointerProperty(
+			SDL_GetPointerProperty(
 				SDL_GetWindowProperties(window),
 				SDL_PROP_WINDOW_WIN32_HWND_POINTER,
 				nullptr
-			))
+			)
 		};
 
 		if (windowHandle) {
 			const auto windowRound{ DWMWCP_DONOTROUND };
 			DwmSetWindowAttribute(
-				windowHandle,
+				static_cast<HWND>(windowHandle),
 				DWMWA_WINDOW_CORNER_PREFERENCE,
 				&windowRound,
 				sizeof(windowRound)
@@ -74,7 +77,7 @@ void BasicVideoSpec::createRenderer() {
 	renderer = SDL_CreateRenderer(window, nullptr);
 	
 	if (!renderer) {
-		showErrorBox("Failed to create SDL_Renderer!");
+		showErrorBox("Failed to create SDL_Renderer");
 	}
 }
 
@@ -92,7 +95,7 @@ void BasicVideoSpec::createTexture(s32 texture_W, s32 texture_H) {
 	);
 
 	if (!texture) {
-		showErrorBox("Failed to create SDL_Texture!");
+		showErrorBox("Failed to create SDL_Texture");
 	} else {
 		SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
 		ppitch = texture_W * 4;
