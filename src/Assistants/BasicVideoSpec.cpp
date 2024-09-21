@@ -50,7 +50,9 @@ void BasicVideoSpec::createWindow(const s32 window_W, const s32 window_H) {
 
 	if (!window) {
 		showErrorBox("Failed to create SDL_Window");
-	} else {
+	}
+	#ifdef SDL_PLATFORM_WIN32
+	else {
 		const auto windowHandle{
 			SDL_GetPointerProperty(
 				SDL_GetWindowProperties(window),
@@ -69,6 +71,7 @@ void BasicVideoSpec::createWindow(const s32 window_W, const s32 window_H) {
 			);
 		}
 	}
+	#endif
 }
 
 void BasicVideoSpec::createRenderer() {
