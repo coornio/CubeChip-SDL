@@ -22,28 +22,42 @@ if(NOT SDL3_FOUND)
   set_property(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/_deps/sdl-src" PROPERTY EXCLUDE_FROM_ALL TRUE)
 endif()
 
-add_executable(CubeChipSDL
+add_executable(CubeChip
   src/Assistants/BasicLogger.cpp
   src/Assistants/BasicInput.cpp
+  src/Assistants/HomeDirManager.cpp
+  src/Assistants/BasicVideoSpec.cpp
+  src/Assistants/BasicAudioSpec.cpp
   src/Assistants/FrameLimiter.cpp
   src/Assistants/SHA1.cpp
-  src/HostClass/HomeDirManager.cpp
-  src/HostClass/BasicVideoSpec.cpp
-  src/HostClass/BasicAudioSpec.cpp
-  src/HostClass/EmuHost.cpp
-  src/GuestClass/HexInput.cpp
-  src/GuestClass/EmuCores/EmuCores.cpp
-  src/GuestClass/EmuCores/CHIP8_MODERN.cpp
-  src/GuestClass/GameFileChecker.cpp
+
+  src/Systems/EmuInterface.cpp
+  src/Systems/GameFileChecker.cpp
+
+  src/Systems/BYTEPUSHER/BytePusher_CoreInterface.cpp
+  src/Systems/BYTEPUSHER/Cores/BYTEPUSHER_STANDARD.cpp
+
+  src/Systems/CHIP8/Chip8_CoreInterface.cpp
+  src/Systems/CHIP8/Cores/CHIP8_MODERN.cpp
+  src/Systems/CHIP8/Cores/SCHIP_MODERN.cpp
+  src/Systems/CHIP8/Cores/SCHIP_LEGACY.cpp
+  src/Systems/CHIP8/Cores/XOCHIP.cpp
+  src/Systems/CHIP8/Cores/MEGACHIP.cpp
+
+  src/EmuHost.cpp
   src/CubeChip.cpp
 )
-target_include_directories(CubeChipSDL PRIVATE src)
-target_link_libraries(CubeChipSDL PRIVATE SDL3::SDL3-shared)
+target_include_directories(CubeChip PRIVATE src)
+target_link_libraries(CubeChip PRIVATE SDL3::SDL3-shared)
+
+if(WIN32)
+    target_link_libraries(CubeChip PRIVATE Dwmapi)
+endif()
 
 if(MSVC)
   # MSVC compiler options.
-  target_compile_options(CubeChipSDL PRIVATE /W4 /std:c++latest)
+  target_compile_options(CubeChip PRIVATE /W4 /std:c++latest)
 else()
   # Everything else.
-  target_compile_options(CubeChipSDL PRIVATE -Wall -Wextra --std=c++23)
+  target_compile_options(CubeChip PRIVATE -Wall -Wextra --std=c++23)
 endif()
