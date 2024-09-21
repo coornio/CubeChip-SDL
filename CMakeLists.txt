@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.5)
 project(CubeChip)
 
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -55,9 +59,7 @@ if(WIN32)
 endif()
 
 if(MSVC)
-  # MSVC compiler options.
   target_compile_options(CubeChip PRIVATE /W4 /std:c++latest)
 else()
-  # Everything else.
   target_compile_options(CubeChip PRIVATE -Wall -Wextra --std=c++23)
 endif()

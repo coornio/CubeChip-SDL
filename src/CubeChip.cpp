@@ -35,7 +35,7 @@ SDL_AppResult SDL_AppInit(void **Host, int argc, char* argv[]) {
 //             VS               OTHER
 #if !defined(NDEBUG) || defined(DEBUG)
 	{
-		printf("SDL3 test dated: 8/9/2024 (dmy)\n");
+		printf("SDL3 test dated: 15/9/2024 (dmy)\n");
 		const auto compiled{ SDL_VERSION };  /* hardcoded number from SDL headers */
 		const auto linked{ SDL_GetVersion() };  /* reported by linked SDL library */
 
