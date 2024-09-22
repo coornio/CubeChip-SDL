@@ -17,9 +17,9 @@ GAMEBOY_CLASSIC::GAMEBOY_CLASSIC() {
 	if (getSystemState() != EmuState::FAILED) {
 		
 		BVS->createTexture(cScreenSizeX, cScreenSizeY);
-		BVS->setAspectRatio(cScreenSizeX, cScreenSizeY, +2);
+		BVS->setAspectRatio(cScreenSizeX * cResSizeMult, cScreenSizeY * cResSizeMult, +2);
 
-		mActiveCPF = 0;
+		mActiveCPF = cCylesPerSec;
 		mFramerate = cRefreshRate;
 	}
 }
@@ -27,7 +27,12 @@ GAMEBOY_CLASSIC::GAMEBOY_CLASSIC() {
 /*==================================================================*/
 
 void GAMEBOY_CLASSIC::instructionLoop() noexcept {
-	
+	const auto maxCycles{ static_cast<s32>(mActiveCPF / cRefreshRate) };
+
+	auto curCycles{ 0 };
+	while (curCycles < maxCycles) {
+
+	}
 }
 
 void GAMEBOY_CLASSIC::renderAudioData() {
