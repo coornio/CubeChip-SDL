@@ -47,8 +47,8 @@ class SCHIP_MODERN final : public Chip8_CoreInterface {
 public:
 	SCHIP_MODERN();
 
-	static constexpr bool testGameSize(const usz size) noexcept {
-		return size + cGameLoadPos <= cTotalMemory;
+	static constexpr bool isGameFileValid(std::span<const char> game) noexcept {
+		return game.size() + cGameLoadPos <= cTotalMemory;
 	}
 
 private:
@@ -68,8 +68,6 @@ private:
 
 	// 00DN - scroll plane N lines down
 	void instruction_00CN(const s32 N) noexcept;
-	// 00DN - scroll plane N lines up
-	void instruction_00DN(const s32 N) noexcept;
 	// 00E0 - erase whole display
 	void instruction_00E0() noexcept;
 	// 00EE - return from subroutine

@@ -102,8 +102,8 @@ class MEGACHIP final : public Chip8_CoreInterface {
 public:
 	MEGACHIP();
 
-	static constexpr bool testGameSize(const usz size) noexcept {
-		return size + cGameLoadPos <= cTotalMemory;
+	static constexpr bool isGameFileValid(std::span<const char> game) noexcept {
+		return game.size() + cGameLoadPos <= cTotalMemory;
 	}
 
 private:

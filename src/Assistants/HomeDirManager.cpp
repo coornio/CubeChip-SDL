@@ -114,7 +114,7 @@ bool HomeDirManager::validateGameFile(const fsPath gamePath) noexcept {
 	}
 
 	const auto tempSHA1{ SHA1::from_span(mFileData) };
-	const bool gameApproved{ checkGame(getFileSize(), gamePath.extension().string(), tempSHA1)};
+	const bool gameApproved{ checkGame(mFileData, gamePath.extension().string(), tempSHA1)};
 
 	if (gameApproved) {
 		mFilePath = gamePath;

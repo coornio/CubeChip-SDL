@@ -44,7 +44,7 @@ private:
 public:
 	BYTEPUSHER_STANDARD();
 
-	static constexpr bool testGameSize(const usz size) noexcept {
-		return size <= cTotalMemory;
+	static constexpr bool isGameFileValid(std::span<const char> game) noexcept {
+		return game.size() <= cTotalMemory;
 	}
 };

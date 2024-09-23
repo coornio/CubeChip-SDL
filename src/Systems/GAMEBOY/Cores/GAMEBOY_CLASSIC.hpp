@@ -9,7 +9,6 @@
 #include "../GameBoy_CoreInterface.hpp"
 
 #include <initializer_list>
-#include <functional>
 
 /*==================================================================*/
 
@@ -48,83 +47,98 @@ private:
 		std::span<u8, 0x0080> mInOutBank  { mMemoryBanks.begin() + 0xFF00, 0x0080 }; // IO REGS
 		std::span<u8, 0x007F> mHighBank   { mMemoryBanks.begin() + 0xFF80, 0x007F }; // HRAM
 
-
-		/* Video Bank Map */
-		std::span<u8, 0x1800> mVideoTileMap_{ mVideoBank.begin() + 0x0000, 0x1800 };
+		/* Video Bank 0 Tile Map */
 		std::span<u8, 0x0800> mVideoTileMap0{ mVideoBank.begin() + 0x0000, 0x0800 };
 		std::span<u8, 0x0800> mVideoTileMap1{ mVideoBank.begin() + 0x0800, 0x0800 };
 		std::span<u8, 0x0800> mVideoTileMap2{ mVideoBank.begin() + 0x1000, 0x0800 };
+		std::span<u8, 0x0400> mVideoTileMap3{ mVideoBank.begin() + 0x1800, 0x0400 };
+		std::span<u8, 0x0400> mVideoTileMap4{ mVideoBank.begin() + 0x1C00, 0x0400 };
 
-		std::span<u8, 0x0800> mVideoAttrMap_{ mVideoBank.begin() + 0x1800, 0x0800 };
+		/* Video Bank 1 Attr Map */
 		std::span<u8, 0x0400> mVideoAttrMap0{ mVideoBank.begin() + 0x1800, 0x0400 };
 		std::span<u8, 0x0400> mVideoAttrMap1{ mVideoBank.begin() + 0x1C00, 0x0400 };
 
 
 		/* I/O Ranges */
-		u8& mJoyPadInput    { mInOutBank[0x00] }; // P1/JOYP
-		u8& mSerialData     { mInOutBank[0x01] }; // SB
-		u8& mSerialControl  { mInOutBank[0x02] }; // SC
+		u8& mJOYP { mInOutBank[0x00] }; // Joypad
+		u8& mSB   { mInOutBank[0x01] }; // Serial transfer data
+		u8& mSC   { mInOutBank[0x02] }; // Serial transfer control
 
-		u8& mRegisterDIV    { mInOutBank[0x04] }; // DIV
-		u8& mRegisterTIMA   { mInOutBank[0x05] }; // TIMA
-		u8& mRegisterTMA    { mInOutBank[0x06] }; // TMA
-		u8& mRegisterTAC    { mInOutBank[0x07] }; // TAC
+		u8& mDIV  { mInOutBank[0x04] }; // Divider register
+		u8& mTIMA { mInOutBank[0x05] }; // Timer counter
+		u8& mTMA  { mInOutBank[0x06] }; // Timer modulo
+		u8& mTAC  { mInOutBank[0x07] }; // Timer control
 
-		u8& mInterruptFlag  { mInOutBank[0x0F] }; // IF
+		u8& mIF   { mInOutBank[0x0F] }; // Interrupt flag
 
-		u8& mAudioCh1Sweep  { mInOutBank[0x10] }; // NR10
-		u8& mAudioCh1Timer  { mInOutBank[0x11] }; // NR11
-		u8& mAudioCh1VolEnv { mInOutBank[0x12] }; // NR12
-		u8& mAudioCh1PerLo  { mInOutBank[0x13] }; // NR13
-		u8& mAudioCh1PerHi  { mInOutBank[0x14] }; // NR14
+		u8& mNR10 { mInOutBank[0x10] }; // Sound channel 1 sweep
+		u8& mNR11 { mInOutBank[0x11] }; // Sound channel 1 length timer & duty cycle
+		u8& mNR12 { mInOutBank[0x12] }; // Sound channel 1 volume & envelope
+		u8& mNR13 { mInOutBank[0x13] }; // Sound channel 1 period low
+		u8& mNR14 { mInOutBank[0x14] }; // Sound channel 1 period high & control
 
-		u8& mAudioCh2Timer  { mInOutBank[0x16] }; // NR21
-		u8& mAudioCh2VolEnv { mInOutBank[0x17] }; // NR22
-		u8& mAudioCh2PerLo  { mInOutBank[0x18] }; // NR23
-		u8& mAudioCh2PerHi  { mInOutBank[0x19] }; // NR24
+		u8& mNR21 { mInOutBank[0x16] }; // Sound channel 2 length timer & duty cycle
+		u8& mNR22 { mInOutBank[0x17] }; // Sound channel 2 volume & envelope
+		u8& mNR23 { mInOutBank[0x18] }; // Sound channel 2 period low
+		u8& mNR24 { mInOutBank[0x19] }; // Sound channel 2 period high & control
 
-		u8& mAudioCh3Dac    { mInOutBank[0x1A] }; // NR30
-		u8& mAudioCh3Timer  { mInOutBank[0x1B] }; // NR31
-		u8& mAudioCh3VolEnv { mInOutBank[0x1C] }; // NR32
-		u8& mAudioCh3PerLo  { mInOutBank[0x1D] }; // NR33
-		u8& mAudioCh3PerHi  { mInOutBank[0x1E] }; // NR34
+		u8& mNR30 { mInOutBank[0x1A] }; // Sound channel 3 DAC enable
+		u8& mNR31 { mInOutBank[0x1B] }; // Sound channel 3 length timer
+		u8& mNR32 { mInOutBank[0x1C] }; // Sound channel 3 output level
+		u8& mNR33 { mInOutBank[0x1D] }; // Sound channel 3 period low
+		u8& mNR34 { mInOutBank[0x1E] }; // Sound channel 3 period high & control
 
-		u8& mAudioCh4Timer  { mInOutBank[0x20] }; // NR40
-		u8& mAudioCh4FreqRng{ mInOutBank[0x21] }; // NR41
-		u8& mAudioCh4PerHi  { mInOutBank[0x22] }; // NR42
-		u8& mAudioCh4PerLo  { mInOutBank[0x23] }; // NR43
+		u8& mNR40 { mInOutBank[0x20] }; // Sound channel 4 length timer
+		u8& mNR41 { mInOutBank[0x21] }; // Sound channel 4 volume & envelope
+		u8& mNR42 { mInOutBank[0x22] }; // Sound channel 4 frequency & randomness
+		u8& mNR43 { mInOutBank[0x23] }; // Sound channel 4 control
 
-		u8& mAudioVolumeVIN { mInOutBank[0x24] }; // NR50
-		u8& mAudioPanning   { mInOutBank[0x25] }; // NR51
-		u8& mAudioEnable    { mInOutBank[0x26] }; // NR52
+		u8& mNR50 { mInOutBank[0x24] }; // Master volume & VIN panning
+		u8& mNR51 { mInOutBank[0x25] }; // Sound panning
+		u8& mNR52 { mInOutBank[0x26] }; // Sound on/off
 
-		std::span<u8, 0x10> mWavePattern
+		std::span<u8, 0x10> mWAVE /* Storage for waveform */
 			{ mInOutBank.begin() + 0x30, 0x10 };
 
-		std::span<u8, 0x0D> mDisplayControl
-			{ mInOutBank.begin() + 0x40, 0x0D }; // split to regs here
+		u8& mLCDC { mInOutBank[0x40] }; // LCD control
+		u8& mSTAT { mInOutBank[0x41] }; // LCD status
+		u8& mSCY  { mInOutBank[0x42] }; // Viewport Y pos
+		u8& mSCX  { mInOutBank[0x43] }; // Viewport X pos
+		u8& mLY   { mInOutBank[0x44] }; // LCD Y coord
+		u8& mLYC  { mInOutBank[0x45] }; // LY compare
+		u8& mDMA  { mInOutBank[0x46] }; // OAM DMA source addr & start
+		u8& mBGP  { mInOutBank[0x47] }; // BG palette data
+		u8& mOBP0 { mInOutBank[0x48] }; // OBJ palette 0 data
+		u8& mOBP1 { mInOutBank[0x49] }; // OBJ palette 1 data
+		u8& mWY   { mInOutBank[0x4A] }; // Window Y pos
+		u8& mWX   { mInOutBank[0x4B] }; // Window X pos + 7
+		u8& mKEY1 { mInOutBank[0x4D] }; // Prepare speed switch
 		
-		u8& mVideoBankSelect{ mInOutBank[0x4F] }; // VBK
-		u8& mBootRomEnabled { mInOutBank[0x50] };
-		u8& mVideoSrcHiDMA  { mInOutBank[0x51] }; // HDMA1
-		u8& mVideoSrcLoDMA  { mInOutBank[0x52] }; // HDMA2
-		u8& mVideoDstHiDMA  { mInOutBank[0x53] }; // HDMA3
-		u8& mVideoDstLoDMA  { mInOutBank[0x54] }; // HDMA4
-		u8& mVideoPropsDMA  { mInOutBank[0x55] }; // HDMA5
-		u8& mInfraredPort   { mInOutBank[0x56] }; // RP
-		u8& mBgPaletteSpec  { mInOutBank[0x68] }; // BCPS/BGPI
-		u8& mBgPaletteData  { mInOutBank[0x69] }; // OCPS/OBPI
-		u8& mObjPaletteSpec { mInOutBank[0x6A] }; // OCPD/OBPD
-		u8& mObjPaletteData { mInOutBank[0x6B] }; // OPRI
-		u8& mObjPriorityMode{ mInOutBank[0x6C] }; // SVBK
-		u8& mWorkBankSelect { mInOutBank[0x70] }; // SVBK
-		u8& mAudioDigiOut12 { mInOutBank[0x76] }; // PCM12
-		u8& mAudioDigiOut32 { mInOutBank[0x77] }; // PCM34
-		u8& mInterruptEnable{ mMemoryBanks[0xFFFF] }; // IE
+		u8& mVBK  { mInOutBank[0x4F] }; // VRAM bank
+		u8& mBOOT { mInOutBank[0x50] }; // Boot ROM enable
+		u8& mHDMA1{ mInOutBank[0x51] }; // VRAM DMA src hi
+		u8& mHDMA2{ mInOutBank[0x52] }; // VRAM DMA src lo
+		u8& mHDMA3{ mInOutBank[0x53] }; // VRAM DMA dst hi
+		u8& mHDMA4{ mInOutBank[0x54] }; // VRAM DMA dst lo
+		u8& mHDMA5{ mInOutBank[0x55] }; // VRAM DMA len/mode/start
+
+		u8& mRP   { mInOutBank[0x56] }; // Infrared comms port
+
+		u8& mBCPS { mInOutBank[0x68] }; // BG (color) palette spec / index
+		u8& mBCPD { mInOutBank[0x69] }; // BG (color) palette data
+		u8& mOCPS { mInOutBank[0x6A] }; // OBJ (color) palette spec / index
+		u8& mOCPD { mInOutBank[0x6B] }; // OBJ (color) palette data
+		u8& mOPRI { mInOutBank[0x6C] }; // OBJ priority mode
+		u8& mSVBK { mInOutBank[0x70] }; // WRAM bank
+
+		u8& mPCM12{ mInOutBank[0x76] }; // Audio digital out 1 & 2
+		u8& mPCM34{ mInOutBank[0x77] }; // Audio digital out 3 & 4
+
+		u8& mIE   { mMemoryBanks[0xFFFF] }; // Interrupt enable
 	} mMMU;
 
 	class PPU {
-
+		// insert spongebob in box saying "IMAGINATION!"
 	} mPPU;
 
 
@@ -219,7 +233,7 @@ private:
 
 
 	struct Opcode {
-		using InstrStep = std::function<void(*)(CPU* const, MMU* const)>;
+		using InstrStep = void(*)(CPU* const, MMU* const);
 
 		const u32 mOpcode{};
 		const u32 mLength{};
@@ -244,7 +258,7 @@ private:
 public:
 	GAMEBOY_CLASSIC();
 
-	static constexpr bool testGameSize(const usz size) noexcept {
-		return size <= 0;
+	static constexpr bool isGameFileValid(std::span<const char> game) noexcept {
+		return true;
 	}
 };

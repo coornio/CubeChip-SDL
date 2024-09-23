@@ -90,6 +90,12 @@ std::unique_ptr<EmuInterface> GameFileChecker::constructCore() {
 			case GameCoreType::BYTEPUSHER_STANDARD:
 				return std::make_unique<BYTEPUSHER_STANDARD>();
 
+			case GameCoreType::GAMEBOY_CLASSIC:
+				return std::make_unique<GAMEBOY_CLASSIC>();
+
+			case GameCoreType::GAMEBOY_COLOR:
+				return std::make_unique<GAMEBOY_CLASSIC>();
+
 			default:
 			case GameCoreType::INVALID:
 				return nullptr;
@@ -121,20 +127,20 @@ std::unique_ptr<EmuInterface> GameFileChecker::initGameCore() noexcept {
 /*==================================================================*/
 
 bool GameFileChecker::validate(
-	const std::size_t  size,
+	std::span<const char> game,
 	const std::string& type,
 	const std::string& sha1
 ) noexcept {
 	if (sha1.empty()) {
-		return validate(size, type);
+		return validate(game, type);
 	} else {
 		/* database check here */
-		return validate(size, type); // placeholder
+		return validate(game, type); // placeholder
 	}
 }
 
 bool GameFileChecker::validate(
-	const std::size_t  size,
+	std::span<const char> game,
 	const std::string& type
 ) noexcept {
 	static const std::unordered_map <std::string_view, GameFileType> sExtMap{
@@ -153,6 +159,8 @@ bool GameFileChecker::validate(
 		{".hwc", GameFileType::hwc},
 		{".bnc", GameFileType::bnc},
 		{".BytePusher", GameFileType::BytePusher},
+		{".gb",  GameFileType::gb},
+		{".gbc", GameFileType::gbc},
 	};
 
 	const auto it{ sExtMap.find(type) };
@@ -162,93 +170,123 @@ bool GameFileChecker::validate(
 	}
 
 	switch (it->second) {
+/*==================================================================*/
+	#pragma region CHIP8 FILE EXTS
+
 		case (GameFileType::c2x):
 		case (GameFileType::c4x):
 			return testGame(
 				true,
-				//CHIP8X_HIRES::testGameSize(size),
+				//CHIP8X_HIRES::isGameFileValid(game),
 				GameCoreType::CHIP8X_HIRES
 			);
 
 		case (GameFileType::c8x):
 			return testGame(
 				true,
-				//CHIP8X::testGameSize(size),
+				//CHIP8X::isGameFileValid(game),
 				GameCoreType::CHIP8X
 			);
 
 		case (GameFileType::c2h):
 			return testGame(
 				true,
-				//CHIP8_2P::testGameSize(size),
+				//CHIP8_2P::isGameFileValid(game),
 				GameCoreType::CHIP8_2P
 			);
 
 		case (GameFileType::c4h):
 			return testGame(
 				true,
-				//CHIP8_4P::testGameSize(size),
+				//CHIP8_4P::isGameFileValid(game),
 				GameCoreType::CHIP8_4P
 			);
 
 		case (GameFileType::mc8):
 			return testGame(
-				MEGACHIP::testGameSize(size),
+				MEGACHIP::isGameFileValid(game),
 				GameCoreType::MEGACHIP
 			);
 
 		case (GameFileType::gc8):
 			return testGame(
 				true,
-				//GIGACHIP::testGameSize(size),
+				//GIGACHIP::isGameFileValid(game),
 				GameCoreType::GIGACHIP
 			);
 
 		case (GameFileType::xo8):
 			return testGame(
-				XOCHIP::testGameSize(size),
+				XOCHIP::isGameFileValid(game),
 				GameCoreType::XOCHIP
 			);
 
 		case (GameFileType::hwc):
 			return testGame(
 				true,
-				//HWCHIP64::testGameSize(size),
+				//HWCHIP64::isGameFileValid(game),
 				GameCoreType::HWCHIP64
 			);
 
 		case (GameFileType::c8e):
 			return testGame(
 				true,
-				//CHIP8E::testGameSize(size),
+				//CHIP8E::isGameFileValid(game),
 				GameCoreType::CHIP8E
 			);
 
 		case (GameFileType::c8h):
 			return testGame(
 				true,
-				//CHIP8_2P::testGameSize(size),
+				//CHIP8_2P::isGameFileValid(game),
 				GameCoreType::CHIP8_2P
 			); // patched!
 
 		case (GameFileType::bnc):
 		case (GameFileType::ch8):
 			return testGame(
-				CHIP8_MODERN::testGameSize(size),
+				CHIP8_MODERN::isGameFileValid(game),
 				GameCoreType::CHIP8_MODERN
 			);
 
 		case (GameFileType::sc8):
 			return testGame(
-				SCHIP_LEGACY::testGameSize(size),
+				SCHIP_LEGACY::isGameFileValid(game),
 				GameCoreType::SCHIP_LEGACY
 			);
 
+	#pragma endregion
+/*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
+
+/*==================================================================*/
+	#pragma region BYTEPUSHER FILE EXTS
+
 		case (GameFileType::BytePusher):
 			return testGame(
-				BYTEPUSHER_STANDARD::testGameSize(size),
+				BYTEPUSHER_STANDARD::isGameFileValid(game),
 				GameCoreType::BYTEPUSHER_STANDARD
 			);
+
+	#pragma endregion
+/*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
+
+/*==================================================================*/
+	#pragma region GAMEBOY FILE EXTS
+
+		case (GameFileType::gb):
+			return testGame(
+				GAMEBOY_CLASSIC::isGameFileValid(game),
+				GameCoreType::GAMEBOY_CLASSIC
+			);
+
+		case (GameFileType::gbc):
+			return testGame(
+				GAMEBOY_CLASSIC::isGameFileValid(game),
+				GameCoreType::GAMEBOY_CLASSIC
+			);
+
+	#pragma endregion
+/*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 	}
 	return false;
 };

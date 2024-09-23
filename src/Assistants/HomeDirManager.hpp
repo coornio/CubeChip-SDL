@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <span>
 #include <string>
 #include <vector>
 
@@ -20,7 +21,11 @@ class HomeDirManager final {
 	HomeDirManager(const HomeDirManager&) = delete;
 	HomeDirManager& operator=(const HomeDirManager&) = delete;
 
-	using GameValidator = bool (*)(const std::size_t, const std::string&, const std::string&);
+	using GameValidator = bool (*)(
+		std::span<const char>,
+		const std::string&,
+		const std::string&
+	) noexcept;
 
 	fsPath      mFilePath{};
 	std::string mFileSHA1{};
@@ -59,6 +64,7 @@ public:
 	auto getFileName() const noexcept { return mFilePath.filename().string(); }
 	auto getFileStem() const noexcept { return mFilePath.stem().string(); }
 	auto getFileExts() const noexcept { return mFilePath.extension().string(); }
+	auto getFileSpan() const noexcept { return std::span{ mFileData }; }
 	auto getFileSize() const noexcept { return mFileData.size(); }
 	auto getFileData() const noexcept { return mFileData.data(); }
 	auto getFileSHA1() const noexcept { return mFileSHA1; }

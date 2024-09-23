@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -31,6 +31,7 @@ enum class GameFileType {
 	hwc, // HYPERWAVE-CHIP
 	bnc,
 	BytePusher,
+	gb, gbc // GAMEBOY/GAMEBOY COLOR
 };
 
 enum class GameCoreType {
@@ -41,7 +42,8 @@ enum class GameCoreType {
 	CHIP8_MODERN, SCHIP_MODERN,
 	CHIP8X_HIRES, CHIP8X_SCHIP,
 	HWCHIP64, MEGACHIP, GIGACHIP,
-	BYTEPUSHER_STANDARD
+	BYTEPUSHER_STANDARD,
+	GAMEBOY_CLASSIC, GAMEBOY_COLOR,
 };
 
 /*==================================================================*/
@@ -65,7 +67,7 @@ class GameFileChecker final {
 	}
 
 	static bool validate(
-		const std::size_t  size,
+		std::span<const char> game,
 		const std::string& type
 	) noexcept;
 
@@ -74,7 +76,7 @@ class GameFileChecker final {
 
 public:
 	static bool validate(
-		const std::size_t  size,
+		std::span<const char> game,
 		const std::string& type,
 		const std::string& sha1
 	) noexcept;
