@@ -24,7 +24,7 @@ class FrameLimiter;
 	#pragma region EmuHost Singleton Class
 
 class EmuHost final {
-	EmuHost(const fsPath&) noexcept;
+	EmuHost(const Path&) noexcept;
 	~EmuHost() noexcept;
 
 	EmuHost(const EmuHost&) = delete;
@@ -51,7 +51,7 @@ private:
 	void replaceCore();
 
 public:
-	static auto* create(const fsPath& gamePath) noexcept {
+	static auto* create(const Path& gamePath) noexcept {
 		static EmuHost self(gamePath);
 		return &self;
 	}
@@ -68,7 +68,7 @@ public:
 	}
 
 	void pauseSystem(const bool state) const noexcept;
-	void loadGameFile(const fsPath&);
+	void loadGameFile(const Path&);
 
 	void processFrame();
 };

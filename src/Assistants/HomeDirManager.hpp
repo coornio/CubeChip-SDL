@@ -27,13 +27,13 @@ class HomeDirManager final {
 		const std::string&
 	) noexcept;
 
-	fsPath      mFilePath{};
+	Path      mFilePath{};
 	std::string mFileSHA1{};
 
 	std::vector<char>
 		mFileData{};
 
-	std::vector<fsPath>
+	std::vector<Path>
 		mDirectories{};
 
 	GameValidator checkGame{};
@@ -54,9 +54,9 @@ public:
 
 	static void showErrorBox(const char* const, const char* const) noexcept;
 
-	fsPath* addSystemDir(
-		const fsPath& sub,
-		const fsPath& sys = {}
+	Path* addSystemDir(
+		const Path& sub,
+		const Path& sys = {}
 	) noexcept;
 
 	auto getFullPath() const noexcept { return mFilePath; }
@@ -72,7 +72,7 @@ public:
 	void setValidator(GameValidator func) noexcept { checkGame = func; }
 
 	void clearCachedFileData() noexcept;
-	bool validateGameFile(const fsPath) noexcept;
+	bool validateGameFile(const Path) noexcept;
 };
 
 	#pragma endregion

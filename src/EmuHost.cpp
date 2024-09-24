@@ -27,7 +27,7 @@ BasicVideoSpec* EmuHost::BVS{};
 BasicAudioSpec* EmuHost::BAS{};
 
 EmuHost::~EmuHost() noexcept = default;
-EmuHost::EmuHost(const fsPath& gamePath) noexcept
+EmuHost::EmuHost(const Path& gamePath) noexcept
 	: Limiter{ std::make_unique<FrameLimiter>(60.0f, true, false) }
 {
 	EmuInterface::assignComponents(HDM, BVS, BAS);
@@ -92,7 +92,7 @@ void EmuHost::replaceCore() {
 
 /*==================================================================*/
 
-void EmuHost::loadGameFile(const fsPath& gameFile) {
+void EmuHost::loadGameFile(const Path& gameFile) {
 	BVS->raiseWindow();
 	if (HDM->validateGameFile(gameFile)) {
 		replaceCore();

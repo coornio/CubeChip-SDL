@@ -13,8 +13,8 @@
 class Chip8_CoreInterface : public EmuInterface {
 
 protected:
-	static fsPath* sPermaRegsPath;
-	static fsPath* sSavestatePath;
+	static Path* sPermaRegsPath;
+	static Path* sSavestatePath;
 
 	std::unique_ptr<AudioSpecBlock> ASB;
 
@@ -135,7 +135,6 @@ protected:
 
 /*==================================================================*/
 
-	std::string formatOpcode(const u32 OP) const;
 	void instructionError(const u32 HI, const u32 LO);
 
 	void triggerInterrupt(const Interrupt type) noexcept;

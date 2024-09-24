@@ -12,7 +12,7 @@
 
 /*==================================================================*/
 
-fsPath* BytePusher_CoreInterface::sSavestatePath{};
+Path* BytePusher_CoreInterface::sSavestatePath{};
 
 BytePusher_CoreInterface::BytePusher_CoreInterface() noexcept
 	: ASB{ std::make_unique<AudioSpecBlock>(SDL_AUDIO_S8, 1, 15'360) }

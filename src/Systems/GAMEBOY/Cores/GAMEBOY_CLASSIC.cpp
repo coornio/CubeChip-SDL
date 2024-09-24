@@ -31,7 +31,7 @@ void GAMEBOY_CLASSIC::instructionLoop() noexcept {
 
 	auto curCycles{ 0 };
 	while (curCycles < maxCycles) {
-
+		
 	}
 }
 

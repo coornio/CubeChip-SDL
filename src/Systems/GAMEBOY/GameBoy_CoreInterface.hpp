@@ -13,7 +13,7 @@
 class GameBoy_CoreInterface : public EmuInterface {
 
 protected:
-	static fsPath* sSavestatePath;
+	static Path* sSavestatePath;
 
 	std::unique_ptr<AudioSpecBlock> ASB;
 
@@ -42,6 +42,7 @@ protected:
 
 	void copyGameToMemory(u8* dest) noexcept;
 
+	virtual void updateKeyStates() noexcept = 0;
 	virtual void instructionLoop() noexcept = 0;
 	virtual void renderAudioData() = 0;
 	virtual void renderVideoData() = 0;

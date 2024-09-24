@@ -15,8 +15,8 @@
 
 /*==================================================================*/
 
-fsPath*   Chip8_CoreInterface::sPermaRegsPath{};
-fsPath*   Chip8_CoreInterface::sSavestatePath{};
+Path*   Chip8_CoreInterface::sPermaRegsPath{};
+Path*   Chip8_CoreInterface::sSavestatePath{};
 std::array<u8, 240> Chip8_CoreInterface::sFontsData{ Chip8_CoreInterface::cFontsData };
 std::array<u32, 16> Chip8_CoreInterface::sBitColors{ Chip8_CoreInterface::cBitColors };
 
@@ -184,14 +184,8 @@ void Chip8_CoreInterface::processFrame() {
 
 /*==================================================================*/
 
-std::string Chip8_CoreInterface::formatOpcode(const u32 OP) const {
-	char buffer[5];
-	std::format_to(buffer, "{:04X}{}", OP, '\0');
-	return buffer;
-}
-
 void Chip8_CoreInterface::instructionError(const u32 HI, const u32 LO) {
-	blog.newEntry(BLOG::INFO, "Unknown instruction: " + formatOpcode(HI << 8 | LO));
+	blog.newEntry(BLOG::INFO, "Unknown instruction: 0x{:04X}", HI << 8 | LO);
 	triggerInterrupt(Interrupt::ERROR);
 }
 
@@ -212,7 +206,7 @@ bool Chip8_CoreInterface::setPermaRegs(const s32 X) noexcept {
 
 	if (std::filesystem::exists(path)) {
 		if (!std::filesystem::is_regular_file(path)) {
-			blog.newEntry(BLOG::ERROR, "SHA1 file is malformed: " + path.string());
+			blog.newEntry(BLOG::ERROR, "SHA1 file is malformed: {}", path.string());
 			return true;
 		}
 
@@ -227,7 +221,7 @@ bool Chip8_CoreInterface::setPermaRegs(const s32 X) noexcept {
 			in.read(tempV, std::min<std::streamsize>(totalBytes, X));
 			in.close();
 		} else {
-			blog.newEntry(BLOG::ERROR, "Could not open SHA1 file to read: " + path.string());
+			blog.newEntry(BLOG::ERROR, "Could not open SHA1 file to read: {}", path.string());
 			return true;
 		}
 
@@ -238,7 +232,7 @@ bool Chip8_CoreInterface::setPermaRegs(const s32 X) noexcept {
 			out.write(tempV, 16);
 			out.close();
 		} else {
-			blog.newEntry(BLOG::ERROR, "Could not open SHA1 file to write: " + path.string());
+			blog.newEntry(BLOG::ERROR, "Could not open SHA1 file to write: {}", path.string());
 			return true;
 		}
 	} else {
@@ -251,7 +245,7 @@ bool Chip8_CoreInterface::setPermaRegs(const s32 X) noexcept {
 			}
 			out.close();
 		} else {
-			blog.newEntry(BLOG::ERROR, "Could not open SHA1 file to write: " + path.string());
+			blog.newEntry(BLOG::ERROR, "Could not open SHA1 file to write: {}", path.string());
 			return true;
 		}
 	}
@@ -263,7 +257,7 @@ bool Chip8_CoreInterface::getPermaRegs(const s32 X) noexcept {
 
 	if (std::filesystem::exists(path)) {
 		if (!std::filesystem::is_regular_file(path)) {
-			blog.newEntry(BLOG::ERROR, "SHA1 file is malformed: " + path.string());
+			blog.newEntry(BLOG::ERROR, "SHA1 file is malformed: {}", path.string());
 			return true;
 		}
 
@@ -280,7 +274,7 @@ bool Chip8_CoreInterface::getPermaRegs(const s32 X) noexcept {
 				std::fill_n(mRegisterV + totalBytes, X - totalBytes, u8());
 			}
 		} else {
-			blog.newEntry(BLOG::ERROR, "Could not open SHA1 file to read: " + path.string());
+			blog.newEntry(BLOG::ERROR, "Could not open SHA1 file to read: {}", path.string());
 			return true;
 		}
 	} else {

@@ -6,9 +6,11 @@
 
 #pragma once
 
+#include <string>
 #include <cstdint>
 #include <cstddef>
 #include <filesystem>
+#include <string_view>
 
 #include <SDL3/SDL_scancode.h>
 
@@ -27,4 +29,6 @@ using s32 = std::int32_t;
 using s16 = std::int16_t;
 using s8  = std::int8_t;
 
-using fsPath = std::filesystem::path;
+using Str  = std::string;
+using StrV = std::string_view;
+using Path = std::filesystem::path;

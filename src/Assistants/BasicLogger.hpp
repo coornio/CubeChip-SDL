@@ -7,7 +7,11 @@
 #pragma once
 
 #include <string>
+#include <format>
+#include <utility>
 #include <filesystem>
+
+#include "TypeDefs.hpp"
 
 /*==================================================================*/
 
@@ -21,26 +25,10 @@ class BasicLogger final {
 	BasicLogger(const BasicLogger&) = delete;
 	BasicLogger& operator=(const BasicLogger&) = delete;
 
-	std::filesystem::path mLogPath{};
+	Path mLogPath{};
 
-	std::string_view getSeverity(BLOG type) const noexcept {
-		switch (type) {
-			case BLOG::INFO:
-				return "INFO";
-
-			case BLOG::WARN:
-				return "WARN";
-
-			case BLOG::ERROR:
-				return "ERROR";
-
-			case BLOG::DEBUG:
-				return "DEBUG";
-
-			default:
-				return "OTHER";
-		}
-	}
+	StrV getSeverity(BLOG type) const noexcept;
+	
 
 public:
 	static auto* create() noexcept {
@@ -48,9 +36,20 @@ public:
 		return &self;
 	}
 
-	bool initLogFile(const std::string&, const std::filesystem::path&) noexcept;
+	bool initLogFile(const Str& filename, const Path& directory) noexcept;
 
-	void newEntry(const BLOG type, const std::string&) noexcept;
+private:
+	void writeEntry(const BLOG type, const Str& message) noexcept;
+
+public:
+	template <typename... Args>
+	void newEntry(const BLOG type, const Str& message, Args&&... args) noexcept {
+		if constexpr (sizeof...(Args) == 0) {
+			writeEntry(type, message);
+		} else {
+			writeEntry(type, std::vformat(message, std::make_format_args(args...)));
+		}
+	}
 };
 
 	#pragma endregion

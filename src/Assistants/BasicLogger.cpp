@@ -13,10 +13,7 @@
 /*==================================================================*/
 	#pragma region BasicLogger Singleton Class
 
-bool BasicLogger::initLogFile(
-	const std::string&           filename,
-	const std::filesystem::path& directory
-) noexcept {
+bool BasicLogger::initLogFile(const Str&  filename, const Path& directory) noexcept {
 	if (filename.empty() || directory.empty()) {
 		std::cerr << ":: ERROR :: " << "Log file name/path is invalid!" << std::endl;
 		return true;
@@ -38,7 +35,26 @@ bool BasicLogger::initLogFile(
 
 /*==================================================================*/
 
-void BasicLogger::newEntry(const BLOG type, const std::string& message) noexcept {
+StrV BasicLogger::getSeverity(BLOG type) const noexcept {
+	switch (type) {
+		case BLOG::INFO:
+			return "INFO";
+
+		case BLOG::WARN:
+			return "WARN";
+
+		case BLOG::ERROR:
+			return "ERROR";
+
+		case BLOG::DEBUG:
+			return "DEBUG";
+
+		default:
+			return "OTHER";
+	}
+}
+
+void BasicLogger::writeEntry(const BLOG type, const Str& message) noexcept {
 	static std::size_t lineCount;
 
 	std::ostringstream output;

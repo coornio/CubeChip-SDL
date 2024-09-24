@@ -13,7 +13,7 @@
 class BytePusher_CoreInterface : public EmuInterface {
 
 protected:
-	static fsPath* sSavestatePath;
+	static Path* sSavestatePath;
 
 	std::unique_ptr<AudioSpecBlock> ASB;
 

@@ -7,6 +7,7 @@
 #pragma once
 
 #include "../GameBoy_CoreInterface.hpp"
+#include "../../../Assistants/BasicLogger.hpp"
 
 #include <initializer_list>
 
@@ -137,6 +138,53 @@ private:
 		u8& mIE   { mMemoryBanks[0xFFFF] }; // Interrupt enable
 	} mMMU;
 
+	struct {
+		u8 mInputControl{};
+		u8 mInputData[2]{};
+	};
+
+	void updateKeyStates() noexcept override {
+		const auto keyState{ static_cast<u8>(getKeyStates()) };
+		const auto keysDPAD{ static_cast<u8>(keyState & 0xF) };
+		const auto keysBTNS{ static_cast<u8>(keyState >>  4) };
+		const auto currJOYP{ static_cast<u8>(~mMMU.mJOYP) };
+
+		if (keysDPAD & ~(currJOYP & 0xF) && currJOYP & 0x10)
+			{ /* trigger CPU interrupt 0x60 */ }
+		if (keysBTNS & ~(currJOYP & 0xF) && currJOYP & 0x20)
+			{ /* trigger CPU interrupt 0x60 */ }
+
+		mInputData[0] = ~keysDPAD & 0xF;
+		mInputData[1] = ~keysBTNS & 0xF;
+	}
+
+	void setJOYP(const u32 addr, const u32 value) noexcept {
+		if (addr != 0xFF00) {
+			blog.newEntry(BLOG::WARN, "JoyPad cannot write to 0x{:04X}", addr);
+			return;
+		} else [[likely]] {
+			mInputControl = value & 0x30;
+		}
+	}
+
+	u32 getJOYP(const u32 addr) const noexcept {
+		if (addr != 0xFF00) {
+			blog.newEntry(BLOG::WARN, "JoyPad cannot read from 0x{:04X}", addr);
+			return 0;
+		} else [[likely]] {
+			switch (mInputControl) {
+				case 0x10:
+					return mInputData[0] | 0xC0;
+					break;
+				case 0x20:
+					return mInputData[1] | 0xC0;
+					break;
+				default:
+					return 0xCF;
+			}
+		}
+	}
+
 	class PPU {
 		// insert spongebob in box saying "IMAGINATION!"
 	} mPPU;
@@ -154,7 +202,7 @@ private:
 		public:
 			template <RegChar T>
 			void set(const u32 value) noexcept {
-				if constexpr (T == A) {
+				       if constexpr (T == A) {
 					mA = static_cast<u8>(value);
 				} else if constexpr (T == B) {
 					mB = static_cast<u8>(value);
@@ -187,7 +235,7 @@ private:
 
 			template <RegChar T>
 			u32  get() const noexcept {
-				if        constexpr (T == A) {
+				       if constexpr (T == A) {
 					return mA;
 				} else if constexpr (T == B) {
 					return mB;
@@ -223,11 +271,28 @@ private:
 			void setFlagN(const bool state) noexcept { mF = (mF & ~0x4F) | (state << 6); }
 			void setFlagH(const bool state) noexcept { mF = (mF & ~0x2F) | (state << 5); }
 			void setFlagC(const bool state) noexcept { mF = (mF & ~0x1F) | (state << 4); }
+
+			void init_GB() noexcept {
+				mA = 0x01; mB = 0x00; mC = 0x13; mD = 0x00;
+				mE = 0xD8; mF = 0xB0; mH = 0x01; mL = 0x4D;
+			}
+
+			void init_GBC() noexcept {
+				mA = 0x11; mB = 0x00; mC = 0x00; mD = 0xFF;
+				mE = 0x56; mF = 0x80; mH = 0x00; mL = 0x00;
+			}
 		} mReg;
 
-		u16  currentPC{};
-		u8*  stackPtr{};
-		bool mIME{ true };
+		u32  currentPC{};
+		u32  stackPtr{};
+		bool mIME{};
+		bool mMUL{};
+
+		enum class Mode {
+			NORMAL, HALT, STOP,
+			HALT_BUG, HALT_DI,
+			ENABLE_IME,
+		} mMode;
 
 	} mCPU;
 

@@ -18,13 +18,13 @@
 /*==================================================================*/
 
 [[maybe_unused]]
-static auto getFileModTime(const fsPath& filePath) noexcept {
+static auto getFileModTime(const Path& filePath) noexcept {
 	std::error_code error;
 	return std::filesystem::last_write_time(filePath, error);
 }
 
 [[maybe_unused]]
-static auto getFileSize(const fsPath& filePath) noexcept {
+static auto getFileSize(const Path& filePath) noexcept {
 	std::error_code error;
 	return std::filesystem::file_size(filePath, error);
 }
@@ -48,15 +48,15 @@ void HomeDirManager::showErrorBox(const char* const title, const char* const mes
 	);
 }
 
-fsPath* HomeDirManager::addSystemDir(const fsPath& sub, const fsPath& sys) noexcept {
+Path* HomeDirManager::addSystemDir(const Path& sub, const Path& sys) noexcept {
 	if (sub.empty()) { return nullptr; }
 	
-	const fsPath newDir{ getHomePath() / sys / sub };
+	const Path newDir{ getHomePath() / sys / sub };
 
 	auto it = std::find_if(
 		std::execution::unseq,
 		mDirectories.begin(), mDirectories.end(),
-		[&newDir](const fsPath& dirEntry) {
+		[&newDir](const Path& dirEntry) {
 			return dirEntry == newDir;
 		}
 	);
@@ -81,15 +81,15 @@ void HomeDirManager::clearCachedFileData() noexcept {
 	mFileData.resize(0);
 }
 
-bool HomeDirManager::validateGameFile(const fsPath gamePath) noexcept {
+bool HomeDirManager::validateGameFile(const Path gamePath) noexcept {
 	if (gamePath.empty()) { return false; }
 	namespace fs = std::filesystem;
 	std::error_code error;
 
-	blog.newEntry(BLOG::INFO, "Attempting to access file: " + gamePath.string());
+	blog.newEntry(BLOG::INFO, "Attempting to access file: {}", gamePath.string());
 
 	if (!fs::exists(gamePath, error) || error) {
-		blog.newEntry(BLOG::WARN, "Unable to locate path!" + error.message());
+		blog.newEntry(BLOG::WARN, "Unable to locate path! {}", error.message());
 		return false;
 	}
 
