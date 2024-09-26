@@ -94,8 +94,12 @@ void EmuHost::replaceCore() {
 
 void EmuHost::loadGameFile(const Path& gameFile) {
 	BVS->raiseWindow();
+	blog.newEntry(BLOG::INFO, "Attempting to access file: \"{}\"", gameFile.string());
 	if (HDM->validateGameFile(gameFile)) {
 		replaceCore();
+		blog.newEntry(BLOG::INFO, "File has been accepted!");
+	} else {
+		blog.newEntry(BLOG::INFO, "File has been rejected!");
 	}
 }
 

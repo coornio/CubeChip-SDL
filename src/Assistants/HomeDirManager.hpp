@@ -23,12 +23,12 @@ class HomeDirManager final {
 
 	using GameValidator = bool (*)(
 		std::span<const char>,
-		const std::string&,
-		const std::string&
+		const Str&,
+		const Str&
 	) noexcept;
 
-	Path      mFilePath{};
-	std::string mFileSHA1{};
+	Path mFilePath{};
+	Str  mFileSHA1{};
 
 	std::vector<char>
 		mFileData{};

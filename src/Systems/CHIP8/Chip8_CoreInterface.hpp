@@ -130,18 +130,21 @@ protected:
 	u32 mStackTop{};
 	u8* mInputReg{};
 
-	u8  mRegisterV[16]{};
-	u32 mStackBank[16]{};
+	std::array<u8, 16>
+		mRegisterV{};
+
+	std::array<u32, 16>
+		mStackBank{};
 
 /*==================================================================*/
 
 	void instructionError(const u32 HI, const u32 LO);
 
 	void triggerInterrupt(const Interrupt type) noexcept;
-	void triggerCritError(const std::string& msg) noexcept;
+	void triggerCritError(const Str& msg) noexcept;
 
-	bool setPermaRegs(const s32 X) noexcept;
-	bool getPermaRegs(const s32 X) noexcept;
+	bool setPermaRegs(const u32 X) noexcept;
+	bool getPermaRegs(const u32 X) noexcept;
 
 	void copyGameToMemory(u8* dest, const u32 offset) noexcept;
 	void copyFontToMemory(u8* dest, const u32 offset, const usz size) noexcept;

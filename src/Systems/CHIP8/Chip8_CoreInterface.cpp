@@ -9,14 +9,15 @@
 #include "../../Assistants/HomeDirManager.hpp"
 #include "../../Assistants/BasicVideoSpec.hpp"
 #include "../../Assistants/BasicAudioSpec.hpp"
+#include "../../Assistants/SimpleFileIO.hpp"
 #include "../../Assistants/Well512.hpp"
 
 #include "Chip8_CoreInterface.hpp"
 
 /*==================================================================*/
 
-Path*   Chip8_CoreInterface::sPermaRegsPath{};
-Path*   Chip8_CoreInterface::sSavestatePath{};
+Path* Chip8_CoreInterface::sPermaRegsPath{};
+Path* Chip8_CoreInterface::sSavestatePath{};
 std::array<u8, 240> Chip8_CoreInterface::sFontsData{ Chip8_CoreInterface::cFontsData };
 std::array<u32, 16> Chip8_CoreInterface::sBitColors{ Chip8_CoreInterface::cBitColors };
 
@@ -194,96 +195,116 @@ void Chip8_CoreInterface::triggerInterrupt(const Interrupt type) noexcept {
 	mActiveCPF = -std::abs(mActiveCPF);
 }
 
-void Chip8_CoreInterface::triggerCritError(const std::string& msg) noexcept {
+void Chip8_CoreInterface::triggerCritError(const Str& msg) noexcept {
 	blog.newEntry(BLOG::INFO, msg);
 	triggerInterrupt(Interrupt::ERROR);
 }
 
 /*==================================================================*/
 
-bool Chip8_CoreInterface::setPermaRegs(const s32 X) noexcept {
+bool Chip8_CoreInterface::setPermaRegs(const u32 X) noexcept {
 	const auto path{ *sPermaRegsPath / HDM->getFileSHA1() };
+	std::error_code error_code;
 
-	if (std::filesystem::exists(path)) {
-		if (!std::filesystem::is_regular_file(path)) {
-			blog.newEntry(BLOG::ERROR, "SHA1 file is malformed: {}", path.string());
+	const bool fileExists{ doesFileExist(path, &error_code) };
+	if (error_code) {
+		blog.newEntry(BLOG::ERROR, "Path is ineligible: \"{}\" [{}]",
+			path.string(), error_code.message()
+		);
+		return true;
+	}
+
+	if (fileExists) {
+		std::vector<char> regsData{ readFileData(path, &error_code) };
+
+		if (error_code) {
+			blog.newEntry(BLOG::ERROR, "File IO error:  \"{}\" [{}]",
+				path.string(), error_code.message()
+			);
+			return true;
+		}
+		if (regsData.size() > mRegisterV.size()) {
+			blog.newEntry(BLOG::ERROR, "File is too large: \"{}\" [{} bytes]",
+				path.string(), regsData.size()
+			);
 			return true;
 		}
 
-		char tempV[16]{};
-		std::ifstream in(path, std::ios::binary);
-
-		if (in.is_open()) {
-			in.seekg(0, std::ios::end);
-			const auto totalBytes{ in.tellg() };
-			in.seekg(0, std::ios::beg);
-
-			in.read(tempV, std::min<std::streamsize>(totalBytes, X));
-			in.close();
-		} else {
-			blog.newEntry(BLOG::ERROR, "Could not open SHA1 file to read: {}", path.string());
+		regsData.resize(mRegisterV.size());
+		std::copy_n(
+			std::execution::unseq,
+			mRegisterV.begin(), X, regsData.begin()
+		);
+		writeFileData<char>(path, regsData, &error_code);
+		if (error_code) {
+			blog.newEntry(BLOG::ERROR, "File IO error:  \"{}\" [{}]",
+				path.string(), error_code.message()
+			);
 			return true;
-		}
-
-		std::copy_n(mRegisterV, X, tempV);
-
-		std::ofstream out(path, std::ios::binary);
-		if (out.is_open()) {
-			out.write(tempV, 16);
-			out.close();
 		} else {
-			blog.newEntry(BLOG::ERROR, "Could not open SHA1 file to write: {}", path.string());
-			return true;
+			return false;
 		}
 	} else {
-		std::ofstream out(path, std::ios::binary);
-		if (out.is_open()) {
-			out.write(reinterpret_cast<const char*>(mRegisterV), X);
-			if (X < 16) {
-				const char padding[16]{};
-				out.write(padding, 16 - X);
-			}
-			out.close();
-		} else {
-			blog.newEntry(BLOG::ERROR, "Could not open SHA1 file to write: {}", path.string());
+		std::array<char, 16> regsData{ 16 };
+
+		std::copy_n(
+			std::execution::unseq,
+			mRegisterV.begin(), X, regsData.begin()
+		);
+		writeFileData<char>(path, regsData, &error_code);
+		if (error_code) {
+			blog.newEntry(BLOG::ERROR, "File IO error:  \"{}\" [{}]",
+				path.string(), error_code.message()
+			);
 			return true;
+		} else {
+			return false;
 		}
+		return false;
 	}
-	return false;
 }
 
-bool Chip8_CoreInterface::getPermaRegs(const s32 X) noexcept {
+bool Chip8_CoreInterface::getPermaRegs(const u32 X) noexcept {
 	const auto path{ *sPermaRegsPath / HDM->getFileSHA1() };
+	std::error_code error_code;
 
-	if (std::filesystem::exists(path)) {
-		if (!std::filesystem::is_regular_file(path)) {
-			blog.newEntry(BLOG::ERROR, "SHA1 file is malformed: {}", path.string());
+	const bool fileExists{ doesFileExist(path, &error_code) };
+	if (error_code) {
+		blog.newEntry(BLOG::ERROR, "Path is ineligible: \"{}\" [{}]",
+			path.string(), error_code.message()
+		);
+		return true;
+	}
+
+	if (fileExists) {
+		std::vector<char> regsData{ readFileData(path, &error_code) };
+
+		if (error_code) {
+			blog.newEntry(BLOG::ERROR, "File IO error:  \"{}\" [{}]",
+				path.string(), error_code.message()
+			);
+			return true;
+		}
+		if (regsData.size() > mRegisterV.size()) {
+			blog.newEntry(BLOG::ERROR, "File is too large: \"{}\" [{} bytes]",
+				path.string(), regsData.size()
+			);
 			return true;
 		}
 
-		std::ifstream in(path, std::ios::binary);
-		if (in.is_open()) {
-			in.seekg(0, std::ios::end);
-			const auto totalBytes{ static_cast<s32>(in.tellg()) };
-			in.seekg(0, std::ios::beg);
-
-			in.read(reinterpret_cast<char*>(mRegisterV), std::min(totalBytes, X));
-			in.close();
-
-			if (totalBytes < X) {
-				std::fill_n(mRegisterV + totalBytes, X - totalBytes, u8());
-			}
-		} else {
-			blog.newEntry(BLOG::ERROR, "Could not open SHA1 file to read: {}", path.string());
-			return true;
-		}
+		regsData.resize(mRegisterV.size());
+		std::copy_n(
+			std::execution::unseq,
+			regsData.begin(), X, mRegisterV.begin()
+		);
+		return false;
 	} else {
 		std::fill_n(
 			std::execution::unseq,
-			mRegisterV, X, u8{}
+			mRegisterV.begin(), X, u8{}
 		);
+		return false;
 	}
-	return false;
 }
 
 /*==================================================================*/

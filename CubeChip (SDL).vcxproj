@@ -54,6 +54,7 @@
     <ClInclude Include="src\Assistants\PathGetters.hpp" />
     <ClInclude Include="src\Assistants\RangeIterator.hpp" />
     <ClInclude Include="src\Assistants\SHA1.hpp" />
+    <ClInclude Include="src\Assistants\SimpleFileIO.hpp" />
     <ClInclude Include="src\Assistants\Typedefs.hpp" />
     <ClInclude Include="src\Assistants\Well512.hpp" />
     <ClInclude Include="src\EmuHost.hpp" />

@@ -10,24 +10,11 @@
 #include "HomeDirManager.hpp"
 
 #include "../Assistants/SHA1.hpp"
+#include "../Assistants/SimpleFileIO.hpp"
 #include "../Assistants/PathGetters.hpp"
 #include "../Assistants/BasicLogger.hpp"
 
 #include <SDL3/SDL_messagebox.h>
-
-/*==================================================================*/
-
-[[maybe_unused]]
-static auto getFileModTime(const Path& filePath) noexcept {
-	std::error_code error;
-	return std::filesystem::last_write_time(filePath, error);
-}
-
-[[maybe_unused]]
-static auto getFileSize(const Path& filePath) noexcept {
-	std::error_code error;
-	return std::filesystem::file_size(filePath, error);
-}
 
 /*==================================================================*/
 	#pragma region HomeDirManager Class
@@ -82,52 +69,44 @@ void HomeDirManager::clearCachedFileData() noexcept {
 }
 
 bool HomeDirManager::validateGameFile(const Path gamePath) noexcept {
-	if (gamePath.empty()) { return false; }
-	namespace fs = std::filesystem;
 	std::error_code error;
 
-	blog.newEntry(BLOG::INFO, "Attempting to access file: {}", gamePath.string());
-
-	if (!fs::exists(gamePath, error) || error) {
-		blog.newEntry(BLOG::WARN, "Unable to locate path! {}", error.message());
+	if (!::doesFileExist(gamePath, &error) || error) {
+		blog.newEntry(BLOG::WARN, "Path is ineligible: {}", error.message());
 		return false;
 	}
 
-	if (!fs::is_regular_file(gamePath, error) || error) {
-		blog.newEntry(BLOG::WARN, "Provided path is not to a file!");
+	const auto fileSize{ ::getFileSize(gamePath, &error) };
+	if (error) {
+		blog.newEntry(BLOG::WARN, "Path is ineligible: {}", error.message());
 		return false;
 	}
 
-	const auto tempTime{ getFileModTime(gamePath) };
-
-	std::ifstream ifs(gamePath, std::ios::binary);
-	mFileData.assign(std::istreambuf_iterator(ifs), {});
-
-	if (tempTime != getFileModTime(gamePath)) {
-		blog.newEntry(BLOG::WARN, "File was modified while reading!");
+	if (fileSize == 0) {
+		blog.newEntry(BLOG::WARN, "Game file must not be empty!");
 		return false;
 	}
 
-	if (!getFileSize()) {
-		blog.newEntry(BLOG::WARN, "File must not be empty!");
+	if (fileSize >= 33'554'432) { // 32 MB upper limit
+		blog.newEntry(BLOG::WARN, "Game file is too large!");
+		return false;
+	}
+
+	mFileData = std::move(::readFileData(gamePath, &error));
+	if (error) {
+		blog.newEntry(BLOG::WARN, "Path is ineligible: {}", error.message());
 		return false;
 	}
 
 	const auto tempSHA1{ SHA1::from_span(mFileData) };
-	const bool gameApproved{ checkGame(mFileData, gamePath.extension().string(), tempSHA1)};
 
-	if (gameApproved) {
+	if (checkGame(mFileData, gamePath.extension().string(), tempSHA1)) {
 		mFilePath = gamePath;
 		mFileSHA1 = tempSHA1;
-	}
-
-	if (gameApproved) {
-		blog.newEntry(BLOG::INFO, "File is a valid game!");
+		return true;
 	} else {
-		blog.newEntry(BLOG::INFO, "File is not a valid game!");
+		return false;
 	}
-
-	return gameApproved;
 }
 
 	#pragma endregion

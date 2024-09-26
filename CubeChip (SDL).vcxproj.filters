@@ -196,5 +196,8 @@
     <ClInclude Include="src\Systems\GAMEBOY\Cores\GAMEBOY_CLASSIC.hpp">
       <Filter>Source Files\Systems\GAMEBOY\Cores</Filter>
     </ClInclude>
+    <ClInclude Include="src\Assistants\SimpleFileIO.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
