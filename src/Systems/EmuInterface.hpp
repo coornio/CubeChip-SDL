@@ -46,14 +46,15 @@ class Well512;
 /*==================================================================*/
 
 class EmuInterface {
-	static u32 mGlobalState;
+	static inline
+		u32 mGlobalState{ EmuState::NORMAL };
 
 protected:
-	static HomeDirManager* HDM;
-	static BasicVideoSpec* BVS;
-	static BasicAudioSpec* BAS;
+	static inline HomeDirManager* HDM{};
+	static inline BasicVideoSpec* BVS{};
+	static inline BasicAudioSpec* BAS{};
 
-	static Well512* Wrand;
+	static inline Well512* Wrand{};
 
 public:
 	EmuInterface() noexcept;

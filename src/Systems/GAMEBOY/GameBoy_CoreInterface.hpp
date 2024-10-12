@@ -13,7 +13,7 @@
 class GameBoy_CoreInterface : public EmuInterface {
 
 protected:
-	static Path* sSavestatePath;
+	static inline Path* sSavestatePath{};
 
 	std::unique_ptr<AudioSpecBlock> ASB;
 

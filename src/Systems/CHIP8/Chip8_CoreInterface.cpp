@@ -16,11 +16,6 @@
 
 /*==================================================================*/
 
-Path* Chip8_CoreInterface::sPermaRegsPath{};
-Path* Chip8_CoreInterface::sSavestatePath{};
-std::array<u8, 240> Chip8_CoreInterface::sFontsData{ Chip8_CoreInterface::cFontsData };
-std::array<u32, 16> Chip8_CoreInterface::sBitColors{ Chip8_CoreInterface::cBitColors };
-
 Chip8_CoreInterface::Chip8_CoreInterface() noexcept
 	: ASB{ std::make_unique<AudioSpecBlock>(SDL_AUDIO_S8, 1, 48'000) }
 {

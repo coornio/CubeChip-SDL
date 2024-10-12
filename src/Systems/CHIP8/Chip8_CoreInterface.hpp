@@ -13,8 +13,8 @@
 class Chip8_CoreInterface : public EmuInterface {
 
 protected:
-	static Path* sPermaRegsPath;
-	static Path* sSavestatePath;
+	static inline Path* sPermaRegsPath{};
+	static inline Path* sSavestatePath{};
 
 	std::unique_ptr<AudioSpecBlock> ASB;
 
@@ -204,7 +204,6 @@ public:
 	); }
 
 protected:
-	static           std::array<u8, 240> sFontsData;
 	static constexpr std::array<u8, 240> cFontsData{ {
 		0x60, 0xA0, 0xA0, 0xA0, 0xC0, // 0
 		0x40, 0xC0, 0x40, 0x40, 0xE0, // 1
@@ -241,13 +240,15 @@ protected:
 		0xFE, 0x62, 0x60, 0x64, 0x7C, 0x64, 0x60, 0x62, 0xFE, 0x00, // E
 		0xFE, 0x66, 0x62, 0x64, 0x7C, 0x64, 0x60, 0x60, 0xF0, 0x00, // F
 	} };
-	static           std::array<u32, 16> sBitColors;
+	static inline std::array<u8, 240> sFontsData{ cFontsData };
+
 	static constexpr std::array<u32, 16> cBitColors{ { // 0-1 monochrome, 0-15 palette color
 		0x0C1218, 0xE4DCD4, 0x8C8884, 0x403C38,
 		0xD82010, 0x40D020, 0x1040D0, 0xE0C818,
 		0x501010, 0x105010, 0x50B0C0, 0xF08010,
 		0xE06090, 0xE0F090, 0xB050F0, 0x704020,
 	} };
+	static inline std::array<u32, 16> sBitColors{ cBitColors };
 
 	static constexpr std::array<u32,  8> cForeColor{ { // CHIP-8X foreground colors
 		0x000000, 0xEE1111, 0x1111EE, 0xEE11EE,

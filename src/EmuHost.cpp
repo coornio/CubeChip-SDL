@@ -22,10 +22,6 @@
 /*==================================================================*/
 	#pragma region VM_Host Singleton Class
 
-HomeDirManager* EmuHost::HDM{};
-BasicVideoSpec* EmuHost::BVS{};
-BasicAudioSpec* EmuHost::BAS{};
-
 EmuHost::~EmuHost() noexcept = default;
 EmuHost::EmuHost(const Path& gamePath) noexcept
 	: Limiter{ std::make_unique<FrameLimiter>(60.0f, true, false) }

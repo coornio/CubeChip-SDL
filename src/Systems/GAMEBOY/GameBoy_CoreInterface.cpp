@@ -12,8 +12,6 @@
 
 /*==================================================================*/
 
-Path* GameBoy_CoreInterface::sSavestatePath{};
-
 GameBoy_CoreInterface::GameBoy_CoreInterface() noexcept
 	: ASB{ std::make_unique<AudioSpecBlock>(SDL_AUDIO_S8, 1, 48'000) }
 {

@@ -10,14 +10,6 @@
 
 /*==================================================================*/
 
-u32 EmuInterface::mGlobalState{ EmuState::NORMAL };
-
-HomeDirManager* EmuInterface::HDM{};
-BasicVideoSpec* EmuInterface::BVS{};
-BasicAudioSpec* EmuInterface::BAS{};
-
-Well512* EmuInterface::Wrand{};
-
 EmuInterface::EmuInterface() noexcept {
 	static Well512 sWrand;
 	Wrand = &sWrand;

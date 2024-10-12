@@ -30,9 +30,9 @@ class EmuHost final {
 	EmuHost(const EmuHost&) = delete;
 	EmuHost& operator=(const EmuHost&) = delete;
 
-	static HomeDirManager* HDM;
-	static BasicVideoSpec* BVS;
-	static BasicAudioSpec* BAS;
+	static inline HomeDirManager* HDM{};
+	static inline BasicVideoSpec* BVS{};
+	static inline BasicAudioSpec* BAS{};
 
 	std::unique_ptr<EmuInterface> iGuest;
 	std::unique_ptr<FrameLimiter> Limiter;
