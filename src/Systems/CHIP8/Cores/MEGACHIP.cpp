@@ -953,8 +953,8 @@ void MEGACHIP::scrollBuffersRT() {
 				mRegisterV[0xF] = static_cast<u8>(collisions);
 			}
 			else {
-				const auto offsetX{ 8 - (mRegisterV[X] * 2 & 7) };
-				const auto originX{ mRegisterV[X] * 2 & 0x78 };
+				const auto offsetX{ 16 - 2 * (mRegisterV[X] & 0x07) };
+				const auto originX{ mRegisterV[X] * 2 & 0x70 };
 				const auto originY{ mRegisterV[Y] * 2 & 0x3F };
 				const auto lengthN{ N == 0 ? 16 : N };
 
@@ -964,7 +964,7 @@ void MEGACHIP::scrollBuffersRT() {
 					const auto offsetY{ originY + rowN * 2 };
 
 					collisions += drawDoubleBytes(
-						originX, offsetY, offsetX ? 24 : 16,
+						originX, offsetY, 0x20,
 						bitBloat(readMemoryI(rowN)) << offsetX
 					);
 					if (offsetY == 0x3E) { break; }
