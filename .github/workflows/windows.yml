@@ -15,5 +15,5 @@ jobs:
         # You may pin to the exact commit or the version.
         uses: actions/upload-artifact@v4
         with:
-           name: LinuxRelease
+           name: WindowsRelease
            path: build/bin
