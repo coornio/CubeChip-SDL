@@ -456,7 +456,7 @@ public:
 #pragma region Map2D Class
 template<typename T> requires arithmetic<T> || ar_pointer<T>
 class Map2D final {
-	using paramS = std::int_fast32_t;
+	using paramS = std::int32_t;
 	using paramU = std::size_t;
 	using underT = std::remove_const_t<std::remove_pointer_t<T>>;
 
