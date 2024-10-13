@@ -1,8 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(CubeChip)
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_23)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -25,7 +24,7 @@ if(NOT SDL3_FOUND)
   set_property(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/_deps/sdl-src" PROPERTY EXCLUDE_FROM_ALL TRUE)
 endif()
 
-add_executable(CubeChip
+add_executable(${PROJECT_NAME}
   src/Assistants/BasicLogger.cpp
   src/Assistants/BasicInput.cpp
   src/Assistants/HomeDirManager.cpp
@@ -53,15 +52,15 @@ add_executable(CubeChip
   src/EmuHost.cpp
   src/CubeChip.cpp
 )
-target_include_directories(CubeChip PRIVATE src)
-target_link_libraries(CubeChip PRIVATE SDL3::SDL3-shared)
+target_include_directories(${PROJECT_NAME} PRIVATE src)
+target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3-shared)
 
 if(WIN32)
-    target_link_libraries(CubeChip PRIVATE Dwmapi)
+    target_link_libraries(${PROJECT_NAME} PRIVATE "Dwmapi.lib")
 endif()
 
 if(MSVC)
-  target_compile_options(CubeChip PRIVATE /W4 /std:c++latest)
+  target_compile_options(${PROJECT_NAME} PRIVATE /W4 /std:c++latest)
 else()
-  target_compile_options(CubeChip PRIVATE -Wall -Wextra --std=c++23)
+  target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra --std=c++23)
 endif()
