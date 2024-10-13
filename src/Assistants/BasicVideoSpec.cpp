@@ -13,7 +13,7 @@
 	#pragma warning(push)
 	#pragma warning(disable : 5039)
 	#include <dwmapi.h>
-	#pragma comment (lib, "Dwmapi")
+	#pragma comment(lib, "Dwmapi")
 	#pragma warning(pop)
 #endif
 
