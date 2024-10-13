@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 project(CubeChip)
 
-target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_23)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -57,6 +58,8 @@ target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3-shared)
 
 if(WIN32)
     target_link_libraries(${PROJECT_NAME} PRIVATE "Dwmapi.lib")
+else()
+    target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_23)
 endif()
 
 if(MSVC)
