@@ -1154,13 +1154,13 @@ public:
 	Map2D() : Map2D{ 1, 1 } {}
 
 	Map2D(const paramS rows, const paramS cols)
-		: mRows{ std::max(1, std::abs(rows)) }
-		, mCols{ std::max(1, std::abs(cols)) }
+		: mRows{ std::max(1, static_cast<paramS>(std::abs(rows))) }
+		, mCols{ std::max(1, static_cast<paramS>(std::abs(cols))) }
 		, pData{ std::make_unique<T[]>(mRows * mCols) }
 	{}
 	Map2D(const paramU rows, const paramU cols)
-		: mRows{ static_cast<paramS>(rows) }
-		, mCols{ static_cast<paramS>(cols) }
+		: mRows{ std::max(1, static_cast<paramS>(rows)) }
+		, mCols{ std::max(1, static_cast<paramS>(cols)) }
 		, pData{ std::make_unique<T[]>(mRows * mCols) }
 	{}
 	#pragma endregion
