@@ -182,8 +182,7 @@ void BasicVideoSpec::setAspectRatio(
 		renderer,
 		texture_W + perimeterWidth * 2,
 		texture_H + perimeterWidth * 2,
-		SDL_LOGICAL_PRESENTATION_INTEGER_SCALE,
-		SDL_SCALEMODE_NEAREST
+		SDL_LOGICAL_PRESENTATION_INTEGER_SCALE
 	);
 }
 

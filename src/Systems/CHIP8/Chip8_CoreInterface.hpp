@@ -126,6 +126,7 @@ protected:
 
 	u32 mDelayTimer{};
 	u32 mSoundTimer{};
+	u32 mInputTimer{};
 
 	u32 mStackTop{};
 	u8* mInputReg{};
