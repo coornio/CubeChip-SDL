@@ -57,7 +57,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE src)
 target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3-shared)
 
 if(WIN32)
-    target_link_libraries(${PROJECT_NAME} PRIVATE "Dwmapi.lib")
+    target_link_libraries(${PROJECT_NAME} PRIVATE Dwmapi)
 else()
     target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_23)
 endif()
