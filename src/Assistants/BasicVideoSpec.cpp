@@ -51,7 +51,7 @@ void BasicVideoSpec::createWindow(const s32 window_W, const s32 window_H) {
 	if (!window) {
 		showErrorBox("Failed to create SDL_Window");
 	}
-	#ifdef SDL_PLATFORM_WIN32
+	#if defined(SDL_PLATFORM_WIN32) && !defined(OLD_WINDOWS_SDK)
 	else {
 		const auto windowHandle{
 			SDL_GetPointerProperty(
