@@ -15,6 +15,12 @@
 CHIP8_MODERN::CHIP8_MODERN() {
 	if (getCoreState() != EmuState::FAILED) {
 
+		std::fill(
+			std::execution::unseq,
+			mMemoryBank.end() - cSafezoneOOB,
+			mMemoryBank.end(), u8{ 0xFF }
+		);
+
 		copyGameToMemory(mMemoryBank.data(), cGameLoadPos);
 		copyFontToMemory(mMemoryBank.data(), 0x0, 0x50);
 

@@ -20,8 +20,14 @@ SCHIP_LEGACY::SCHIP_LEGACY()
 		std::generate(
 			std::execution::unseq,
 			mMemoryBank.begin(),
-			mMemoryBank.end(),
+			mMemoryBank.end() - cSafezoneOOB,
 			[]() { return Wrand->get<u8>(); }
+		);
+
+		std::fill(
+			std::execution::unseq,
+			mMemoryBank.end() - cSafezoneOOB,
+			mMemoryBank.end(), u8{ 0xFF }
 		);
 
 		copyGameToMemory(mMemoryBank.data(), cGameLoadPos);
