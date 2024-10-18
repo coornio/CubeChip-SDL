@@ -114,7 +114,7 @@ public:
 	void pushAudioData(const std::span<T> samplesBuffer) const {
 		if (!pStream || !mDevice) { return; }
 
-		const auto localVolume { getVolumeNorm() };
+		const auto localVolume { AudioSpecBlock::getVolumeNorm() };
 		const auto globalVolume{ BasicAudioSpec::getGlobalVolumeNorm() };
 
 		std::transform(

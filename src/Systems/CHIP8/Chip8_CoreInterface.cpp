@@ -20,9 +20,9 @@ Chip8_CoreInterface::Chip8_CoreInterface() noexcept
 	: ASB{ std::make_unique<AudioSpecBlock>(SDL_AUDIO_S8, 1, 48'000) }
 {
 	sSavestatePath = HDM->addSystemDir("savestate", "CHIP8");
-	if (!sSavestatePath) { setCoreState(EmuState::FAILED); }
+	if (!sSavestatePath) { setCoreState(EmuState::FATAL); }
 	sPermaRegsPath = HDM->addSystemDir("permaRegs", "CHIP8");
-	if (!sPermaRegsPath) { setCoreState(EmuState::FAILED); }
+	if (!sPermaRegsPath) { setCoreState(EmuState::FATAL); }
 
 	loadPresetBinds();
 }
@@ -132,6 +132,10 @@ void Chip8_CoreInterface::handleEndFrameInterrupt() noexcept {
 			return;
 
 		case Interrupt::ERROR:
+			addCoreState(EmuState::FATAL);
+			mActiveCPF = 0;
+			return;
+
 		case Interrupt::FINAL:
 			setCoreState(EmuState::HALTED);
 			mActiveCPF = 0;

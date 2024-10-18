@@ -14,10 +14,11 @@
 /*==================================================================*/
 
 GAMEBOY_CLASSIC::GAMEBOY_CLASSIC() {
-	if (getSystemState() != EmuState::FAILED) {
+	if (getSystemState() != EmuState::FATAL) {
 		
-		BVS->createTexture(cScreenSizeX, cScreenSizeY);
 		BVS->setAspectRatio(cScreenSizeX * cResSizeMult, cScreenSizeY * cResSizeMult, +2);
+		if (BVS->updateMainTexture(cScreenSizeX, cScreenSizeY))
+			[[unlikely]] { addCoreState(EmuState::FATAL); }
 
 		mActiveCPF = cCylesPerSec;
 		mFramerate = cRefreshRate;

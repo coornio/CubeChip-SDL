@@ -18,7 +18,7 @@ BytePusher_CoreInterface::BytePusher_CoreInterface() noexcept
 	: ASB{ std::make_unique<AudioSpecBlock>(SDL_AUDIO_S8, 1, 15'360) }
 {
 	sSavestatePath = HDM->addSystemDir("savestate", "BYTEPUSHER");
-	if (!sSavestatePath) { addCoreState(EmuState::FAILED); }
+	if (!sSavestatePath) { addCoreState(EmuState::FATAL); }
 
 	loadPresetBinds();
 }

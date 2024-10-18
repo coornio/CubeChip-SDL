@@ -15,6 +15,10 @@
 
 #include "Typedefs.hpp"
 
+using SDL_UniqueWindow   = std::unique_ptr<SDL_Window,   decltype(&SDL_DestroyWindow)  >;
+using SDL_UniqueRenderer = std::unique_ptr<SDL_Renderer, decltype(&SDL_DestroyRenderer)>;
+using SDL_UniqueTexture  = std::unique_ptr<SDL_Texture,  decltype(&SDL_DestroyTexture) >;
+
 /*==================================================================*/
 	#pragma region BasicVideoSpec Singleton Class
 
@@ -24,22 +28,22 @@ class BasicVideoSpec final {
 	BasicVideoSpec(const BasicVideoSpec&) = delete;
 	BasicVideoSpec& operator=(const BasicVideoSpec&) = delete;
 
-	SDL_Window*   window{};
-	SDL_Renderer* renderer{};
-	SDL_Texture*  texture{};
+	SDL_UniqueWindow   mMainWindow  { nullptr, SDL_DestroyWindow   };
+	SDL_UniqueRenderer mMainRenderer{ nullptr, SDL_DestroyRenderer };
+	SDL_UniqueTexture  mMainTexture { nullptr, SDL_DestroyTexture  };
 
-	s32  ppitch{};
+	s32  mTexPixelPitch{};
 	bool enableBuzzGlow{};
 	bool enableScanLine{};
 
-	SDL_FRect frameBack{};
-	SDL_FRect frameRect{};
+	SDL_FRect mOuterFrame{};
+	SDL_FRect mInnerFrame{};
 
-	u32  frameBackColor{};
-	u32  frameRectColor[2]{};
+	u32  mInnerFrameColor{};
+	u32  mOuterFrameColor[2]{};
 
-	s32  perimeterWidth{};
-	s32  frameMultiplier{ 2 };
+	s32  mOuterFrameWidth{};
+	s32  mFrameScaleMulti{ 2 };
 
 	static bool& errorState() noexcept {
 		static bool errorEncountered{};
@@ -58,25 +62,32 @@ public:
 	static void showErrorBox(const char* const) noexcept;
 
 	void setBackColor(const u32 color) noexcept {
-		frameBackColor = color;
+		mInnerFrameColor = color;
 	}
 
 	void setFrameColor(const u32 color_off, const u32 color_on) noexcept {
-		frameRectColor[0] = color_off;
-		frameRectColor[1] = color_on;
+		mOuterFrameColor[0] = color_off;
+		mOuterFrameColor[1] = color_on;
 	}
 
 private:
-	void createWindow(s32, s32);
-	void createRenderer();
+	void createMainWindow(s32, s32);
+	void createMainRenderer();
+	void createMainTexture(s32, s32);
+
+	void multiplyWindowDimensions();
 
 public:
-	void createTexture(s32, s32);
+	bool updateMainTexture(s32, s32);
 	void changeTitle(const std::string&);
+	void changeFrameMultiplier(s32);
 
 	void raiseWindow();
 	void resetWindow();
 	void renderPresent();
+
+	void setTextureAlpha(u32);
+	void setAspectRatio(s32, s32, s32);
 
 	[[nodiscard]]
 	u32* lockTexture();
@@ -115,20 +126,6 @@ public:
 		);
 		unlockTexture();
 	}
-
-	void setTextureAlpha(u32);
-	void setAspectRatio(s32, s32, s32);
-
-private:
-	void multiplyWindowDimensions();
-
-public:
-	void changeFrameMultiplier(s32);
-
-private:
-	void quitWindow() noexcept;
-	void quitRenderer() noexcept;
-	void quitTexture() noexcept;
 };
 
 	#pragma endregion

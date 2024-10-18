@@ -20,7 +20,7 @@ XOCHIP::XOCHIP()
 		{cScreenSizeY, cScreenSizeX},
 	}
 {
-	if (getCoreState() != EmuState::FAILED) {
+	if (getCoreState() != EmuState::FATAL) {
 		Quirk.wrapSprite = true;
 
 		std::fill(
@@ -36,8 +36,9 @@ XOCHIP::XOCHIP()
 		setDisplayResolution(cScreenSizeX, cScreenSizeY);
 
 		BVS->setBackColor(mBitColors[0]);
-		BVS->createTexture(cScreenSizeX, cScreenSizeY);
 		BVS->setAspectRatio(cScreenSizeX * cResSizeMult, cScreenSizeY * cResSizeMult, +2);
+		if (BVS->updateMainTexture(cScreenSizeX, cScreenSizeY))
+			[[unlikely]] { addCoreState(EmuState::FATAL); }
 
 		mCurrentPC = cStartOffset;
 		mFramerate = cRefreshRate;
@@ -324,13 +325,16 @@ void XOCHIP::prepDisplayArea(const Resolution mode) {
 	const auto W{ isDisplayLarger() ? 128 : 64 };
 	const auto H{ isDisplayLarger() ?  64 : 32 };
 
-	BVS->createTexture(W, H);
 	setDisplayResolution(W, H);
-	
-	mDisplayBuffer[0].resize(false, H, W);
-	mDisplayBuffer[1].resize(false, H, W);
-	mDisplayBuffer[2].resize(false, H, W);
-	mDisplayBuffer[3].resize(false, H, W);
+
+	if (BVS->updateMainTexture(W, H)) [[unlikely]] {
+		triggerInterrupt(Interrupt::ERROR);
+	} else {
+		mDisplayBuffer[0].resize(false, H, W);
+		mDisplayBuffer[1].resize(false, H, W);
+		mDisplayBuffer[2].resize(false, H, W);
+		mDisplayBuffer[3].resize(false, H, W);
+	}
 };
 
 void XOCHIP::setColorBit332(const s32 bit, const s32 color) noexcept {

@@ -30,10 +30,10 @@ BasicVideoSpec::BasicVideoSpec() noexcept
 		return;
 	}
 
-	createWindow(0, 0);
+	createMainWindow(0, 0);
 	if (getErrorState()) { return; }
 
-	createRenderer();
+	createMainRenderer();
 	if (getErrorState()) { return; }
 
 	resetWindow();
@@ -43,19 +43,17 @@ BasicVideoSpec::~BasicVideoSpec() noexcept {
 	SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }
 
-void BasicVideoSpec::createWindow(const s32 window_W, const s32 window_H) {
-	quitWindow();
+void BasicVideoSpec::createMainWindow(const s32 window_W, const s32 window_H) {
+	mMainWindow.reset(SDL_CreateWindow(nullptr, window_W, window_H, 0));
 
-	window = SDL_CreateWindow(nullptr, window_W, window_H, 0);
-
-	if (!window) {
+	if (!mMainWindow) {
 		showErrorBox("Failed to create SDL_Window");
 	}
 	#if defined(SDL_PLATFORM_WIN32) && !defined(OLD_WINDOWS_SDK)
 	else {
 		const auto windowHandle{
 			SDL_GetPointerProperty(
-				SDL_GetWindowProperties(window),
+				SDL_GetWindowProperties(mMainWindow.get()),
 				SDL_PROP_WINDOW_WIN32_HWND_POINTER,
 				nullptr
 			)
@@ -74,40 +72,42 @@ void BasicVideoSpec::createWindow(const s32 window_W, const s32 window_H) {
 	#endif
 }
 
-void BasicVideoSpec::createRenderer() {
-	quitRenderer();
-
-	renderer = SDL_CreateRenderer(window, nullptr);
+void BasicVideoSpec::createMainRenderer() {
+	mMainRenderer.reset(SDL_CreateRenderer(mMainWindow.get(), nullptr));
 	
-	if (!renderer) {
+	if (!mMainRenderer) {
 		showErrorBox("Failed to create SDL_Renderer");
 	}
 }
 
-void BasicVideoSpec::createTexture(s32 texture_W, s32 texture_H) {
-	quitTexture();
-
+void BasicVideoSpec::createMainTexture(s32 texture_W, s32 texture_H) {
 	texture_W = std::max<s32>(std::abs(texture_W), 1);
 	texture_H = std::max<s32>(std::abs(texture_H), 1);
 
-	texture = SDL_CreateTexture(
-		renderer,
+	mMainTexture.reset(SDL_CreateTexture(
+		mMainRenderer.get(),
 		SDL_PIXELFORMAT_ARGB8888,
 		SDL_TEXTUREACCESS_STREAMING,
 		texture_W, texture_H
-	);
+	));
 
-	if (!texture) {
+	if (!mMainTexture) {
 		showErrorBox("Failed to create SDL_Texture");
 	} else {
-		SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
-		ppitch = texture_W * 4;
+		SDL_SetTextureScaleMode(mMainTexture.get(), SDL_SCALEMODE_NEAREST);
+		mTexPixelPitch = texture_W * 4;
 	}
+}
+
+bool BasicVideoSpec::updateMainTexture(s32 texture_W, s32 texture_H) {
+	setTextureAlpha(0xFF);
+	createMainTexture(texture_W, texture_H);
+	return mMainTexture ? false : true;
 }
 
 void BasicVideoSpec::changeTitle(const std::string& name) {
 	std::string windowTitle{ "CubeChip :: " + name };
-	SDL_SetWindowTitle(window, windowTitle.c_str());
+	SDL_SetWindowTitle(mMainWindow.get(), windowTitle.c_str());
 }
 
 void BasicVideoSpec::showErrorBox(const char* const title) noexcept {
@@ -119,27 +119,27 @@ void BasicVideoSpec::showErrorBox(const char* const title) noexcept {
 }
 
 void BasicVideoSpec::raiseWindow() {
-	SDL_RaiseWindow(window);
+	SDL_RaiseWindow(mMainWindow.get());
 }
 
 void BasicVideoSpec::resetWindow() {
-	SDL_SetWindowSize(window, 640, 480);
+	SDL_SetWindowSize(mMainWindow.get(), 640, 480);
 	changeTitle("Waiting for file...");
-	quitTexture();
+	mMainTexture.reset();
 	renderPresent();
 }
 
 u32* BasicVideoSpec::lockTexture() {
 	void* pixel_ptr{};
 	SDL_LockTexture(
-		texture, nullptr,
-		&pixel_ptr,
-		&ppitch
+		mMainTexture.get(),
+		nullptr, &pixel_ptr,
+		&mTexPixelPitch
 	);
 	return static_cast<u32*>(pixel_ptr);
 }
 void BasicVideoSpec::unlockTexture() {
-	SDL_UnlockTexture(texture);
+	SDL_UnlockTexture(mMainTexture.get());
 }
 
 void BasicVideoSpec::modifyTexture(const std::span<u32> colorData) {
@@ -153,7 +153,7 @@ void BasicVideoSpec::modifyTexture(const std::span<u32> colorData) {
 }
 
 void BasicVideoSpec::setTextureAlpha(const u32 alpha) {
-	SDL_SetTextureAlphaMod(texture, static_cast<u8>(alpha));
+	SDL_SetTextureAlphaMod(mMainTexture.get(), static_cast<u8>(alpha));
 }
 
 void BasicVideoSpec::setAspectRatio(
@@ -163,103 +163,84 @@ void BasicVideoSpec::setAspectRatio(
 ) {
 	const auto padding_A{ std::abs(padding_S) };
 
-	perimeterWidth = padding_A;
+	mOuterFrameWidth = padding_A;
 	enableScanLine = padding_A == padding_S;
 
-	frameBack = {
+	mOuterFrame = {
 		static_cast<f32>(padding_A),
 		static_cast<f32>(padding_A),
 		static_cast<f32>(texture_W),
 		static_cast<f32>(texture_H)
 	};
 
-	frameRect.w = texture_W + 2.0f * perimeterWidth;
-	frameRect.h = texture_H + 2.0f * perimeterWidth;
+	mInnerFrame.w = texture_W + 2.0f * mOuterFrameWidth;
+	mInnerFrame.h = texture_H + 2.0f * mOuterFrameWidth;
 
 	multiplyWindowDimensions();
 
 	SDL_SetRenderLogicalPresentation(
-		renderer,
-		texture_W + perimeterWidth * 2,
-		texture_H + perimeterWidth * 2,
+		mMainRenderer.get(),
+		texture_W + mOuterFrameWidth * 2,
+		texture_H + mOuterFrameWidth * 2,
 		SDL_LOGICAL_PRESENTATION_INTEGER_SCALE
 	);
 }
 
 void BasicVideoSpec::multiplyWindowDimensions() {
-	const auto window_W{ static_cast<s32>(frameRect.w) };
-	const auto window_H{ static_cast<s32>(frameRect.h) };
+	const auto window_W{ static_cast<s32>(mInnerFrame.w) };
+	const auto window_H{ static_cast<s32>(mInnerFrame.h) };
 
-	SDL_SetWindowMinimumSize(window, window_W, window_H);
-	SDL_SetWindowSize(window, window_W * frameMultiplier, window_H * frameMultiplier);
+	SDL_SetWindowMinimumSize(mMainWindow.get(), window_W, window_H);
+	SDL_SetWindowSize(mMainWindow.get(), window_W * mFrameScaleMulti, window_H * mFrameScaleMulti);
 }
 
 void BasicVideoSpec::changeFrameMultiplier(const s32 delta) {
-	frameMultiplier = std::clamp(frameMultiplier + delta, 1, 8);
+	mFrameScaleMulti = std::clamp(mFrameScaleMulti + delta, 1, 8);
 	multiplyWindowDimensions();
 }
 
 void BasicVideoSpec::renderPresent() {
-	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-	SDL_RenderClear(renderer);
+	SDL_SetRenderDrawColor(mMainRenderer.get(), 0, 0, 0, 255);
+	SDL_RenderClear(mMainRenderer.get());
 
-	if (texture) {
+	if (mMainTexture) {
 		SDL_SetRenderDrawColor(
-			renderer,
-			static_cast<u8>(frameRectColor[enableBuzzGlow] >> 16),
-			static_cast<u8>(frameRectColor[enableBuzzGlow] >>  8),
-			static_cast<u8>(frameRectColor[enableBuzzGlow]), 255
+			mMainRenderer.get(),
+			static_cast<u8>(mOuterFrameColor[enableBuzzGlow] >> 16),
+			static_cast<u8>(mOuterFrameColor[enableBuzzGlow] >>  8),
+			static_cast<u8>(mOuterFrameColor[enableBuzzGlow]), 255
 		);
-		SDL_RenderFillRect(renderer, &frameRect);
+		SDL_RenderFillRect(mMainRenderer.get(), &mInnerFrame);
 
 		SDL_SetRenderDrawColor(
-			renderer,
-			static_cast<u8>(frameBackColor >> 16),
-			static_cast<u8>(frameBackColor >>  8),
-			static_cast<u8>(frameBackColor), 255
+			mMainRenderer.get(),
+			static_cast<u8>(mInnerFrameColor >> 16),
+			static_cast<u8>(mInnerFrameColor >>  8),
+			static_cast<u8>(mInnerFrameColor), 255
 		);
-		SDL_RenderFillRect(renderer, &frameBack);
+		SDL_RenderFillRect(mMainRenderer.get(), &mOuterFrame);
 
-		SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
-		SDL_RenderTexture(renderer, texture, nullptr, &frameBack);
+		SDL_SetTextureBlendMode(mMainTexture.get(), SDL_BLENDMODE_BLEND);
+		SDL_RenderTexture(mMainRenderer.get(), mMainTexture.get(), nullptr, &mOuterFrame);
 
 		if (enableScanLine) {
-			SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-			SDL_SetRenderDrawColor(renderer, 0, 0, 0, 32);
+			SDL_SetRenderDrawBlendMode(mMainRenderer.get(), SDL_BLENDMODE_BLEND);
+			SDL_SetRenderDrawColor(mMainRenderer.get(), 0, 0, 0, 32);
 
-			const auto drawLimit{ static_cast<s32>(frameRect.h) };
-			for (auto y{ 0 }; y < drawLimit; y += perimeterWidth) {
+			const auto drawLimit{ static_cast<s32>(mInnerFrame.h) };
+			for (auto y{ 0 }; y < drawLimit; y += mOuterFrameWidth) {
 				SDL_RenderLine(
-					renderer,
-					frameRect.x, static_cast<f32>(y),
-					frameRect.w, static_cast<f32>(y)
+					mMainRenderer.get(),
+					mInnerFrame.x, static_cast<f32>(y),
+					mInnerFrame.w, static_cast<f32>(y)
 				);
 			}
 		}
 	} else {
-		SDL_RenderTexture(renderer, nullptr, nullptr, nullptr);
+		SDL_RenderTexture(mMainRenderer.get(), nullptr, nullptr, nullptr);
 	}
 
-	SDL_RenderPresent(renderer);
-}
-
-void BasicVideoSpec::quitTexture() noexcept {
-	if (texture) {
-		SDL_DestroyTexture(texture);
-		texture = nullptr;
-	}
-}
-void BasicVideoSpec::quitRenderer() noexcept {
-	if (renderer) {
-		SDL_DestroyRenderer(renderer);
-		renderer = nullptr;
-	}
-}
-void BasicVideoSpec::quitWindow() noexcept {
-	if (window) {
-		SDL_DestroyWindow(window);
-		window = nullptr;
-	}
+	SDL_RenderPresent(mMainRenderer.get());
 }
 
 	#pragma endregion

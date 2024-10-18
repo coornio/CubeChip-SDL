@@ -14,13 +14,14 @@
 /*==================================================================*/
 
 BYTEPUSHER_STANDARD::BYTEPUSHER_STANDARD() {
-	if (getSystemState() != EmuState::FAILED) {
+	if (getSystemState() != EmuState::FATAL) {
 		copyGameToMemory(mMemoryBank.data());
 
 		BVS->setBackColor(cBitsColor[0]);
 		BVS->setFrameColor(cBitsColor[0], cBitsColor[0]);
-		BVS->createTexture(cScreenSizeX, cScreenSizeY);
 		BVS->setAspectRatio(cScreenSizeX, cScreenSizeY, -2);
+		if (BVS->updateMainTexture(cScreenSizeX, cScreenSizeY))
+			[[unlikely]] { addCoreState(EmuState::FATAL); }
 
 		mActiveCPF = 0x10000;
 		mFramerate = cRefreshRate;

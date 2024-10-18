@@ -15,7 +15,7 @@
 SCHIP_LEGACY::SCHIP_LEGACY()
 	: mDisplayBuffer{ {cScreenSizeY, cScreenSizeX} }
 {
-	if (getCoreState() != EmuState::FAILED) {
+	if (getCoreState() != EmuState::FATAL) {
 
 		std::generate(
 			std::execution::unseq,
@@ -36,8 +36,9 @@ SCHIP_LEGACY::SCHIP_LEGACY()
 		setDisplayResolution(cScreenSizeX, cScreenSizeY);
 
 		BVS->setBackColor(sBitColors[0]);
-		BVS->createTexture(cScreenSizeX, cScreenSizeY);
 		BVS->setAspectRatio(cScreenSizeX * cResSizeMult, cScreenSizeY * cResSizeMult, +2);
+		if (BVS->updateMainTexture(cScreenSizeX, cScreenSizeY))
+			[[unlikely]] { addCoreState(EmuState::FATAL); }
 
 		mCurrentPC = cStartOffset;
 		mFramerate = cRefreshRate;

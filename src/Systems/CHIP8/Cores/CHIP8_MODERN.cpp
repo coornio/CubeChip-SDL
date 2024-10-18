@@ -13,7 +13,7 @@
 /*==================================================================*/
 
 CHIP8_MODERN::CHIP8_MODERN() {
-	if (getCoreState() != EmuState::FAILED) {
+	if (getCoreState() != EmuState::FATAL) {
 
 		std::fill(
 			std::execution::unseq,
@@ -27,8 +27,9 @@ CHIP8_MODERN::CHIP8_MODERN() {
 		setDisplayResolution(cScreenSizeX, cScreenSizeY);
 
 		BVS->setBackColor(sBitColors[0]);
-		BVS->createTexture(cScreenSizeX, cScreenSizeY);
 		BVS->setAspectRatio(cScreenSizeX * cResSizeMult, cScreenSizeY * cResSizeMult, +2);
+		if (BVS->updateMainTexture(cScreenSizeX, cScreenSizeY))
+			[[unlikely]] { addCoreState(EmuState::FATAL); }
 
 		mCurrentPC = cStartOffset;
 		mFramerate = cRefreshRate;

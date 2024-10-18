@@ -15,7 +15,7 @@
 MEGACHIP::MEGACHIP()
 	: mDisplayBuffer{ {cScreenSizeY, cScreenSizeX} }
 {
-	if (getCoreState() != EmuState::FAILED) {
+	if (getCoreState() != EmuState::FATAL) {
 
 		copyGameToMemory(mMemoryBank.data(), cGameLoadPos);
 		copyFontToMemory(mMemoryBank.data(), 0x0, 0xB4);
@@ -358,9 +358,10 @@ void MEGACHIP::prepDisplayArea(const Resolution mode) {
 		setDisplayResolution(cScreenMegaX, cScreenMegaY);
 
 		BVS->setBackColor(mColorPalette.at_raw(0));
-		BVS->createTexture(cScreenMegaX, cScreenMegaY);
+		BVS->updateMainTexture(cScreenMegaX, cScreenMegaY);
 		BVS->setAspectRatio(cScreenMegaX * cResMegaMult, cScreenMegaY * cResMegaMult, -2);
-		BVS->setTextureAlpha(0xFF);
+		if (BVS->updateMainTexture(cScreenMegaX, cScreenMegaY))
+			[[unlikely]] { triggerInterrupt(Interrupt::ERROR); }
 
 		Quirk.waitVblank = false;
 		mActiveCPF = cInstSpeedMC;
@@ -369,9 +370,9 @@ void MEGACHIP::prepDisplayArea(const Resolution mode) {
 		setDisplayResolution(cScreenSizeX, cScreenSizeY);
 
 		BVS->setBackColor(sBitColors[0]);
-		BVS->createTexture(cScreenSizeX, cScreenSizeY);
 		BVS->setAspectRatio(cScreenSizeX * cResSizeMult, cScreenSizeY * cResSizeMult, +2);
-		BVS->setTextureAlpha(0xFF);
+		if (BVS->updateMainTexture(cScreenSizeX, cScreenSizeY))
+			[[unlikely]] { triggerInterrupt(Interrupt::ERROR); }
 
 		Quirk.waitVblank = !isDisplayLarger();
 		mActiveCPF = isDisplayLarger() ? cInstSpeedLo : cInstSpeedHi;

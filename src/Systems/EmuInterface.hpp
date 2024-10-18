@@ -27,8 +27,8 @@ enum EmuState {
 	NORMAL = 0x0, // normal operation
 	HIDDEN = 0x1, // window is hidden
 	PAUSED = 0x2, // paused by hotkey
-	HALTED = 0x4, // normal/error end
-	FAILED = 0x8, // failed core init
+	HALTED = 0x4, // normal end path
+	FATAL  = 0x8, // fatal error path
 };
 
 struct SimpleKeyMapping {

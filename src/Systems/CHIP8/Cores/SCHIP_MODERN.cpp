@@ -15,7 +15,7 @@
 SCHIP_MODERN::SCHIP_MODERN()
 	: mDisplayBuffer{ {cScreenSizeY, cScreenSizeX} }
 {
-	if (getCoreState() != EmuState::FAILED) {
+	if (getCoreState() != EmuState::FATAL) {
 
 		std::fill(
 			std::execution::unseq,
@@ -29,8 +29,9 @@ SCHIP_MODERN::SCHIP_MODERN()
 		setDisplayResolution(cScreenSizeX, cScreenSizeY);
 
 		BVS->setBackColor(sBitColors[0]);
-		BVS->createTexture(cScreenSizeX, cScreenSizeY);
 		BVS->setAspectRatio(cScreenSizeX * cResSizeMult, cScreenSizeY * cResSizeMult, +2);
+		if (BVS->updateMainTexture(cScreenSizeX, cScreenSizeY))
+			[[unlikely]] { addCoreState(EmuState::FATAL); }
 
 		mCurrentPC = cStartOffset;
 		mFramerate = cRefreshRate;
@@ -270,10 +271,13 @@ void SCHIP_MODERN::prepDisplayArea(const Resolution mode) {
 	const auto W{ isDisplayLarger() ? 128 : 64 };
 	const auto H{ isDisplayLarger() ?  64 : 32 };
 
-	BVS->createTexture(W, H);
 	setDisplayResolution(W, H);
-	
-	mDisplayBuffer[0].resize(false, H, W);
+
+	if (BVS->updateMainTexture(W, H)) [[unlikely]] {
+		triggerInterrupt(Interrupt::ERROR);
+	} else {
+		mDisplayBuffer[0].resize(false, H, W);
+	}
 };
 
 /*==================================================================*/
