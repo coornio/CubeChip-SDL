@@ -67,6 +67,8 @@ public:
 		return !(HDM && BVS && BAS);
 	}
 
+	bool terminationRequested(const SDL_WindowID windowID) const noexcept;
+
 	void pauseSystem(const bool state) const noexcept;
 	void loadGameFile(const Path&);
 

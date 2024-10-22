@@ -36,6 +36,20 @@ BasicVideoSpec::BasicVideoSpec() noexcept
 	createMainRenderer();
 	if (getErrorState()) { return; }
 
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+	// Setup Dear ImGui style
+	ImGui::StyleColorsDark();
+	//ImGui::StyleColorsLight();
+
+	// Setup Platform/Renderer backends
+	ImGui_ImplSDL3_InitForSDLRenderer(mMainWindow.get(), mMainRenderer.get());
+	ImGui_ImplSDLRenderer3_Init(mMainRenderer.get());
+
 	resetWindow();
 }
 

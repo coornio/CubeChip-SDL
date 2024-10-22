@@ -55,6 +55,7 @@ add_executable(${PROJECT_NAME}
 )
 target_include_directories(${PROJECT_NAME} PRIVATE src)
 target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3-shared)
+target_link_libraries(${PROJECT_NAME} PRIVATE imgui)
 
 if(WIN32)
     if (CMAKE_SYSTEM_VERSION VERSION_LESS "10.0.22000.0")

@@ -99,6 +99,11 @@ SDL_AppResult SDL_AppEvent(void* pHost, SDL_Event* Event) {
 		case SDL_EVENT_QUIT:
 			return SDL_APP_SUCCESS;
 
+		case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+			return Host.terminationRequested(Event->window.windowID)
+				? SDL_APP_SUCCESS
+				: SDL_APP_CONTINUE;
+
 		case SDL_EVENT_DROP_FILE:
 			Host.loadGameFile(Event->drop.data);
 			break;

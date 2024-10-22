@@ -13,6 +13,10 @@
 #include <utility>
 #include <execution>
 
+#include "../_imgui/imgui.h"
+#include "../_imgui/imgui_impl_sdl3.h"
+#include "../_imgui/imgui_impl_sdlrenderer3.h"
+
 #include "Typedefs.hpp"
 
 using SDL_UniqueWindow   = std::unique_ptr<SDL_Window,   decltype(&SDL_DestroyWindow)  >;
@@ -32,6 +36,10 @@ class BasicVideoSpec final {
 	SDL_UniqueRenderer mMainRenderer{ nullptr, SDL_DestroyRenderer };
 	SDL_UniqueTexture  mMainTexture { nullptr, SDL_DestroyTexture  };
 
+public:
+	auto getMainWindow() const noexcept { return mMainWindow.get(); }
+
+private:
 	s32  mTexPixelPitch{};
 	bool enableBuzzGlow{};
 	bool enableScanLine{};

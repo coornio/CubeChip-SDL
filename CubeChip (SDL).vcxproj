@@ -40,6 +40,14 @@
     <ClCompile Include="src\Systems\GAMEBOY\Cores\GAMEBOY_CLASSIC.cpp" />
     <ClCompile Include="src\Systems\GAMEBOY\GameBoy_CoreInterface.cpp" />
     <ClCompile Include="src\Systems\GameFileChecker.cpp" />
+    <ClCompile Include="src\_imgui\imgui.cpp" />
+    <ClCompile Include="src\_imgui\imgui_demo.cpp" />
+    <ClCompile Include="src\_imgui\imgui_draw.cpp" />
+    <ClCompile Include="src\_imgui\imgui_impl_sdl3.cpp" />
+    <ClCompile Include="src\_imgui\imgui_impl_sdlrenderer3.cpp" />
+    <ClCompile Include="src\_imgui\imgui_stdlib.cpp" />
+    <ClCompile Include="src\_imgui\imgui_tables.cpp" />
+    <ClCompile Include="src\_imgui\imgui_widgets.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Assistants\BasicAudioSpec.hpp" />
@@ -70,8 +78,23 @@
     <ClInclude Include="src\Systems\GAMEBOY\Cores\GAMEBOY_CLASSIC.hpp" />
     <ClInclude Include="src\Systems\GAMEBOY\GameBoy_CoreInterface.hpp" />
     <ClInclude Include="src\Systems\GameFileChecker.hpp" />
+    <ClInclude Include="src\_imgui\imconfig.h" />
+    <ClInclude Include="src\_imgui\imgui.h" />
+    <ClInclude Include="src\_imgui\imgui_impl_sdl3.h" />
+    <ClInclude Include="src\_imgui\imgui_impl_sdlrenderer3.h" />
+    <ClInclude Include="src\_imgui\imgui_internal.h" />
+    <ClInclude Include="src\_imgui\imgui_stdlib.h" />
+    <ClInclude Include="src\_imgui\imstb_rectpack.h" />
+    <ClInclude Include="src\_imgui\imstb_textedit.h" />
+    <ClInclude Include="src\_imgui\imstb_truetype.h" />
     <ClInclude Include="src\_nlohmann\json.hpp" />
     <ClInclude Include="src\_nlohmann\json_fwd.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="external\imgui\misc\debuggers\imgui.natvis" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="external\imgui\misc\debuggers\imgui.natstepfilter" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

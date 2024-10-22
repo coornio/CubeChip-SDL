@@ -107,6 +107,10 @@ void EmuHost::pauseSystem(const bool state) const noexcept {
 	}
 }
 
+bool EmuHost::terminationRequested(const SDL_WindowID windowID) const noexcept {
+	return windowID == SDL_GetWindowID(BVS->getMainWindow());
+}
+
 /*==================================================================*/
 
 void EmuHost::processFrame() {

@@ -42,6 +42,9 @@
     <Filter Include="Source Files\Systems\GAMEBOY\Cores">
       <UniqueIdentifier>{5b33560e-ded9-4795-ba66-939d71046c56}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\_imgui">
+      <UniqueIdentifier>{cc2e90dd-9204-4996-b0cf-cc4c7909c0c3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\CubeChip.cpp">
@@ -106,6 +109,30 @@
     </ClCompile>
     <ClCompile Include="src\Systems\GAMEBOY\Cores\GAMEBOY_CLASSIC.cpp">
       <Filter>Source Files\Systems\GAMEBOY\Cores</Filter>
+    </ClCompile>
+    <ClCompile Include="src\_imgui\imgui.cpp">
+      <Filter>Header Files\_imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\_imgui\imgui_demo.cpp">
+      <Filter>Header Files\_imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\_imgui\imgui_draw.cpp">
+      <Filter>Header Files\_imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\_imgui\imgui_impl_sdl3.cpp">
+      <Filter>Header Files\_imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\_imgui\imgui_impl_sdlrenderer3.cpp">
+      <Filter>Header Files\_imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\_imgui\imgui_stdlib.cpp">
+      <Filter>Header Files\_imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\_imgui\imgui_tables.cpp">
+      <Filter>Header Files\_imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\_imgui\imgui_widgets.cpp">
+      <Filter>Header Files\_imgui</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -199,5 +226,38 @@
     <ClInclude Include="src\Assistants\SimpleFileIO.hpp">
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
+    <ClInclude Include="src\_imgui\imconfig.h">
+      <Filter>Header Files\_imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\_imgui\imgui.h">
+      <Filter>Header Files\_imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\_imgui\imgui_impl_sdl3.h">
+      <Filter>Header Files\_imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\_imgui\imgui_impl_sdlrenderer3.h">
+      <Filter>Header Files\_imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\_imgui\imgui_internal.h">
+      <Filter>Header Files\_imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\_imgui\imgui_stdlib.h">
+      <Filter>Header Files\_imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\_imgui\imstb_rectpack.h">
+      <Filter>Header Files\_imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\_imgui\imstb_textedit.h">
+      <Filter>Header Files\_imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\_imgui\imstb_truetype.h">
+      <Filter>Header Files\_imgui</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="external\imgui\misc\debuggers\imgui.natvis" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="external\imgui\misc\debuggers\imgui.natstepfilter" />
   </ItemGroup>
 </Project>
