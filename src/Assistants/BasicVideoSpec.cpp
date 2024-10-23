@@ -38,15 +38,13 @@ BasicVideoSpec::BasicVideoSpec() noexcept
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	ImGuiIO& io = ImGui::GetIO();
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
-	// Setup Dear ImGui style
 	ImGui::StyleColorsDark();
 	//ImGui::StyleColorsLight();
 
-	// Setup Platform/Renderer backends
 	ImGui_ImplSDL3_InitForSDLRenderer(mMainWindow.get(), mMainRenderer.get());
 	ImGui_ImplSDLRenderer3_Init(mMainRenderer.get());
 
@@ -54,6 +52,10 @@ BasicVideoSpec::BasicVideoSpec() noexcept
 }
 
 BasicVideoSpec::~BasicVideoSpec() noexcept {
+	ImGui_ImplSDLRenderer3_Shutdown();
+	ImGui_ImplSDL3_Shutdown();
+	ImGui::DestroyContext();
+
 	SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }
 
@@ -201,11 +203,31 @@ void BasicVideoSpec::setAspectRatio(
 }
 
 void BasicVideoSpec::multiplyWindowDimensions() {
-	const auto window_W{ static_cast<s32>(mInnerFrame.w) };
-	const auto window_H{ static_cast<s32>(mInnerFrame.h) };
+	const auto desired_W{ static_cast<s32>(mInnerFrame.w) };
+	const auto desired_H{ static_cast<s32>(mInnerFrame.h) };
 
-	SDL_SetWindowMinimumSize(mMainWindow.get(), window_W, window_H);
-	SDL_SetWindowSize(mMainWindow.get(), window_W * mFrameScaleMulti, window_H * mFrameScaleMulti);
+	SDL_SetWindowMinimumSize(mMainWindow.get(), desired_W, desired_H);
+	SDL_SetWindowSize(mMainWindow.get(), desired_W * mFrameScaleMulti, desired_H * mFrameScaleMulti);
+	SDL_SyncWindow(mMainWindow.get());
+
+	auto window_W{ 0 }, window_H{ 0 };
+	SDL_GetWindowSize(mMainWindow.get(), &window_W, &window_H);
+
+	auto render_W{ 0 }, render_H{ 0 };
+	SDL_GetCurrentRenderOutputSize(mMainRenderer.get(), &render_W, &render_H);
+
+		// Ensure ImGui is using the correct display size (in screen coordinates)
+	ImGui::GetIO().DisplaySize = ImVec2(static_cast<f32>(window_W), static_cast<f32>(window_H));
+
+	// Calculate framebuffer scale based on the rendering output size
+	ImGui::GetIO().DisplayFramebufferScale = ImVec2(
+		static_cast<f32>(render_W) / static_cast<f32>(window_W),
+		static_cast<f32>(render_H) / static_cast<f32>(window_H)
+	);
+
+	// Ensure there's no additional global scaling
+	ImGui::GetIO().FontGlobalScale = 1.0f;
+
 }
 
 void BasicVideoSpec::changeFrameMultiplier(const s32 delta) {
@@ -214,15 +236,25 @@ void BasicVideoSpec::changeFrameMultiplier(const s32 delta) {
 }
 
 void BasicVideoSpec::renderPresent() {
+	ImGui_ImplSDLRenderer3_NewFrame();
+	ImGui_ImplSDL3_NewFrame();
+	ImGui::NewFrame();
+
 	SDL_SetRenderDrawColor(mMainRenderer.get(), 0, 0, 0, 255);
 	SDL_RenderClear(mMainRenderer.get());
+
+	static bool show_demo_window{ true };
+
+	if (show_demo_window) {
+		ImGui::ShowDemoWindow(&show_demo_window);
+	}
 
 	if (mMainTexture) {
 		SDL_SetRenderDrawColor(
 			mMainRenderer.get(),
 			static_cast<u8>(mOuterFrameColor[enableBuzzGlow] >> 16),
 			static_cast<u8>(mOuterFrameColor[enableBuzzGlow] >>  8),
-			static_cast<u8>(mOuterFrameColor[enableBuzzGlow]), 255
+			static_cast<u8>(mOuterFrameColor[enableBuzzGlow]), SDL_ALPHA_OPAQUE
 		);
 		SDL_RenderFillRect(mMainRenderer.get(), &mInnerFrame);
 
@@ -230,7 +262,7 @@ void BasicVideoSpec::renderPresent() {
 			mMainRenderer.get(),
 			static_cast<u8>(mInnerFrameColor >> 16),
 			static_cast<u8>(mInnerFrameColor >>  8),
-			static_cast<u8>(mInnerFrameColor), 255
+			static_cast<u8>(mInnerFrameColor), SDL_ALPHA_OPAQUE
 		);
 		SDL_RenderFillRect(mMainRenderer.get(), &mOuterFrame);
 
@@ -254,6 +286,8 @@ void BasicVideoSpec::renderPresent() {
 		SDL_RenderTexture(mMainRenderer.get(), nullptr, nullptr, nullptr);
 	}
 
+	ImGui::Render();
+	ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), mMainRenderer.get());
 	SDL_RenderPresent(mMainRenderer.get());
 }
 

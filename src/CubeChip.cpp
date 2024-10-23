@@ -35,7 +35,7 @@ SDL_AppResult SDL_AppInit(void **Host, int argc, char* argv[]) {
 //             VS               OTHER
 #if !defined(NDEBUG) || defined(DEBUG)
 	{
-		printf("SDL3 test dated: 13/10/24 (dd/mm/yy)\n");
+		printf("SDL3 test dated: 20/10/24 (dd/mm/yy)\n");
 		const auto compiled{ SDL_VERSION };  /* hardcoded number from SDL headers */
 		const auto linked{ SDL_GetVersion() };  /* reported by linked SDL library */
 
@@ -95,10 +95,9 @@ SDL_AppResult SDL_AppEvent(void* pHost, SDL_Event* Event) {
 	auto& Host{ *static_cast<EmuHost*>(pHost) };
 	const std::lock_guard lock{ Host.Mutex };
 
-	switch (Event->type) {
-		case SDL_EVENT_QUIT:
-			return SDL_APP_SUCCESS;
+	ImGui_ImplSDL3_ProcessEvent(Event);
 
+	switch (Event->type) {
 		case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
 			return Host.terminationRequested(Event->window.windowID)
 				? SDL_APP_SUCCESS

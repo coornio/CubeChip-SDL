@@ -151,12 +151,12 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>C:\VSlibs\SDL3-3.1.2\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\VSlibs\SDL3-3.1.2\lib\x64;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\VSlibs\SDL3-x64\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\VSlibs\SDL3-x64\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>C:\VSlibs\SDL3-3.1.2\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\VSlibs\SDL3-3.1.2\lib\x64;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\VSlibs\SDL3-x64\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\VSlibs\SDL3-x64\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LibraryPath>C:\VSlibs\SDL3-3.1.2\lib\x86;$(LibraryPath)</LibraryPath>
