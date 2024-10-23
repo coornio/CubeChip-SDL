@@ -26,6 +26,15 @@ if(NOT SDL3_FOUND)
 endif()
 
 add_executable(${PROJECT_NAME}
+  src/_imgui/imgui.cpp
+  src/_imgui/imgui_demo.cpp
+  src/_imgui/imgui_draw.cpp
+  src/_imgui/imgui_stdlib.cpp
+  src/_imgui/imgui_tables.cpp
+  src/_imgui/imgui_widgets.cpp
+  src/_imgui/imgui_impl_sdl3.cpp
+  src/_imgui/imgui_impl_sdlrenderer3.cpp
+
   src/Assistants/BasicLogger.cpp
   src/Assistants/BasicInput.cpp
   src/Assistants/HomeDirManager.cpp

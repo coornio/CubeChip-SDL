@@ -209,25 +209,6 @@ void BasicVideoSpec::multiplyWindowDimensions() {
 	SDL_SetWindowMinimumSize(mMainWindow.get(), desired_W, desired_H);
 	SDL_SetWindowSize(mMainWindow.get(), desired_W * mFrameScaleMulti, desired_H * mFrameScaleMulti);
 	SDL_SyncWindow(mMainWindow.get());
-
-	auto window_W{ 0 }, window_H{ 0 };
-	SDL_GetWindowSize(mMainWindow.get(), &window_W, &window_H);
-
-	auto render_W{ 0 }, render_H{ 0 };
-	SDL_GetCurrentRenderOutputSize(mMainRenderer.get(), &render_W, &render_H);
-
-		// Ensure ImGui is using the correct display size (in screen coordinates)
-	ImGui::GetIO().DisplaySize = ImVec2(static_cast<f32>(window_W), static_cast<f32>(window_H));
-
-	// Calculate framebuffer scale based on the rendering output size
-	ImGui::GetIO().DisplayFramebufferScale = ImVec2(
-		static_cast<f32>(render_W) / static_cast<f32>(window_W),
-		static_cast<f32>(render_H) / static_cast<f32>(window_H)
-	);
-
-	// Ensure there's no additional global scaling
-	ImGui::GetIO().FontGlobalScale = 1.0f;
-
 }
 
 void BasicVideoSpec::changeFrameMultiplier(const s32 delta) {
@@ -240,7 +221,7 @@ void BasicVideoSpec::renderPresent() {
 	ImGui_ImplSDL3_NewFrame();
 	ImGui::NewFrame();
 
-	SDL_SetRenderDrawColor(mMainRenderer.get(), 0, 0, 0, 255);
+	SDL_SetRenderDrawColor(mMainRenderer.get(), 0, 0, 0, SDL_ALPHA_OPAQUE);
 	SDL_RenderClear(mMainRenderer.get());
 
 	static bool show_demo_window{ true };
@@ -286,8 +267,24 @@ void BasicVideoSpec::renderPresent() {
 		SDL_RenderTexture(mMainRenderer.get(), nullptr, nullptr, nullptr);
 	}
 
+	auto window_W{ 0 }, window_H{ 0 };
+	SDL_GetWindowSize(mMainWindow.get(), &window_W, &window_H);
+
+	SDL_UniqueTexture imguiTexture{
+		SDL_CreateTexture(
+			mMainRenderer.get(), SDL_PIXELFORMAT_RGBA8888,
+			SDL_TEXTUREACCESS_TARGET, window_W, window_H
+		), SDL_DestroyTexture
+	};
+
+	SDL_SetRenderTarget(mMainRenderer.get(), imguiTexture.get());
+	SDL_RenderClear(mMainRenderer.get());
+
 	ImGui::Render();
 	ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), mMainRenderer.get());
+
+	SDL_SetRenderTarget(mMainRenderer.get(), nullptr);
+	SDL_RenderTexture(mMainRenderer.get(), imguiTexture.get(), nullptr, nullptr);
 	SDL_RenderPresent(mMainRenderer.get());
 }
 
