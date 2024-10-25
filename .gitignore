@@ -365,3 +365,4 @@ FodyWeavers.xsd
 
 # Ignore the build folder
 /build
+/imgui.ini

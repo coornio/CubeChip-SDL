@@ -6,8 +6,6 @@
 
 #pragma once
 
-#include <SDL3/SDL.h>
-
 #include <span>
 #include <string>
 #include <utility>
@@ -18,10 +16,7 @@
 #include "../_imgui/imgui_impl_sdlrenderer3.h"
 
 #include "Typedefs.hpp"
-
-using SDL_UniqueWindow   = std::unique_ptr<SDL_Window,   decltype(&SDL_DestroyWindow)  >;
-using SDL_UniqueRenderer = std::unique_ptr<SDL_Renderer, decltype(&SDL_DestroyRenderer)>;
-using SDL_UniqueTexture  = std::unique_ptr<SDL_Texture,  decltype(&SDL_DestroyTexture) >;
+#include "LifetimeWrapperSDL.hpp"
 
 /*==================================================================*/
 	#pragma region BasicVideoSpec Singleton Class
@@ -32,9 +27,9 @@ class BasicVideoSpec final {
 	BasicVideoSpec(const BasicVideoSpec&) = delete;
 	BasicVideoSpec& operator=(const BasicVideoSpec&) = delete;
 
-	SDL_UniqueWindow   mMainWindow  { nullptr, SDL_DestroyWindow   };
-	SDL_UniqueRenderer mMainRenderer{ nullptr, SDL_DestroyRenderer };
-	SDL_UniqueTexture  mMainTexture { nullptr, SDL_DestroyTexture  };
+	SDL_Unique<SDL_Window>   mMainWindow{};
+	SDL_Unique<SDL_Renderer> mMainRenderer{};
+	SDL_Unique<SDL_Texture>  mMainTexture{};
 
 public:
 	auto getMainWindow() const noexcept { return mMainWindow.get(); }
@@ -109,7 +104,7 @@ public:
 		Lambda&& function
 	) {
 		std::transform(
-			std::execution::unseq,
+			//std::execution::unseq,
 			pixelData.begin(),
 			pixelData.end(),
 			lockTexture(),

@@ -253,6 +253,9 @@
     <ClInclude Include="src\_imgui\imstb_truetype.h">
       <Filter>Header Files\_imgui</Filter>
     </ClInclude>
+    <ClInclude Include="src\Assistants\LifetimeWrapperSDL.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="external\imgui\misc\debuggers\imgui.natvis" />
