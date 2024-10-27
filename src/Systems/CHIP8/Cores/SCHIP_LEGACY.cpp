@@ -35,9 +35,8 @@ SCHIP_LEGACY::SCHIP_LEGACY()
 
 		setDisplayResolution(cScreenSizeX, cScreenSizeY);
 
-		BVS->setBackColor(sBitColors[0]);
 		BVS->setAspectRatio(cScreenSizeX * cResSizeMult, cScreenSizeY * cResSizeMult, +2);
-		if (BVS->updateMainTexture(cScreenSizeX, cScreenSizeY))
+		if (!BVS->setViewportResolution(cScreenSizeX, cScreenSizeY))
 			[[unlikely]] { addCoreState(EmuState::FATAL); }
 
 		mCurrentPC = cStartOffset;

@@ -28,9 +28,8 @@ SCHIP_MODERN::SCHIP_MODERN()
 
 		setDisplayResolution(cScreenSizeX, cScreenSizeY);
 
-		BVS->setBackColor(sBitColors[0]);
 		BVS->setAspectRatio(cScreenSizeX * cResSizeMult, cScreenSizeY * cResSizeMult, +2);
-		if (BVS->updateMainTexture(cScreenSizeX, cScreenSizeY))
+		if (!BVS->setViewportResolution(cScreenSizeX, cScreenSizeY))
 			[[unlikely]] { addCoreState(EmuState::FATAL); }
 
 		mCurrentPC = cStartOffset;
@@ -273,7 +272,7 @@ void SCHIP_MODERN::prepDisplayArea(const Resolution mode) {
 
 	setDisplayResolution(W, H);
 
-	if (BVS->updateMainTexture(W, H)) [[unlikely]] {
+	if (!BVS->setViewportResolution(W, H)) [[unlikely]] {
 		triggerInterrupt(Interrupt::ERROR);
 	} else {
 		mDisplayBuffer[0].resize(false, H, W);

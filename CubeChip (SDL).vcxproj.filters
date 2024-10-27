@@ -256,6 +256,9 @@
     <ClInclude Include="src\Assistants\LifetimeWrapperSDL.hpp">
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
+    <ClInclude Include="src\Cubechip.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="external\imgui\misc\debuggers\imgui.natvis" />

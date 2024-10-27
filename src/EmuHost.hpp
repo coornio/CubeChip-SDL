@@ -64,10 +64,10 @@ public:
 		HDM = pHDM;
 		BVS = pBVS;
 		BAS = pBAS;
-		return !(HDM && BVS && BAS);
+		return HDM && BVS && BAS;
 	}
 
-	bool terminationRequested(const SDL_WindowID windowID) const noexcept;
+	bool terminationRequested(const u32 windowID) const noexcept;
 
 	void pauseSystem(const bool state) const noexcept;
 	void loadGameFile(const Path&);

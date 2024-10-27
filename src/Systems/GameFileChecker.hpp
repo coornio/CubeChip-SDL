@@ -72,7 +72,8 @@ class GameFileChecker final {
 	) noexcept;
 
 	[[nodiscard]]
-	static std::unique_ptr<EmuInterface> constructCore() ;
+	static std::unique_ptr<EmuInterface>
+		constructCore();
 
 public:
 	static bool validate(
@@ -82,13 +83,14 @@ public:
 	) noexcept;
 
 	[[nodiscard]]
-	static std::unique_ptr<EmuInterface> initGameCore() noexcept;
+	static std::unique_ptr<EmuInterface>
+		initGameCore() noexcept;
 
-	static void deleteGameCore()  noexcept;
-
-	[[nodiscard]]
-	static auto getGameCoreType()  noexcept;
+	static void deleteGameCore() noexcept;
 
 	[[nodiscard]]
-	static bool hasGameCoreType()  noexcept;
+	static auto getGameCoreType() noexcept;
+
+	[[nodiscard]]
+	static bool isGameCoreValid() noexcept;
 };

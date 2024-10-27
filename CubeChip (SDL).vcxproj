@@ -66,6 +66,7 @@
     <ClInclude Include="src\Assistants\SimpleFileIO.hpp" />
     <ClInclude Include="src\Assistants\Typedefs.hpp" />
     <ClInclude Include="src\Assistants\Well512.hpp" />
+    <ClInclude Include="src\Cubechip.hpp" />
     <ClInclude Include="src\EmuHost.hpp" />
     <ClInclude Include="src\Systems\BYTEPUSHER\BytePusher_CoreInterface.hpp" />
     <ClInclude Include="src\Systems\BYTEPUSHER\Cores\BYTEPUSHER_STANDARD.hpp" />

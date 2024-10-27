@@ -38,7 +38,7 @@ void GameFileChecker::deleteGameCore() noexcept {
 
 auto GameFileChecker::getGameCoreType() noexcept { return sEmuCore; }
 
-bool GameFileChecker::hasGameCoreType() noexcept { return sEmuCore != GameCoreType::INVALID; }
+bool GameFileChecker::isGameCoreValid() noexcept { return sEmuCore != GameCoreType::INVALID; }
 
 /*==================================================================*/
 
@@ -101,7 +101,7 @@ std::unique_ptr<EmuInterface> GameFileChecker::constructCore() {
 				return nullptr;
 		}
 	} catch (const std::exception&) {
-		blog.newEntry(BLOG::ERROR, "Failed to allocate memory for the Game Core!");
+		blog.newEntry(BLOG::ERROR, "Failed to construct Game Core!");
 		return nullptr;
 	}
 }
@@ -109,19 +109,12 @@ std::unique_ptr<EmuInterface> GameFileChecker::constructCore() {
 std::unique_ptr<EmuInterface> GameFileChecker::initGameCore() noexcept {
 	auto tempCore{ constructCore() };
 
-	if (tempCore) {
-		if (tempCore->isCoreStopped()) {
-			if (hasGameCoreType()) {
-				blog.newEntry(BLOG::ERROR, "Failed critical Game Core initialization requirements!");
-				deleteGameCore();
-			}
-			return nullptr;
-		} else {
-			return tempCore;
-		}
-	} else {
-		return nullptr;
+	if (tempCore && isGameCoreValid()) {
+		if (!tempCore->isCoreStopped()) { return tempCore; }
+		blog.newEntry(BLOG::ERROR, "Failed to initialize Game Core!");
+		deleteGameCore();
 	}
+	return nullptr;
 }
 
 /*==================================================================*/

@@ -316,7 +316,7 @@ void MEGACHIP::renderAudioData() {
 				}
 			}
 		}
-		BVS->setFrameColor(0x202020, 0x202020);
+		BVS->setFrameColor(sBitColors[0], sBitColors[0]);
 	} else {
 		static f32 wavePhase{};
 
@@ -357,10 +357,8 @@ void MEGACHIP::prepDisplayArea(const Resolution mode) {
 	if (isManualRefresh()) {
 		setDisplayResolution(cScreenMegaX, cScreenMegaY);
 
-		BVS->setBackColor(mColorPalette.at_raw(0));
-		BVS->updateMainTexture(cScreenMegaX, cScreenMegaY);
 		BVS->setAspectRatio(cScreenMegaX * cResMegaMult, cScreenMegaY * cResMegaMult, -2);
-		if (BVS->updateMainTexture(cScreenMegaX, cScreenMegaY))
+		if (!BVS->setViewportResolution(cScreenMegaX, cScreenMegaY))
 			[[unlikely]] { triggerInterrupt(Interrupt::ERROR); }
 
 		Quirk.waitVblank = false;
@@ -369,9 +367,8 @@ void MEGACHIP::prepDisplayArea(const Resolution mode) {
 	else {
 		setDisplayResolution(cScreenSizeX, cScreenSizeY);
 
-		BVS->setBackColor(sBitColors[0]);
 		BVS->setAspectRatio(cScreenSizeX * cResSizeMult, cScreenSizeY * cResSizeMult, +2);
-		if (BVS->updateMainTexture(cScreenSizeX, cScreenSizeY))
+		if (!BVS->setViewportResolution(cScreenSizeX, cScreenSizeY))
 			[[unlikely]] { triggerInterrupt(Interrupt::ERROR); }
 
 		Quirk.waitVblank = !isDisplayLarger();
@@ -472,7 +469,6 @@ void MEGACHIP::setNewBlendAlgorithm(const s32 mode) noexcept {
 void MEGACHIP::scrapAllVideoBuffers() {
 	mBackgroundBuffer.wipeAll();
 	mCollisionMap.wipeAll();
-	mColorPalette.wipeAll();
 }
 
 void MEGACHIP::flushAllVideoBuffers() {
@@ -623,7 +619,7 @@ void MEGACHIP::scrollBuffersRT() {
 		mTexture.H = NN ? NN : 256;
 	}
 	void MEGACHIP::instruction_05NN(const s32 NN) noexcept {
-		BVS->setTextureAlpha(NN);
+		BVS->setViewportOpacity(NN);
 	}
 	void MEGACHIP::instruction_060N(const s32 N) noexcept {
 		startAudioTrack(N == 0);

@@ -31,22 +31,23 @@ class BasicVideoSpec final {
 	SDL_Unique<SDL_Renderer> mMainRenderer{};
 	SDL_Unique<SDL_Texture>  mMainTexture{};
 
+	static inline const char* sAppName{};
+
 public:
-	auto getMainWindow() const noexcept { return mMainWindow.get(); }
+	auto getMainWindow()  const noexcept { return mMainWindow.get(); }
+	auto getMainTexture() const noexcept { return mMainTexture.get(); }
 
 private:
-	s32  mTexPixelPitch{};
-	bool enableBuzzGlow{};
-	bool enableScanLine{};
-
 	SDL_FRect mOuterFrame{};
 	SDL_FRect mInnerFrame{};
 
-	u32  mInnerFrameColor{};
 	u32  mOuterFrameColor[2]{};
 
-	s32  mOuterFrameWidth{};
-	s32  mFrameScaleMulti{ 2 };
+	s32  mOuterFramePad{};
+	s32  mScaleMultiplier{ 2 };
+
+	bool enableBuzzGlow{};
+	bool enableScanLine{};
 
 	static bool& errorState() noexcept {
 		static bool errorEncountered{};
@@ -54,7 +55,8 @@ private:
 	}
 
 public:
-	static auto* create() noexcept {
+	static auto* create(const char* appname = nullptr) noexcept {
+		sAppName = appname;
 		static BasicVideoSpec self;
 		return errorState() ? nullptr : &self;
 	}
@@ -64,38 +66,47 @@ public:
 
 	static void showErrorBox(const char* const) noexcept;
 
-	void setBackColor(const u32 color) noexcept {
-		mInnerFrameColor = color;
-	}
-
 	void setFrameColor(const u32 color_off, const u32 color_on) noexcept {
 		mOuterFrameColor[0] = color_off;
 		mOuterFrameColor[1] = color_on;
 	}
 
 private:
-	void createMainWindow(s32, s32);
-	void createMainRenderer();
-	void createMainTexture(s32, s32);
-
 	void multiplyWindowDimensions();
 
 public:
-	bool updateMainTexture(s32, s32);
-	void changeTitle(const std::string&);
-	void changeFrameMultiplier(s32);
+	bool setViewportResolution(const s32 texture_W, const s32 texture_H);
 
-	void raiseWindow();
-	void resetWindow();
-	void renderPresent();
+	void resetMainWindow(const s32 window_W = 640, const s32 window_H = 480);
+	void setMainWindowTitle(const std::string& title);
+	auto getMainWindowID() const noexcept {
+		return SDL_GetWindowID(mMainWindow.get());
+	}
+	void raiseMainWindow();
 
-	void setTextureAlpha(u32);
+
+
+	void setWindowTitle(SDL_Window* window, const std::string& title);
+	void setWindowSize(SDL_Window* window, const s32 window_W, const s32 window_H);
+	auto getWindowID(SDL_Window* window) const noexcept {
+		return SDL_GetWindowID(window);
+	}
+	void raiseWindow(SDL_Window* window);
+
+
+
+	void setViewportOpacity(const u32 alpha);
 	void setAspectRatio(s32, s32, s32);
 
+	void changeScaleMultiplier(const s32 delta);
+	void renderPresent();
+
+private:
 	[[nodiscard]]
 	u32* lockTexture();
 	void unlockTexture();
 
+public:
 	void modifyTexture(const std::span<u32> colorData);
 
 	template <typename T, typename Lambda>

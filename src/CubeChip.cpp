@@ -20,6 +20,7 @@
 #include "Assistants/BasicVideoSpec.hpp"
 #include "Assistants/BasicAudioSpec.hpp"
 
+#include "Cubechip.hpp"
 #include "EmuHost.hpp"
 
 /*==================================================================*/
@@ -56,11 +57,11 @@ SDL_AppResult SDL_AppInit(void **Host, int argc, char* argv[]) {
 	SDL_SetHint(SDL_HINT_RENDER_DRIVER, "direct3d");
 	SDL_SetHint(SDL_HINT_WINDOWS_RAW_KEYBOARD, "0");
 #endif
-	SDL_SetHint(SDL_HINT_APP_NAME, "CubeChip");
+	SDL_SetHint(SDL_HINT_APP_NAME, AppName);
 
-	if (EmuHost::assignComponents(
-		HomeDirManager::create(nullptr, "CubeChip"),
-		BasicVideoSpec::create(),
+	if (!EmuHost::assignComponents(
+		HomeDirManager::create(nullptr, AppName),
+		BasicVideoSpec::create(AppName),
 		BasicAudioSpec::create()
 	)) { return SDL_APP_FAILURE; }
 

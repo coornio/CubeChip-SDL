@@ -35,9 +35,8 @@ XOCHIP::XOCHIP()
 
 		setDisplayResolution(cScreenSizeX, cScreenSizeY);
 
-		BVS->setBackColor(mBitColors[0]);
 		BVS->setAspectRatio(cScreenSizeX * cResSizeMult, cScreenSizeY * cResSizeMult, +2);
-		if (BVS->updateMainTexture(cScreenSizeX, cScreenSizeY))
+		if (!BVS->setViewportResolution(cScreenSizeX, cScreenSizeY))
 			[[unlikely]] { addCoreState(EmuState::FATAL); }
 
 		mCurrentPC = cStartOffset;
@@ -327,7 +326,7 @@ void XOCHIP::prepDisplayArea(const Resolution mode) {
 
 	setDisplayResolution(W, H);
 
-	if (BVS->updateMainTexture(W, H)) [[unlikely]] {
+	if (!BVS->setViewportResolution(W, H)) [[unlikely]] {
 		triggerInterrupt(Interrupt::ERROR);
 	} else {
 		mDisplayBuffer[0].resize(false, H, W);
@@ -512,7 +511,6 @@ void XOCHIP::scrollDisplayRT() {
 				setColorBit332(X - Z, readMemoryI(Z));
 			}
 		}
-		BVS->setBackColor(mBitColors[0]);
 	}
 
 	#pragma endregion

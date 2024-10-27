@@ -32,3 +32,6 @@ using s8  = std::int8_t;
 using Str  = std::string;
 using StrV = std::string_view;
 using Path = std::filesystem::path;
+
+using namespace std::string_literals;
+using namespace std::string_view_literals;

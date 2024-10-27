@@ -67,7 +67,7 @@ void EmuHost::discardCore() {
 	binput::mb.updateCopy();
 
 	iGuest.reset();
-	BVS->resetWindow();
+	BVS->resetMainWindow();
 	GameFileChecker::deleteGameCore();
 
 	Limiter->setLimiter(30.0f);
@@ -82,14 +82,14 @@ void EmuHost::replaceCore() {
 
 	if (iGuest) {
 		Limiter->setLimiter(iGuest->getFramerate());
-		BVS->changeTitle(HDM->getFileStem().c_str());
+		BVS->setMainWindowTitle(HDM->getFileStem());
 	}
 }
 
 /*==================================================================*/
 
 void EmuHost::loadGameFile(const Path& gameFile) {
-	BVS->raiseWindow();
+	BVS->raiseMainWindow();
 	blog.newEntry(BLOG::INFO, "Attempting to access file: \"{}\"", gameFile.string());
 	if (HDM->validateGameFile(gameFile)) {
 		replaceCore();
@@ -107,8 +107,8 @@ void EmuHost::pauseSystem(const bool state) const noexcept {
 	}
 }
 
-bool EmuHost::terminationRequested(const SDL_WindowID windowID) const noexcept {
-	return windowID == SDL_GetWindowID(BVS->getMainWindow());
+bool EmuHost::terminationRequested(const u32 windowID) const noexcept {
+	return windowID == BVS->getMainWindowID();
 }
 
 /*==================================================================*/
@@ -154,10 +154,10 @@ void EmuHost::checkForHotkeys() {
 			toggleUnlimited();
 		}
 		if (kb.isPressed(KEY(PAGEDOWN))) {
-			BVS->changeFrameMultiplier(-1);
+			BVS->changeScaleMultiplier(-1);
 		}
 		if (kb.isPressed(KEY(PAGEUP))) {
-			BVS->changeFrameMultiplier(+1);
+			BVS->changeScaleMultiplier(+1);
 		}
 	}
 }
