@@ -30,7 +30,7 @@ BasicVideoSpec::BasicVideoSpec() noexcept
 		return;
 	}
 
-	mMainWindow = SDL_CreateWindow(sAppName, 0, 0, SDL_WINDOW_HIDDEN);
+	mMainWindow = SDL_CreateWindow(sAppName, 0, 0, SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE);
 	if (!mMainWindow) {
 		showErrorBox("Failed to create Main window!");
 		return;
@@ -104,7 +104,7 @@ bool BasicVideoSpec::setViewportResolution(const s32 texture_W, const s32 textur
 }
 
 void BasicVideoSpec::setMainWindowTitle(const std::string& name) {
-	const std::string windowTitle{ sAppName + name };
+	const std::string windowTitle{ sAppName + " :: "s + name};
 	SDL_SetWindowTitle(mMainWindow, windowTitle.c_str());
 }
 
@@ -132,7 +132,7 @@ void BasicVideoSpec::resetMainWindow(const s32 window_W, const s32 window_H) {
 	SDL_SetWindowMinimumSize(mMainWindow, window_W, window_H);
 	SDL_SetWindowSize(mMainWindow, window_W, window_H);
 
-	const std::string windowTitle{ sAppName + "Waiting for file..."s };
+	const std::string windowTitle{ sAppName + " :: Waiting for file..."s };
 	SDL_SetWindowTitle(mMainWindow, windowTitle.c_str());
 	SDL_ShowWindow(mMainWindow);
 	SDL_SyncWindow(mMainWindow);
