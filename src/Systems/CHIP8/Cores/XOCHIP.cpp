@@ -273,14 +273,14 @@ void XOCHIP::renderAudioData() {
 			}
 			BVS->setFrameColor(mBitColors[0], mBitColors[1]);
 		} else {
-			const auto audioStep{ std::pow(2.0f, (mAudioPitch - 64.0f) / 48.0f) };
-			const auto audioTone{ 31.25f / ASB->getFrequency() * audioStep };
+			const auto audioTone{ std::pow(2.0f, (mAudioPitch - 64.0f) / 48.0f) };
+			const auto audioStep{ 31.25f / ASB->getFrequency() * audioTone };
 
 			for (auto& sample : samplesBuffer) {
-				const auto step{ static_cast<s32>(std::clamp(wavePhase * 128.0f, 0.0f, 127.0f)) };
-				const auto mask{ 1 << (7 ^ (step & 7)) };
-				sample    = mPatternBuf[step >> 3] & mask ? 0x0F : 0xF0;
-				wavePhase = std::fmod(wavePhase + audioTone, 1.0f);
+				const auto bitOffset{ static_cast<s32>(std::clamp(wavePhase * 128.0f, 0.0f, 127.0f)) };
+				const auto bytePhase{ 1 << (7 ^ (bitOffset & 7)) };
+				sample    = mPatternBuf[bitOffset >> 3] & bytePhase ? 0x0F : 0xF0;
+				wavePhase = std::fmod(wavePhase + audioStep, 1.0f);
 			}
 			BVS->setFrameColor(mBitColors[0], mBitColors[0]);
 		}

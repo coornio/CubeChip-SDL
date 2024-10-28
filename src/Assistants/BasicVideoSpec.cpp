@@ -4,6 +4,7 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include <cmath>
 #include <stdexcept>
 #include <algorithm>
 
@@ -215,37 +216,39 @@ void BasicVideoSpec::drawViewportTexture(SDL_Texture* viewportTexture) {
 	SDL_RenderClear(mMainRenderer);
 
 	SDL_SetTextureScaleMode(viewportTexture, SDL_SCALEMODE_NEAREST);
-	SDL_SetRenderTarget(mMainRenderer, viewportTexture);
+	
+	if (mMainTexture) {
+		SDL_SetRenderTarget(mMainRenderer, viewportTexture);
 
-	SDL_SetRenderDrawColor(
-		mMainRenderer,
-		static_cast<u8>(mOuterFrameColor[enableBuzzGlow] >> 16),
-		static_cast<u8>(mOuterFrameColor[enableBuzzGlow] >>  8),
-		static_cast<u8>(mOuterFrameColor[enableBuzzGlow]), SDL_ALPHA_OPAQUE
-	);
-	SDL_RenderFillRect(mMainRenderer, &mOuterFrame);
+		SDL_SetRenderDrawColor(
+			mMainRenderer,
+			static_cast<u8>(mOuterFrameColor[enableBuzzGlow] >> 16),
+			static_cast<u8>(mOuterFrameColor[enableBuzzGlow] >> 8),
+			static_cast<u8>(mOuterFrameColor[enableBuzzGlow]), SDL_ALPHA_OPAQUE
+		);
+		SDL_RenderFillRect(mMainRenderer, &mOuterFrame);
 
-	SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-	SDL_RenderFillRect(mMainRenderer, &mInnerFrame);
+		SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+		SDL_RenderFillRect(mMainRenderer, &mInnerFrame);
 
-	SDL_RenderTexture(mMainRenderer, mMainTexture, nullptr, &mInnerFrame);
+		SDL_RenderTexture(mMainRenderer, mMainTexture, nullptr, &mInnerFrame);
 
-	if (enableScanLine) {
-		SDL_SetRenderDrawBlendMode(mMainRenderer, SDL_BLENDMODE_BLEND);
-		SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, 0x20);
+		if (enableScanLine) {
+			SDL_SetRenderDrawBlendMode(mMainRenderer, SDL_BLENDMODE_BLEND);
+			SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, 0x20);
 
-		const auto drawLimit{ static_cast<s32>(mOuterFrame.h) };
-		const auto increment{ static_cast<s32>(mInnerFrame.y) };
-		for (auto y{ 0 }; y < drawLimit; y += increment) {
-			SDL_RenderLine(
-				mMainRenderer,
-				mOuterFrame.x, static_cast<f32>(y),
-				mOuterFrame.w, static_cast<f32>(y)
-			);
+			const auto drawLimit{ static_cast<s32>(mOuterFrame.h) };
+			const auto increment{ static_cast<s32>(mInnerFrame.y) };
+			for (auto y{ 0 }; y < drawLimit; y += increment) {
+				SDL_RenderLine(
+					mMainRenderer,
+					mOuterFrame.x, static_cast<f32>(y),
+					mOuterFrame.w, static_cast<f32>(y)
+				);
+			}
 		}
+		SDL_SetRenderTarget(mMainRenderer, nullptr);
 	}
-
-	SDL_SetRenderTarget(mMainRenderer, nullptr);
 }
 
 void BasicVideoSpec::renderPresent() {
@@ -275,14 +278,14 @@ void BasicVideoSpec::renderPresent() {
 			static_cast<s32>(mOuterFrame.h + ImGui::GetFrameHeight())
 		);
 
-		const ImVec2 viewportFrameDimensions{
+		const auto viewportFrameDimensions{ ImVec2{
 			ImGui::GetIO().DisplaySize.x,
 			ImGui::GetIO().DisplaySize.y - ImGui::GetFrameHeight()
-		};
+		} };
 
 		ImGui::SetNextWindowSize(viewportFrameDimensions);
-		ImGui::SetNextWindowPos({ 0, ImGui::GetFrameHeight() });
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0 });
+		ImGui::SetNextWindowPos(ImVec2{ 0, ImGui::GetFrameHeight() });
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0, 0 });
 		ImGui::Begin("ViewportFrame", nullptr,
 			ImGuiWindowFlags_NoTitleBar |
 			ImGuiWindowFlags_NoResize |
@@ -308,15 +311,15 @@ void BasicVideoSpec::renderPresent() {
 			viewportFrameDimensions.y / mOuterFrame.h
 		) };
 
-		const ImVec2 viewportDimensions{
+		const auto viewportDimensions{ ImVec2{
 			mOuterFrame.w * std::max(std::floor(aspectRatio), 1.0f),
 			mOuterFrame.h * std::max(std::floor(aspectRatio), 1.0f)
-		};
+		} };
 
-		const ImVec2 viewportOffsets{
+		const auto viewportOffsets{ ImVec2{
 			(viewportFrameDimensions.x - viewportDimensions.x) / 2.0f,
 			(viewportFrameDimensions.y - viewportDimensions.y) / 2.0f
-		};
+		} };
 
 		if (viewportOffsets.x > 0.0f) { ImGui::SetCursorPosX(ImGui::GetCursorPosX() + viewportOffsets.x); }
 		if (viewportOffsets.y > 0.0f) { ImGui::SetCursorPosY(ImGui::GetCursorPosY() + viewportOffsets.y); }
