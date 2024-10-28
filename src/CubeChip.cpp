@@ -96,25 +96,31 @@ SDL_AppResult SDL_AppEvent(void* pHost, SDL_Event* Event) {
 	auto& Host{ *static_cast<EmuHost*>(pHost) };
 	const std::lock_guard lock{ Host.Mutex };
 
+	static bool mainWindowPaused{};
+
 	ImGui_ImplSDL3_ProcessEvent(Event);
 
-	switch (Event->type) {
-		case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
-			return Host.terminationRequested(Event->window.windowID)
-				? SDL_APP_SUCCESS
-				: SDL_APP_CONTINUE;
+	if (Host.isMainWindow(Event->window.windowID)) {
+		switch (Event->type) {
+			case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+				return SDL_APP_SUCCESS;
 
-		case SDL_EVENT_DROP_FILE:
-			Host.loadGameFile(Event->drop.data);
-			break;
+			case SDL_EVENT_DROP_FILE:
+				Host.loadGameFile(Event->drop.data);
+				break;
 
-		case SDL_EVENT_WINDOW_MINIMIZED:
-			Host.pauseSystem(true);
-			break;
+			case SDL_EVENT_WINDOW_MINIMIZED:
+				if (!mainWindowPaused) {
+					Host.pauseSystem(mainWindowPaused = true);
+				}
+				break;
 
-		case SDL_EVENT_WINDOW_RESTORED:
-			Host.pauseSystem(false);
-			break;
+			case SDL_EVENT_WINDOW_RESTORED:
+				if (mainWindowPaused) {
+					Host.pauseSystem(mainWindowPaused = false);
+				}
+				break;
+		}
 	}
 
 	return SDL_APP_CONTINUE;

@@ -35,8 +35,7 @@ XOCHIP::XOCHIP()
 
 		setDisplayResolution(cScreenSizeX, cScreenSizeY);
 
-		BVS->setAspectRatio(cScreenSizeX * cResSizeMult, cScreenSizeY * cResSizeMult, +2);
-		if (!BVS->setViewportResolution(cScreenSizeX, cScreenSizeY))
+		if (!BVS->setViewportDimensions(cScreenSizeX, cScreenSizeY, cResSizeMult, +2))
 			[[unlikely]] { addCoreState(EmuState::FATAL); }
 
 		mCurrentPC = cStartOffset;
@@ -280,7 +279,7 @@ void XOCHIP::renderAudioData() {
 			for (auto& sample : samplesBuffer) {
 				const auto step{ static_cast<s32>(std::clamp(wavePhase * 128.0f, 0.0f, 127.0f)) };
 				const auto mask{ 1 << (7 ^ (step & 7)) };
-				sample    = mPatternBuf[step >> 3] & mask ? 16 : -16;
+				sample    = mPatternBuf[step >> 3] & mask ? 0x0F : 0xF0;
 				wavePhase = std::fmod(wavePhase + audioTone, 1.0f);
 			}
 			BVS->setFrameColor(mBitColors[0], mBitColors[0]);
@@ -326,7 +325,7 @@ void XOCHIP::prepDisplayArea(const Resolution mode) {
 
 	setDisplayResolution(W, H);
 
-	if (!BVS->setViewportResolution(W, H)) [[unlikely]] {
+	if (!BVS->setViewportDimensions(W, H)) [[unlikely]] {
 		triggerInterrupt(Interrupt::ERROR);
 	} else {
 		mDisplayBuffer[0].resize(false, H, W);

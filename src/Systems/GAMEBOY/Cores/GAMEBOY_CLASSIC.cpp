@@ -16,8 +16,7 @@
 GAMEBOY_CLASSIC::GAMEBOY_CLASSIC() {
 	if (getSystemState() != EmuState::FATAL) {
 		
-		BVS->setAspectRatio(cScreenSizeX * cResSizeMult, cScreenSizeY * cResSizeMult, +2);
-		if (!BVS->setViewportResolution(cScreenSizeX, cScreenSizeY))
+		if (!BVS->setViewportDimensions(cScreenSizeX, cScreenSizeY, cResSizeMult, +2))
 			[[unlikely]] { addCoreState(EmuState::FATAL); }
 
 		mActiveCPF = cCylesPerSec;

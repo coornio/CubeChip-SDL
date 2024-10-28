@@ -64,9 +64,8 @@ BasicVideoSpec::BasicVideoSpec() noexcept
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO();
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 
 	ImGui::StyleColorsDark();
 	//ImGui::StyleColorsLight();
@@ -85,23 +84,6 @@ BasicVideoSpec::~BasicVideoSpec() noexcept {
 	SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }
 
-bool BasicVideoSpec::setViewportResolution(const s32 texture_W, const s32 texture_H) {
-	mMainTexture = SDL_CreateTexture(
-		mMainRenderer,
-		SDL_PIXELFORMAT_ARGB8888,
-		SDL_TEXTUREACCESS_STREAMING,
-		texture_W, texture_H
-	);
-
-	if (!mMainTexture) {
-		showErrorBox("Failed to create Viewport texture!");
-	} else {
-		SDL_SetTextureAlphaMod(mMainTexture, SDL_ALPHA_OPAQUE);
-		SDL_SetTextureScaleMode(mMainTexture, SDL_SCALEMODE_NEAREST);
-	}
-
-	return mMainTexture ? true : false;
-}
 
 void BasicVideoSpec::setMainWindowTitle(const std::string& name) {
 	const std::string windowTitle{ sAppName + " :: "s + name};
@@ -132,13 +114,12 @@ void BasicVideoSpec::resetMainWindow(const s32 window_W, const s32 window_H) {
 	SDL_SetWindowMinimumSize(mMainWindow, window_W, window_H);
 	SDL_SetWindowSize(mMainWindow, window_W, window_H);
 
-	const std::string windowTitle{ sAppName + " :: Waiting for file..."s };
-	SDL_SetWindowTitle(mMainWindow, windowTitle.c_str());
 	SDL_ShowWindow(mMainWindow);
 	SDL_SyncWindow(mMainWindow);
 
+	setMainWindowTitle("Waiting for file..."s);
+	setViewportDimensions(window_W, window_H, 1, 0);
 	mMainTexture.reset();
-	renderPresent();
 }
 
 void BasicVideoSpec::setWindowSize(SDL_Window* window, const s32 window_W, const s32 window_H) {
@@ -173,115 +154,146 @@ void BasicVideoSpec::setViewportOpacity(const u32 alpha) {
 	SDL_SetTextureAlphaMod(mMainTexture, static_cast<Uint8>(alpha));
 }
 
-void BasicVideoSpec::setAspectRatio(
-	const s32 texture_W,
-	const s32 texture_H,
-	const s32 padding_S
+bool BasicVideoSpec::setViewportDimensions(
+	const s32 texture_W, const s32 texture_H
+) {
+	mMainTexture = SDL_CreateTexture(
+		mMainRenderer,
+		SDL_PIXELFORMAT_ARGB8888,
+		SDL_TEXTUREACCESS_STREAMING,
+		texture_W, texture_H
+	);
+
+	if (!mMainTexture) {
+		showErrorBox("Failed to create Viewport texture!");
+	} else {
+		SDL_SetTextureScaleMode(mMainTexture, SDL_SCALEMODE_NEAREST);
+	}
+
+	return mMainTexture ? true : false;
+}
+
+bool BasicVideoSpec::setViewportDimensions(
+	const s32 texture_W, const s32 texture_H,
+	const s32 upscale_M, const s32 padding_S
 ) {
 	const auto padding_A{ std::abs(padding_S) };
 
 	mOuterFramePad = padding_A;
-	enableScanLine = padding_A == padding_S;
+	enableScanLine = padding_S && padding_A == padding_S;
 
 	mInnerFrame = {
 		static_cast<f32>(padding_A),
 		static_cast<f32>(padding_A),
-		static_cast<f32>(texture_W),
-		static_cast<f32>(texture_H)
+		static_cast<f32>(texture_W * upscale_M),
+		static_cast<f32>(texture_H * upscale_M)
 	};
 
-	mOuterFrame.w = texture_W + 2.0f * mOuterFramePad;
-	mOuterFrame.h = texture_H + 2.0f * mOuterFramePad;
+	const auto window_W{ texture_W * upscale_M + 2 * mOuterFramePad };
+	const auto window_H{ texture_H * upscale_M + 2 * mOuterFramePad };
 
-	SDL_SetRenderLogicalPresentation(
+	mOuterFrame.w = static_cast<f32>(window_W);
+	mOuterFrame.h = static_cast<f32>(window_H);
+
+	SDL_SetWindowMinimumSize(mMainWindow, window_W, window_H);
+
+	return setViewportDimensions(texture_W, texture_H);
+}
+
+void BasicVideoSpec::drawViewportTexture(SDL_Texture* viewportTexture) {
+	SDL_SetRenderTarget(mMainRenderer, viewportTexture);
+
+	SDL_SetRenderDrawColor(
 		mMainRenderer,
-		static_cast<s32>(mOuterFrame.w),
-		static_cast<s32>(mOuterFrame.h),
-		SDL_LOGICAL_PRESENTATION_INTEGER_SCALE
+		static_cast<u8>(mOuterFrameColor[enableBuzzGlow] >> 16),
+		static_cast<u8>(mOuterFrameColor[enableBuzzGlow] >>  8),
+		static_cast<u8>(mOuterFrameColor[enableBuzzGlow]), SDL_ALPHA_OPAQUE
 	);
+	SDL_RenderFillRect(mMainRenderer, &mOuterFrame);
 
-	multiplyWindowDimensions();
-}
+	SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+	SDL_RenderFillRect(mMainRenderer, &mInnerFrame);
 
-void BasicVideoSpec::multiplyWindowDimensions() {
-	const auto desired_W{ static_cast<s32>(mOuterFrame.w) };
-	const auto desired_H{ static_cast<s32>(mOuterFrame.h) };
+	SDL_RenderTexture(mMainRenderer, mMainTexture, nullptr, &mInnerFrame);
 
-	SDL_SetWindowMinimumSize(mMainWindow, desired_W, desired_H);
-	setWindowSize(mMainWindow, desired_W * mScaleMultiplier, desired_H * mScaleMultiplier);
-	renderPresent();
-}
+	if (enableScanLine) {
+		SDL_SetRenderDrawBlendMode(mMainRenderer, SDL_BLENDMODE_BLEND);
+		SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, 0x20);
 
-void BasicVideoSpec::changeScaleMultiplier(const s32 delta) {
-	mScaleMultiplier = std::clamp(mScaleMultiplier + delta, 1, 8);
-	multiplyWindowDimensions();
-}
-
-void BasicVideoSpec::renderPresent() {
-	SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
-	SDL_RenderClear(mMainRenderer);
-
-	if (mMainTexture) {
-		SDL_SetRenderDrawColor(
-			mMainRenderer,
-			static_cast<u8>(mOuterFrameColor[enableBuzzGlow] >> 16),
-			static_cast<u8>(mOuterFrameColor[enableBuzzGlow] >>  8),
-			static_cast<u8>(mOuterFrameColor[enableBuzzGlow]), SDL_ALPHA_OPAQUE
-		);
-		SDL_RenderFillRect(mMainRenderer, &mOuterFrame);
-
-		SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-		SDL_RenderFillRect(mMainRenderer, &mInnerFrame);
-
-		SDL_RenderTexture(mMainRenderer, mMainTexture, nullptr, &mInnerFrame);
-
-		if (enableScanLine) {
-			SDL_SetRenderDrawBlendMode(mMainRenderer, SDL_BLENDMODE_BLEND);
-			SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, 0x20);
-
-			const auto drawLimit{ static_cast<s32>(mOuterFrame.h) };
-			for (auto y{ 0 }; y < drawLimit; y += mOuterFramePad) {
-				SDL_RenderLine(
-					mMainRenderer,
-					mOuterFrame.x, static_cast<f32>(y),
-					mOuterFrame.w, static_cast<f32>(y)
-				);
-			}
+		const auto drawLimit{ static_cast<s32>(mOuterFrame.h) };
+		for (auto y{ 0 }; y < drawLimit; y += mOuterFramePad) {
+			SDL_RenderLine(
+				mMainRenderer,
+				mOuterFrame.x, static_cast<f32>(y),
+				mOuterFrame.w, static_cast<f32>(y)
+			);
 		}
 	}
 
-	s32 window_W, window_H;
-	SDL_GetWindowSize(mMainWindow, &window_W, &window_H);
+	SDL_SetRenderTarget(mMainRenderer, nullptr);
+}
 
-	SDL_Unique guiTexture{ SDL_CreateTexture(
-		mMainRenderer, SDL_PIXELFORMAT_ARGB8888,
-		SDL_TEXTUREACCESS_TARGET, window_W, window_H
+void BasicVideoSpec::renderPresent() {
+	SDL_Unique viewportTexture{ SDL_CreateTexture(
+		mMainRenderer,
+		SDL_PIXELFORMAT_ARGB8888,
+		SDL_TEXTUREACCESS_TARGET,
+		static_cast<s32>(mOuterFrame.w),
+		static_cast<s32>(mOuterFrame.h)
 	) };
 
-	if (!guiTexture) {
+	if (!viewportTexture) {
 		showErrorBox("Failed to create GUI texture!");
-	} else {
-		SDL_SetRenderTarget(mMainRenderer, guiTexture);
-		SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
-		SDL_RenderClear(mMainRenderer);
-
-		#pragma region IMGUI CODE CALL/PASSTHROUGH
-			ImGui_ImplSDLRenderer3_NewFrame();
-			ImGui_ImplSDL3_NewFrame();
-			ImGui::NewFrame();
-
-			static bool show_demo_window{ true };
-			if (show_demo_window) {
-				ImGui::ShowDemoWindow(&show_demo_window);
-			}
-
-			ImGui::Render();
-			ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), mMainRenderer);
-		#pragma endregion
-
-		SDL_SetRenderTarget(mMainRenderer, nullptr);
-		SDL_RenderTexture(mMainRenderer, guiTexture, nullptr, nullptr);
+		return;
 	}
+	
+	drawViewportTexture(viewportTexture);
+
+	#pragma region IMGUI LOGIC
+		ImGui_ImplSDLRenderer3_NewFrame();
+		ImGui_ImplSDL3_NewFrame();
+		ImGui::NewFrame();
+
+		if (ImGui::BeginMainMenuBar()) {
+			if (ImGui::BeginMenu("File")) {
+				if (ImGui::MenuItem("Open...")) {
+
+				}
+				ImGui::EndMenu();
+			}
+			ImGui::EndMainMenuBar();
+		}
+
+		const auto viewportResolution{ ImVec2{
+			ImGui::GetIO().DisplaySize.x,
+			ImGui::GetIO().DisplaySize.y - ImGui::GetFrameHeight()
+		} };
+
+		ImGui::SetNextWindowPos(ImVec2{ 0, ImGui::GetFrameHeight() });
+		ImGui::SetNextWindowSize(viewportResolution);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0, 0 });
+
+		ImGui::Begin("ViewportFrame", nullptr,
+			ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+			ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+			ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoInputs
+		);
+		ImGui::Image(
+			reinterpret_cast<ImTextureID>(viewportTexture.get()),
+			viewportResolution
+		);
+		ImGui::End();
+		ImGui::PopStyleVar();
+
+		static bool show_demo_window{ true };
+		if (show_demo_window) {
+			ImGui::ShowDemoWindow(&show_demo_window);
+		}
+
+		ImGui::Render();
+		ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), mMainRenderer);
+	#pragma endregion
+
 
 	SDL_RenderPresent(mMainRenderer);
 }

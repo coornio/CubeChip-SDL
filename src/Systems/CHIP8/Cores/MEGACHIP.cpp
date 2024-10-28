@@ -357,8 +357,7 @@ void MEGACHIP::prepDisplayArea(const Resolution mode) {
 	if (isManualRefresh()) {
 		setDisplayResolution(cScreenMegaX, cScreenMegaY);
 
-		BVS->setAspectRatio(cScreenMegaX * cResMegaMult, cScreenMegaY * cResMegaMult, -2);
-		if (!BVS->setViewportResolution(cScreenMegaX, cScreenMegaY))
+		if (!BVS->setViewportDimensions(cScreenMegaX, cScreenMegaY, cResMegaMult, -2))
 			[[unlikely]] { triggerInterrupt(Interrupt::ERROR); }
 
 		Quirk.waitVblank = false;
@@ -367,8 +366,7 @@ void MEGACHIP::prepDisplayArea(const Resolution mode) {
 	else {
 		setDisplayResolution(cScreenSizeX, cScreenSizeY);
 
-		BVS->setAspectRatio(cScreenSizeX * cResSizeMult, cScreenSizeY * cResSizeMult, +2);
-		if (!BVS->setViewportResolution(cScreenSizeX, cScreenSizeY))
+		if (!BVS->setViewportDimensions(cScreenSizeX, cScreenSizeY, cResSizeMult, +2))
 			[[unlikely]] { triggerInterrupt(Interrupt::ERROR); }
 
 		Quirk.waitVblank = !isDisplayLarger();

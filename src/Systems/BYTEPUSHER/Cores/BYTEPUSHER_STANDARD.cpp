@@ -18,8 +18,7 @@ BYTEPUSHER_STANDARD::BYTEPUSHER_STANDARD() {
 		copyGameToMemory(mMemoryBank.data());
 
 		BVS->setFrameColor(cBitsColor[0], cBitsColor[0]);
-		BVS->setAspectRatio(cScreenSizeX, cScreenSizeY, -2);
-		if (!BVS->setViewportResolution(cScreenSizeX, cScreenSizeY))
+		if (!BVS->setViewportDimensions(cScreenSizeX, cScreenSizeY, 1, -2))
 			[[unlikely]] { addCoreState(EmuState::FATAL); }
 
 		mActiveCPF = 0x10000;

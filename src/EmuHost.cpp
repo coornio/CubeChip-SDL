@@ -107,7 +107,7 @@ void EmuHost::pauseSystem(const bool state) const noexcept {
 	}
 }
 
-bool EmuHost::terminationRequested(const u32 windowID) const noexcept {
+bool EmuHost::isMainWindow(const u32 windowID) const noexcept {
 	return windowID == BVS->getMainWindowID();
 }
 
@@ -115,6 +115,8 @@ bool EmuHost::terminationRequested(const u32 windowID) const noexcept {
 
 void EmuHost::processFrame() {
 	if (Limiter->checkTime()) {
+		if (BVS->getErrorState())
+			[[unlikely]] { return; }
 
 		checkForHotkeys();
 
@@ -152,12 +154,6 @@ void EmuHost::checkForHotkeys() {
 
 		if (kb.isPressed(KEY(RSHIFT))) {
 			toggleUnlimited();
-		}
-		if (kb.isPressed(KEY(PAGEDOWN))) {
-			BVS->changeScaleMultiplier(-1);
-		}
-		if (kb.isPressed(KEY(PAGEUP))) {
-			BVS->changeScaleMultiplier(+1);
 		}
 	}
 }

@@ -67,7 +67,7 @@ public:
 		return HDM && BVS && BAS;
 	}
 
-	bool terminationRequested(const u32 windowID) const noexcept;
+	bool isMainWindow(const u32 windowID) const noexcept;
 
 	void pauseSystem(const bool state) const noexcept;
 	void loadGameFile(const Path&);

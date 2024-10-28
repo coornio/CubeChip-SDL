@@ -72,10 +72,17 @@ public:
 	}
 
 private:
-	void multiplyWindowDimensions();
+	void drawViewportTexture(SDL_Texture* viewportTexture);
 
 public:
-	bool setViewportResolution(const s32 texture_W, const s32 texture_H);
+	void setViewportOpacity(const u32 alpha);
+	bool setViewportDimensions(
+		const s32 texture_W, const s32 texture_H
+	);
+	bool setViewportDimensions(
+		const s32 texture_W, const s32 texture_H,
+		const s32 upscale_M, const s32 padding_S
+	);
 
 	void resetMainWindow(const s32 window_W = 640, const s32 window_H = 480);
 	void setMainWindowTitle(const std::string& title);
@@ -84,8 +91,6 @@ public:
 	}
 	void raiseMainWindow();
 
-
-
 	void setWindowTitle(SDL_Window* window, const std::string& title);
 	void setWindowSize(SDL_Window* window, const s32 window_W, const s32 window_H);
 	auto getWindowID(SDL_Window* window) const noexcept {
@@ -93,12 +98,6 @@ public:
 	}
 	void raiseWindow(SDL_Window* window);
 
-
-
-	void setViewportOpacity(const u32 alpha);
-	void setAspectRatio(s32, s32, s32);
-
-	void changeScaleMultiplier(const s32 delta);
 	void renderPresent();
 
 private:
