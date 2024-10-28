@@ -10,6 +10,7 @@
 #include <SDL3/SDL_platform_defines.h>
 
 #ifdef SDL_PLATFORM_WIN32
+	#define NOMINMAX
 	#pragma warning(push)
 	#pragma warning(disable : 5039)
 	#include <dwmapi.h>
@@ -67,6 +68,20 @@ BasicVideoSpec::BasicVideoSpec() noexcept
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 
+	const auto scaleFactor{ (getDisplayWidth(1) / 1920.0f + getDisplayHeight(1) / 1080.0f) / 2.5f };
+
+	if (sFontData && sFontSize) {
+		ImGui::GetIO().Fonts->AddFontFromMemoryCompressedTTF(sFontData, sFontSize, scaleFactor * 17.0f);
+	} else {
+		ImGui::GetIO().Fonts->Clear();
+
+		ImFontConfig fontConfig;
+		fontConfig.SizePixels = 16.0f * scaleFactor;
+
+		ImGui::GetIO().Fonts->AddFontDefault(&fontConfig);
+	}
+	ImGui::GetStyle().ScaleAllSizes(scaleFactor);
+
 	ImGui::StyleColorsDark();
 	//ImGui::StyleColorsLight();
 
@@ -84,13 +99,12 @@ BasicVideoSpec::~BasicVideoSpec() noexcept {
 	SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }
 
-
-void BasicVideoSpec::setMainWindowTitle(const std::string& name) {
-	const std::string windowTitle{ sAppName + " :: "s + name};
+void BasicVideoSpec::setMainWindowTitle(const Str& name) {
+	const auto windowTitle{ (sAppName ? sAppName : "") + " :: "s + name};
 	SDL_SetWindowTitle(mMainWindow, windowTitle.c_str());
 }
 
-void BasicVideoSpec::setWindowTitle(SDL_Window* window, const std::string& name) {
+void BasicVideoSpec::setWindowTitle(SDL_Window* window, const Str& name) {
 	SDL_SetWindowTitle(window, name.c_str());
 }
 
@@ -111,7 +125,6 @@ void BasicVideoSpec::raiseWindow(SDL_Window* window) {
 }
 
 void BasicVideoSpec::resetMainWindow(const s32 window_W, const s32 window_H) {
-	SDL_SetWindowMinimumSize(mMainWindow, window_W, window_H);
 	SDL_SetWindowSize(mMainWindow, window_W, window_H);
 
 	SDL_ShowWindow(mMainWindow);
@@ -179,8 +192,7 @@ bool BasicVideoSpec::setViewportDimensions(
 ) {
 	const auto padding_A{ std::abs(padding_S) };
 
-	mOuterFramePad = padding_A;
-	enableScanLine = padding_S && padding_A == padding_S;
+	enableScanLine = padding_S > 0;
 
 	mInnerFrame = {
 		static_cast<f32>(padding_A),
@@ -189,18 +201,20 @@ bool BasicVideoSpec::setViewportDimensions(
 		static_cast<f32>(texture_H * upscale_M)
 	};
 
-	const auto window_W{ texture_W * upscale_M + 2 * mOuterFramePad };
-	const auto window_H{ texture_H * upscale_M + 2 * mOuterFramePad };
+	const auto window_W{ texture_W * upscale_M + 2 * padding_A };
+	const auto window_H{ texture_H * upscale_M + 2 * padding_A };
 
 	mOuterFrame.w = static_cast<f32>(window_W);
 	mOuterFrame.h = static_cast<f32>(window_H);
-
-	SDL_SetWindowMinimumSize(mMainWindow, window_W, window_H);
 
 	return setViewportDimensions(texture_W, texture_H);
 }
 
 void BasicVideoSpec::drawViewportTexture(SDL_Texture* viewportTexture) {
+	SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+	SDL_RenderClear(mMainRenderer);
+
+	SDL_SetTextureScaleMode(viewportTexture, SDL_SCALEMODE_NEAREST);
 	SDL_SetRenderTarget(mMainRenderer, viewportTexture);
 
 	SDL_SetRenderDrawColor(
@@ -221,7 +235,8 @@ void BasicVideoSpec::drawViewportTexture(SDL_Texture* viewportTexture) {
 		SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, 0x20);
 
 		const auto drawLimit{ static_cast<s32>(mOuterFrame.h) };
-		for (auto y{ 0 }; y < drawLimit; y += mOuterFramePad) {
+		const auto increment{ static_cast<s32>(mInnerFrame.y) };
+		for (auto y{ 0 }; y < drawLimit; y += increment) {
 			SDL_RenderLine(
 				mMainRenderer,
 				mOuterFrame.x, static_cast<f32>(y),
@@ -254,6 +269,30 @@ void BasicVideoSpec::renderPresent() {
 		ImGui_ImplSDL3_NewFrame();
 		ImGui::NewFrame();
 
+		SDL_SetWindowMinimumSize(
+			mMainWindow,
+			static_cast<s32>(mOuterFrame.w),
+			static_cast<s32>(mOuterFrame.h + ImGui::GetFrameHeight())
+		);
+
+		const ImVec2 viewportFrameDimensions{
+			ImGui::GetIO().DisplaySize.x,
+			ImGui::GetIO().DisplaySize.y - ImGui::GetFrameHeight()
+		};
+
+		ImGui::SetNextWindowSize(viewportFrameDimensions);
+		ImGui::SetNextWindowPos({ 0, ImGui::GetFrameHeight() });
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0 });
+		ImGui::Begin("ViewportFrame", nullptr,
+			ImGuiWindowFlags_NoTitleBar |
+			ImGuiWindowFlags_NoResize |
+			ImGuiWindowFlags_NoMove |
+			ImGuiWindowFlags_NoScrollbar |
+			ImGuiWindowFlags_NoScrollWithMouse |
+			ImGuiWindowFlags_NoBringToFrontOnFocus
+		);
+		ImGui::PopStyleVar();
+
 		if (ImGui::BeginMainMenuBar()) {
 			if (ImGui::BeginMenu("File")) {
 				if (ImGui::MenuItem("Open...")) {
@@ -263,32 +302,32 @@ void BasicVideoSpec::renderPresent() {
 			}
 			ImGui::EndMainMenuBar();
 		}
+		
+		const auto aspectRatio{ std::min(
+			viewportFrameDimensions.x / mOuterFrame.w,
+			viewportFrameDimensions.y / mOuterFrame.h
+		) };
 
-		const auto viewportResolution{ ImVec2{
-			ImGui::GetIO().DisplaySize.x,
-			ImGui::GetIO().DisplaySize.y - ImGui::GetFrameHeight()
-		} };
+		const ImVec2 viewportDimensions{
+			mOuterFrame.w * std::max(std::floor(aspectRatio), 1.0f),
+			mOuterFrame.h * std::max(std::floor(aspectRatio), 1.0f)
+		};
 
-		ImGui::SetNextWindowPos(ImVec2{ 0, ImGui::GetFrameHeight() });
-		ImGui::SetNextWindowSize(viewportResolution);
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0, 0 });
+		const ImVec2 viewportOffsets{
+			(viewportFrameDimensions.x - viewportDimensions.x) / 2.0f,
+			(viewportFrameDimensions.y - viewportDimensions.y) / 2.0f
+		};
 
-		ImGui::Begin("ViewportFrame", nullptr,
-			ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
-			ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
-			ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoInputs
-		);
-		ImGui::Image(
-			reinterpret_cast<ImTextureID>(viewportTexture.get()),
-			viewportResolution
-		);
+		if (viewportOffsets.x > 0.0f) { ImGui::SetCursorPosX(ImGui::GetCursorPosX() + viewportOffsets.x); }
+		if (viewportOffsets.y > 0.0f) { ImGui::SetCursorPosY(ImGui::GetCursorPosY() + viewportOffsets.y); }
+
+		ImGui::Image(reinterpret_cast<ImTextureID>(viewportTexture.get()), viewportDimensions);
 		ImGui::End();
-		ImGui::PopStyleVar();
 
-		static bool show_demo_window{ true };
-		if (show_demo_window) {
-			ImGui::ShowDemoWindow(&show_demo_window);
-		}
+		//static bool show_demo_window{ true };
+		//if (show_demo_window) {
+		//	ImGui::ShowDemoWindow(&show_demo_window);
+		//}
 
 		ImGui::Render();
 		ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), mMainRenderer);

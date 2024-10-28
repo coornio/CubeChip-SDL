@@ -32,19 +32,13 @@ class BasicVideoSpec final {
 	SDL_Unique<SDL_Texture>  mMainTexture{};
 
 	static inline const char* sAppName{};
+	static inline const void* sFontData{};
+	static inline       s32   sFontSize{};
 
-public:
-	auto getMainWindow()  const noexcept { return mMainWindow.get(); }
-	auto getMainTexture() const noexcept { return mMainTexture.get(); }
-
-private:
 	SDL_FRect mOuterFrame{};
 	SDL_FRect mInnerFrame{};
 
 	u32  mOuterFrameColor[2]{};
-
-	s32  mOuterFramePad{};
-	s32  mScaleMultiplier{ 2 };
 
 	bool enableBuzzGlow{};
 	bool enableScanLine{};
@@ -55,8 +49,14 @@ private:
 	}
 
 public:
-	static auto* create(const char* appname = nullptr) noexcept {
-		sAppName = appname;
+	static auto* create(
+		const char* appName,
+		const void* fontData,
+		const u32  fontSize
+	) noexcept {
+		sAppName  = appName;
+		sFontData = fontData;
+		sFontSize = fontSize;
 		static BasicVideoSpec self;
 		return errorState() ? nullptr : &self;
 	}
@@ -65,6 +65,16 @@ public:
 	static bool getErrorState()                 noexcept { return errorState();  }
 
 	static void showErrorBox(const char* const) noexcept;
+
+	static auto getDisplayWidth(const u32 displayID) noexcept {
+		const auto displayMode{ SDL_GetCurrentDisplayMode(displayID) };
+		return displayMode ? displayMode->w : 0;
+	}
+
+	static auto getDisplayHeight(const u32 displayID) noexcept {
+		const auto displayMode{ SDL_GetCurrentDisplayMode(displayID) };
+		return displayMode ? displayMode->h : 0;
+	}
 
 	void setFrameColor(const u32 color_off, const u32 color_on) noexcept {
 		mOuterFrameColor[0] = color_off;
@@ -85,13 +95,13 @@ public:
 	);
 
 	void resetMainWindow(const s32 window_W = 640, const s32 window_H = 480);
-	void setMainWindowTitle(const std::string& title);
+	void setMainWindowTitle(const Str& title);
 	auto getMainWindowID() const noexcept {
 		return SDL_GetWindowID(mMainWindow.get());
 	}
 	void raiseMainWindow();
 
-	void setWindowTitle(SDL_Window* window, const std::string& title);
+	void setWindowTitle(SDL_Window* window, const Str& title);
 	void setWindowSize(SDL_Window* window, const s32 window_W, const s32 window_H);
 	auto getWindowID(SDL_Window* window) const noexcept {
 		return SDL_GetWindowID(window);

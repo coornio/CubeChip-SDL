@@ -61,7 +61,7 @@ SDL_AppResult SDL_AppInit(void **Host, int argc, char* argv[]) {
 
 	if (!EmuHost::assignComponents(
 		HomeDirManager::create(nullptr, AppName),
-		BasicVideoSpec::create(AppName),
+		BasicVideoSpec::create(AppName, AppFont.data(), sizeof(AppFont) ),
 		BasicAudioSpec::create()
 	)) { return SDL_APP_FAILURE; }
 
