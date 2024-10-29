@@ -82,6 +82,7 @@ public:
 	}
 
 private:
+	void updateInterfacePixelScaling(); // XXX - needs agnostic interface, must go in imgui
 	void drawViewportTexture(SDL_Texture* viewportTexture);
 
 public:

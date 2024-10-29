@@ -5,6 +5,7 @@
 */
 
 #include <cmath>
+#include <limits>
 #include <stdexcept>
 #include <algorithm>
 
@@ -69,19 +70,7 @@ BasicVideoSpec::BasicVideoSpec() noexcept
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 
-	const auto scaleFactor{ SDL_GetWindowDisplayScale(mMainWindow) };
-
-	if (sFontData && sFontSize) {
-		ImGui::GetIO().Fonts->AddFontFromMemoryCompressedTTF(sFontData, sFontSize, scaleFactor * 17.0f);
-	} else {
-		ImGui::GetIO().Fonts->Clear();
-
-		ImFontConfig fontConfig;
-		fontConfig.SizePixels = 16.0f * scaleFactor;
-
-		ImGui::GetIO().Fonts->AddFontDefault(&fontConfig);
-	}
-	ImGui::GetStyle().ScaleAllSizes(scaleFactor);
+	updateInterfacePixelScaling();
 
 	ImGui::StyleColorsDark();
 	//ImGui::StyleColorsLight();
@@ -98,6 +87,29 @@ BasicVideoSpec::~BasicVideoSpec() noexcept {
 	ImGui::DestroyContext();
 
 	SDL_QuitSubSystem(SDL_INIT_VIDEO);
+}
+
+void BasicVideoSpec::updateInterfacePixelScaling() {
+	static constexpr auto epsilon{ std::numeric_limits<f32>::epsilon() };
+	static auto currentFactor{ 0.0f };
+	
+	const auto newFactor{ SDL_GetWindowDisplayScale(mMainWindow) };
+	if (std::fabs(currentFactor - newFactor) > epsilon) {
+		currentFactor = newFactor;
+		if (sFontData && sFontSize) {
+			ImGui::GetIO().Fonts->AddFontFromMemoryCompressedTTF(
+				sFontData, sFontSize, newFactor * 17.0f
+			);
+		} else {
+			ImGui::GetIO().Fonts->Clear();
+
+			ImFontConfig fontConfig;
+			fontConfig.SizePixels = 16.0f * newFactor;
+
+			ImGui::GetIO().Fonts->AddFontDefault(&fontConfig);
+		}
+		ImGui::GetStyle().ScaleAllSizes(newFactor);
+	}
 }
 
 void BasicVideoSpec::setMainWindowTitle(const Str& name) {
