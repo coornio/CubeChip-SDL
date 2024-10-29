@@ -69,7 +69,7 @@ BasicVideoSpec::BasicVideoSpec() noexcept
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 
-	const auto scaleFactor{ (getDisplayWidth(1) / 1920.0f + getDisplayHeight(1) / 1080.0f) / 2.5f };
+	const auto scaleFactor{ SDL_GetWindowDisplayScale(mMainWindow) };
 
 	if (sFontData && sFontSize) {
 		ImGui::GetIO().Fonts->AddFontFromMemoryCompressedTTF(sFontData, sFontSize, scaleFactor * 17.0f);
