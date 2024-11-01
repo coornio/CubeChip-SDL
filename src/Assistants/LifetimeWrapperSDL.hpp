@@ -32,6 +32,11 @@ struct SDL_Deleter<SDL_Texture> {
 	static void deleter(SDL_Texture* ptr) { SDL_DestroyTexture(ptr); }
 	using type = decltype(&deleter);
 };
+template <>
+struct SDL_Deleter<SDL_AudioStream> {
+	static void deleter(SDL_AudioStream* ptr) { SDL_DestroyAudioStream(ptr); }
+	using type = decltype(&deleter);
+};
 
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/

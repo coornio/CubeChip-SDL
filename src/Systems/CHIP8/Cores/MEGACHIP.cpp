@@ -411,8 +411,7 @@ void MEGACHIP::initializeFontColors() noexcept {
 
 u32  MEGACHIP::blendPixel(const u32 srcPixel, const u32 dstPixel) const noexcept {
 	static constexpr f32 minF{ 1.0f / 255.0f };
-	struct ColorF { f32 A, R, G, B; };
-	ColorF src, dst;
+	struct { f32 A, R, G, B; } src{}, dst{};
 
 	src.A =  (srcPixel >> 24) * mTexture.opacity * minF;
 	if (src.A < minF) [[unlikely]] { return dstPixel; }

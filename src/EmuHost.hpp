@@ -69,6 +69,16 @@ public:
 
 	bool isMainWindow(const u32 windowID) const noexcept;
 
+	template <typename T>
+	void scaleInterface(T&& appFont) const noexcept {
+		BVS->scaleInterface(std::forward<T>(appFont));
+	}
+
+	template <typename T>
+	void processInterfaceEvent(T&& event) const noexcept {
+		BVS->processInterfaceEvent(std::forward<T>(event));
+	}
+
 	void pauseSystem(const bool state) const noexcept;
 	void loadGameFile(const Path&);
 

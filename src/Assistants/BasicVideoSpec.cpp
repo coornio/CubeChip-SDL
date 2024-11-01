@@ -9,6 +9,10 @@
 #include <stdexcept>
 #include <algorithm>
 
+#include "../_imgui/imgui.h"
+#include "../_imgui/imgui_impl_sdl3.h"
+#include "../_imgui/imgui_impl_sdlrenderer3.h"
+
 #include <SDL3/SDL_platform_defines.h>
 
 #ifdef SDL_PLATFORM_WIN32
@@ -70,7 +74,7 @@ BasicVideoSpec::BasicVideoSpec() noexcept
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 
-	updateInterfacePixelScaling();
+	//updateInterfacePixelScaling();
 
 	ImGui::StyleColorsDark();
 	//ImGui::StyleColorsLight();
@@ -87,29 +91,6 @@ BasicVideoSpec::~BasicVideoSpec() noexcept {
 	ImGui::DestroyContext();
 
 	SDL_QuitSubSystem(SDL_INIT_VIDEO);
-}
-
-void BasicVideoSpec::updateInterfacePixelScaling() {
-	static constexpr auto epsilon{ std::numeric_limits<f32>::epsilon() };
-	static auto currentFactor{ 0.0f };
-	
-	const auto newFactor{ SDL_GetWindowDisplayScale(mMainWindow) };
-	if (std::fabs(currentFactor - newFactor) > epsilon) {
-		currentFactor = newFactor;
-		if (sFontData && sFontSize) {
-			ImGui::GetIO().Fonts->AddFontFromMemoryCompressedTTF(
-				sFontData, sFontSize, newFactor * 17.0f
-			);
-		} else {
-			ImGui::GetIO().Fonts->Clear();
-
-			ImFontConfig fontConfig;
-			fontConfig.SizePixels = 16.0f * newFactor;
-
-			ImGui::GetIO().Fonts->AddFontDefault(&fontConfig);
-		}
-		ImGui::GetStyle().ScaleAllSizes(newFactor);
-	}
 }
 
 void BasicVideoSpec::setMainWindowTitle(const Str& name) {
@@ -223,12 +204,37 @@ bool BasicVideoSpec::setViewportDimensions(
 	return setViewportDimensions(texture_W, texture_H);
 }
 
+void BasicVideoSpec::processInterfaceEvent(SDL_Event* event) const noexcept {
+	ImGui_ImplSDL3_ProcessEvent(event);
+}
+
+void BasicVideoSpec::updateInterfacePixelScaling(const void* fontData, const s32 fontSize, const f32 newScale) {
+	static auto currentScale{ 0.0f };
+
+	if (newScale < 1.0f) { return; }
+	if (std::fabs(currentScale - newScale) > Epsilon::f32) {
+		currentScale = newScale;
+		auto& io{ ImGui::GetIO() };
+
+		if (fontData && fontSize) {
+			io.Fonts->AddFontFromMemoryCompressedTTF(
+				fontData, fontSize, newScale * 17.0f
+			);
+		} else {
+			ImFontConfig fontConfig;
+			fontConfig.SizePixels = 16.0f * newScale;
+
+			io.Fonts->Clear();
+			io.Fonts->AddFontDefault(&fontConfig);
+		}
+		ImGui::GetStyle().ScaleAllSizes(newScale);
+	}
+}
+
 void BasicVideoSpec::drawViewportTexture(SDL_Texture* viewportTexture) {
 	SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 	SDL_RenderClear(mMainRenderer);
 
-	SDL_SetTextureScaleMode(viewportTexture, SDL_SCALEMODE_NEAREST);
-	
 	if (mMainTexture) {
 		SDL_SetRenderTarget(mMainRenderer, viewportTexture);
 
@@ -275,6 +281,8 @@ void BasicVideoSpec::renderPresent() {
 	if (!viewportTexture) {
 		showErrorBox("Failed to create GUI texture!");
 		return;
+	} else {
+		SDL_SetTextureScaleMode(viewportTexture, SDL_SCALEMODE_NEAREST);
 	}
 	
 	drawViewportTexture(viewportTexture);

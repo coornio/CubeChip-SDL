@@ -16,6 +16,7 @@
 #include <SDL3/SDL.h>
 
 #include "Typedefs.hpp"
+#include "LifetimeWrapperSDL.hpp"
 
 /*==================================================================*/
 	#pragma region BasicAudioSpec Singleton Class
@@ -48,44 +49,24 @@ public:
 	static auto getGlobalVolume()     noexcept { return globalVolume(); }
 	static auto getGlobalVolumeNorm() noexcept { return globalVolume() / 255.0f; }
 
-	static void setGlobalVolume(s32 value) noexcept {
-		auto& volume{ globalVolume() };
-		volume = std::clamp(value, 0, 255);
-	}
-	static void changeGlobalVolume(s32 delta) noexcept {
-		auto& volume{ globalVolume() };
-		volume = std::clamp(volume + delta, 0, 255);
-	}
+	static void setGlobalVolume(s32 value) noexcept;
+	static void changeGlobalVolume(s32 delta) noexcept;
 };
 
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
-#include <iostream>
-
 class AudioSpecBlock {
-	SDL_AudioSpec     mSpec;
-	SDL_AudioDeviceID mDevice{};
-	SDL_AudioStream*  pStream{};
-
-	s32 mVolume{};
+	SDL_AudioSpec mSpec;
+	s32           mVolume{};
+	SDL_AudioStream* pStream{};
 
 public:
 	AudioSpecBlock(
 		const SDL_AudioFormat format, const s32 channels, const s32 frequency,
 		const SDL_AudioDeviceID device = SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK
-	) noexcept {
-		SDL_InitSubSystem(SDL_INIT_AUDIO);
-		mSpec   = { format, std::max(channels, 1), std::max(frequency, 1) };
-		pStream = SDL_OpenAudioDeviceStream(device, &mSpec, nullptr, nullptr);
-		mDevice = SDL_GetAudioStreamDevice(pStream);
-		SDL_ResumeAudioStreamDevice(pStream);
-		setVolume(255);
-	}
-	~AudioSpecBlock() noexcept {
-		//SDL_DestroyAudioStream(pStream);
-		SDL_QuitSubSystem(SDL_INIT_AUDIO);
-	}
+	) noexcept;
+	~AudioSpecBlock() noexcept;
 
 	AudioSpecBlock(const AudioSpecBlock&) = delete;
 	AudioSpecBlock& operator=(const AudioSpecBlock&) = delete;
@@ -94,16 +75,12 @@ public:
 	auto getVolume()     const noexcept { return mVolume; }
 	auto getVolumeNorm() const noexcept { return mVolume / 255.0f; }
 
-	auto getSampleRate(f32 framerate) const noexcept {
-		return std::abs(framerate) > 1e-6f ? mSpec.freq / framerate : 0.0f;
+	auto getSampleRate(const f32 framerate) const noexcept {
+		return framerate > Epsilon::f32 ? mSpec.freq / framerate : 0.0f;
 	}
 
-	void setVolume(s32 value) noexcept {
-		mVolume = std::clamp(value, 0, 255);
-	}
-	void changeVolume(s32 delta) noexcept {
-		mVolume = std::clamp(mVolume + delta, 0, 255);
-	}
+	void setVolume(const s32 value) noexcept;
+	void changeVolume(const s32 delta) noexcept;
 
 	/**
 	 * @brief Pushes buffer of audio samples to SDL, accepts any span
@@ -112,7 +89,7 @@ public:
 	 */
 	template <typename T>
 	void pushAudioData(const std::span<T> samplesBuffer) const {
-		if (!pStream || !mDevice) { return; }
+		if (!pStream) { return; }
 
 		const auto localVolume { AudioSpecBlock::getVolumeNorm() };
 		const auto globalVolume{ BasicAudioSpec::getGlobalVolumeNorm() };

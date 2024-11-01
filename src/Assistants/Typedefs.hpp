@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <limits>
 #include <string>
 #include <cstdint>
 #include <cstddef>
@@ -35,3 +36,8 @@ using Path = std::filesystem::path;
 
 using namespace std::string_literals;
 using namespace std::string_view_literals;
+
+struct Epsilon {
+	constexpr static f32 f32{ std::numeric_limits<::f32>::epsilon() };
+	constexpr static f64 f64{ std::numeric_limits<::f64>::epsilon() };
+};

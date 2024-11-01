@@ -9,11 +9,10 @@
 #include <span>
 #include <string>
 #include <utility>
+#include <concepts>
 #include <execution>
 
-#include "../_imgui/imgui.h"
-#include "../_imgui/imgui_impl_sdl3.h"
-#include "../_imgui/imgui_impl_sdlrenderer3.h"
+#include <SDL3/SDL.h>
 
 #include "Typedefs.hpp"
 #include "LifetimeWrapperSDL.hpp"
@@ -32,8 +31,6 @@ class BasicVideoSpec final {
 	SDL_Unique<SDL_Texture>  mMainTexture{};
 
 	static inline const char* sAppName{};
-	static inline const void* sFontData{};
-	static inline       s32   sFontSize{};
 
 	SDL_FRect mOuterFrame{};
 	SDL_FRect mInnerFrame{};
@@ -49,14 +46,8 @@ class BasicVideoSpec final {
 	}
 
 public:
-	static auto* create(
-		const char* appName,
-		const void* fontData,
-		const u32  fontSize
-	) noexcept {
-		sAppName  = appName;
-		sFontData = fontData;
-		sFontSize = fontSize;
+	static auto* create(const char *appName) noexcept {
+		sAppName = appName;
 		static BasicVideoSpec self;
 		return errorState() ? nullptr : &self;
 	}
@@ -70,7 +61,6 @@ public:
 		const auto displayMode{ SDL_GetCurrentDisplayMode(displayID) };
 		return displayMode ? displayMode->w : 0;
 	}
-
 	static auto getDisplayHeight(const u32 displayID) noexcept {
 		const auto displayMode{ SDL_GetCurrentDisplayMode(displayID) };
 		return displayMode ? displayMode->h : 0;
@@ -81,8 +71,18 @@ public:
 		mOuterFrameColor[1] = color_on;
 	}
 
+	template <typename T, std::size_t N = std::dynamic_extent>
+	void scaleInterface(std::span<const T, N> appFont) {
+		updateInterfacePixelScaling(
+			appFont.data(), static_cast<s32>(appFont.size()),
+			SDL_GetWindowDisplayScale(mMainWindow)
+		);
+	}
+
+	void processInterfaceEvent(SDL_Event* event) const noexcept;
+
 private:
-	void updateInterfacePixelScaling(); // XXX - needs agnostic interface, must go in imgui
+	void updateInterfacePixelScaling(const void* fontData, const s32 fontSize, const f32 newScale);
 	void drawViewportTexture(SDL_Texture* viewportTexture);
 
 public:

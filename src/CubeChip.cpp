@@ -31,12 +31,12 @@ BasicMouse&    binput::mb{    *BasicMouse::create() };
 
 /*==================================================================*/
 
-SDL_AppResult SDL_AppInit(void **Host, int argc, char* argv[]) {
+SDL_AppResult SDL_AppInit(void **Host, int argc, char *argv[]) {
 
 //             VS               OTHER
 #if !defined(NDEBUG) || defined(DEBUG)
 	{
-		printf("SDL3 test dated: 20/10/24 (dd/mm/yy)\n");
+		printf("SDL3 test dated: 27/10/24 (dd/mm/yy)\n");
 		const auto compiled{ SDL_VERSION };  /* hardcoded number from SDL headers */
 		const auto linked{ SDL_GetVersion() };  /* reported by linked SDL library */
 
@@ -58,10 +58,11 @@ SDL_AppResult SDL_AppInit(void **Host, int argc, char* argv[]) {
 	SDL_SetHint(SDL_HINT_WINDOWS_RAW_KEYBOARD, "0");
 #endif
 	SDL_SetHint(SDL_HINT_APP_NAME, AppName);
+	SDL_SetAppMetadata(AppName, AppVer, nullptr);
 
 	if (!EmuHost::assignComponents(
 		HomeDirManager::create(nullptr, AppName),
-		BasicVideoSpec::create(AppName, AppFont.data(), sizeof(AppFont) ),
+		BasicVideoSpec::create(AppName),
 		BasicAudioSpec::create()
 	)) { return SDL_APP_FAILURE; }
 
@@ -81,7 +82,7 @@ SDL_AppResult SDL_AppInit(void **Host, int argc, char* argv[]) {
 
 /*==================================================================*/
 
-SDL_AppResult SDL_AppIterate(void* pHost) {
+SDL_AppResult SDL_AppIterate(void *pHost) {
 	auto& Host{ *static_cast<EmuHost*>(pHost) };
 	const std::lock_guard lock{ Host.Mutex };
 
@@ -92,13 +93,13 @@ SDL_AppResult SDL_AppIterate(void* pHost) {
 
 /*==================================================================*/
 
-SDL_AppResult SDL_AppEvent(void* pHost, SDL_Event* Event) {
+SDL_AppResult SDL_AppEvent(void *pHost, SDL_Event *Event) {
 	auto& Host{ *static_cast<EmuHost*>(pHost) };
 	const std::lock_guard lock{ Host.Mutex };
 
 	static bool mainWindowPaused{};
 
-	ImGui_ImplSDL3_ProcessEvent(Event);
+	Host.processInterfaceEvent(Event);
 
 	if (Host.isMainWindow(Event->window.windowID)) {
 		switch (Event->type) {
@@ -110,8 +111,10 @@ SDL_AppResult SDL_AppEvent(void* pHost, SDL_Event* Event) {
 				break;
 
 			case SDL_EVENT_WINDOW_MINIMIZED:
-				if (!mainWindowPaused) {
-					Host.pauseSystem(mainWindowPaused = true);
+				if (Host.isMainWindow(Event->window.windowID)) {
+					if (!mainWindowPaused) {
+						Host.pauseSystem(mainWindowPaused = true);
+					}
 				}
 				break;
 
@@ -119,6 +122,14 @@ SDL_AppResult SDL_AppEvent(void* pHost, SDL_Event* Event) {
 				if (mainWindowPaused) {
 					Host.pauseSystem(mainWindowPaused = false);
 				}
+				break;
+
+			case SDL_EVENT_WINDOW_DISPLAY_CHANGED:
+				Host.scaleInterface(AppFont);
+				break;
+
+			case SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED:
+				Host.scaleInterface(AppFont);
 				break;
 		}
 	}
@@ -128,4 +139,4 @@ SDL_AppResult SDL_AppEvent(void* pHost, SDL_Event* Event) {
 
 /*==================================================================*/
 
-void SDL_AppQuit(void*, SDL_AppResult) {}
+void SDL_AppQuit(void *, SDL_AppResult) {}
