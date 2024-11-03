@@ -47,10 +47,10 @@ void BYTEPUSHER_STANDARD::renderAudioData() {
 	const std::span<u8, cAudioLength>
 		samplesOffset{ mMemoryBank.data() + (readData<2>(6) << 8), cAudioLength };
 
-	std::vector<s8> samplesBuffer \
+	std::vector<s8> samplesBuffer0 \
 		(samplesOffset.begin(), samplesOffset.end());
 
-	ASB->pushAudioData<s8>(samplesBuffer);
+	ASB->pushAudioData<s8>(0, samplesBuffer0);
 }
 
 void BYTEPUSHER_STANDARD::renderVideoData() {

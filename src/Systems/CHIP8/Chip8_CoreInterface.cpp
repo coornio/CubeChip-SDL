@@ -17,7 +17,7 @@
 /*==================================================================*/
 
 Chip8_CoreInterface::Chip8_CoreInterface() noexcept
-	: ASB{ std::make_unique<AudioSpecBlock>(SDL_AUDIO_S8, 1, 48'000) }
+	: ASB{ std::make_unique<AudioSpecBlock>(SDL_AUDIO_S8, 1, 48'000, 2) }
 {
 	sSavestatePath = HDM->addSystemDir("savestate", "CHIP8");
 	if (!sSavestatePath) { setCoreState(EmuState::FATAL); }

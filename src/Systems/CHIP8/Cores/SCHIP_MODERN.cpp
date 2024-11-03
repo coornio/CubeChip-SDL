@@ -235,7 +235,7 @@ void SCHIP_MODERN::renderAudioData() {
 		BVS->setFrameColor(sBitColors[0], sBitColors[0]);
 	}
 
-	ASB->pushAudioData<s8>(samplesBuffer);
+	ASB->pushAudioData<s8>(0, samplesBuffer);
 }
 
 void SCHIP_MODERN::renderVideoData() {

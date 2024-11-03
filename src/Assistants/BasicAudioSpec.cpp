@@ -24,23 +24,26 @@ void BasicAudioSpec::changeGlobalVolume(s32 delta) noexcept {
 
 AudioSpecBlock::AudioSpecBlock(
 	const SDL_AudioFormat format, const s32 channels,
-	const s32 frequency, const SDL_AudioDeviceID device
-) noexcept {
+	const s32 frequency, const s32 streams, const SDL_AudioDeviceID device
+) noexcept
+	: mAudioStreams(std::max(streams, 1))
+{
 	SDL_InitSubSystem(SDL_INIT_AUDIO);
-	mSpec   = { format, std::max(channels, 1), std::max(frequency, 1) };
-	pStream = SDL_OpenAudioDeviceStream(device, &mSpec, nullptr, nullptr);
-	SDL_ResumeAudioStreamDevice(pStream);
-	setVolume(255);
+	mAudioSpec = { format, std::max(channels, 1), std::max(frequency, 1) };
+	for (auto& stream : mAudioStreams) {
+		stream.ptr = SDL_OpenAudioDeviceStream(device, &mAudioSpec, nullptr, nullptr);
+		SDL_ResumeAudioStreamDevice(stream.ptr);
+	}
 }
 
 AudioSpecBlock::~AudioSpecBlock() noexcept {
 	SDL_QuitSubSystem(SDL_INIT_AUDIO);
 }
 
-void AudioSpecBlock::setVolume(const s32 value) noexcept {
-	mVolume = std::clamp(value, 0, 255);
+void AudioSpecBlock::setVolume(const u32 index, const s32 value) noexcept {
+	mAudioStreams[index].volume = std::clamp(value, 0, 255);
 }
 
-void AudioSpecBlock::changeVolume(const s32 delta) noexcept {
-	mVolume = std::clamp(mVolume + delta, 0, 255);
+void AudioSpecBlock::changeVolume(const u32 index, const s32 delta) noexcept {
+	mAudioStreams[index].volume = std::clamp(mAudioStreams[index].volume + delta, 0, 255);
 }

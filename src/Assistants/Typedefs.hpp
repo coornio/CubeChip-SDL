@@ -38,6 +38,6 @@ using namespace std::string_literals;
 using namespace std::string_view_literals;
 
 struct Epsilon {
-	constexpr static f32 f32{ std::numeric_limits<::f32>::epsilon() };
-	constexpr static f64 f64{ std::numeric_limits<::f64>::epsilon() };
+	constexpr static ::f32 f32{ std::numeric_limits<::f32>::epsilon() };
+	constexpr static ::f64 f64{ std::numeric_limits<::f64>::epsilon() };
 };

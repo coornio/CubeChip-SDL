@@ -10,6 +10,7 @@
 #include <cmath>
 #include <vector>
 #include <utility>
+#include <concepts>
 #include <algorithm>
 #include <execution>
 
@@ -57,13 +58,20 @@ public:
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 class AudioSpecBlock {
-	SDL_AudioSpec mSpec;
-	s32           mVolume{};
-	SDL_AudioStream* pStream{};
+	
+	struct StreamBlock {
+		using Stream = SDL_AudioStream;
+		s32 volume{ 255 };
+		Stream* ptr{};
+	};
+
+	SDL_AudioSpec mAudioSpec;
+	std::vector<StreamBlock>
+		mAudioStreams;
 
 public:
 	AudioSpecBlock(
-		const SDL_AudioFormat format, const s32 channels, const s32 frequency,
+		const SDL_AudioFormat format, const s32 channels, const s32 frequency, const s32 streams,
 		const SDL_AudioDeviceID device = SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK
 	) noexcept;
 	~AudioSpecBlock() noexcept;
@@ -71,16 +79,16 @@ public:
 	AudioSpecBlock(const AudioSpecBlock&) = delete;
 	AudioSpecBlock& operator=(const AudioSpecBlock&) = delete;
 
-	auto getFrequency()  const noexcept { return mSpec.freq; }
-	auto getVolume()     const noexcept { return mVolume; }
-	auto getVolumeNorm() const noexcept { return mVolume / 255.0f; }
+	auto getFrequency()                 const noexcept { return mAudioSpec.freq; }
+	auto getVolume(const u32 index)     const noexcept { return mAudioStreams[index].volume; }
+	auto getVolumeNorm(const u32 index) const noexcept { return mAudioStreams[index].volume / 255.0f; }
 
 	auto getSampleRate(const f32 framerate) const noexcept {
-		return framerate > Epsilon::f32 ? mSpec.freq / framerate : 0.0f;
+		return framerate > Epsilon::f32 ? mAudioSpec.freq / framerate : 0.0f;
 	}
 
-	void setVolume(const s32 value) noexcept;
-	void changeVolume(const s32 delta) noexcept;
+	void setVolume(const u32 index, const s32 value) noexcept;
+	void changeVolume(const u32 index, const s32 delta) noexcept;
 
 	/**
 	 * @brief Pushes buffer of audio samples to SDL, accepts any span
@@ -88,10 +96,10 @@ public:
 	 * @param[in] samplesBuffer :: Span to array of audio samples.
 	 */
 	template <typename T>
-	void pushAudioData(const std::span<T> samplesBuffer) const {
-		if (!pStream) { return; }
+	void pushAudioData(const u32 index, const std::span<T> samplesBuffer) const {
+		if (!mAudioStreams[index].ptr) { return; }
 
-		const auto localVolume { AudioSpecBlock::getVolumeNorm() };
+		const auto localVolume { AudioSpecBlock::getVolumeNorm(index) };
 		const auto globalVolume{ BasicAudioSpec::getGlobalVolumeNorm() };
 
 		std::transform(
@@ -104,7 +112,7 @@ public:
 			}
 		);
 
-		SDL_PutAudioStreamData(pStream, samplesBuffer.data(),
+		SDL_PutAudioStreamData(mAudioStreams[index].ptr, samplesBuffer.data(),
 			static_cast<s32>(sizeof(T) * samplesBuffer.size())
 		);
 	}

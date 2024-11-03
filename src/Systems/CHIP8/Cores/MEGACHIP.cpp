@@ -298,14 +298,17 @@ void MEGACHIP::instructionLoop() noexcept {
 }
 
 void MEGACHIP::renderAudioData() {
-	std::vector<s8> samplesBuffer \
+	std::vector<s8> samplesBuffer0 \
+		(static_cast<usz>(ASB->getSampleRate(cRefreshRate)));
+
+	std::vector<s8> samplesBuffer1 \
 		(static_cast<usz>(ASB->getSampleRate(cRefreshRate)));
 
 	if (isManualRefresh() && mTrackTotalLen) {
-		for (auto& sample : samplesBuffer) {
+		for (auto& sample : samplesBuffer0) {
 			sample = static_cast<s8>((readMemory(
 				mTrackStartIdx + static_cast<u32>(mTrackPosition)
-			) - 128) * ASB->getVolumeNorm());
+			) - 128));
 
 			if ((mTrackPosition += mTrackStepping) >= std::abs(mTrackTotalLen)) {
 				if (mTrackTotalLen < 0) {
@@ -316,12 +319,12 @@ void MEGACHIP::renderAudioData() {
 				}
 			}
 		}
-		BVS->setFrameColor(sBitColors[0], sBitColors[0]);
-	} else {
+	}
+	if (true) {
 		static f32 wavePhase{};
 
 		if (mSoundTimer) {
-			for (auto& sample : samplesBuffer) {
+			for (auto& sample : samplesBuffer1) {
 				sample = static_cast<s8>(wavePhase > 0.5f ? 16 : -16);
 				wavePhase = std::fmod(wavePhase + mBuzzerTone, 1.0f);
 			}
@@ -332,7 +335,8 @@ void MEGACHIP::renderAudioData() {
 		}
 	}
 
-	ASB->pushAudioData<s8>(samplesBuffer);
+	ASB->pushAudioData<s8>(0, samplesBuffer0);
+	ASB->pushAudioData<s8>(1, samplesBuffer1);
 }
 
 void MEGACHIP::renderVideoData() {
