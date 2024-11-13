@@ -11,7 +11,7 @@
 /*==================================================================*/
 
 class Chip8_CoreInterface : public EmuInterface {
-
+	
 protected:
 	static inline Path* sPermaRegsPath{};
 	static inline Path* sSavestatePath{};
@@ -19,6 +19,12 @@ protected:
 	std::unique_ptr<AudioSpecBlock> ASB;
 
 	std::vector<SimpleKeyMapping> mCustomBinds;
+
+	enum STREAM {
+		CHANN0, CHANN1, CHANN2, CHANN3, COUNT,
+		BUZZER = CHANN3,
+		UNIQUE = CHANN0,
+	};
 
 private:
 	u32  mTickLast{};
@@ -118,14 +124,25 @@ protected:
 		mDisplayH = H; mDisplayHb = H - 1;
 	}
 
-	f32 mBuzzerTone{};
 	u32 mPlanarMask{ 0x1 };
 
 	u32 mCurrentPC{};
 	u32 mRegisterI{};
 
+	std::array<f32, STREAM::COUNT>
+		mPhaseStep{};
+
+	std::array<f32, STREAM::COUNT>
+		mAudioPhase{};
+
+	std::array<u8,  STREAM::COUNT>
+		mAudioTimer{};
+
+	void startAudio(const s32 duration, const s32 tone = 0) noexcept;
+	void startAudioAtChannel(const u32 index, const s32 duration, const s32 tone = 0) noexcept;
+	void pushSquareTone(const u32 index, const f32 framerate = 60.0f) noexcept;
+
 	u32 mDelayTimer{};
-	u32 mSoundTimer{};
 	u32 mInputTimer{};
 
 	u32 mStackTop{};
@@ -164,8 +181,6 @@ protected:
 
 	virtual void renderAudioData() = 0;
 	virtual void renderVideoData() = 0;
-
-	f32  calcBuzzerTone() const noexcept;
 
 public:
 	Chip8_CoreInterface() noexcept;

@@ -19,6 +19,8 @@ protected:
 
 	std::vector<SimpleKeyMapping> mCustomBinds;
 
+	enum STREAM { CHANN0, COUNT };
+
 	u32  getKeyStates() const;
 	void loadPresetBinds();
 	void loadCustomBinds(std::span<const SimpleKeyMapping> binds);

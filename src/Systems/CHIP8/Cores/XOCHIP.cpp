@@ -41,6 +41,9 @@ XOCHIP::XOCHIP()
 		mCurrentPC = cStartOffset;
 		mFramerate = cRefreshRate;
 		mActiveCPF = cInstSpeedLo;
+
+		ASB->setStatus(STREAM::UNIQUE, true);
+		ASB->setStatus(STREAM::BUZZER, true);
 	}
 }
 
@@ -260,42 +263,8 @@ void XOCHIP::instructionLoop() noexcept {
 }
 
 void XOCHIP::renderAudioData() {
-	std::vector<s8> samplesBuffer0 \
-		(static_cast<usz>(ASB->getSampleRate(cRefreshRate)));
-
-	std::vector<s8> samplesBuffer1 \
-		(static_cast<usz>(ASB->getSampleRate(cRefreshRate)));
-
-	static f32 wavePhase0{};
-	static f32 wavePhase1{};
-
-	if (mSoundTimer) {
-		if (isBuzzerEnabled()) {
-			for (auto& sample : samplesBuffer0) {
-				sample    = static_cast<s8>(wavePhase0 > 0.5f ? 16 : -16);
-				wavePhase0 = std::fmod(wavePhase0 + mBuzzerTone, 1.0f);
-			}
-			BVS->setFrameColor(mBitColors[0], mBitColors[1]);
-		} else {
-			const auto audioTone{ std::pow(2.0f, (mAudioPitch - 64.0f) / 48.0f) };
-			const auto audioStep{ 31.25f / ASB->getFrequency() * audioTone };
-
-			for (auto& sample : samplesBuffer1) {
-				const auto bitOffset{ static_cast<s32>(std::clamp(wavePhase1 * 128.0f, 0.0f, 127.0f)) };
-				const auto bytePhase{ 1 << (7 ^ (bitOffset & 7)) };
-				sample    = mPatternBuf[bitOffset >> 3] & bytePhase ? 0x0F : 0xF0;
-				wavePhase1 = std::fmod(wavePhase1 + audioStep, 1.0f);
-			}
-			BVS->setFrameColor(mBitColors[0], mBitColors[0]);
-		}
-	} else {
-		wavePhase0 = wavePhase1 = 0.0f;
-		isBuzzerEnabled(false);
-		BVS->setFrameColor(mBitColors[0], mBitColors[0]);
-	}
-
-	ASB->pushAudioData<s8>(0, samplesBuffer0);
-	ASB->pushAudioData<s8>(1, samplesBuffer1);
+	pushPatternTone(STREAM::UNIQUE, cRefreshRate);
+	pushSquareTone(STREAM::BUZZER, cRefreshRate);
 }
 
 void XOCHIP::renderVideoData() {
@@ -347,6 +316,25 @@ void XOCHIP::setColorBit332(const s32 bit, const s32 color) noexcept {
 	mBitColors[bit & 0xF] = map3b[color >> 5 & 0x7] << 16 // red
 						  | map3b[color >> 2 & 0x7] <<  8 // green
 						  | map2b[color      & 0x3];      // blue
+}
+
+void XOCHIP::pushPatternTone(const u32 index, const f32 framerate) noexcept {
+	std::vector<s8> samplesBuffer \
+		(static_cast<usz>(ASB->getSampleRate(framerate)));
+
+	if (mAudioTimer[index]) {
+		const auto audioTone{ std::pow(2.0f, (mAudioPitch - 64.0f) / 48.0f) };
+		const auto audioStep{ 31.25f / ASB->getFrequency() * audioTone };
+
+		for (auto& audioSample : samplesBuffer) {
+			const auto bitOffset{ static_cast<s32>(std::clamp(mAudioPhase[index] * 128.0f, 0.0f, 127.0f)) };
+			const auto bytePhase{ 1 << (7 ^ (bitOffset & 7)) };
+			audioSample = mPatternBuf[bitOffset >> 3] & bytePhase ? 0x0F : 0xF0;
+			mAudioPhase[index] = std::fmod(mAudioPhase[index] + audioStep, 1.0f);
+		}
+	} else { mAudioPhase[index] = 0.0f; }
+
+	ASB->pushAudioData<s8>(index, samplesBuffer);
 }
 
 /*==================================================================*/
@@ -742,11 +730,10 @@ void XOCHIP::scrollDisplayRT() {
 		mInputReg = &mRegisterV[X];
 	}
 	void XOCHIP::instruction_Fx15(const s32 X) noexcept {
-		mDelayTimer = static_cast<u8>(mRegisterV[X]);
+		mDelayTimer = mRegisterV[X];
 	}
 	void XOCHIP::instruction_Fx18(const s32 X) noexcept {
-		mBuzzerTone = calcBuzzerTone();
-		mSoundTimer = mRegisterV[X] + (mRegisterV[X] == 1);
+		startAudioAtChannel(STREAM::UNIQUE, mRegisterV[X] + (mRegisterV[X] == 1));
 	}
 	void XOCHIP::instruction_Fx1E(const s32 X) noexcept {
 		mRegisterI = mRegisterI + mRegisterV[X] & 0xFFFF;

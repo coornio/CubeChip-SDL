@@ -103,11 +103,17 @@ SDL_AppResult SDL_AppEvent(void *pHost, SDL_Event *Event) {
 
 	if (Host.isMainWindow(Event->window.windowID)) {
 		switch (Event->type) {
-			case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+			case SDL_EVENT_QUIT:
 				return SDL_APP_SUCCESS;
 
 			case SDL_EVENT_DROP_FILE:
 				Host.loadGameFile(Event->drop.data);
+				break;
+
+			case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+				if (Host.isMainWindow(Event->window.windowID)) {
+					return SDL_APP_SUCCESS;
+				}
 				break;
 
 			case SDL_EVENT_WINDOW_MINIMIZED:
@@ -139,4 +145,7 @@ SDL_AppResult SDL_AppEvent(void *pHost, SDL_Event *Event) {
 
 /*==================================================================*/
 
-void SDL_AppQuit(void *, SDL_AppResult) {}
+void SDL_AppQuit(void *pHost, SDL_AppResult) {
+	auto& Host{ *static_cast<EmuHost*>(pHost) };
+	Host.quitApplication();
+}

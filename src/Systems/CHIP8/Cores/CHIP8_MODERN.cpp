@@ -32,6 +32,11 @@ CHIP8_MODERN::CHIP8_MODERN() {
 		mCurrentPC = cStartOffset;
 		mFramerate = cRefreshRate;
 		mActiveCPF = Quirk.waitVblank ? cInstSpeedHi : cInstSpeedLo;
+
+		ASB->setStatus(STREAM::CHANN0, true);
+		ASB->setStatus(STREAM::CHANN1, true);
+		ASB->setStatus(STREAM::CHANN2, true);
+		ASB->setStatus(STREAM::BUZZER, true);
 	}
 }
 
@@ -187,23 +192,10 @@ void CHIP8_MODERN::instructionLoop() noexcept {
 }
 
 void CHIP8_MODERN::renderAudioData() {
-	std::vector<s8> samplesBuffer \
-		(static_cast<usz>(ASB->getSampleRate(cRefreshRate)));
-
-	static f32 wavePhase{};
-
-	if (mSoundTimer) {
-		for (auto& sample : samplesBuffer) {
-			sample    = static_cast<s8>(wavePhase > 0.5f ? 16 : -16);
-			wavePhase = std::fmod(wavePhase + mBuzzerTone, 1.0f);
-		}
-		BVS->setFrameColor(sBitColors[0], sBitColors[1]);
-	} else {
-		wavePhase = 0.0f;
-		BVS->setFrameColor(sBitColors[0], sBitColors[0]);
-	}
-
-	ASB->pushAudioData<s8>(0, samplesBuffer);
+	pushSquareTone(STREAM::CHANN0, cRefreshRate);
+	pushSquareTone(STREAM::CHANN1, cRefreshRate);
+	pushSquareTone(STREAM::CHANN2, cRefreshRate);
+	pushSquareTone(STREAM::BUZZER, cRefreshRate);
 }
 
 void CHIP8_MODERN::renderVideoData() {
@@ -506,11 +498,10 @@ void CHIP8_MODERN::renderVideoData() {
 		mInputReg = &mRegisterV[X];
 	}
 	void CHIP8_MODERN::instruction_Fx15(const s32 X) noexcept {
-		mDelayTimer = static_cast<u8>(mRegisterV[X]);
+		mDelayTimer = mRegisterV[X];
 	}
 	void CHIP8_MODERN::instruction_Fx18(const s32 X) noexcept {
-		mBuzzerTone = calcBuzzerTone();
-		mSoundTimer = mRegisterV[X] + (mRegisterV[X] == 1);
+		startAudio(mRegisterV[X] + (mRegisterV[X] == 1));
 	}
 	void CHIP8_MODERN::instruction_Fx1E(const s32 X) noexcept {
 		mRegisterI = mRegisterI + mRegisterV[X] & 0xFFF;

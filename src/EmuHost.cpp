@@ -107,6 +107,10 @@ void EmuHost::pauseSystem(const bool state) const noexcept {
 	}
 }
 
+void EmuHost::quitApplication() noexcept {
+	discardCore();
+}
+
 bool EmuHost::isMainWindow(const u32 windowID) const noexcept {
 	return windowID == BVS->getMainWindowID();
 }

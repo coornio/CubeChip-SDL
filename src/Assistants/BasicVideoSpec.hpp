@@ -55,7 +55,7 @@ public:
 	static void setErrorState(const bool state) noexcept { errorState() = state; }
 	static bool getErrorState()                 noexcept { return errorState();  }
 
-	static void showErrorBox(const char* const) noexcept;
+	static void showErrorBox(const char* const title) noexcept;
 
 	static auto getDisplayWidth(const u32 displayID) noexcept {
 		const auto displayMode{ SDL_GetCurrentDisplayMode(displayID) };

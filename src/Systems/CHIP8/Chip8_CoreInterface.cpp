@@ -17,7 +17,7 @@
 /*==================================================================*/
 
 Chip8_CoreInterface::Chip8_CoreInterface() noexcept
-	: ASB{ std::make_unique<AudioSpecBlock>(SDL_AUDIO_S8, 1, 48'000, 2) }
+	: ASB{ std::make_unique<AudioSpecBlock>(SDL_AUDIO_S8, 1, 48'000, STREAM::COUNT) }
 {
 	sSavestatePath = HDM->addSystemDir("savestate", "CHIP8");
 	if (!sSavestatePath) { setCoreState(EmuState::FATAL); }
@@ -103,14 +103,16 @@ void Chip8_CoreInterface::handlePreFrameInterrupt() noexcept {
 			return;
 
 		case Interrupt::SOUND:
-			if (!mSoundTimer) {
-				mInterrupt = Interrupt::FINAL;
-				mActiveCPF = 0;
-			}
+			if (mAudioTimer[0]) { return; }
+			if (mAudioTimer[1]) { return; }
+			if (mAudioTimer[2]) { return; }
+			if (mAudioTimer[3]) { return; }
+			mInterrupt = Interrupt::FINAL;
+			mActiveCPF = 0;
 			return;
 
 		case Interrupt::DELAY:
-			if (!mSoundTimer) {
+			if (!mDelayTimer) {
 				mInterrupt = Interrupt::CLEAR;
 				mActiveCPF = std::abs(mActiveCPF);
 			}
@@ -125,9 +127,7 @@ void Chip8_CoreInterface::handleEndFrameInterrupt() noexcept {
 			if (keyPressed(mInputReg, mTotalFrames)) {
 				mInterrupt  = Interrupt::CLEAR;
 				mActiveCPF  = std::abs(mActiveCPF);
-				mBuzzerTone = calcBuzzerTone();
-				mSoundTimer = 2;
-				isBuzzerEnabled(true);
+				startAudioAtChannel(STREAM::BUZZER, 2);
 			}
 			return;
 
@@ -144,8 +144,11 @@ void Chip8_CoreInterface::handleEndFrameInterrupt() noexcept {
 }
 
 void Chip8_CoreInterface::handleTimerTick() noexcept {
-	if (mDelayTimer) { --mDelayTimer; }
-	if (mSoundTimer) { --mSoundTimer; }
+	if (mDelayTimer)    { --mDelayTimer; }
+	if (mAudioTimer[0]) { --mAudioTimer[0]; }
+	if (mAudioTimer[1]) { --mAudioTimer[1]; }
+	if (mAudioTimer[2]) { --mAudioTimer[2]; }
+	if (mAudioTimer[3]) { --mAudioTimer[3]; }
 }
 
 void Chip8_CoreInterface::nextInstruction() noexcept {
@@ -183,6 +186,37 @@ void Chip8_CoreInterface::processFrame() {
 }
 
 /*==================================================================*/
+
+void Chip8_CoreInterface::startAudio(const s32 duration, const s32 tone) noexcept {
+	if constexpr(STREAM::COUNT == 0) { return; }
+	
+	static auto index{ STREAM::CHANN0 };
+	startAudioAtChannel(index, duration, tone);
+	index = static_cast<STREAM>(index + 1 % STREAM::COUNT - 1);
+}
+
+void Chip8_CoreInterface::startAudioAtChannel(const u32 index, const s32 duration, const s32 tone) noexcept {
+	if (index >= STREAM::COUNT) { return; }
+
+	mAudioTimer[index] = duration & 0xFF;
+	mPhaseStep[index] = (160.0f + (tone ? tone
+		: 8 * ((mCurrentPC >> 1) + mStackTop + 1 & 0x3E)
+	)) / ASB->getFrequency();
+}
+
+void Chip8_CoreInterface::pushSquareTone(const u32 index, const f32 framerate) noexcept {
+	std::vector<s8> samplesBuffer \
+		(static_cast<usz>(ASB->getSampleRate(framerate)));
+
+	if (mAudioTimer[index]) {
+		for (auto& audioSample : samplesBuffer) {
+			audioSample        = static_cast<s8>(mAudioPhase[index] > 0.5f ? 16 : -16);
+			mAudioPhase[index] = std::fmod(mAudioPhase[index] + mPhaseStep[index], 1.0f);
+		}
+	} else { mAudioPhase[index] = 0.0f; }
+
+	ASB->pushAudioData<s8>(index, samplesBuffer);
+}
 
 void Chip8_CoreInterface::instructionError(const u32 HI, const u32 LO) {
 	blog.newEntry(BLOG::INFO, "Unknown instruction: 0x{:04X}", HI << 8 | LO);
@@ -339,8 +373,14 @@ void Chip8_CoreInterface::copyColorsToCore(
 
 /*==================================================================*/
 
-f32  Chip8_CoreInterface::calcBuzzerTone() const noexcept {
-	return (160.0f + 8.0f * (
-		(mCurrentPC >> 1) + mStackTop + 1 & 0x3E
-	)) / ASB->getFrequency();
-}
+//f32 Chip8_CoreInterface::calcBuzzerTone() const noexcept {
+//	return (160.0f + 8.0f * (
+//		(mCurrentPC >> 1) + mStackTop + 1 & 0x3E
+//	)) / ASB->getFrequency();
+//}
+
+//f32 Chip8_CoreInterface::calcBuzz8xTone(const u32 pitch) const noexcept {
+//	return (160.0f + (
+//		(0xFF - (pitch ? pitch : 0x80)) >> 3 << 4)
+//	) / ASB->getFrequency();
+//}

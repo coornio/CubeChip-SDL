@@ -15,7 +15,7 @@
 Path* BytePusher_CoreInterface::sSavestatePath{};
 
 BytePusher_CoreInterface::BytePusher_CoreInterface() noexcept
-	: ASB{ std::make_unique<AudioSpecBlock>(SDL_AUDIO_S8, 1, 15'360, 1) }
+	: ASB{ std::make_unique<AudioSpecBlock>(SDL_AUDIO_S8, 1, 15'360, STREAM::COUNT) }
 {
 	sSavestatePath = HDM->addSystemDir("savestate", "BYTEPUSHER");
 	if (!sSavestatePath) { addCoreState(EmuState::FATAL); }

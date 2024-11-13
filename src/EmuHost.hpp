@@ -80,6 +80,7 @@ public:
 	}
 
 	void pauseSystem(const bool state) const noexcept;
+	void quitApplication() noexcept;
 	void loadGameFile(const Path&);
 
 	void processFrame();

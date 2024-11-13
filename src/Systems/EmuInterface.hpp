@@ -14,6 +14,7 @@
 #include <vector>
 #include <format>
 #include <array>
+#include <cmath>
 #include <span>
 #include <bit>
 

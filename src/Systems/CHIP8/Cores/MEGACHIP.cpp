@@ -31,6 +31,11 @@ MEGACHIP::MEGACHIP()
 		prepDisplayArea(Resolution::LO);
 		setNewBlendAlgorithm(BlendMode::ALPHA_BLEND);
 		initializeFontColors();
+
+		ASB->setStatus(STREAM::CHANN0, true);
+		ASB->setStatus(STREAM::CHANN1, true);
+		ASB->setStatus(STREAM::CHANN2, true);
+		ASB->setStatus(STREAM::BUZZER, true);
 	}
 }
 
@@ -298,45 +303,17 @@ void MEGACHIP::instructionLoop() noexcept {
 }
 
 void MEGACHIP::renderAudioData() {
-	std::vector<s8> samplesBuffer0 \
-		(static_cast<usz>(ASB->getSampleRate(cRefreshRate)));
-
-	std::vector<s8> samplesBuffer1 \
-		(static_cast<usz>(ASB->getSampleRate(cRefreshRate)));
-
-	if (isManualRefresh() && mTrackTotalLen) {
-		for (auto& sample : samplesBuffer0) {
-			sample = static_cast<s8>((readMemory(
-				mTrackStartIdx + static_cast<u32>(mTrackPosition)
-			) - 128));
-
-			if ((mTrackPosition += mTrackStepping) >= std::abs(mTrackTotalLen)) {
-				if (mTrackTotalLen < 0) {
-					mTrackPosition += mTrackTotalLen;
-				} else {
-					resetAudioTrack();
-					break;
-				}
-			}
+	if (isManualRefresh()) {
+		if (mTrackTotalLen) {
+			pushByteAudio(STREAM::UNIQUE, cRefreshRate);
 		}
 	}
-	if (true) {
-		static f32 wavePhase{};
-
-		if (mSoundTimer) {
-			for (auto& sample : samplesBuffer1) {
-				sample = static_cast<s8>(wavePhase > 0.5f ? 16 : -16);
-				wavePhase = std::fmod(wavePhase + mBuzzerTone, 1.0f);
-			}
-			BVS->setFrameColor(sBitColors[0], sBitColors[1]);
-		} else {
-			wavePhase = 0.0f;
-			BVS->setFrameColor(sBitColors[0], sBitColors[0]);
-		}
+	else {
+		pushSquareTone(STREAM::CHANN0, cRefreshRate);
+		pushSquareTone(STREAM::CHANN1, cRefreshRate);
+		pushSquareTone(STREAM::CHANN2, cRefreshRate);
+		pushSquareTone(STREAM::BUZZER, cRefreshRate);
 	}
-
-	ASB->pushAudioData<s8>(0, samplesBuffer0);
-	ASB->pushAudioData<s8>(1, samplesBuffer1);
 }
 
 void MEGACHIP::renderVideoData() {
@@ -513,6 +490,29 @@ void MEGACHIP::startAudioTrack(const bool repeat) noexcept {
 	mTrackStartIdx = mRegisterI + 6;
 }
 
+void MEGACHIP::pushByteAudio(const u32 index, const f32 framerate) noexcept {
+	std::vector<s8> samplesBuffer \
+		(static_cast<usz>(ASB->getSampleRate(framerate)));
+
+	if (isManualRefresh() && mTrackTotalLen) {
+		for (auto& sample : samplesBuffer) {
+			sample = static_cast<s8>((readMemory(
+				mTrackStartIdx + static_cast<u32>(mTrackPosition)
+			) - 128));
+
+			if ((mTrackPosition += mTrackStepping) >= std::abs(mTrackTotalLen)) {
+				if (mTrackTotalLen < 0) {
+					mTrackPosition += mTrackTotalLen;
+				} else {
+					resetAudioTrack();
+					break;
+				}
+			}
+		}
+	}
+	ASB->pushAudioData<s8>(index, samplesBuffer);
+}
+
 void MEGACHIP::scrollBuffersUP(const s32 N) {
 	mForegroundBuffer.shift(-N, 0);
 	blendAndFlushBuffers();
@@ -587,6 +587,9 @@ void MEGACHIP::scrollBuffersRT() {
 	void MEGACHIP::instruction_0010() noexcept {
 		triggerInterrupt(Interrupt::FRAME);
 
+		ASB->setStatus(STREAM::CHANN1, true);
+		ASB->setStatus(STREAM::CHANN2, true);
+
 		resetAudioTrack();
 		flushAllVideoBuffers();
 
@@ -594,6 +597,9 @@ void MEGACHIP::scrollBuffersRT() {
 	}
 	void MEGACHIP::instruction_0011() noexcept {
 		triggerInterrupt(Interrupt::FRAME);
+
+		ASB->setStatus(STREAM::CHANN1, false);
+		ASB->setStatus(STREAM::CHANN2, false);
 
 		resetAudioTrack();
 		scrapAllVideoBuffers();
@@ -879,7 +885,7 @@ void MEGACHIP::scrollBuffersRT() {
 							backbufCoord = 0;
 							mRegisterV[0xF] = 1;
 						} else {
-							collideCoord = 254;
+							collideCoord = 0xFF;
 							backbufCoord = mFontColor[rowN];
 						}
 					}
@@ -1001,11 +1007,10 @@ void MEGACHIP::scrollBuffersRT() {
 			{ flushAllVideoBuffers(); }
 	}
 	void MEGACHIP::instruction_Fx15(const s32 X) noexcept {
-		mDelayTimer = static_cast<u8>(mRegisterV[X]);
+		mDelayTimer = mRegisterV[X];
 	}
 	void MEGACHIP::instruction_Fx18(const s32 X) noexcept {
-		mBuzzerTone = calcBuzzerTone();
-		mSoundTimer = mRegisterV[X] + (mRegisterV[X] == 1);
+		startAudio(mRegisterV[X] + (mRegisterV[X] == 1));
 	}
 	void MEGACHIP::instruction_Fx1E(const s32 X) noexcept {
 		mRegisterI = mRegisterI + mRegisterV[X];

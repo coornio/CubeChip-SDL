@@ -23,6 +23,8 @@ BYTEPUSHER_STANDARD::BYTEPUSHER_STANDARD() {
 
 		mActiveCPF = 0x10000;
 		mFramerate = cRefreshRate;
+
+		ASB->setStatus(STREAM::CHANN0, true);
 	}
 }
 
@@ -50,7 +52,7 @@ void BYTEPUSHER_STANDARD::renderAudioData() {
 	std::vector<s8> samplesBuffer0 \
 		(samplesOffset.begin(), samplesOffset.end());
 
-	ASB->pushAudioData<s8>(0, samplesBuffer0);
+	ASB->pushAudioData<s8>(STREAM::CHANN0, samplesBuffer0);
 }
 
 void BYTEPUSHER_STANDARD::renderVideoData() {

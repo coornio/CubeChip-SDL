@@ -72,6 +72,8 @@ class MEGACHIP final : public Chip8_CoreInterface {
 	void resetAudioTrack() noexcept;
 	void startAudioTrack(const bool repeat) noexcept;
 
+	void pushByteAudio(const u32 index, const f32 framerate) noexcept;
+
 	std::array<u8, cTotalMemory + cSafezoneOOB>
 		mMemoryBank{};
 
