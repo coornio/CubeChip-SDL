@@ -304,10 +304,8 @@ void MEGACHIP::instructionLoop() noexcept {
 
 void MEGACHIP::renderAudioData() {
 	if (isManualRefresh()) {
-		if (mTrackTotalLen) {
-			pushByteAudio(STREAM::UNIQUE, cRefreshRate);
-			pushSquareTone(STREAM::BUZZER, cRefreshRate);
-		}
+		pushByteAudio(STREAM::UNIQUE, cRefreshRate);
+		pushSquareTone(STREAM::BUZZER, cRefreshRate);
 
 		BVS->setFrameColor(sBitColors[0], sBitColors[0]);
 	}
@@ -502,7 +500,7 @@ void MEGACHIP::pushByteAudio(const u32 index, const f32 framerate) noexcept {
 	std::vector<s8> samplesBuffer \
 		(static_cast<usz>(ASB->getSampleRate(framerate)));
 
-	if (isManualRefresh() && mTrackTotalLen) {
+	if (mTrackTotalLen) {
 		for (auto& sample : samplesBuffer) {
 			sample = static_cast<s8>((readMemory(
 				mTrackStartIdx + static_cast<u32>(mTrackPosition)
