@@ -306,6 +306,7 @@ void MEGACHIP::renderAudioData() {
 	if (isManualRefresh()) {
 		if (mTrackTotalLen) {
 			pushByteAudio(STREAM::UNIQUE, cRefreshRate);
+			pushSquareTone(STREAM::BUZZER, cRefreshRate);
 		}
 
 		BVS->setFrameColor(sBitColors[0], sBitColors[0]);
