@@ -35,10 +35,10 @@ SCHIP_MODERN::SCHIP_MODERN()
 		mFramerate = cRefreshRate;
 		mActiveCPF = cInstSpeedLo;
 
-		ASB->setStatus(STREAM::CHANN0, true);
-		ASB->setStatus(STREAM::CHANN1, true);
-		ASB->setStatus(STREAM::CHANN2, true);
-		ASB->setStatus(STREAM::BUZZER, true);
+		ASB->resumeStream(STREAM::CHANN0);
+		ASB->resumeStream(STREAM::CHANN1);
+		ASB->resumeStream(STREAM::CHANN2);
+		ASB->resumeStream(STREAM::BUZZER);
 	}
 }
 

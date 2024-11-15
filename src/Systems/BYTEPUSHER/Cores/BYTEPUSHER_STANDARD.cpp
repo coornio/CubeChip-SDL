@@ -24,7 +24,7 @@ BYTEPUSHER_STANDARD::BYTEPUSHER_STANDARD() {
 		mActiveCPF = 0x10000;
 		mFramerate = cRefreshRate;
 
-		ASB->setStatus(STREAM::CHANN0, true);
+		ASB->resumeStream(STREAM::CHANN0);
 	}
 }
 

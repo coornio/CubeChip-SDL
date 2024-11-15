@@ -62,10 +62,10 @@ public:
 	SDL_Unique& operator=(T* ptr) noexcept { reset(ptr); return *this; }
 
 	void reset(T* ptr = nullptr) noexcept { mPtr.reset(ptr); }
-	T* release()               noexcept { return mPtr.release(); }
+	T* release()                 noexcept { return mPtr.release(); }
 	T* get()               const noexcept { return mPtr.get(); }
 
-	operator T* ()         noexcept { return mPtr.get(); }
+	operator T*()   const noexcept { return mPtr.get(); }
 	operator bool() const noexcept { return static_cast<bool>(mPtr); }
 };
 

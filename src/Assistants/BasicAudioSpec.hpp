@@ -59,27 +59,21 @@ public:
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 class AudioSpecBlock {
-	
-	struct StreamBlock {
-		s32 volume{ 255 };
-		bool active{};
-		SDL_Unique<SDL_AudioStream> stream{};
-	};
 
 	SDL_AudioSpec mAudioSpec;
-	std::vector<StreamBlock>
+	std::vector<SDL_Unique<SDL_AudioStream>>
 		mAudioStreams;
 
 public:
 	AudioSpecBlock(
 		const SDL_AudioFormat format, const s32 channels, const s32 frequency, const s32 streams,
 		const SDL_AudioDeviceID device = SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK
-	)  noexcept
+	) noexcept
 		: mAudioStreams(std::max(streams, 1))
 	{
 		mAudioSpec = { format, std::max(channels, 1), std::max(frequency, 1) };
 		for (auto& audioStream : mAudioStreams) {
-			audioStream.stream = SDL_OpenAudioDeviceStream(device, &mAudioSpec, nullptr, nullptr);
+			audioStream = SDL_OpenAudioDeviceStream(device, &mAudioSpec, nullptr, nullptr);
 		}
 	}
 	~AudioSpecBlock() = default;
@@ -87,44 +81,21 @@ public:
 	AudioSpecBlock(const AudioSpecBlock&) = delete;
 	AudioSpecBlock& operator=(const AudioSpecBlock&) = delete;
 
-	auto getFrequency()   const noexcept { return mAudioSpec.freq; }
-	auto getStreamCount() const noexcept { return static_cast<s32>(mAudioStreams.size()); }
+	s32  getFrequency()   const noexcept;
+	s32  getStreamCount() const noexcept;
 
-	auto getSampleRate(const f32 framerate) const noexcept {
-		return framerate > Epsilon::f32 ? mAudioSpec.freq / framerate : 0.0f;
-	}
+	bool isPaused(const u32 index) const noexcept;
 
-	bool getStatus(const u32 index) noexcept {
-		if (index >= mAudioStreams.size()) { return false; }
-		return mAudioStreams[index].active;
-	}
-	auto getVolume(const u32 index) const noexcept {
-		if (index >= mAudioStreams.size()) { return -1; }
-		return mAudioStreams[index].volume;
-	}
-	auto getVolumeNorm(const u32 index) const noexcept {
-		if (index >= mAudioStreams.size()) { return -1.0f; }
-		return mAudioStreams[index].volume / 255.0f;
-	}
+	f32  getSampleRate(const f32 framerate) const noexcept;
+	f32  getGain(const u32 index) const noexcept;
+	s32  getGainByte(const u32 index) const noexcept;
 
-	void setStatus(const u32 index, const bool state) noexcept {
-		if (index >= mAudioStreams.size()) { return; }
-		if (state) {
-			mAudioStreams[index].active = \
-			SDL_ResumeAudioStreamDevice(mAudioStreams[index].stream);
-		} else {
-			mAudioStreams[index].active = false;
-			SDL_PauseAudioStreamDevice(mAudioStreams[index].stream);
-		}
-	}
-	void setVolume(const u32 index, const s32 value) noexcept {
-		if (index >= mAudioStreams.size()) { return; }
-		mAudioStreams[index].volume = std::clamp(value, 0, 255);
-	}
-	void changeVolume(const u32 index, const s32 delta) noexcept {
-		if (index >= mAudioStreams.size()) { return; }
-		mAudioStreams[index].volume = std::clamp(mAudioStreams[index].volume + delta, 0, 255);
-	}
+	void pauseStream(const u32 index) noexcept;
+	void resumeStream(const u32 index) noexcept;
+
+	void setGain(const u32 index, const f32 gain) noexcept;
+	void addGain(const u32 index, const s32 gain) noexcept;
+	void addGain(const u32 index, const f32 gain) noexcept;
 
 	/**
 	 * @brief Pushes buffer of audio samples to SDL, accepts any span
@@ -133,12 +104,8 @@ public:
 	 */
 	template <typename T>
 	void pushAudioData(const u32 index, const std::span<T> samplesBuffer) const {
-		if (index >= mAudioStreams.size()) { return; }
+		if (isPaused(index)) { return; }
 
-		if (!mAudioStreams[index].stream) { return; }
-		if (!mAudioStreams[index].active) { return; }
-
-		const auto streamVolume{ AudioSpecBlock::getVolumeNorm(index) };
 		const auto globalVolume{ BasicAudioSpec::getGlobalVolumeNorm() };
 
 		std::transform(
@@ -146,12 +113,12 @@ public:
 			samplesBuffer.begin(),
 			samplesBuffer.end(),
 			samplesBuffer.data(),
-			[streamVolume, globalVolume](const T sample) noexcept {
-				return static_cast<T>(sample * streamVolume * globalVolume);
+			[globalVolume](const T sample) noexcept {
+				return static_cast<T>(sample * globalVolume);
 			}
 		);
 
-		SDL_PutAudioStreamData(mAudioStreams[index].stream.get(), samplesBuffer.data(),
+		SDL_PutAudioStreamData(mAudioStreams[index], samplesBuffer.data(),
 			static_cast<s32>(sizeof(T) * samplesBuffer.size())
 		);
 	}

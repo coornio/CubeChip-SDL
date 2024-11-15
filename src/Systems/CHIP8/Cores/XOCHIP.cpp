@@ -42,8 +42,8 @@ XOCHIP::XOCHIP()
 		mFramerate = cRefreshRate;
 		mActiveCPF = cInstSpeedLo;
 
-		ASB->setStatus(STREAM::UNIQUE, true);
-		ASB->setStatus(STREAM::BUZZER, true);
+		ASB->resumeStream(STREAM::UNIQUE);
+		ASB->resumeStream(STREAM::BUZZER);
 	}
 }
 

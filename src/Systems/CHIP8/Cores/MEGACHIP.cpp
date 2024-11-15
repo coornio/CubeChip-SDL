@@ -32,10 +32,10 @@ MEGACHIP::MEGACHIP()
 		setNewBlendAlgorithm(BlendMode::ALPHA_BLEND);
 		initializeFontColors();
 
-		ASB->setStatus(STREAM::CHANN0, true);
-		ASB->setStatus(STREAM::CHANN1, true);
-		ASB->setStatus(STREAM::CHANN2, true);
-		ASB->setStatus(STREAM::BUZZER, true);
+		ASB->resumeStream(STREAM::CHANN0);
+		ASB->resumeStream(STREAM::CHANN1);
+		ASB->resumeStream(STREAM::CHANN2);
+		ASB->resumeStream(STREAM::BUZZER);
 	}
 }
 
@@ -593,8 +593,8 @@ void MEGACHIP::scrollBuffersRT() {
 	void MEGACHIP::instruction_0010() noexcept {
 		triggerInterrupt(Interrupt::FRAME);
 
-		ASB->setStatus(STREAM::CHANN1, true);
-		ASB->setStatus(STREAM::CHANN2, true);
+		ASB->resumeStream(STREAM::CHANN1);
+		ASB->resumeStream(STREAM::CHANN2);
 
 		resetAudioTrack();
 		flushAllVideoBuffers();
@@ -604,8 +604,8 @@ void MEGACHIP::scrollBuffersRT() {
 	void MEGACHIP::instruction_0011() noexcept {
 		triggerInterrupt(Interrupt::FRAME);
 
-		ASB->setStatus(STREAM::CHANN1, false);
-		ASB->setStatus(STREAM::CHANN2, false);
+		ASB->pauseStream(STREAM::CHANN1);
+		ASB->pauseStream(STREAM::CHANN2);
 
 		resetAudioTrack();
 		scrapAllVideoBuffers();
