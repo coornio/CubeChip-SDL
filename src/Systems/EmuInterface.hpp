@@ -9,6 +9,7 @@
 #include <execution>
 #include <utility>
 #include <fstream>
+#include <numeric>
 #include <memory>
 #include <string>
 #include <vector>

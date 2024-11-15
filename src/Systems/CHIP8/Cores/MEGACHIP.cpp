@@ -307,12 +307,19 @@ void MEGACHIP::renderAudioData() {
 		if (mTrackTotalLen) {
 			pushByteAudio(STREAM::UNIQUE, cRefreshRate);
 		}
+
+		BVS->setFrameColor(sBitColors[0], sBitColors[0]);
 	}
 	else {
 		pushSquareTone(STREAM::CHANN0, cRefreshRate);
 		pushSquareTone(STREAM::CHANN1, cRefreshRate);
 		pushSquareTone(STREAM::CHANN2, cRefreshRate);
 		pushSquareTone(STREAM::BUZZER, cRefreshRate);
+
+		BVS->setFrameColor(sBitColors[0],
+			std::accumulate(mAudioTimer.begin(), mAudioTimer.end(), 0)
+			? sBitColors[1] : sBitColors[0]
+		);
 	}
 }
 
@@ -921,8 +928,8 @@ void MEGACHIP::scrollBuffersRT() {
 					if (!Quirk.wrapSprite && offsetX == mDisplayWb) { break; }
 					else { ++offsetX &= mDisplayWb; }
 				}
-				if (!Quirk.wrapSprite && offsetY == mDisplayWb) { break; }
-				else { ++offsetY &= mDisplayWb; }
+				if (!Quirk.wrapSprite && offsetY == mDisplayHb) { break; }
+				else { ++offsetY %= mDisplayH; }
 			}
 		} else {
 			if (isDisplayLarger()) {

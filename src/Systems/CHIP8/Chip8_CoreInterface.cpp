@@ -190,9 +190,9 @@ void Chip8_CoreInterface::processFrame() {
 void Chip8_CoreInterface::startAudio(const s32 duration, const s32 tone) noexcept {
 	if constexpr(STREAM::COUNT == 0) { return; }
 	
-	static auto index{ STREAM::CHANN0 };
+	static auto index{ 0 };
 	startAudioAtChannel(index, duration, tone);
-	index = static_cast<STREAM>(index + 1 % STREAM::COUNT - 1);
+	++index %= STREAM::COUNT - 1;
 }
 
 void Chip8_CoreInterface::startAudioAtChannel(const u32 index, const s32 duration, const s32 tone) noexcept {

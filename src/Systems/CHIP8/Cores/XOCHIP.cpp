@@ -265,6 +265,11 @@ void XOCHIP::instructionLoop() noexcept {
 void XOCHIP::renderAudioData() {
 	pushPatternTone(STREAM::UNIQUE, cRefreshRate);
 	pushSquareTone(STREAM::BUZZER, cRefreshRate);
+
+	BVS->setFrameColor(mBitColors[0],
+		std::accumulate(mAudioTimer.begin(), mAudioTimer.end(), 0)
+		? mBitColors[1] : mBitColors[0]
+	);
 }
 
 void XOCHIP::renderVideoData() {

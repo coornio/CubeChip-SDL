@@ -228,7 +228,11 @@ void SCHIP_MODERN::renderAudioData() {
 	pushSquareTone(STREAM::CHANN1, cRefreshRate);
 	pushSquareTone(STREAM::CHANN2, cRefreshRate);
 	pushSquareTone(STREAM::BUZZER, cRefreshRate);
-	//BVS->setFrameColor(sBitColors[0], sBitColors[1]);
+
+	BVS->setFrameColor(sBitColors[0],
+		std::accumulate(mAudioTimer.begin(), mAudioTimer.end(), 0)
+		? sBitColors[1] : sBitColors[0]
+	);
 }
 
 void SCHIP_MODERN::renderVideoData() {
