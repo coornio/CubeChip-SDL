@@ -31,6 +31,7 @@ class BasicVideoSpec final {
 	SDL_Unique<SDL_Texture>  mMainTexture{};
 
 	static inline const char* sAppName{};
+	static inline bool mSuccessful{ true };
 
 	SDL_FRect mOuterFrame{};
 	SDL_FRect mInnerFrame{};
@@ -40,20 +41,14 @@ class BasicVideoSpec final {
 	bool enableBuzzGlow{};
 	bool enableScanLine{};
 
-	static bool& errorState() noexcept {
-		static bool errorEncountered{};
-		return errorEncountered;
-	}
-
 public:
 	static auto* create(const char *appName) noexcept {
 		sAppName = appName;
 		static BasicVideoSpec self;
-		return errorState() ? nullptr : &self;
+		return mSuccessful ? &self : nullptr;
 	}
 
-	static void setErrorState(const bool state) noexcept { errorState() = state; }
-	static bool getErrorState()                 noexcept { return errorState();  }
+	static bool isSuccessful() noexcept { return mSuccessful; }
 
 	static void showErrorBox(const char* const title) noexcept;
 

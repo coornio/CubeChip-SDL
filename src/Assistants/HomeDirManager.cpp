@@ -20,19 +20,15 @@
 	#pragma region HomeDirManager Class
 
 HomeDirManager::HomeDirManager(const char* const org, const char* const app) noexcept {
-	if (!getHomePath(org, app)) {
-		showErrorBox("Filesystem Error", "Unable to get home directory!");
+	mSuccessful = getHomePath(org, app);
+	if (!mSuccessful) {
+		SDL_ShowSimpleMessageBox(
+			SDL_MESSAGEBOX_ERROR, "Filesystem Error",
+			"Unable to get home directory!", nullptr
+		);
 	} else {
 		blog.initLogFile("program.log", getHomePath());
 	}
-}
-
-void HomeDirManager::showErrorBox(const char* const title, const char* const message) noexcept {
-	setErrorState(true);
-	SDL_ShowSimpleMessageBox(
-		SDL_MESSAGEBOX_ERROR, title,
-		message, nullptr
-	);
 }
 
 Path* HomeDirManager::addSystemDir(const Path& sub, const Path& sys) noexcept {
@@ -54,7 +50,11 @@ Path* HomeDirManager::addSystemDir(const Path& sub, const Path& sys) noexcept {
 
 	std::filesystem::create_directories(newDir, error);
 	if (!std::filesystem::exists(newDir, error) || error) {
-		showErrorBox("Filesystem Error", (newDir.string() + "\nUnable to create subdirectories!").c_str());
+		mSuccessful = false;
+		SDL_ShowSimpleMessageBox(
+			SDL_MESSAGEBOX_ERROR, "Filesystem Error",
+			(newDir.string() + "\nUnable to create subdirectories!").c_str(), nullptr
+		);
 		return nullptr;
 	}
 

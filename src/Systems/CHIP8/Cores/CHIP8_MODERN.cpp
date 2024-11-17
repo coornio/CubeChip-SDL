@@ -32,11 +32,6 @@ CHIP8_MODERN::CHIP8_MODERN() {
 		mCurrentPC = cStartOffset;
 		mFramerate = cRefreshRate;
 		mActiveCPF = Quirk.waitVblank ? cInstSpeedHi : cInstSpeedLo;
-
-		ASB->resumeStream(STREAM::CHANN0);
-		ASB->resumeStream(STREAM::CHANN1);
-		ASB->resumeStream(STREAM::CHANN2);
-		ASB->resumeStream(STREAM::BUZZER);
 	}
 }
 

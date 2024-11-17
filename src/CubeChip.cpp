@@ -97,30 +97,23 @@ SDL_AppResult SDL_AppEvent(void *pHost, SDL_Event *Event) {
 	auto& Host{ *static_cast<EmuHost*>(pHost) };
 	const std::lock_guard lock{ Host.Mutex };
 
-	static bool mainWindowPaused{};
-
 	Host.processInterfaceEvent(Event);
 
 	if (Host.isMainWindow(Event->window.windowID)) {
+		static bool mainWindowPaused{};
+
 		switch (Event->type) {
 			case SDL_EVENT_QUIT:
+			case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
 				return SDL_APP_SUCCESS;
 
 			case SDL_EVENT_DROP_FILE:
 				Host.loadGameFile(Event->drop.data);
 				break;
 
-			case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
-				if (Host.isMainWindow(Event->window.windowID)) {
-					return SDL_APP_SUCCESS;
-				}
-				break;
-
 			case SDL_EVENT_WINDOW_MINIMIZED:
-				if (Host.isMainWindow(Event->window.windowID)) {
-					if (!mainWindowPaused) {
-						Host.pauseSystem(mainWindowPaused = true);
-					}
+				if (!mainWindowPaused) {
+					Host.pauseSystem(mainWindowPaused = true);
 				}
 				break;
 
@@ -131,9 +124,6 @@ SDL_AppResult SDL_AppEvent(void *pHost, SDL_Event *Event) {
 				break;
 
 			case SDL_EVENT_WINDOW_DISPLAY_CHANGED:
-				Host.scaleInterface(AppFont);
-				break;
-
 			case SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED:
 				Host.scaleInterface(AppFont);
 				break;

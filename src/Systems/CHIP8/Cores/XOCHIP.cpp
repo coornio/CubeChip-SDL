@@ -42,8 +42,8 @@ XOCHIP::XOCHIP()
 		mFramerate = cRefreshRate;
 		mActiveCPF = cInstSpeedLo;
 
-		ASB->resumeStream(STREAM::UNIQUE);
-		ASB->resumeStream(STREAM::BUZZER);
+		ASB->pauseStream(STREAM::CHANN1);
+		ASB->pauseStream(STREAM::CHANN2);
 	}
 }
 
@@ -771,11 +771,11 @@ void XOCHIP::scrollDisplayRT() {
 			{ mRegisterI = mRegisterI + N + 1 & 0xFFFF; }
 	}
 	void XOCHIP::instruction_FN75(const s32 N) noexcept {
-		if (setPermaRegs(N + 1)) [[unlikely]]
+		if (!setPermaRegs(N + 1)) [[unlikely]]
 			{ triggerCritError("Error :: Failed writing persistent registers!"); }
 	}
 	void XOCHIP::instruction_FN85(const s32 N) noexcept {
-		if (getPermaRegs(N + 1)) [[unlikely]]
+		if (!getPermaRegs(N + 1)) [[unlikely]]
 			{ triggerCritError("Error :: Failed reading persistent registers!"); }
 	}
 

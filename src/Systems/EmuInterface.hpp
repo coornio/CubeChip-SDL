@@ -54,7 +54,6 @@ class EmuInterface {
 protected:
 	static inline HomeDirManager* HDM{};
 	static inline BasicVideoSpec* BVS{};
-	static inline BasicAudioSpec* BAS{};
 
 	static inline Well512* Wrand{};
 
@@ -64,12 +63,10 @@ public:
 
 	static void assignComponents(
 		HomeDirManager* const pHDM,
-		BasicVideoSpec* const pBVS,
-		BasicAudioSpec* const pBAS
+		BasicVideoSpec* const pBVS
 	) noexcept {
 		HDM = pHDM;
 		BVS = pBVS;
-		BAS = pBAS;
 	}
 
 	static void addSystemState(const EmuState state) noexcept { mGlobalState |=  state; }

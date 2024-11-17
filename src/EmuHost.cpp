@@ -26,7 +26,7 @@ EmuHost::~EmuHost() noexcept = default;
 EmuHost::EmuHost(const Path& gamePath) noexcept
 	: Limiter{ std::make_unique<FrameLimiter>(60.0f, true, false) }
 {
-	EmuInterface::assignComponents(HDM, BVS, BAS);
+	EmuInterface::assignComponents(HDM, BVS);
 	HDM->setValidator(GameFileChecker::validate);
 
 	if (!gamePath.empty()) { loadGameFile(gamePath); }
@@ -119,7 +119,7 @@ bool EmuHost::isMainWindow(const u32 windowID) const noexcept {
 
 void EmuHost::processFrame() {
 	if (Limiter->checkTime()) {
-		if (BVS->getErrorState())
+		if (!BVS->isSuccessful())
 			[[unlikely]] { return; }
 
 		checkForHotkeys();
@@ -140,10 +140,10 @@ void EmuHost::checkForHotkeys() {
 	using namespace binput;
 
 	if (kb.isPressed(KEY(RIGHT))) {
-		BAS->changeGlobalVolume(+15);
+		BAS->addGlobalGain(+15);
 	}
 	if (kb.isPressed(KEY(LEFT))) {
-		BAS->changeGlobalVolume(-15);
+		BAS->addGlobalGain(-15);
 	}
 
 	if (iGuest) {

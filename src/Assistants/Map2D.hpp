@@ -465,6 +465,22 @@ class Map2D final {
 	std::unique_ptr<T[]> pData;
 
 public:
+	using value_type = T;
+	using size_type  = std::size_t;
+
+	using allocator_type    = std::allocator<T>;
+	using iterator_category = std::contiguous_iterator_tag;
+
+	using pointer   = T*;
+	using reference = T&;
+	using iterator  = T*;
+	using reverse_iterator = std::reverse_iterator<iterator>;
+
+	using const_pointer   = const T*;
+	using const_reference = const T&;
+	using const_iterator  = const T*;
+	using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+
 	paramU size() const noexcept { return mRows * mCols; }
 	paramS lenX() const noexcept { return mCols; }
 	paramS lenY() const noexcept { return mRows; }

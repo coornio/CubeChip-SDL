@@ -32,25 +32,24 @@
 BasicVideoSpec::BasicVideoSpec() noexcept
 	: enableBuzzGlow{ true }
 {
-	if (!SDL_InitSubSystem(SDL_INIT_VIDEO)) {
+	mSuccessful = SDL_InitSubSystem(SDL_INIT_VIDEO);
+	if (!mSuccessful) {
 		showErrorBox("Failed to init SDL video!");
 		return;
 	}
 
-	mMainWindow = SDL_CreateWindow(sAppName, 0, 0, SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE);
-	if (!mMainWindow) {
-		showErrorBox("Failed to create Main window!");
+	mSuccessful = mMainWindow = SDL_CreateWindow(sAppName, 0, 0, SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE);
+	if (!mSuccessful) {
+		showErrorBox("Failed to create main window!");
 		return;
 	}
 	#if defined(SDL_PLATFORM_WIN32) && !defined(OLD_WINDOWS_SDK)
 	else {
-		const auto windowHandle{
-			SDL_GetPointerProperty(
-				SDL_GetWindowProperties(mMainWindow),
-				SDL_PROP_WINDOW_WIN32_HWND_POINTER,
-				nullptr
-			)
-		};
+		const auto windowHandle{ SDL_GetPointerProperty(
+			SDL_GetWindowProperties(mMainWindow),
+			SDL_PROP_WINDOW_WIN32_HWND_POINTER,
+			nullptr
+		) };
 
 		if (windowHandle) {
 			const auto windowRound{ DWMWCP_DONOTROUND };
@@ -64,9 +63,10 @@ BasicVideoSpec::BasicVideoSpec() noexcept
 	}
 	#endif
 
-	mMainRenderer = SDL_CreateRenderer(mMainWindow, nullptr);
-	if (!mMainRenderer) {
+	mSuccessful = mMainRenderer = SDL_CreateRenderer(mMainWindow, nullptr);
+	if (!mSuccessful) {
 		showErrorBox("Failed to create Main renderer!");
+		return;
 	}
 
 	IMGUI_CHECKVERSION();
@@ -103,7 +103,6 @@ void BasicVideoSpec::setWindowTitle(SDL_Window* window, const Str& name) {
 }
 
 void BasicVideoSpec::showErrorBox(const char* const title) noexcept {
-	setErrorState(true);
 	SDL_ShowSimpleMessageBox(
 		SDL_MESSAGEBOX_ERROR, title,
 		SDL_GetError(), nullptr
@@ -164,14 +163,14 @@ void BasicVideoSpec::setViewportOpacity(const u32 alpha) {
 bool BasicVideoSpec::setViewportDimensions(
 	const s32 texture_W, const s32 texture_H
 ) {
-	mMainTexture = SDL_CreateTexture(
+	mSuccessful = mMainTexture = SDL_CreateTexture(
 		mMainRenderer,
 		SDL_PIXELFORMAT_ARGB8888,
 		SDL_TEXTUREACCESS_STREAMING,
 		texture_W, texture_H
 	);
 
-	if (!mMainTexture) {
+	if (!mSuccessful) {
 		showErrorBox("Failed to create Viewport texture!");
 	} else {
 		SDL_SetTextureScaleMode(mMainTexture, SDL_SCALEMODE_NEAREST);
@@ -278,7 +277,8 @@ void BasicVideoSpec::renderPresent() {
 		static_cast<s32>(mOuterFrame.h)
 	) };
 
-	if (!viewportTexture) {
+	mSuccessful = viewportTexture;
+	if (!mSuccessful) {
 		showErrorBox("Failed to create GUI texture!");
 		return;
 	} else {

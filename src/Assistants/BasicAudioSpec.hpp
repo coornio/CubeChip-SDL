@@ -9,6 +9,7 @@
 #include <span>
 #include <cmath>
 #include <vector>
+#include <cassert>
 #include <utility>
 #include <algorithm>
 #include <execution>
@@ -27,32 +28,23 @@ class BasicAudioSpec final {
 	BasicAudioSpec(const BasicAudioSpec&) = delete;
 	BasicAudioSpec& operator=(const BasicAudioSpec&) = delete;
 
-	static bool& errorState() noexcept {
-		static bool errorEncountered{};
-		return errorEncountered;
-	}
-
-	static s32& globalVolume() noexcept {
-		static s32 globalVolume{ 15 * 11 };
-		return globalVolume;
-	}
+	static inline f32  mGlobalGain{ 11 * (1.0f / 255.0f * 15) };
+	static inline bool mSuccessful{ true };
 
 public:
 	static auto* create() noexcept {
 		static BasicAudioSpec self;
-		return errorState() ? nullptr : &self;
+		return mSuccessful ? &self : nullptr;
 	}
 
-	static bool getErrorState()                 noexcept { return errorState();  }
-	static void setErrorState(const bool state) noexcept { errorState() = state; }
+	static bool isSuccessful() noexcept { return mSuccessful; }
 
-	static void showErrorBox(const char* const title) noexcept;
+	static auto getGlobalGain()     noexcept { return mGlobalGain; }
+	static auto getGlobalGainByte() noexcept { return static_cast<s32>(mGlobalGain * 255.0f); }
 
-	static auto getGlobalVolume()     noexcept { return globalVolume(); }
-	static auto getGlobalVolumeNorm() noexcept { return globalVolume() / 255.0f; }
-
-	static void setGlobalVolume(s32 value) noexcept;
-	static void changeGlobalVolume(s32 delta) noexcept;
+	static void setGlobalGain(const f32 gain) noexcept;
+	static void addGlobalGain(const f32 gain) noexcept;
+	static void addGlobalGain(const s32 gain) noexcept;
 };
 
 	#pragma endregion
@@ -76,26 +68,31 @@ public:
 			audioStream = SDL_OpenAudioDeviceStream(device, &mAudioSpec, nullptr, nullptr);
 		}
 	}
-	~AudioSpecBlock() = default;
 
 	AudioSpecBlock(const AudioSpecBlock&) = delete;
 	AudioSpecBlock& operator=(const AudioSpecBlock&) = delete;
 
-	s32  getFrequency()   const noexcept;
-	s32  getStreamCount() const noexcept;
+	/*==================================================================*/
 
-	bool isPaused(const u32 index) const noexcept;
+	auto getFrequency()   const noexcept { return mAudioSpec.freq; }
+	auto getStreamCount() const noexcept { return static_cast<s32>(mAudioStreams.size()); }
 
+	bool isStreamPaused(const u32 index)    const noexcept;
 	f32  getSampleRate(const f32 framerate) const noexcept;
-	f32  getGain(const u32 index) const noexcept;
-	s32  getGainByte(const u32 index) const noexcept;
+	f32  getGain(const u32 index)           const noexcept;
+	s32  getGainByte(const u32 index)       const noexcept;
+
+	/*==================================================================*/
 
 	void pauseStream(const u32 index) noexcept;
+	void pauseStreams() noexcept;
+
 	void resumeStream(const u32 index) noexcept;
+	void resumeStreams() noexcept;
 
 	void setGain(const u32 index, const f32 gain) noexcept;
-	void addGain(const u32 index, const s32 gain) noexcept;
 	void addGain(const u32 index, const f32 gain) noexcept;
+	void addGain(const u32 index, const s32 gain) noexcept;
 
 	/**
 	 * @brief Pushes buffer of audio samples to SDL, accepts any span
@@ -104,17 +101,17 @@ public:
 	 */
 	template <typename T>
 	void pushAudioData(const u32 index, const std::span<T> samplesBuffer) const {
-		if (isPaused(index)) { return; }
+		if (isStreamPaused(index) || !samplesBuffer.size()) { return; }
 
-		const auto globalVolume{ BasicAudioSpec::getGlobalVolumeNorm() };
+		const auto globalGain{ BasicAudioSpec::getGlobalGain() };
 
 		std::transform(
 			std::execution::unseq,
 			samplesBuffer.begin(),
 			samplesBuffer.end(),
 			samplesBuffer.data(),
-			[globalVolume](const T sample) noexcept {
-				return static_cast<T>(sample * globalVolume);
+			[globalGain](const T sample) noexcept {
+				return static_cast<T>(sample * globalGain);
 			}
 		);
 

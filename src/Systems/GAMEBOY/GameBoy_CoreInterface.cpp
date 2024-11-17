@@ -18,6 +18,7 @@ GameBoy_CoreInterface::GameBoy_CoreInterface() noexcept
 	sSavestatePath = HDM->addSystemDir("savestate", "GAMEBOY");
 	if (!sSavestatePath) { addCoreState(EmuState::FATAL); }
 
+	ASB->resumeStreams();
 	loadPresetBinds();
 }
 

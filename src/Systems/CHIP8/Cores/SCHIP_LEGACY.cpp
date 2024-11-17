@@ -43,11 +43,6 @@ SCHIP_LEGACY::SCHIP_LEGACY()
 		mFramerate = cRefreshRate;
 
 		prepDisplayArea(Resolution::LO);
-
-		ASB->resumeStream(STREAM::CHANN0);
-		ASB->resumeStream(STREAM::CHANN1);
-		ASB->resumeStream(STREAM::CHANN2);
-		ASB->resumeStream(STREAM::BUZZER);
 	}
 }
 
@@ -647,11 +642,11 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 			{ mRegisterI = mRegisterI + N & 0xFFF; }
 	}
 	void SCHIP_LEGACY::instruction_FN75(const s32 N) noexcept {
-		if (setPermaRegs(std::min(N, 7) + 1)) [[unlikely]]
+		if (!setPermaRegs(std::min(N, 7) + 1)) [[unlikely]]
 			{ triggerCritError("Error :: Failed writing persistent registers!"); }
 	}
 	void SCHIP_LEGACY::instruction_FN85(const s32 N) noexcept {
-		if (getPermaRegs(std::min(N, 7) + 1)) [[unlikely]]
+		if (!getPermaRegs(std::min(N, 7) + 1)) [[unlikely]]
 			{ triggerCritError("Error :: Failed reading persistent registers!"); }
 	}
 

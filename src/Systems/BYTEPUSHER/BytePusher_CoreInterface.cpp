@@ -20,6 +20,7 @@ BytePusher_CoreInterface::BytePusher_CoreInterface() noexcept
 	sSavestatePath = HDM->addSystemDir("savestate", "BYTEPUSHER");
 	if (!sSavestatePath) { addCoreState(EmuState::FATAL); }
 
+	ASB->resumeStreams();
 	loadPresetBinds();
 }
 

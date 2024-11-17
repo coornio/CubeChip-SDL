@@ -11,13 +11,13 @@
 #include <fstream>
 #include <concepts>
 #include <filesystem>
+#include <type_traits>
 
 #include "Typedefs.hpp"
 
 /*==================================================================*/
 
-[[maybe_unused]]
-inline auto getFileModTime(
+[[maybe_unused]] inline auto getFileModTime(
 	const Path& filePath,
 	std::error_code* const ioError = nullptr
 ) noexcept {
@@ -27,8 +27,7 @@ inline auto getFileModTime(
 	return modifiedTime;
 }
 
-[[maybe_unused]]
-inline auto getFileSize(
+[[maybe_unused]] inline auto getFileSize(
 	const Path& filePath,
 	std::error_code* const ioError = nullptr
 ) noexcept {
@@ -38,8 +37,9 @@ inline auto getFileSize(
 	return fileSize;
 }
 
-[[maybe_unused]]
-inline auto doesPathExist(
+/*==================================================================*/
+
+[[maybe_unused]] inline auto doesPathExist(
 	const Path& filePath,
 	std::error_code* const ioError = nullptr
 ) noexcept {
@@ -54,8 +54,7 @@ inline auto doesPathExist(
 	}
 }
 
-[[maybe_unused]]
-inline auto doesFileExist(
+[[maybe_unused]] inline auto doesFileExist(
 	const Path& filePath,
 	std::error_code* const ioError = nullptr
 ) noexcept {
@@ -70,8 +69,9 @@ inline auto doesFileExist(
 	}
 }
 
-[[maybe_unused]]
-inline auto readFileData(
+/*==================================================================*/
+
+[[maybe_unused]] inline auto readFileData(
 	const Path& filePath,
 	std::error_code* const ioError = nullptr
 ) noexcept {
@@ -124,27 +124,61 @@ inline auto readFileData(
 	}
 }
 
-template <typename T> [[maybe_unused]]
-inline auto writeFileData(
+/*==================================================================*/
+
+[[maybe_unused]] inline bool writeFileData(
 	const Path& filePath,
-	std::span<const T> fileData,
+	const void* fileData,
+	const usz   fileSize,
 	std::error_code* const ioError = nullptr
-) noexcept requires std::is_trivially_constructible_v<T> {
+) noexcept {
 	std::ofstream ofs(filePath, std::ios::binary);
 
-	// Attempt to init file stream
-	if (ofs) {
-		ofs.write(reinterpret_cast<const char*>(fileData.data()), fileData.size() * sizeof(T));
-
-		// Check if the stream failed to write fully
-		if (!ofs.good()) {
-			if (ioError) { *ioError = std::make_error_code(std::errc::io_error); }
-			return true;
-		} else {
-			return false;
-		}
-	} else {
+	if (!ofs) { // failed to open file stream
 		if (ioError) { *ioError = std::make_error_code(std::errc::permission_denied); }
+		return false;
+	}
+
+	ofs.write(reinterpret_cast<const char*>(fileData), fileSize);
+
+	if (!ofs.good()) { // failed to write all data
+		if (ioError) { *ioError = std::make_error_code(std::errc::io_error); }
+		return false;
+	} else {
 		return true;
 	}
+}
+
+/*==================================================================*/
+
+template <typename T>
+concept ContiguousContainer = requires(const T& c) {
+	{ std::data(c) } -> std::same_as<const typename T::value_type*>;
+	{ std::size(c) } -> std::convertible_to<std::size_t>;
+};
+
+template <typename T> requires ContiguousContainer<T>
+[[maybe_unused]] inline bool writeFileData(
+	const Path& filePath, const T& fileData,
+	std::error_code* const ioError = nullptr
+) noexcept {
+	using typeT = decltype(std::data(fileData));
+	using elemT = std::remove_cv_t<std::remove_pointer_t<typeT>>;
+
+	return writeFileData(
+		filePath, fileData.data(),
+		fileData.size() * sizeof(elemT),
+		ioError
+	);
+}
+
+template <typename T, usz N>
+[[maybe_unused]] inline bool writeFileData(
+	const Path& filePath, const T(&fileData)[N],
+	std::error_code* const ioError = nullptr
+) noexcept {
+	return writeFileData(
+		filePath, fileData,
+		N * sizeof(T), ioError
+	);
 }

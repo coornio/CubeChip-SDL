@@ -38,21 +38,15 @@ class HomeDirManager final {
 
 	GameValidator checkGame{};
 
-	static bool& errorState() noexcept {
-		static bool errorEncountered{};
-		return errorEncountered;
-	}
+	static inline bool mSuccessful{ true };
 
 public:
 	static auto* create(const char* const org, const char* const app) noexcept {
 		static HomeDirManager self(org, app);
-		return errorState() ? nullptr : &self;
+		return mSuccessful ? &self : nullptr;
 	}
 
-	static void setErrorState(const bool state) noexcept { errorState() = state; }
-	static bool getErrorState()                 noexcept { return errorState();  }
-
-	static void showErrorBox(const char* const, const char* const) noexcept;
+	static bool isSuccessful() noexcept { return mSuccessful; }
 
 	Path* addSystemDir(
 		const Path& sub,

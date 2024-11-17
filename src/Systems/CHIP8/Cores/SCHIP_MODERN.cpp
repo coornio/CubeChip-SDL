@@ -34,11 +34,6 @@ SCHIP_MODERN::SCHIP_MODERN()
 		mCurrentPC = cStartOffset;
 		mFramerate = cRefreshRate;
 		mActiveCPF = cInstSpeedLo;
-
-		ASB->resumeStream(STREAM::CHANN0);
-		ASB->resumeStream(STREAM::CHANN1);
-		ASB->resumeStream(STREAM::CHANN2);
-		ASB->resumeStream(STREAM::BUZZER);
 	}
 }
 
@@ -621,11 +616,11 @@ void SCHIP_MODERN::scrollDisplayRT() {
 			{ mRegisterI = mRegisterI + N + 1 & 0xFFF; }
 	}
 	void SCHIP_MODERN::instruction_FN75(const s32 N) noexcept {
-		if (setPermaRegs(N + 1)) [[unlikely]]
+		if (!setPermaRegs(N + 1)) [[unlikely]]
 			{ triggerCritError("Error :: Failed writing persistent registers!"); }
 	}
 	void SCHIP_MODERN::instruction_FN85(const s32 N) noexcept {
-		if (getPermaRegs(N + 1)) [[unlikely]]
+		if (!getPermaRegs(N + 1)) [[unlikely]]
 			{ triggerCritError("Error :: Failed reading persistent registers!"); }
 	}
 

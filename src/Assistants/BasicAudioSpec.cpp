@@ -10,9 +10,12 @@
 	#pragma region BasicAudioSpec Singleton Class
 
 BasicAudioSpec::BasicAudioSpec() noexcept {
-	if (!SDL_InitSubSystem(SDL_INIT_AUDIO)) {
-		showErrorBox("Failed to init SDL audio!");
-		return;
+	mSuccessful = SDL_InitSubSystem(SDL_INIT_AUDIO);
+	if (!mSuccessful) {
+		SDL_ShowSimpleMessageBox(
+			SDL_MESSAGEBOX_ERROR, "Failed to init SDL audio!",
+			SDL_GetError(), nullptr
+		);
 	}
 }
 
@@ -20,69 +23,84 @@ BasicAudioSpec::~BasicAudioSpec() noexcept {
 	SDL_QuitSubSystem(SDL_INIT_AUDIO);
 }
 
-void BasicAudioSpec::showErrorBox(const char* const title) noexcept {
-	setErrorState(true);
-	SDL_ShowSimpleMessageBox(
-		SDL_MESSAGEBOX_ERROR, title,
-		SDL_GetError(), nullptr
-	);
+void BasicAudioSpec::setGlobalGain(const f32 gain) noexcept {
+	mGlobalGain = std::clamp(gain, 0.0f, 1.0f);
 }
 
-void BasicAudioSpec::setGlobalVolume(s32 value) noexcept {
-	auto& volume{ globalVolume() };
-	volume = std::clamp(value, 0, 255);
+void BasicAudioSpec::addGlobalGain(const f32 gain) noexcept {
+	mGlobalGain = std::clamp(mGlobalGain + gain, 0.0f, 1.0f);
 }
 
-void BasicAudioSpec::changeGlobalVolume(s32 delta) noexcept {
-	auto& volume{ globalVolume() };
-	volume = std::clamp(volume + delta, 0, 255);
+void BasicAudioSpec::addGlobalGain(const s32 gain) noexcept {
+	static constexpr f32 minF{ 1.0f / 255.0f };
+	mGlobalGain = std::clamp(mGlobalGain + gain * minF, 0.0f, 1.0f);
 }
 
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
-s32 AudioSpecBlock::getFrequency() const noexcept {
-	return mAudioSpec.freq;
-}
+/*==================================================================*/
+	#pragma region BasicAudioSpec Singleton Class
 
-s32 AudioSpecBlock::getStreamCount() const noexcept {
-	return static_cast<s32>(mAudioStreams.size());
-}
-
-bool AudioSpecBlock::isPaused(const u32 index) const noexcept {
+bool AudioSpecBlock::isStreamPaused(const u32 index) const noexcept {
+	assert(index < mAudioStreams.size() && "isStreamPaused() index out-of-bounds");
 	const auto deviceID{ SDL_GetAudioStreamDevice(mAudioStreams[index]) };
 	return deviceID ? SDL_AudioDevicePaused(deviceID) : true;
 }
 
 f32  AudioSpecBlock::getSampleRate(const f32 framerate) const noexcept {
-	return framerate > Epsilon::f32 ? mAudioSpec.freq / framerate : 0.0f;
+	return framerate > 1.0f ? mAudioSpec.freq / framerate : 0.0f;
 }
 
 f32  AudioSpecBlock::getGain(const u32 index) const noexcept {
+	assert(index < mAudioStreams.size() && "getGain() index out-of-bounds");
 	return SDL_GetAudioStreamGain(mAudioStreams[index]);
 }
 
-s32 AudioSpecBlock::getGainByte(const u32 index) const noexcept {
+s32  AudioSpecBlock::getGainByte(const u32 index) const noexcept {
+	assert(index < mAudioStreams.size() && "getGainByte() index out-of-bounds");
 	return static_cast<s32>(getGain(index) * 255.0f);
 }
 
+/*==================================================================*/
+
 void AudioSpecBlock::pauseStream(const u32 index) noexcept {
+	assert(index < mAudioStreams.size() && "pauseStream() index out-of-bounds");
 	SDL_PauseAudioStreamDevice(mAudioStreams[index]);
 }
 
+void AudioSpecBlock::pauseStreams() noexcept {
+	for (const auto& stream : mAudioStreams) {
+		SDL_PauseAudioStreamDevice(stream);
+	}
+}
+
 void AudioSpecBlock::resumeStream(const u32 index) noexcept {
+	assert(index < mAudioStreams.size() && "resumeStream() index out-of-bounds");
 	SDL_ResumeAudioStreamDevice(mAudioStreams[index]);
 }
 
+void AudioSpecBlock::resumeStreams() noexcept {
+	for (const auto& stream : mAudioStreams) {
+		SDL_ResumeAudioStreamDevice(stream);
+	}
+}
+
 void AudioSpecBlock::setGain(const u32 index, const f32 gain) noexcept {
+	assert(index < mAudioStreams.size() && "setGain() index out-of-bounds");
 	SDL_SetAudioStreamGain(mAudioStreams[index], gain);
 }
 
+void AudioSpecBlock::addGain(const u32 index, const f32 gain) noexcept {
+	assert(index < mAudioStreams.size() && "addGain() index out-of-bounds");
+	setGain(index, std::clamp(getGain(index) + gain, 0.0f, 1.0f));
+}
+
 void AudioSpecBlock::addGain(const u32 index, const s32 gain) noexcept {
+	assert(index < mAudioStreams.size() && "addGain() index out-of-bounds");
 	static constexpr f32 minF{ 1.0f / 255.0f };
 	setGain(index, std::clamp(getGain(index) + gain * minF, 0.0f, 1.0f));
 }
 
-void AudioSpecBlock::addGain(const u32 index, const f32 gain) noexcept {
-	setGain(index, std::clamp(getGain(index) + gain, 0.0f, 1.0f));
-}
+	#pragma endregion
+/*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/

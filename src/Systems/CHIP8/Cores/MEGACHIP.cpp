@@ -31,11 +31,6 @@ MEGACHIP::MEGACHIP()
 		prepDisplayArea(Resolution::LO);
 		setNewBlendAlgorithm(BlendMode::ALPHA_BLEND);
 		initializeFontColors();
-
-		ASB->resumeStream(STREAM::CHANN0);
-		ASB->resumeStream(STREAM::CHANN1);
-		ASB->resumeStream(STREAM::CHANN2);
-		ASB->resumeStream(STREAM::BUZZER);
 	}
 }
 
@@ -1041,11 +1036,11 @@ void MEGACHIP::scrollBuffersRT() {
 			{ mRegisterV[idx] = readMemoryI(idx); }
 	}
 	void MEGACHIP::instruction_FN75(const s32 N) noexcept {
-		if (setPermaRegs(std::min(N, 7) + 1)) [[unlikely]]
+		if (!setPermaRegs(std::min(N, 7) + 1)) [[unlikely]]
 			{ triggerCritError("Error :: Failed writing persistent registers!"); }
 	}
 	void MEGACHIP::instruction_FN85(const s32 N) noexcept {
-		if (getPermaRegs(std::min(N, 7) + 1)) [[unlikely]]
+		if (!getPermaRegs(std::min(N, 7) + 1)) [[unlikely]]
 			{ triggerCritError("Error :: Failed reading persistent registers!"); }
 	}
 
