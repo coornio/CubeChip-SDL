@@ -12,11 +12,11 @@ inline auto getHomePath(
 	const char* const org = nullptr,
 	const char* const app = nullptr
 ) noexcept {
-	static const char* const homePath{ SDL_GetPrefPath(org, app) };
+	static auto* const homePath{ SDL_GetPrefPath(org, app) };
 	return homePath;
 }
 
 inline auto getBasePath() noexcept {
-	static const char* const homePath{ SDL_GetBasePath() };
+	static auto* const homePath{ SDL_GetBasePath() };
 	return homePath;
 }

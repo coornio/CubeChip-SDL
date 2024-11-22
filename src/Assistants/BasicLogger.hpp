@@ -28,7 +28,6 @@ class BasicLogger final {
 	Path mLogPath{};
 
 	StrV getSeverity(BLOG type) const noexcept;
-	
 
 public:
 	static auto* create() noexcept {
@@ -36,7 +35,7 @@ public:
 		return &self;
 	}
 
-	bool initLogFile(const Str& filename, const Path& directory) noexcept;
+	bool initLogFile(const Str8& filename, const Path& directory) noexcept;
 
 private:
 	void writeEntry(const BLOG type, const Str& message) noexcept;

@@ -9,11 +9,6 @@
 #define SDL_MAIN_USE_CALLBACKS
 #include <SDL3/SDL_main.h>
 
-#if 0
-#include <windows.h>
-#include <shellapi.h>
-#endif
-
 #include "Assistants/BasicLogger.hpp"
 #include "Assistants/BasicInput.hpp"
 #include "Assistants/HomeDirManager.hpp"
@@ -23,6 +18,14 @@
 #include "Cubechip.hpp"
 #include "EmuHost.hpp"
 
+#if _WIN32
+	#pragma warning(push)
+	#pragma warning(disable : 5039)
+		#include <windows.h>
+		#include <shellapi.h>
+	#pragma warning(pop)
+#endif
+
 /*==================================================================*/
 
 BasicLogger&         blog{   *BasicLogger::create() };
@@ -31,8 +34,11 @@ BasicMouse&    binput::mb{    *BasicMouse::create() };
 
 /*==================================================================*/
 
-SDL_AppResult SDL_AppInit(void **Host, int argc, char *argv[]) {
-
+SDL_AppResult SDL_AppInit(
+	void **Host,
+	[[maybe_unused]] int argc,
+	[[maybe_unused]] char *argv[]
+) {
 //             VS               OTHER
 #if !defined(NDEBUG) || defined(DEBUG)
 	{
@@ -66,13 +72,14 @@ SDL_AppResult SDL_AppInit(void **Host, int argc, char *argv[]) {
 		BasicAudioSpec::create()
 	)) { return SDL_APP_FAILURE; }
 
-#if 0
-	setlocale(LC_CTYPE, "");
+#if _WIN32
+	setlocale(LC_CTYPE, ".UTF-8");
+	SetConsoleOutputCP(CP_UTF8);
 	LPWSTR* wargv{}; int wargc{};
 	wargv = CommandLineToArgvW(GetCommandLineW(), &wargc);
 	if (!wargv) { return SDL_APP_FAILURE; }
 
-	*Host = &EmuHost::create(wargc <= 1 ? L"" : wargv[1]);
+	*Host = EmuHost::create(wargc <= 1 ? L"" : wargv[1]);
 	LocalFree(wargv);
 #else
 	*Host = EmuHost::create(argc <= 1 ? "" : argv[1]);
@@ -108,7 +115,7 @@ SDL_AppResult SDL_AppEvent(void *pHost, SDL_Event *Event) {
 				return SDL_APP_SUCCESS;
 
 			case SDL_EVENT_DROP_FILE:
-				Host.loadGameFile(Event->drop.data);
+				Host.loadGameFile(reinterpret_cast<const char8_t*>(Event->drop.data));
 				break;
 
 			case SDL_EVENT_WINDOW_MINIMIZED:

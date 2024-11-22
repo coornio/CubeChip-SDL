@@ -42,7 +42,7 @@ class BasicVideoSpec final {
 	bool enableScanLine{};
 
 public:
-	static auto* create(const char *appName) noexcept {
+	static auto* create(const char* appName) noexcept {
 		sAppName = appName;
 		static BasicVideoSpec self;
 		return mSuccessful ? &self : nullptr;
@@ -104,7 +104,7 @@ public:
 	}
 	void raiseWindow(SDL_Window* window);
 
-	void renderPresent();
+	void renderPresent(const char* const stats);
 
 private:
 	[[nodiscard]]

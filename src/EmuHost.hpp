@@ -43,9 +43,8 @@ public:
 private:
 	bool unlimitedMode{};
 
-	void toggleUnlimited();
-	void printStatistics() const;
 	void checkForHotkeys();
+	const Str& getStats() const;
 
 	void discardCore();
 	void replaceCore();

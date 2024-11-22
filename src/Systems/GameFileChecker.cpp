@@ -121,8 +121,8 @@ std::unique_ptr<EmuInterface> GameFileChecker::initGameCore() noexcept {
 
 bool GameFileChecker::validate(
 	std::span<const char> game,
-	const std::string& type,
-	const std::string& sha1
+	const Str8& type,
+	const Str& sha1
 ) noexcept {
 	if (sha1.empty()) {
 		return validate(game, type);
@@ -134,7 +134,7 @@ bool GameFileChecker::validate(
 
 bool GameFileChecker::validate(
 	std::span<const char> game,
-	const std::string& type
+	const Str8& type
 ) noexcept {
 	static const std::unordered_map <std::string_view, GameFileType> sExtMap{
 		{".c2x", GameFileType::c2x},
@@ -156,7 +156,7 @@ bool GameFileChecker::validate(
 		{".gbc", GameFileType::gbc},
 	};
 
-	const auto it{ sExtMap.find(type) };
+	const auto it{ sExtMap.find(reinterpret_cast<const char*>(type.c_str())) };
 	if (it == sExtMap.end()) {
 		blog.newEntry(BLOG::WARN, "Cannot match Game to a supported system/platform!");
 		return false;

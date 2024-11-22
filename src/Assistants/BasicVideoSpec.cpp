@@ -9,6 +9,7 @@
 #include <stdexcept>
 #include <algorithm>
 
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include "../_imgui/imgui.h"
 #include "../_imgui/imgui_impl_sdl3.h"
 #include "../_imgui/imgui_impl_sdlrenderer3.h"
@@ -38,7 +39,10 @@ BasicVideoSpec::BasicVideoSpec() noexcept
 		return;
 	}
 
-	mSuccessful = mMainWindow = SDL_CreateWindow(sAppName, 0, 0, SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE);
+	mSuccessful = mMainWindow = SDL_CreateWindow(
+		reinterpret_cast<const char*>(sAppName), 0, 0,
+		SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE
+	);
 	if (!mSuccessful) {
 		showErrorBox("Failed to create main window!");
 		return;
@@ -94,7 +98,7 @@ BasicVideoSpec::~BasicVideoSpec() noexcept {
 }
 
 void BasicVideoSpec::setMainWindowTitle(const Str& name) {
-	const auto windowTitle{ (sAppName ? sAppName : "") + " :: "s + name};
+	const auto windowTitle{ (sAppName ? sAppName : "") + " :: "s + name.c_str()};
 	SDL_SetWindowTitle(mMainWindow, windowTitle.c_str());
 }
 
@@ -268,7 +272,72 @@ void BasicVideoSpec::drawViewportTexture(SDL_Texture* viewportTexture) {
 	}
 }
 
-void BasicVideoSpec::renderPresent() {
+enum class Corner {
+	TopLeft,
+	TopRight,
+	BottomLeft,
+	BottomRight
+};
+
+namespace ImGui {
+	[[maybe_unused]]
+	inline auto clamp(const ImVec2& value, const ImVec2& min, const ImVec2& max) {
+		return ImVec2{
+			std::clamp(value.x, min.x, max.x),
+			std::clamp(value.y, min.y, max.y)
+		};
+	}
+
+	[[maybe_unused]]
+	inline auto abs(const ImVec2& value) {
+		return ImVec2{ std::abs(value.x), std::abs(value.y) };
+	}
+
+	[[maybe_unused]]
+	static void writeText(
+		const Str& textString,
+		const ImVec2 textAlign   = ImVec2{ 0.5f, 0.5f },
+		const ImVec4 textColor   = ImVec4{ 1.0f, 1.0f, 1.0f, 1.0f },
+		const ImVec2 textPadding = ImVec2{ 6.0f, 6.0f }
+	) {
+		using namespace ImGui;
+		const auto textPos{ (
+			GetWindowSize() - CalcTextSize(textString.c_str()) - textPadding * 2
+		) * textAlign + textPadding };
+
+		PushStyleColor(ImGuiCol_Text, textColor);
+		SetCursorPos(textPos);
+		TextUnformatted(textString.c_str());
+		PopStyleColor();
+	}
+
+	[[maybe_unused]]
+	static void writeShadowedText(
+		const Str& textString,
+		const ImVec2 textAlign   = ImVec2{ 0.5f, 0.5f },
+		const ImVec4 textColor   = ImVec4{ 1.0f, 1.0f, 1.0f, 1.0f },
+		const ImVec2 textPadding = ImVec2{ 6.0f, 6.0f },
+		const ImVec2 shadowDist  = ImVec2{ 2.0f, 2.0f }
+	) {
+		using namespace ImGui;
+		const auto textPos{ (
+			GetWindowSize() - CalcTextSize(textString.c_str()) - textPadding * 2
+		) * textAlign + textPadding };
+
+		const auto shadowOffset{ shadowDist * 0.5f };
+		PushStyleColor(ImGuiCol_Text, { 0.0f, 0.0f, 0.0f, 1.0f });
+		SetCursorPos(textPos + shadowOffset);
+		TextUnformatted(textString.c_str());
+		PopStyleColor();
+
+		PushStyleColor(ImGuiCol_Text, textColor);
+		SetCursorPos(textPos - shadowOffset);
+		TextUnformatted(textString.c_str());
+		PopStyleColor();
+	}
+}
+
+void BasicVideoSpec::renderPresent(const char* const stats) {
 	SDL_Unique viewportTexture{ SDL_CreateTexture(
 		mMainRenderer,
 		SDL_PIXELFORMAT_ARGB8888,
@@ -304,8 +373,8 @@ void BasicVideoSpec::renderPresent() {
 		} };
 
 		ImGui::SetNextWindowSize(viewportFrameDimensions);
-		ImGui::SetNextWindowPos(ImVec2{ 0, ImGui::GetFrameHeight() });
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0, 0 });
+		ImGui::SetNextWindowPos({ 0.0f, ImGui::GetFrameHeight() });
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
 		ImGui::Begin("ViewportFrame", nullptr,
 			ImGuiWindowFlags_NoTitleBar |
 			ImGuiWindowFlags_NoResize |
@@ -336,15 +405,15 @@ void BasicVideoSpec::renderPresent() {
 			mOuterFrame.h * std::max(std::floor(aspectRatio), 1.0f)
 		} };
 
-		const auto viewportOffsets{ ImVec2{
-			(viewportFrameDimensions.x - viewportDimensions.x) / 2.0f,
-			(viewportFrameDimensions.y - viewportDimensions.y) / 2.0f
-		} };
+		const auto viewportOffsets{ (viewportFrameDimensions - viewportDimensions) / 2.0f };
 
-		if (viewportOffsets.x > 0.0f) { ImGui::SetCursorPosX(ImGui::GetCursorPosX() + viewportOffsets.x); }
-		if (viewportOffsets.y > 0.0f) { ImGui::SetCursorPosY(ImGui::GetCursorPosY() + viewportOffsets.y); }
+		if (viewportOffsets.x > 0.0f) { ImGui::SetCursorPosX(std::floor(ImGui::GetCursorPosX() + viewportOffsets.x)); }
+		if (viewportOffsets.y > 0.0f) { ImGui::SetCursorPosY(std::floor(ImGui::GetCursorPosY() + viewportOffsets.y)); }
 
 		ImGui::Image(reinterpret_cast<ImTextureID>(viewportTexture.get()), viewportDimensions);
+
+		if (stats) { ImGui::writeShadowedText(stats, { 0.0f, 1.0f }); }
+		
 		ImGui::End();
 
 		//static bool show_demo_window{ true };

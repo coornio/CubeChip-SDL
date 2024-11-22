@@ -34,30 +34,29 @@ EmuHost::EmuHost(const Path& gamePath) noexcept
 
 /*==================================================================*/
 
-void EmuHost::toggleUnlimited() {
-	unlimitedMode = !unlimitedMode;
-	if (!unlimitedMode) { std::cout << "\n\n\n"; }
-}
+const Str& EmuHost::getStats() const {
+	if (!unlimitedMode || iGuest->isSystemStopped()) 
+		[[unlikely]] { static Str none{}; return none; }
 
-void EmuHost::printStatistics() const {
-	if (!unlimitedMode || iGuest->isSystemStopped()) { return; }
-
-	if (Limiter->getValidFrameCounter() & 0x1) {
+	static Str stats{};
+	if (Limiter->getValidFrameCounter() & 0x1) [[likely]] {
 		const auto currentFrameTime{ Limiter->getElapsedMicrosSince() / 1000.0f };
 
 		const auto frameTimeDelta{ currentFrameTime * 1.04f / Limiter->getFramespan() };
 		const auto workCycleDelta{ 1e5f * std::sin((1 - frameTimeDelta) * 1.5707963f) };
 
-		std::cout << std::format(
+		stats = std::format(
 			"Frame time:{:9.4f} ms\n"
 			"Time since:{:9.4f} ms\n"
-			" ::   MIPS:{:8.2f}\33[3F",
+			" ::   MIPS:{:8.2f}",
 			currentFrameTime,
 			Limiter->getElapsedMillisLast(),
 			iGuest->changeCPF(static_cast<s32>(workCycleDelta))
 				* iGuest->getFramerate() / 1'000'000.0f
-		) << std::endl;
+		);
 	}
+	
+	return stats;
 }
 
 /*==================================================================*/
@@ -82,7 +81,7 @@ void EmuHost::replaceCore() {
 
 	if (iGuest) {
 		Limiter->setLimiter(iGuest->getFramerate());
-		BVS->setMainWindowTitle(HDM->getFileStem());
+		BVS->setMainWindowTitle(reinterpret_cast<const char*>(HDM->getFileStem().c_str()));
 	}
 }
 
@@ -124,12 +123,12 @@ void EmuHost::processFrame() {
 
 		checkForHotkeys();
 
-		if (iGuest) {
+		if (iGuest) [[likely]] {
 			iGuest->processFrame();
-			printStatistics();
+			BVS->renderPresent(getStats().c_str());
+		} else {
+			BVS->renderPresent(nullptr);
 		}
-
-		BVS->renderPresent();
 
 		binput::kb.updateCopy();
 		binput::mb.updateCopy();
@@ -157,7 +156,7 @@ void EmuHost::checkForHotkeys() {
 		}
 
 		if (kb.isPressed(KEY(RSHIFT))) {
-			toggleUnlimited();
+			unlimitedMode = !unlimitedMode;
 		}
 	}
 }

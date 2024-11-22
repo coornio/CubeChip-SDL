@@ -68,7 +68,7 @@ class GameFileChecker final {
 
 	static bool validate(
 		std::span<const char> game,
-		const std::string& type
+		const Str8& type
 	) noexcept;
 
 	[[nodiscard]]
@@ -78,8 +78,8 @@ class GameFileChecker final {
 public:
 	static bool validate(
 		std::span<const char> game,
-		const std::string& type,
-		const std::string& sha1
+		const Str8& type,
+		const Str& sha1
 	) noexcept;
 
 	[[nodiscard]]
