@@ -32,13 +32,6 @@ using s8  = std::int8_t;
 
 using Str  = std::string;
 using StrV = std::string_view;
-
-using Str8  = std::u8string;
-using Str8V = std::u8string_view;
-
-using StrW  = std::wstring;
-using StrWV = std::wstring_view;
-
 using Path = std::filesystem::path;
 
 using namespace std::string_literals;
@@ -48,11 +41,3 @@ struct Epsilon {
 	constexpr static ::f32 f32{ std::numeric_limits<::f32>::epsilon() };
 	constexpr static ::f64 f64{ std::numeric_limits<::f64>::epsilon() };
 };
-
-inline StrW toStrW(Str Str) {
-	std::vector<wchar_t> buf(Str.size());
-	std::use_facet<std::ctype<wchar_t>>(std::locale{}).widen(
-		Str.data(), Str.data() + Str.size(), buf.data()
-	);
-	return StrW{ buf.data(), buf.size() };
-}

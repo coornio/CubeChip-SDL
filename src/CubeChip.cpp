@@ -21,8 +21,8 @@
 #if _WIN32
 	#pragma warning(push)
 	#pragma warning(disable : 5039)
+		#include <mbctype.h>
 		#include <windows.h>
-		#include <shellapi.h>
 	#pragma warning(pop)
 #endif
 
@@ -34,11 +34,7 @@ BasicMouse&    binput::mb{    *BasicMouse::create() };
 
 /*==================================================================*/
 
-SDL_AppResult SDL_AppInit(
-	void **Host,
-	[[maybe_unused]] int argc,
-	[[maybe_unused]] char *argv[]
-) {
+SDL_AppResult SDL_AppInit(void **Host, int argc, char *argv[]) {
 //             VS               OTHER
 #if !defined(NDEBUG) || defined(DEBUG)
 	{
@@ -59,6 +55,12 @@ SDL_AppResult SDL_AppInit(
 	}
 #endif
 
+#if _WIN32
+	_setmbcp(CP_UTF8);
+	setlocale(LC_CTYPE, ".UTF-8");
+	SetConsoleOutputCP(CP_UTF8);
+#endif
+
 #ifdef SDL_PLATFORM_WIN32
 	SDL_SetHint(SDL_HINT_RENDER_DRIVER, "direct3d");
 	SDL_SetHint(SDL_HINT_WINDOWS_RAW_KEYBOARD, "0");
@@ -72,18 +74,7 @@ SDL_AppResult SDL_AppInit(
 		BasicAudioSpec::create()
 	)) { return SDL_APP_FAILURE; }
 
-#if _WIN32
-	setlocale(LC_CTYPE, ".UTF-8");
-	SetConsoleOutputCP(CP_UTF8);
-	LPWSTR* wargv{}; int wargc{};
-	wargv = CommandLineToArgvW(GetCommandLineW(), &wargc);
-	if (!wargv) { return SDL_APP_FAILURE; }
-
-	*Host = EmuHost::create(wargc <= 1 ? L"" : wargv[1]);
-	LocalFree(wargv);
-#else
 	*Host = EmuHost::create(argc <= 1 ? "" : argv[1]);
-#endif
 	return SDL_APP_CONTINUE;
 }
 
@@ -115,7 +106,7 @@ SDL_AppResult SDL_AppEvent(void *pHost, SDL_Event *Event) {
 				return SDL_APP_SUCCESS;
 
 			case SDL_EVENT_DROP_FILE:
-				Host.loadGameFile(reinterpret_cast<const char8_t*>(Event->drop.data));
+				Host.loadGameFile(Event->drop.data);
 				break;
 
 			case SDL_EVENT_WINDOW_MINIMIZED:

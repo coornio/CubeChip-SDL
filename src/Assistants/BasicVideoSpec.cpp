@@ -39,10 +39,7 @@ BasicVideoSpec::BasicVideoSpec() noexcept
 		return;
 	}
 
-	mSuccessful = mMainWindow = SDL_CreateWindow(
-		reinterpret_cast<const char*>(sAppName), 0, 0,
-		SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE
-	);
+	mSuccessful = mMainWindow = SDL_CreateWindow(sAppName, 0, 0, SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE);
 	if (!mSuccessful) {
 		showErrorBox("Failed to create main window!");
 		return;
@@ -98,7 +95,7 @@ BasicVideoSpec::~BasicVideoSpec() noexcept {
 }
 
 void BasicVideoSpec::setMainWindowTitle(const Str& name) {
-	const auto windowTitle{ (sAppName ? sAppName : "") + " :: "s + name.c_str()};
+	const auto windowTitle{ (sAppName ? (sAppName + " :: "s) : "") + name};
 	SDL_SetWindowTitle(mMainWindow, windowTitle.c_str());
 }
 

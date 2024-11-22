@@ -27,7 +27,7 @@ HomeDirManager::HomeDirManager(const char* const org, const char* const app) noe
 			"Unable to get home directory!", nullptr
 		);
 	} else {
-		blog.initLogFile(u8"program.log", getHomePath());
+		blog.initLogFile("program.log", getHomePath());
 	}
 }
 
@@ -53,9 +53,7 @@ Path* HomeDirManager::addSystemDir(const Path& sub, const Path& sys) noexcept {
 		mSuccessful = false;
 		SDL_ShowSimpleMessageBox(
 			SDL_MESSAGEBOX_ERROR, "Filesystem Error",
-			reinterpret_cast<const char*>(
-				(newDir.u8string() + u8"\nUnable to create subdirectories!").c_str()
-			), nullptr
+			(newDir.string() + "\nUnable to create subdirectories!").c_str(), nullptr
 		);
 		return nullptr;
 	}
@@ -102,7 +100,7 @@ bool HomeDirManager::validateGameFile(const Path gamePath) noexcept {
 
 	const auto tempSHA1{ SHA1::from_span(mFileData) };
 
-	if (checkGame(mFileData, gamePath.extension().u8string(), tempSHA1)) {
+	if (checkGame(mFileData, gamePath.extension().string(), tempSHA1)) {
 		mFilePath = gamePath;
 		mFileSHA1 = tempSHA1;
 		return true;

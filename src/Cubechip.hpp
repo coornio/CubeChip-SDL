@@ -1,4 +1,4 @@
-/*
+﻿/*
 	This Source Code Form is subject to the terms of the Mozilla Public
 	License, v. 2.0. If a copy of the MPL was not distributed with this
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -8,9 +8,8 @@
 
 #include <span>
 
-constexpr auto AppName{ "CubeChip" };
-constexpr auto AppVer{ "01/11/2024" };
-
+constexpr auto* AppName{ "CubeChip" };
+constexpr auto* AppVer{ "22/11/2024" };
 
 constexpr unsigned AppFontData[]{ // Roboto Mono 
 	0x0000bc57, 0x00000000, 0xc4540100, 0x00000400, 0x00010037, 0x000e0000, 0x00030080, 0x55534760, 0x35bd3642, 0x020000cb, 0x2c038220, 0x2f534fa8,

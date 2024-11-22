@@ -13,7 +13,7 @@
 /*==================================================================*/
 	#pragma region BasicLogger Singleton Class
 
-bool BasicLogger::initLogFile(const Str8& filename, const Path& directory) noexcept {
+bool BasicLogger::initLogFile(const Str& filename, const Path& directory) noexcept {
 	if (filename.empty() || directory.empty()) {
 		std::cerr << ":: ERROR :: " << "Log file name/path is invalid!" << std::endl;
 		return true;
@@ -57,29 +57,8 @@ StrV BasicLogger::getSeverity(BLOG type) const noexcept {
 void BasicLogger::writeEntry(const BLOG type, const Str& message) noexcept {
 	static std::size_t lineCount;
 
-#if _WIN32
-	const auto wideMessage{ toStrW(message.c_str()) };
-
-	std::wostringstream output;
-	output << ++lineCount << L" :: " << getSeverity(type).data() << L" :: "
-		<< wideMessage;
-
-	std::wcout << output.str() << std::endl;
-
-	if (!mLogPath.empty()) {
-		std::wofstream logFile(mLogPath, std::ios::app);
-		if (!logFile) {
-			std::wcerr << L":: ERROR :: " << L"Unable to open log file: " << mLogPath << std::endl;
-			mLogPath.clear();
-			return;
-		} else {
-			logFile << output.str() << std::endl;
-		}
-	}
-#else
 	std::ostringstream output;
-	output << ++lineCount << " :: " << getSeverity(type) << " :: "
-		<< message.c_str();
+	output << ++lineCount << " :: " << getSeverity(type) << " :: " << message;
 
 	std::cout << output.str() << std::endl;
 
@@ -93,7 +72,6 @@ void BasicLogger::writeEntry(const BLOG type, const Str& message) noexcept {
 			logFile << output.str() << std::endl;
 		}
 	}
-#endif
 }
 
 	#pragma endregion

@@ -23,8 +23,8 @@ class HomeDirManager final {
 
 	using GameValidator = bool (*)(
 		std::span<const char> fileData,
-		const Str8& fileExts,
-		const Str&  fileSHA1
+		const Str& fileExts,
+		const Str& fileSHA1
 	) noexcept;
 
 	Path mFilePath{};
@@ -54,10 +54,10 @@ public:
 	) noexcept;
 
 	auto getFullPath() const noexcept { return mFilePath; }
-	auto getFilePath() const noexcept { return mFilePath.u8string(); }
-	auto getFileName() const noexcept { return mFilePath.filename().u8string(); }
-	auto getFileStem() const noexcept { return mFilePath.stem().u8string(); }
-	auto getFileExts() const noexcept { return mFilePath.extension().u8string(); }
+	auto getFilePath() const noexcept { return mFilePath.string(); }
+	auto getFileName() const noexcept { return mFilePath.filename().string(); }
+	auto getFileStem() const noexcept { return mFilePath.stem().string(); }
+	auto getFileExts() const noexcept { return mFilePath.extension().string(); }
 	auto getFileSpan() const noexcept { return std::span{ mFileData }; }
 	auto getFileSize() const noexcept { return mFileData.size(); }
 	auto getFileData() const noexcept { return mFileData.data(); }

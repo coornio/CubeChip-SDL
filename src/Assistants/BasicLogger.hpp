@@ -35,7 +35,7 @@ public:
 		return &self;
 	}
 
-	bool initLogFile(const Str8& filename, const Path& directory) noexcept;
+	bool initLogFile(const Str& filename, const Path& directory) noexcept;
 
 private:
 	void writeEntry(const BLOG type, const Str& message) noexcept;

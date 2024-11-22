@@ -76,7 +76,7 @@ else()
 endif()
 
 if(MSVC)
-  target_compile_options(${PROJECT_NAME} PRIVATE /W4 /std:c++latest)
+  target_compile_options(${PROJECT_NAME} PRIVATE /W4 /std:c++latest /utf-8)
 else()
   target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra --std=c++23)
 endif()
