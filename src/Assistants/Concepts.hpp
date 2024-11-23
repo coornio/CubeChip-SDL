@@ -17,3 +17,9 @@ concept arithmetic = std::is_arithmetic_v<T>;
 
 template<class T>
 concept ar_pointer = std::is_pointer_v<T> && std::is_arithmetic_v<std::remove_pointer_t<T>>;
+
+template <typename T>
+concept ContiguousContainer = requires(const T & c) {
+	{ std::data(c) } -> std::same_as<const typename T::value_type*>;
+	{ std::size(c) } -> std::convertible_to<std::size_t>;
+};

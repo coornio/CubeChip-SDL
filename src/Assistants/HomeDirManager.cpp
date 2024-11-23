@@ -71,12 +71,12 @@ void HomeDirManager::clearCachedFileData() noexcept {
 bool HomeDirManager::validateGameFile(const Path gamePath) noexcept {
 	std::error_code error;
 
-	if (!::doesFileExist(gamePath, &error) || error) {
+	if (!::doesFileExist(gamePath, error) || error) {
 		blog.newEntry(BLOG::WARN, "Path is ineligible: {}", error.message());
 		return false;
 	}
 
-	const auto fileSize{ ::getFileSize(gamePath, &error) };
+	const auto fileSize{ ::getFileSize(gamePath, error) };
 	if (error) {
 		blog.newEntry(BLOG::WARN, "Path is ineligible: {}", error.message());
 		return false;
@@ -92,7 +92,7 @@ bool HomeDirManager::validateGameFile(const Path gamePath) noexcept {
 		return false;
 	}
 
-	mFileData = std::move(::readFileData(gamePath, &error));
+	mFileData = std::move(::readFileData(gamePath, error));
 	if (error) {
 		blog.newEntry(BLOG::WARN, "Path is ineligible: {}", error.message());
 		return false;

@@ -240,7 +240,7 @@ bool Chip8_CoreInterface::setPermaRegs(const u32 X) noexcept {
 	const auto path{ *sPermaRegsPath / HDM->getFileSHA1() };
 	std::error_code error_code;
 
-	const bool fileExists{ doesFileExist(path, &error_code) };
+	const bool fileExists{ doesFileExist(path, error_code) };
 	if (error_code) {
 		blog.newEntry(BLOG::ERROR, "Path is ineligible: \"{}\" [{}]",
 			path.string(), error_code.message()
@@ -249,10 +249,10 @@ bool Chip8_CoreInterface::setPermaRegs(const u32 X) noexcept {
 	}
 
 	if (fileExists) {
-		auto regsData{ readFileData(path, &error_code) };
+		auto regsData{ readFileData(path, error_code) };
 
 		if (error_code) {
-			blog.newEntry(BLOG::ERROR, "File IO error:  \"{}\" [{}]",
+			blog.newEntry(BLOG::ERROR, "File IO error: \"{}\" [{}]",
 				path.string(), error_code.message()
 			);
 			return false;
@@ -267,8 +267,8 @@ bool Chip8_CoreInterface::setPermaRegs(const u32 X) noexcept {
 		regsData.resize(mRegisterV.size());
 		std::copy_n(mRegisterV.begin(), X, regsData.begin());
 
-		if (!writeFileData(path, regsData, &error_code)) {
-			blog.newEntry(BLOG::ERROR, "File IO error:  \"{}\" [{}]",
+		if (!writeFileData(path, regsData, error_code)) {
+			blog.newEntry(BLOG::ERROR, "File IO error: \"{}\" [{}]",
 				path.string(), error_code.message()
 			);
 			return false;
@@ -279,8 +279,8 @@ bool Chip8_CoreInterface::setPermaRegs(const u32 X) noexcept {
 		char regsData[sizeof(mRegisterV)]{};
 		std::copy_n(mRegisterV.begin(), X, regsData);
 
-		if (!writeFileData(path, regsData, &error_code)) {
-			blog.newEntry(BLOG::ERROR, "File IO error:  \"{}\" [{}]",
+		if (!writeFileData(path, regsData, error_code)) {
+			blog.newEntry(BLOG::ERROR, "File IO error: \"{}\" [{}]",
 				path.string(), error_code.message()
 			);
 			return false;
@@ -294,7 +294,7 @@ bool Chip8_CoreInterface::getPermaRegs(const u32 X) noexcept {
 	const auto path{ *sPermaRegsPath / HDM->getFileSHA1() };
 	std::error_code error_code;
 
-	const bool fileExists{ doesFileExist(path, &error_code) };
+	const bool fileExists{ doesFileExist(path, error_code) };
 	if (error_code) {
 		blog.newEntry(BLOG::ERROR, "Path is ineligible: \"{}\" [{}]",
 			path.string(), error_code.message()
@@ -303,10 +303,10 @@ bool Chip8_CoreInterface::getPermaRegs(const u32 X) noexcept {
 	}
 
 	if (fileExists) {
-		auto regsData{ readFileData(path, &error_code) };
+		auto regsData{ readFileData(path, error_code) };
 
 		if (error_code) {
-			blog.newEntry(BLOG::ERROR, "File IO error:  \"{}\" [{}]",
+			blog.newEntry(BLOG::ERROR, "File IO error: \"{}\" [{}]",
 				path.string(), error_code.message()
 			);
 			return false;
