@@ -49,7 +49,7 @@ bool AudioSpecBlock::isStreamPaused(const u32 index) const noexcept {
 }
 
 f32  AudioSpecBlock::getSampleRate(const f32 framerate) const noexcept {
-	return framerate > 1.0f ? mAudioSpec.freq / framerate : 0.0f;
+	return framerate > 1.0f ? mAudioSpec.freq / framerate * mAudioSpec.channels : 0.0f;
 }
 
 f32  AudioSpecBlock::getGain(const u32 index) const noexcept {

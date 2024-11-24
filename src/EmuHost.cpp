@@ -51,7 +51,7 @@ const Str& EmuHost::getStats() const {
 			" ::   MIPS:{:8.2f}",
 			currentFrameTime,
 			Limiter->getElapsedMillisLast(),
-			iGuest->changeCPF(static_cast<s32>(workCycleDelta))
+			iGuest->addCPF(static_cast<s32>(workCycleDelta))
 				* iGuest->getFramerate() / 1'000'000.0f
 		);
 	}

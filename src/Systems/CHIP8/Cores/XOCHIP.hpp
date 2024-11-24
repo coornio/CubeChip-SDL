@@ -56,7 +56,7 @@ private:
 
 	auto NNNN() const noexcept { return mMemoryBank[mCurrentPC] << 8 | mMemoryBank[mCurrentPC + 1]; }
 
-	void pushPatternTone(const u32 index, const f32 framerate) noexcept;
+	void pushPatternTone(const u32 index) noexcept;
 
 public:
 	XOCHIP();

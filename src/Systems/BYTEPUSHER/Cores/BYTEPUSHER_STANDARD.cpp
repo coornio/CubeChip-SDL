@@ -50,7 +50,7 @@ void BYTEPUSHER_STANDARD::renderAudioData() {
 	std::vector<s8> samplesBuffer0 \
 		(samplesOffset.begin(), samplesOffset.end());
 
-	ASB->pushAudioData<s8>(STREAM::CHANN0, samplesBuffer0);
+	ASB->pushAudioData(STREAM::CHANN0, samplesBuffer0);
 }
 
 void BYTEPUSHER_STANDARD::renderVideoData() {

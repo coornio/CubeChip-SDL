@@ -263,8 +263,8 @@ void XOCHIP::instructionLoop() noexcept {
 }
 
 void XOCHIP::renderAudioData() {
-	pushPatternTone(STREAM::UNIQUE, cRefreshRate);
-	pushSquareTone(STREAM::BUZZER, cRefreshRate);
+	pushPatternTone(STREAM::UNIQUE);
+	pushSquareTone(STREAM::BUZZER);
 
 	BVS->setFrameColor(mBitColors[0],
 		std::accumulate(mAudioTimer.begin(), mAudioTimer.end(), 0)
@@ -323,9 +323,9 @@ void XOCHIP::setColorBit332(const s32 bit, const s32 color) noexcept {
 						  | map2b[color      & 0x3];      // blue
 }
 
-void XOCHIP::pushPatternTone(const u32 index, const f32 framerate) noexcept {
-	std::vector<s8> samplesBuffer \
-		(static_cast<usz>(ASB->getSampleRate(framerate)));
+void XOCHIP::pushPatternTone(const u32 index) noexcept {
+	static const auto samplesTotal{ ASB->getSampleRate(cRefreshRate) };
+	std::vector<s8> samplesBuffer(static_cast<usz>(samplesTotal));
 
 	if (mAudioTimer[index]) {
 		const auto audioTone{ std::pow(2.0f, (mAudioPitch - 64.0f) / 48.0f) };
@@ -339,7 +339,7 @@ void XOCHIP::pushPatternTone(const u32 index, const f32 framerate) noexcept {
 		}
 	} else { mAudioPhase[index] = 0.0f; }
 
-	ASB->pushAudioData<s8>(index, samplesBuffer);
+	ASB->pushAudioData(index, samplesBuffer);
 }
 
 /*==================================================================*/

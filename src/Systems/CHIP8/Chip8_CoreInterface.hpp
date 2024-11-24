@@ -194,7 +194,7 @@ public:
 	s32 getCPF()       const noexcept override { return mActiveCPF; }
 	f32 getFramerate() const noexcept override { return mFramerate; }
 
-	s32 changeCPF(const s32 delta) noexcept override {
+	s32 addCPF(const s32 delta) noexcept override {
 		if (stateRunning() && !stateWaiting()) {
 			mActiveCPF += mActiveCPF > 0
 				? delta : -delta;

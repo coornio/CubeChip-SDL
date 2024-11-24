@@ -10,13 +10,13 @@
 #include <concepts>
 
 template<class T>
-concept integral = std::is_integral_v<T>;
+concept Integral = std::is_integral_v<T>;
 
 template<class T>
-concept arithmetic = std::is_arithmetic_v<T>;
+concept Arithmetic = std::is_arithmetic_v<T>;
 
 template<class T>
-concept ar_pointer = std::is_pointer_v<T> && std::is_arithmetic_v<std::remove_pointer_t<T>>;
+concept ArithmeticPtr = std::is_pointer_v<T> && std::is_arithmetic_v<std::remove_pointer_t<T>>;
 
 template <typename T>
 concept ContiguousContainer = requires(const T & c) {

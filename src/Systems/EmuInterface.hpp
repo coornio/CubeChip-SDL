@@ -81,7 +81,7 @@ public:
 	virtual s32 getCPF()       const noexcept = 0;
 	virtual f32 getFramerate() const noexcept = 0;
 
-	virtual s32 changeCPF(const s32 delta) noexcept = 0;
+	virtual s32 addCPF(const s32 delta) noexcept = 0;
 
 	[[nodiscard]]
 	virtual bool isSystemStopped() const noexcept = 0;

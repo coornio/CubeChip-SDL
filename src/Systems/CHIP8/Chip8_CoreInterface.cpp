@@ -216,7 +216,7 @@ void Chip8_CoreInterface::pushSquareTone(const u32 index, const f32 framerate) n
 		}
 	} else { mAudioPhase[index] = 0.0f; }
 
-	ASB->pushAudioData<s8>(index, samplesBuffer);
+	ASB->pushAudioData(index, samplesBuffer);
 }
 
 void Chip8_CoreInterface::instructionError(const u32 HI, const u32 LO) {

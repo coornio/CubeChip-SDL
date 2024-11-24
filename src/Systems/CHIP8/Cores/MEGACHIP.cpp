@@ -299,8 +299,8 @@ void MEGACHIP::instructionLoop() noexcept {
 
 void MEGACHIP::renderAudioData() {
 	if (isManualRefresh()) {
-		pushByteAudio(STREAM::UNIQUE, cRefreshRate);
-		pushSquareTone(STREAM::BUZZER, cRefreshRate);
+		pushByteAudio(STREAM::UNIQUE);
+		pushSquareTone(STREAM::BUZZER);
 
 		BVS->setFrameColor(sBitColors[0], sBitColors[0]);
 	}
@@ -491,9 +491,9 @@ void MEGACHIP::startAudioTrack(const bool repeat) noexcept {
 	mTrackStartIdx = mRegisterI + 6;
 }
 
-void MEGACHIP::pushByteAudio(const u32 index, const f32 framerate) noexcept {
-	std::vector<s8> samplesBuffer \
-		(static_cast<usz>(ASB->getSampleRate(framerate)));
+void MEGACHIP::pushByteAudio(const u32 index) noexcept {
+	static const auto samplesTotal{ ASB->getSampleRate(cRefreshRate) };
+	std::vector<s8> samplesBuffer(static_cast<usz>(samplesTotal));
 
 	if (mTrackTotalLen) {
 		for (auto& sample : samplesBuffer) {
@@ -511,7 +511,7 @@ void MEGACHIP::pushByteAudio(const u32 index, const f32 framerate) noexcept {
 			}
 		}
 	}
-	ASB->pushAudioData<s8>(index, samplesBuffer);
+	ASB->pushAudioData(index, samplesBuffer);
 }
 
 void MEGACHIP::scrollBuffersUP(const s32 N) {

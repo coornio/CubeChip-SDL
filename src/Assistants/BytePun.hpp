@@ -24,15 +24,15 @@ public:
 		return reinterpret_cast<std::uint8_t const*>(&mInt + idx);
 	}
 
-	BytePun& operator+=(const arithmetic auto rhs) { mInt += rhs; return *this; }
-	BytePun& operator-=(const arithmetic auto rhs) { mInt -= rhs; return *this; }
-	BytePun& operator*=(const arithmetic auto rhs) { mInt *= rhs; return *this; }
-	BytePun& operator/=(const arithmetic auto rhs) { mInt /= rhs; return *this; }
-	BytePun& operator%=(const arithmetic auto rhs) { mInt %= rhs; return *this; }
+	BytePun& operator+=(const Arithmetic auto rhs) { mInt += rhs; return *this; }
+	BytePun& operator-=(const Arithmetic auto rhs) { mInt -= rhs; return *this; }
+	BytePun& operator*=(const Arithmetic auto rhs) { mInt *= rhs; return *this; }
+	BytePun& operator/=(const Arithmetic auto rhs) { mInt /= rhs; return *this; }
+	BytePun& operator%=(const Arithmetic auto rhs) { mInt %= rhs; return *this; }
 
-	BytePun& operator&= (const integral auto rhs) { mInt  &= rhs; return *this; }
-	BytePun& operator|= (const integral auto rhs) { mInt  |= rhs; return *this; }
-	BytePun& operator^= (const integral auto rhs) { mInt  ^= rhs; return *this; }
-	BytePun& operator<<=(const integral auto rhs) { mInt <<= rhs; return *this; }
-	BytePun& operator>>=(const integral auto rhs) { mInt >>= rhs; return *this; }
+	BytePun& operator&= (const Integral auto rhs) { mInt  &= rhs; return *this; }
+	BytePun& operator|= (const Integral auto rhs) { mInt  |= rhs; return *this; }
+	BytePun& operator^= (const Integral auto rhs) { mInt  ^= rhs; return *this; }
+	BytePun& operator<<=(const Integral auto rhs) { mInt <<= rhs; return *this; }
+	BytePun& operator>>=(const Integral auto rhs) { mInt >>= rhs; return *this; }
 };

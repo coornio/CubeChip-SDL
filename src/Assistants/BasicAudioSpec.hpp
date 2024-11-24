@@ -17,6 +17,7 @@
 #include <SDL3/SDL.h>
 
 #include "Typedefs.hpp"
+#include "Concepts.hpp"
 #include "LifetimeWrapperSDL.hpp"
 
 /*==================================================================*/
@@ -95,29 +96,50 @@ public:
 	void addGain(const u32 index, const s32 gain) noexcept;
 
 	/**
-	 * @brief Pushes buffer of audio samples to SDL, accepts any span
-	 * and implicitly converts type to appropriate byte count.
-	 * @param[in] samplesBuffer :: Span to array of audio samples.
+	 * @brief Pushes buffer of audio samples to SDL device/stream.
+	 * @param[in] index :: the device/stream to push audio to.
+	 * @param[in] sampleData :: pointer to audio samples buffer.
+	 * @param[in] bufferSize :: size of buffer in bytes.
 	 */
-	template <typename T>
-	void pushAudioData(const u32 index, const std::span<T> samplesBuffer) const {
-		if (isStreamPaused(index) || !samplesBuffer.size()) { return; }
+	template <typename T> requires Arithmetic<T>
+	void pushAudioData(const u32 index, T* const sampleData, const usz bufferSize) const {
+		if (isStreamPaused(index) || !bufferSize) { return; }
 
 		const auto globalGain{ BasicAudioSpec::getGlobalGain() };
 
 		std::transform(
 			std::execution::unseq,
-			samplesBuffer.begin(),
-			samplesBuffer.end(),
-			samplesBuffer.data(),
+			sampleData,
+			sampleData + bufferSize,
+			sampleData,
 			[globalGain](const T sample) noexcept {
 				return static_cast<T>(sample * globalGain);
 			}
 		);
 
-		SDL_PutAudioStreamData(mAudioStreams[index], samplesBuffer.data(),
-			static_cast<s32>(sizeof(T) * samplesBuffer.size())
+		SDL_PutAudioStreamData(
+			mAudioStreams[index], sampleData,
+			static_cast<s32>(bufferSize * sizeof(T))
 		);
 	}
-};
 
+	/**
+	 * @brief Pushes buffer of audio samples to SDL device/stream.
+	 * @param[in] index :: the device/stream to push audio to.
+	 * @param[in] samplesBuffer :: audio samples buffer (C style).
+	 */
+	template <typename T, usz N> requires Arithmetic<T>
+	void pushAudioData(const u32 index, T(&samplesBuffer)[N]) const noexcept {
+		pushAudioData(index, samplesBuffer, N);
+	}
+
+	/**
+	 * @brief Pushes buffer of audio samples to SDL device/stream.
+	 * @param[in] index :: the device/stream to push audio to.
+	 * @param[in] samplesBuffer :: audio samples buffer (C++ style).
+	 */
+	template <typename T> requires ContiguousContainer<T>
+	void pushAudioData(const u32 index, T& samplesBuffer) const noexcept {
+		pushAudioData(index, samplesBuffer.data(), samplesBuffer.size());
+	}
+};

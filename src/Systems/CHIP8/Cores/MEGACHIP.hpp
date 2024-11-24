@@ -17,7 +17,7 @@ class MEGACHIP final : public Chip8_CoreInterface {
 	static constexpr u32 cSafezoneOOB{       32 };
 	static constexpr u32 cGameLoadPos{      512 };
 	static constexpr u32 cStartOffset{      512 };
-	static constexpr f32 cRefreshRate{    50.0f };
+	static constexpr f32 cRefreshRate{    60.0f };
 
 	static constexpr s32 cResSizeMult{        4 };
 	static constexpr s32 cScreenSizeX{      128 };
@@ -28,7 +28,7 @@ class MEGACHIP final : public Chip8_CoreInterface {
 	static constexpr s32 cResMegaMult{        2 };
 	static constexpr s32 cScreenMegaX{      256 };
 	static constexpr s32 cScreenMegaY{      192 };
-	static constexpr s32 cInstSpeedMC{     4000 };
+	static constexpr s32 cInstSpeedMC{     3000 };
 
 /*==================================================================*/
 
@@ -72,7 +72,7 @@ class MEGACHIP final : public Chip8_CoreInterface {
 	void resetAudioTrack() noexcept;
 	void startAudioTrack(const bool repeat) noexcept;
 
-	void pushByteAudio(const u32 index, const f32 framerate) noexcept;
+	void pushByteAudio(const u32 index) noexcept;
 
 	std::array<u8, cTotalMemory + cSafezoneOOB>
 		mMemoryBank{};

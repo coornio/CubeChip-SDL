@@ -119,8 +119,9 @@ inline auto readFileData(const Path& filePath) noexcept {
 
 /*==================================================================*/
 
+template <typename T>
 [[maybe_unused]]
-inline bool writeFileData(const Path& filePath, const void* fileData, const usz fileSize, std::error_code& ioError) noexcept {
+inline bool writeFileData(const Path& filePath, const T* fileData, const usz fileSize, std::error_code& ioError) noexcept {
 	std::ofstream ofs(filePath, std::ios::binary);
 
 	if (!ofs) { // failed to open file stream
@@ -128,7 +129,7 @@ inline bool writeFileData(const Path& filePath, const void* fileData, const usz 
 		return false;
 	}
 
-	ofs.write(reinterpret_cast<const char*>(fileData), fileSize);
+	ofs.write(reinterpret_cast<const char*>(fileData), fileSize * sizeof(T));
 
 	if (!ofs.good()) { // failed to write all data
 		ioError = std::make_error_code(std::errc::io_error);
@@ -138,8 +139,9 @@ inline bool writeFileData(const Path& filePath, const void* fileData, const usz 
 	}
 }
 
+template <typename T>
 [[maybe_unused]]
-inline auto writeFileData(const Path& filePath, const void* fileData, const usz fileSize) noexcept {
+inline auto writeFileData(const Path& filePath, const T* fileData, const usz fileSize) noexcept {
 	std::error_code ioError;
 	return writeFileData(filePath, fileData, fileSize, ioError);
 }
@@ -149,45 +151,25 @@ inline auto writeFileData(const Path& filePath, const void* fileData, const usz 
 template <typename T> requires ContiguousContainer<T>
 [[maybe_unused]]
 inline bool writeFileData(const Path& filePath, const T& fileData, std::error_code& ioError) noexcept {
-	using typeT = decltype(std::data(fileData));
-	using elemT = std::remove_cv_t<std::remove_pointer_t<typeT>>;
-
-	return writeFileData(
-		filePath, fileData.data(),
-		fileData.size() * sizeof(elemT),
-		ioError
-	);
+	return writeFileData(filePath, fileData.data(), fileData.size(), ioError);
 }
 
 template <typename T> requires ContiguousContainer<T>
 [[maybe_unused]]
 inline bool writeFileData(const Path& filePath, const T& fileData) noexcept {
-	using typeT = decltype(std::data(fileData));
-	using elemT = std::remove_cv_t<std::remove_pointer_t<typeT>>;
-
 	std::error_code ioError;
-	return writeFileData(
-		filePath, fileData.data(),
-		fileData.size() * sizeof(elemT),
-		ioError
-	);
+	return writeFileData(filePath, fileData.data(), fileData.size(), ioError);
 }
 
 template <typename T, usz N>
 [[maybe_unused]]
 inline bool writeFileData(const Path& filePath, const T(&fileData)[N], std::error_code& ioError) noexcept {
-	return writeFileData(
-		filePath, fileData,
-		N * sizeof(T), ioError
-	);
+	return writeFileData(filePath, fileData, N, ioError);
 }
 
 template <typename T, usz N>
 [[maybe_unused]]
 inline bool writeFileData(const Path& filePath, const T(&fileData)[N]) noexcept {
 	std::error_code ioError;
-	return writeFileData(
-		filePath, fileData,
-		N * sizeof(T), ioError
-	);
+	return writeFileData(filePath, fileData, N, ioError);
 }

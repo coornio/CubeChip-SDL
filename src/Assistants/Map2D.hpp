@@ -21,7 +21,7 @@
 #include <utility>
 
 #pragma region MapRow Class
-template<typename T> requires arithmetic<T> || ar_pointer<T>
+template<typename T> requires Arithmetic<T> || ArithmeticPtr<T>
 class MapRow : public std::vector<T> {
 	using std::vector<T>::vector;
 	using paramU = std::size_t;
@@ -30,7 +30,7 @@ public:
 	#pragma region operator +=
 	constexpr MapRow& operator+=(
 		const MapRow& other
-	) requires arithmetic<T> {
+	) requires Arithmetic<T> {
 		const auto len{ std::min(this->size(), other.size()) };
 		for (paramU i{ 0 }; i < len; ++i) {
 			(*this)[i] += other[i];
@@ -38,8 +38,8 @@ public:
 		return *this;
 	}
 	constexpr MapRow& operator+=(
-		const arithmetic auto& value
-	) requires arithmetic<T> {
+		const Arithmetic auto& value
+	) requires Arithmetic<T> {
 		for (T& elem : *this) {
 			elem += value;
 		}
@@ -49,7 +49,7 @@ public:
 	#pragma region operator -=
 	constexpr MapRow& operator-=(
 		const MapRow& other
-	) requires arithmetic<T> {
+	) requires Arithmetic<T> {
 		const auto len{ std::min(this->size(), other.size()) };
 		for (paramU i{ 0 }; i < len; ++i) {
 			(*this)[i] += other[i];
@@ -57,8 +57,8 @@ public:
 		return *this;
 	}
 	constexpr MapRow& operator-=(
-		const arithmetic auto& value
-	) requires arithmetic<T> {
+		const Arithmetic auto& value
+	) requires Arithmetic<T> {
 		for (T& elem : *this) {
 			elem -= value;
 		}
@@ -68,7 +68,7 @@ public:
 	#pragma region operator *=
 	constexpr MapRow& operator*=(
 		const MapRow& other
-	) requires arithmetic<T> {
+	) requires Arithmetic<T> {
 		const auto len{ std::min(this->size(), other.size()) };
 		for (paramU i{ 0 }; i < len; ++i) {
 			(*this)[i] *= other[i];
@@ -76,8 +76,8 @@ public:
 		return *this;
 	}
 	constexpr MapRow& operator*=(
-		const arithmetic auto& value
-	) requires arithmetic<T> {
+		const Arithmetic auto& value
+	) requires Arithmetic<T> {
 		for (T& elem : *this) {
 			elem *= value;
 		}
@@ -87,7 +87,7 @@ public:
 	#pragma region operator /=
 	constexpr MapRow& operator/=(
 		const MapRow& other
-	) requires arithmetic<T> {
+	) requires Arithmetic<T> {
 		const auto len{ std::min(this->size(), other.size()) };
 		for (paramU i{ 0 }; i < len; ++i) {
 			if (other[i] == 0) {
@@ -99,8 +99,8 @@ public:
 		return *this;
 	}
 	constexpr MapRow& operator/=(
-		const arithmetic auto& value
-	) requires arithmetic<T> {
+		const Arithmetic auto& value
+	) requires Arithmetic<T> {
 		for (T& elem : *this) {
 			if (value == 0) {
 				throw std::domain_error("division by zero");
@@ -114,7 +114,7 @@ public:
 	#pragma region operator %=
 	constexpr MapRow& operator%=(
 		const MapRow& other
-	) requires arithmetic<T> {
+	) requires Arithmetic<T> {
 		const auto len{ std::min(this->size(), other.size()) };
 		for (paramU i{ 0 }; i < len; ++i) {
 			if (other[i] == 0) {
@@ -126,8 +126,8 @@ public:
 		return *this;
 	}
 	constexpr MapRow& operator%=(
-		const arithmetic auto& value
-		) requires arithmetic<T> {
+		const Arithmetic auto& value
+		) requires Arithmetic<T> {
 		for (T& elem : *this) {
 			if (value == 0) {
 				throw std::domain_error("division by zero");
@@ -142,7 +142,7 @@ public:
 	#pragma region operator &=
 	constexpr MapRow& operator&=(
 		const MapRow& other
-	) requires integral<T> {
+	) requires Integral<T> {
 		const auto len{ std::min(this->size(), other.size()) };
 		for (paramU i{ 0 }; i < len; ++i) {
 			(*this)[i] &= other[i];
@@ -150,8 +150,8 @@ public:
 		return *this;
 	}
 	constexpr MapRow operator&=(
-		const integral auto& value
-	) requires integral<T> {
+		const Integral auto& value
+	) requires Integral<T> {
 		for (T& elem : *this) {
 			elem &= value;
 		}
@@ -161,7 +161,7 @@ public:
 	#pragma region operator |=
 	constexpr MapRow& operator|=(
 		const MapRow& other
-	) requires integral<T> {
+	) requires Integral<T> {
 		const auto len{ std::min(this->size(), other.size()) };
 		for (paramU i{ 0 }; i < len; ++i) {
 			(*this)[i] |= other[i];
@@ -169,8 +169,8 @@ public:
 		return *this;
 	}
 	constexpr MapRow& operator|=(
-		const integral auto& value
-	) requires integral<T> {
+		const Integral auto& value
+	) requires Integral<T> {
 		for (T& elem : *this) {
 			elem |= value;
 		}
@@ -180,7 +180,7 @@ public:
 	#pragma region operator ^=
 	constexpr MapRow& operator^=(
 		const MapRow& other
-	) requires integral<T> {
+	) requires Integral<T> {
 		const auto len{ std::min(this->size(), other.size()) };
 		for (paramU i{ 0 }; i < len; ++i) {
 			(*this)[i] ^= other[i];
@@ -188,8 +188,8 @@ public:
 		return *this;
 	}
 	constexpr MapRow& operator^=(
-		const integral auto& value
-	) requires integral<T> {
+		const Integral auto& value
+	) requires Integral<T> {
 		for (T& elem : *this) {
 			elem ^= value;
 		}
@@ -199,7 +199,7 @@ public:
 	#pragma region operator <<=
 	constexpr MapRow& operator<<=(
 		const MapRow& other
-	) requires integral<T> {
+	) requires Integral<T> {
 		const auto len{ std::min(this->size(), other.size()) };
 		for (paramU i{ 0 }; i < len; ++i) {
 			(*this)[i] <<= other[i];
@@ -207,8 +207,8 @@ public:
 		return *this;
 	}
 	constexpr MapRow& operator<<=(
-		const integral auto& value
-	) requires integral<T> {
+		const Integral auto& value
+	) requires Integral<T> {
 		for (T& elem : *this) {
 			elem <<= value;
 		}
@@ -218,7 +218,7 @@ public:
 	#pragma region operator >>=
 	constexpr MapRow& operator>>=(
 		const MapRow& other
-	) requires integral<T> {
+	) requires Integral<T> {
 		const auto len{ std::min(this->size(), other.size()) };
 		for (paramU i{ 0 }; i < len; ++i) {
 			(*this)[i] >>= other[i];
@@ -226,8 +226,8 @@ public:
 		return *this;
 	}
 	constexpr MapRow& operator>>=(
-		const integral auto& value
-	) requires integral<T> {
+		const Integral auto& value
+	) requires Integral<T> {
 		for (T& elem : *this) {
 			elem >>= value;
 		}
@@ -238,7 +238,7 @@ public:
 	#pragma region operator +
 	constexpr MapRow operator+(
 		const MapRow& other
-	) const requires arithmetic<T> {
+	) const requires Arithmetic<T> {
 		auto temp{ *this };
 		const auto len{ std::min(temp.size(), other.size()) };
 		for (paramU i{ 0 }; i < len; ++i) {
@@ -247,8 +247,8 @@ public:
 		return temp;
 	}
 	constexpr MapRow operator+(
-		const arithmetic auto& value
-	) const requires arithmetic<T> {
+		const Arithmetic auto& value
+	) const requires Arithmetic<T> {
 		auto temp{ *this };
 		for (T& elem : temp) {
 			elem += value;
@@ -259,7 +259,7 @@ public:
 	#pragma region operator -
 	constexpr MapRow operator-(
 		const MapRow& other
-	) const requires arithmetic<T> {
+	) const requires Arithmetic<T> {
 		auto temp{ *this };
 		const auto len{ std::min(temp.size(), other.size()) };
 		for (paramU i{ 0 }; i < len; ++i) {
@@ -268,8 +268,8 @@ public:
 		return temp;
 	}
 	constexpr MapRow operator-(
-		const arithmetic auto& value
-	) const requires arithmetic<T> {
+		const Arithmetic auto& value
+	) const requires Arithmetic<T> {
 		auto temp{ *this };
 		for (T& elem : temp) {
 			elem -= value;
@@ -280,7 +280,7 @@ public:
 	#pragma region operator *
 	constexpr MapRow operator*(
 		const MapRow& other
-	) const requires arithmetic<T> {
+	) const requires Arithmetic<T> {
 		auto temp{ *this };
 		const auto len{ std::min(temp.size(), other.size()) };
 		for (paramU i{ 0 }; i < len; ++i) {
@@ -289,8 +289,8 @@ public:
 		return temp;
 	}
 	constexpr MapRow operator*(
-		const arithmetic auto& value
-	) const requires arithmetic<T> {
+		const Arithmetic auto& value
+	) const requires Arithmetic<T> {
 		auto temp{ *this };
 		for (T& elem : temp) {
 			elem *= value;
@@ -301,7 +301,7 @@ public:
 	#pragma region operator /
 	constexpr MapRow operator/(
 		const MapRow& other
-	) const requires arithmetic<T> {
+	) const requires Arithmetic<T> {
 		auto temp{ *this };
 		const auto len{ std::min(temp.size(), other.size()) };
 		for (paramU i{ 0 }; i < len; ++i) {
@@ -314,8 +314,8 @@ public:
 		return temp;
 	}
 	constexpr MapRow operator/(
-		const arithmetic auto& value
-	) const requires arithmetic<T> {
+		const Arithmetic auto& value
+	) const requires Arithmetic<T> {
 		auto temp{ *this };
 		for (T& elem : temp) {
 			if (value == 0) {
@@ -330,7 +330,7 @@ public:
 	#pragma region operator %
 	constexpr MapRow operator%(
 		const MapRow& other
-	) const requires arithmetic<T> {
+	) const requires Arithmetic<T> {
 		auto temp{ *this };
 		const auto len{ std::min(temp.size(), other.size()) };
 		for (paramU i{ 0 }; i < len; ++i) {
@@ -343,8 +343,8 @@ public:
 		return temp;
 	}
 	constexpr MapRow operator%(
-		const arithmetic auto& value
-	) const requires arithmetic<T> {
+		const Arithmetic auto& value
+	) const requires Arithmetic<T> {
 		auto temp{ *this };
 		for (T& elem : temp) {
 			if (value == 0) {
@@ -360,7 +360,7 @@ public:
 	#pragma region operator &
 	constexpr MapRow operator&(
 		const MapRow& other
-	) const requires integral<T> {
+	) const requires Integral<T> {
 		auto temp{ *this };
 		const auto len{ std::min(temp.size(), other.size()) };
 		for (paramU i{ 0 }; i < len; ++i) {
@@ -369,8 +369,8 @@ public:
 		return temp;
 	}
 	constexpr MapRow operator&(
-		const integral auto& value
-	) const requires integral<T> {
+		const Integral auto& value
+	) const requires Integral<T> {
 		auto temp{ *this };
 		for (T& elem : temp) {
 			elem &= value;
@@ -381,7 +381,7 @@ public:
 	#pragma region operator |
 	constexpr MapRow operator|(
 		const MapRow& other
-	) const requires integral<T> {
+	) const requires Integral<T> {
 		auto temp{ *this };
 		const auto len{ std::min(temp.size(), other.size()) };
 		for (paramU i{ 0 }; i < len; ++i) {
@@ -390,8 +390,8 @@ public:
 		return temp;
 	}
 	constexpr MapRow operator|(
-		const integral auto& value
-	) const requires integral<T> {
+		const Integral auto& value
+	) const requires Integral<T> {
 		auto temp{ *this };
 		for (T& elem : temp) {
 			elem |= value;
@@ -402,7 +402,7 @@ public:
 	#pragma region operator ^
 	constexpr MapRow operator^(
 		const MapRow& other
-	) const requires integral<T> {
+	) const requires Integral<T> {
 		auto temp{ *this };
 		const auto len{ std::min(temp.size(), other.size()) };
 		for (paramU i{ 0 }; i < len; ++i) {
@@ -411,8 +411,8 @@ public:
 		return temp;
 	}
 	constexpr MapRow operator^(
-		const integral auto& value
-	) const requires integral<T> {
+		const Integral auto& value
+	) const requires Integral<T> {
 		auto temp{ *this };
 		for (T& elem : temp) {
 			elem ^= value;
@@ -421,14 +421,14 @@ public:
 	}
 	#pragma endregion
 	#pragma region operator ~
-	constexpr MapRow operator~() const & requires integral<T> {
+	constexpr MapRow operator~() const & requires Integral<T> {
 		auto temp{ *this };
 		for (T& elem : temp) {
 			elem = ~elem;
 		}
 		return temp;
 	}
-	constexpr MapRow&& operator~() && requires integral<T> {
+	constexpr MapRow&& operator~() && requires Integral<T> {
 		for (T& elem : *this) {
 			elem = ~elem;
 		}
@@ -436,14 +436,14 @@ public:
 	}
 	#pragma endregion
 	#pragma region operator !
-	constexpr MapRow operator!() const & requires integral<T> {
+	constexpr MapRow operator!() const & requires Integral<T> {
 		auto temp{ *this };
 		for (T& elem : temp) {
 			elem = !elem;
 		}
 		return temp;
 	}
-	constexpr MapRow&& operator!() && requires integral<T> {
+	constexpr MapRow&& operator!() && requires Integral<T> {
 		for (T& elem : *this) {
 			elem = !elem;
 		}
@@ -454,7 +454,7 @@ public:
 #pragma endregion
 
 #pragma region Map2D Class
-template<typename T> requires arithmetic<T> || ar_pointer<T>
+template<typename T> requires Arithmetic<T> || ArithmeticPtr<T>
 class Map2D final {
 	using paramS = std::int32_t;
 	using paramU = std::size_t;
@@ -571,7 +571,7 @@ private:
 		 * @brief Clones the row's data and returns a vector of it.
 		 * @return Vector of the same type.
 		 */
-		MapRow<T> clone() const requires arithmetic<T> {
+		MapRow<T> clone() const requires Arithmetic<T> {
 			return MapRow<T>(mBegin, mBegin + mLength);
 		}
 		#pragma endregion
@@ -597,7 +597,7 @@ private:
 		 *
 		 * @return Self reference for method chaining.
 		 */
-		RowProxy& wipeAll() requires arithmetic<T> {
+		RowProxy& wipeAll() requires Arithmetic<T> {
 			std::fill(
 				std::execution::unseq,
 				begin(), end(), T()
@@ -617,8 +617,8 @@ private:
 		 * @warning If the param exceeds row length, all row data is wiped.
 		 */
 		RowProxy& wipe(
-			const integral auto cols
-		) requires arithmetic<T> {
+			const Integral auto cols
+		) requires Arithmetic<T> {
 			if (!colValidAbs(cols)) {
 				wipeAll();
 			} else {
@@ -651,7 +651,7 @@ private:
 		 * @warning The sign of the param controls the application direction.
 		 */
 		RowProxy& rotate(
-			const integral auto cols
+			const Integral auto cols
 		) {
 			const auto _cols{ static_cast<paramS>(cols) };
 			if (_cols) {
@@ -683,8 +683,8 @@ private:
 		 * @warning If the param exceeds row length, all row data is wiped.
 		 */
 		RowProxy& shift(
-			const integral auto cols
-		) requires arithmetic<T> {
+			const Integral auto cols
+		) requires Arithmetic<T> {
 			if (colValidAbs(cols)) {
 				rotate(cols);
 			}
@@ -718,7 +718,7 @@ private:
 		bool colValid(const paramU idx) const noexcept {
 			return idx < static_cast<paramU>(mLength);
 		}
-		bool colValidAbs(const integral auto idx) const noexcept {
+		bool colValidAbs(const Integral auto idx) const noexcept {
 			return std::abs(static_cast<paramS>(idx)) < mLength;
 		}
 		#pragma endregion
@@ -727,11 +727,11 @@ private:
 		#pragma region Accessors
 		/* bounds-checked accessors, reverse indexing allowed */
 
-		auto at(const integral auto col)
+		auto at(const Integral auto col)
 		-> T&
 		{ return *(begin() + checkColBounds(static_cast<paramS>(col))); }
 
-		auto at(const integral auto col) const
+		auto at(const Integral auto col) const
 		-> const T&
 		{ return *(begin() + checkColBounds(static_cast<paramS>(col))); }
 
@@ -753,8 +753,8 @@ private:
 	public:
 		#pragma region operator =
 		RowProxy& operator=(
-			const arithmetic auto& value
-		) requires arithmetic<T> {
+			const Arithmetic auto& value
+		) requires Arithmetic<T> {
 			std::fill(
 				std::execution::unseq,
 				begin(), end(), static_cast<T>(value)
@@ -763,7 +763,7 @@ private:
 		}
 		RowProxy& operator=(
 			const RowProxy& other
-		) requires arithmetic<T> {
+		) requires Arithmetic<T> {
 			if (this == &other) [[unlikely]] return *this;
 			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
 			std::copy(
@@ -774,7 +774,7 @@ private:
 		}
 		RowProxy& operator=(
 			MapRow<T>&& other
-		) requires arithmetic<T> {
+		) requires Arithmetic<T> {
 			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
 			std::move(
 				std::execution::unseq,
@@ -784,7 +784,7 @@ private:
 		}
 		RowProxy& operator=(
 			const MapRow<T>& other
-		) requires arithmetic<T> {
+		) requires Arithmetic<T> {
 			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
 			std::copy(
 				std::execution::unseq,
@@ -796,8 +796,8 @@ private:
 		
 		#pragma region operator +=
 		RowProxy& operator+=(
-			const arithmetic auto& value
-		) requires arithmetic<T> {
+			const Arithmetic auto& value
+		) requires Arithmetic<T> {
 			for (T& elem : *this) {
 				elem += value;
 			}
@@ -805,7 +805,7 @@ private:
 		}
 		RowProxy& operator+=(
 			const RowProxy& other
-		) requires arithmetic<T> {
+		) requires Arithmetic<T> {
 			const auto len{ std::min(other.mLength, mLength) };
 			for (paramS i{ 0 }; i < len; ++i) {
 				(*this)[i] += other[i];
@@ -814,7 +814,7 @@ private:
 		}
 		RowProxy& operator+=(
 			const MapRow<T>& other
-		) requires arithmetic<T> {
+		) requires Arithmetic<T> {
 			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
 			for (paramU i{ 0 }; i < len; ++i) {
 				(*this)[i] += other[i];
@@ -824,8 +824,8 @@ private:
 		#pragma endregion
 		#pragma region operator -=
 		RowProxy& operator-=(
-			const arithmetic auto& value
-		) requires arithmetic<T> {
+			const Arithmetic auto& value
+		) requires Arithmetic<T> {
 			for (T& elem : *this) {
 				elem -= value;
 			}
@@ -833,7 +833,7 @@ private:
 		}
 		RowProxy& operator-=(
 			const RowProxy& other
-		) requires arithmetic<T> {
+		) requires Arithmetic<T> {
 			const auto len{ std::min(other.mLength, mLength) };
 			for (paramS i{ 0 }; i < len; ++i) {
 				(*this)[i] -= other[i];
@@ -842,7 +842,7 @@ private:
 		}
 		RowProxy& operator-=(
 			const MapRow<T>& other
-		) requires arithmetic<T> {
+		) requires Arithmetic<T> {
 			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
 			for (paramU i{ 0 }; i < len; ++i) {
 				(*this)[i] -= other[i];
@@ -852,8 +852,8 @@ private:
 		#pragma endregion
 		#pragma region operator *=
 		RowProxy& operator*=(
-			const arithmetic auto& value
-		) requires arithmetic<T> {
+			const Arithmetic auto& value
+		) requires Arithmetic<T> {
 			for (T& elem : *this) {
 				elem *= value;
 			}
@@ -861,7 +861,7 @@ private:
 		}
 		RowProxy& operator*=(
 			const RowProxy& other
-		) requires arithmetic<T> {
+		) requires Arithmetic<T> {
 			const auto len{ std::min(other.mLength, mLength) };
 			for (paramS i{ 0 }; i < len; ++i) {
 				(*this)[i] *= other[i];
@@ -870,7 +870,7 @@ private:
 		}
 		RowProxy& operator*=(
 			const MapRow<T>& other
-		) requires arithmetic<T> {
+		) requires Arithmetic<T> {
 			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
 			for (paramU i{ 0 }; i < len; ++i) {
 				(*this)[i] *= other[i];
@@ -880,8 +880,8 @@ private:
 		#pragma endregion
 		#pragma region operator /=
 		RowProxy & operator/=(
-			const arithmetic auto& value
-		) requires arithmetic<T> {
+			const Arithmetic auto& value
+		) requires Arithmetic<T> {
 			for (T& elem : *this) {
 				if (value == 0) {
 					throw std::domain_error("division by zero");
@@ -893,7 +893,7 @@ private:
 		}
 		RowProxy& operator/=(
 			const RowProxy& other
-		) requires arithmetic<T> {
+		) requires Arithmetic<T> {
 			const auto len{ std::min(other.mLength, mLength) };
 			for (paramS i{ 0 }; i < len; ++i) {
 				if (other[i] == 0) {
@@ -906,7 +906,7 @@ private:
 		}
 		RowProxy& operator/=(
 			const MapRow<T>& other
-		) requires arithmetic<T> {
+		) requires Arithmetic<T> {
 			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
 			for (paramU i{ 0 }; i < len; ++i) {
 				if (other[i] == 0) {
@@ -920,8 +920,8 @@ private:
 		#pragma endregion
 		#pragma region operator %=
 		RowProxy & operator%=(
-			const arithmetic auto& value
-		) requires arithmetic<T> {
+			const Arithmetic auto& value
+		) requires Arithmetic<T> {
 			for (T& elem : *this) {
 				if (value == 0) {
 					throw std::domain_error("division by zero");
@@ -933,7 +933,7 @@ private:
 		}
 		RowProxy& operator%=(
 			const RowProxy& other
-		) requires arithmetic<T> {
+		) requires Arithmetic<T> {
 			const auto len{ std::min(other.mLength, mLength) };
 			for (paramS i{ 0 }; i < len; ++i) {
 				if (other[i] == 0) {
@@ -946,7 +946,7 @@ private:
 		}
 		RowProxy& operator%=(
 			const MapRow<T>& other
-		) requires arithmetic<T> {
+		) requires Arithmetic<T> {
 			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
 			for (paramU i{ 0 }; i < len; ++i) {
 				if (other[i] == 0) {
@@ -961,8 +961,8 @@ private:
 		
 		#pragma region operator &=
 		RowProxy& operator&=(
-			const integral auto& value
-		) requires integral<T> {
+			const Integral auto& value
+		) requires Integral<T> {
 			for (T& elem : *this) {
 				elem &= value;
 			}
@@ -970,7 +970,7 @@ private:
 		}
 		RowProxy& operator&=(
 			const RowProxy& other
-		) requires integral<T> {
+		) requires Integral<T> {
 			const auto len{ std::min(other.mLength, mLength) };
 			for (paramS i{ 0 }; i < len; ++i) {
 				(*this)[i] &= other[i];
@@ -979,7 +979,7 @@ private:
 		}
 		RowProxy& operator&=(
 			const MapRow<T>& other
-		) requires integral<T> {
+		) requires Integral<T> {
 			const auto len{ std::min<paramU>(other.size(), mLength) };
 			for (paramU i{ 0 }; i < len; ++i) {
 				(*this)[i] &= other[i];
@@ -989,8 +989,8 @@ private:
 		#pragma endregion
 		#pragma region operator |=
 		RowProxy& operator|=(
-			const integral auto& value
-		) requires integral<T> {
+			const Integral auto& value
+		) requires Integral<T> {
 			for (T& elem : *this) {
 				elem |= value;
 			}
@@ -998,7 +998,7 @@ private:
 		}
 		RowProxy& operator|=(
 			const RowProxy& other
-		) requires integral<T> {
+		) requires Integral<T> {
 			const auto len{ std::min(other.mLength, mLength) };
 			for (paramS i{ 0 }; i < len; ++i) {
 				(*this)[i] |= other[i];
@@ -1007,7 +1007,7 @@ private:
 		}
 		RowProxy& operator|=(
 			const MapRow<T>& other
-		) requires integral<T> {
+		) requires Integral<T> {
 			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
 			for (paramU i{ 0 }; i < len; ++i) {
 				(*this)[i] |= other[i];
@@ -1017,8 +1017,8 @@ private:
 		#pragma endregion
 		#pragma region operator ^=
 		RowProxy& operator^=(
-			const integral auto& value
-		) requires integral<T> {
+			const Integral auto& value
+		) requires Integral<T> {
 			for (T& elem : *this) {
 				elem ^= value;
 			}
@@ -1026,7 +1026,7 @@ private:
 		}
 		RowProxy& operator^=(
 			const RowProxy& other
-		) requires integral<T> {
+		) requires Integral<T> {
 			const auto len{ std::min(other.mLength, mLength) };
 			for (paramS i{ 0 }; i < len; ++i) {
 				(*this)[i] ^= other[i];
@@ -1035,7 +1035,7 @@ private:
 		}
 		RowProxy& operator^=(
 			const MapRow<T>& other
-		) requires integral<T> {
+		) requires Integral<T> {
 			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
 			for (paramU i{ 0 }; i < len; ++i) {
 				(*this)[i] ^= other[i];
@@ -1045,8 +1045,8 @@ private:
 		#pragma endregion
 		#pragma region operator <<=
 		RowProxy& operator<<=(
-			const integral auto& value
-		) requires integral<T> {
+			const Integral auto& value
+		) requires Integral<T> {
 			for (T& elem : *this) {
 				elem <<= value;
 			}
@@ -1054,7 +1054,7 @@ private:
 		}
 		RowProxy& operator<<=(
 			const RowProxy& other
-		) requires integral<T> {
+		) requires Integral<T> {
 			const auto len{ std::min(other.mLength, mLength) };
 			for (paramS i{ 0 }; i < len; ++i) {
 				(*this)[i] <<= other[i];
@@ -1063,7 +1063,7 @@ private:
 		}
 		RowProxy& operator<<=(
 			const MapRow<T>& other
-		) requires integral<T> {
+		) requires Integral<T> {
 			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
 			for (paramU i{ 0 }; i < len; ++i) {
 				(*this)[i] <<= other[i];
@@ -1073,8 +1073,8 @@ private:
 		#pragma endregion
 		#pragma region operator >>=
 		RowProxy& operator>>=(
-			const integral auto& value
-		) requires integral<T> {
+			const Integral auto& value
+		) requires Integral<T> {
 			for (T& elem : *this) {
 				elem >>= value;
 			}
@@ -1082,7 +1082,7 @@ private:
 		}
 		RowProxy& operator>>=(
 			const RowProxy& other
-		) requires integral<T> {
+		) requires Integral<T> {
 			const auto len{ std::min(other.mLength, mLength) };
 			for (paramS i{ 0 }; i < len; ++i) {
 				(*this)[i] >>= other[i];
@@ -1091,7 +1091,7 @@ private:
 		}
 		RowProxy& operator>>=(
 			const MapRow<T>& other
-		) requires integral<T> {
+		) requires Integral<T> {
 			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
 			for (paramU i{ 0 }; i < len; ++i) {
 				(*this)[i] >>= other[i];
@@ -1212,7 +1212,7 @@ public:
 
 private:
 	#pragma region negmod()
-	auto negmod(const integral auto lhs, const integral auto rhs) const {
+	auto negmod(const Integral auto lhs, const Integral auto rhs) const {
 		const auto _mod{
 			static_cast<paramS>(lhs) %
 			static_cast<paramS>(rhs)
@@ -1240,11 +1240,11 @@ public:
 	 * @warning Elements in the View matrix must be dereferenced to be used.
 	 */
 	auto makeView(
-		const integral auto rows = 0,
-		const integral auto cols = 0,
-		const integral auto posY = 0,
-		const integral auto posX = 0
-	) const requires arithmetic<T> {
+		const Integral auto rows = 0,
+		const Integral auto cols = 0,
+		const Integral auto posY = 0,
+		const Integral auto posX = 0
+	) const requires Arithmetic<T> {
 		const auto _rows{ static_cast<paramS>(std::abs(rows)) };
 		const auto _cols{ static_cast<paramS>(std::abs(cols)) };
 
@@ -1270,11 +1270,11 @@ public:
 	 * @warning Elements in the View matrix must be dereferenced to be used.
 	 */
 	auto makeView(
-		const integral auto rows = 0,
-		const integral auto cols = 0,
-		const integral auto posY = 0,
-		const integral auto posX = 0
-	) const requires ar_pointer<T> {
+		const Integral auto rows = 0,
+		const Integral auto cols = 0,
+		const Integral auto posY = 0,
+		const Integral auto posX = 0
+	) const requires ArithmeticPtr<T> {
 		const auto _rows{ static_cast<paramS>(std::abs(rows)) };
 		const auto _cols{ static_cast<paramS>(std::abs(cols)) };
 
@@ -1301,11 +1301,11 @@ public:
 	 */
 	Map2D& setView(
 		const Map2D<underT>* const base,
-		const integral auto rows = 0,
-		const integral auto cols = 0,
-		const integral auto posY = 0,
-		const integral auto posX = 0
-	) requires ar_pointer<T> {
+		const Integral auto rows = 0,
+		const Integral auto cols = 0,
+		const Integral auto posY = 0,
+		const Integral auto posX = 0
+	) requires ArithmeticPtr<T> {
 		const auto _rows{ static_cast<paramS>(std::abs(rows)) };
 		const auto _cols{ static_cast<paramS>(std::abs(cols)) };
 
@@ -1339,11 +1339,11 @@ public:
 	 */
 	Map2D& setView(
 		const Map2D<const underT*>* const base,
-		const integral auto rows = 0,
-		const integral auto cols = 0,
-		const integral auto posY = 0,
-		const integral auto posX = 0
-	) requires ar_pointer<T> {
+		const Integral auto rows = 0,
+		const Integral auto cols = 0,
+		const Integral auto posY = 0,
+		const Integral auto posX = 0
+	) requires ArithmeticPtr<T> {
 		const auto _rows{ static_cast<paramS>(std::abs(rows)) };
 		const auto _cols{ static_cast<paramS>(std::abs(cols)) };
 
@@ -1372,7 +1372,7 @@ public:
 	 */
 	Map2D& copyLinear(
 		const Map2D& other
-	) requires arithmetic<T> {
+	) requires Arithmetic<T> {
 		const auto _len{ std::min(size(), other.size())};
 		std::copy_n(
 			std::execution::unseq,
@@ -1395,8 +1395,8 @@ public:
 	 */
 	Map2D& copyLinear(
 		const T* const other,
-		const integral auto len
-	) requires arithmetic<T> {
+		const Integral auto len
+	) requires Arithmetic<T> {
 		const auto _len{ static_cast<paramU>(std::abs(len)) };
 		std::copy_n(
 			std::execution::unseq,
@@ -1420,9 +1420,9 @@ public:
 	 */
 	Map2D& resize(
 		const bool choice_copy,
-		const integral auto rows,
-		const integral auto cols
-	) requires arithmetic<T> {
+		const Integral auto rows,
+		const Integral auto cols
+	) requires Arithmetic<T> {
 		auto nRows{ static_cast<paramS>(std::abs(rows)) };
 		auto nCols{ static_cast<paramS>(std::abs(cols)) };
 
@@ -1492,7 +1492,7 @@ public:
 	 * @brief Wipes all of the matrix's data.
 	 * @return Self reference for method chaining.
 	 */
-	Map2D& wipeAll() requires arithmetic<T> {
+	Map2D& wipeAll() requires Arithmetic<T> {
 		std::fill(
 			std::execution::unseq,
 			mBegin(), mEnd(), T()
@@ -1513,9 +1513,9 @@ public:
 	 * @warning If the params exceed row/column length, all row data is wiped.
 	 */
 	Map2D& wipe(
-		const integral auto rows,
-		const integral auto cols
-	) requires arithmetic<T> {
+		const Integral auto rows,
+		const Integral auto cols
+	) requires Arithmetic<T> {
 		if (!rowValidAbs(rows) || !colValidAbs(cols)) {
 			wipeAll();
 		} else {
@@ -1555,8 +1555,8 @@ public:
 	 * @warning The sign of the params control the application direction.
 	 */
 	Map2D& rotate(
-		const integral auto rows,
-		const integral auto cols
+		const Integral auto rows,
+		const Integral auto cols
 	) {
 		const auto _rows{ static_cast<paramS>(rows) };
 		const auto _cols{ static_cast<paramS>(cols) };
@@ -1595,9 +1595,9 @@ public:
 	 * @warning If the params exceed row/column length, all row data is wiped.
 	 */
 	Map2D& shift(
-		const integral auto rows,
-		const integral auto cols
-	) requires arithmetic<T> {
+		const Integral auto rows,
+		const Integral auto cols
+	) requires Arithmetic<T> {
 		if (rowValidAbs(rows) && colValidAbs(cols)) {
 			rotate(rows, cols);
 		}
@@ -1689,10 +1689,10 @@ private:
 	bool colValid(const paramU idx) const noexcept {
 		return idx < static_cast<paramU>(mCols);
 	}
-	bool rowValidAbs(const integral auto idx) const noexcept {
+	bool rowValidAbs(const Integral auto idx) const noexcept {
 		return std::abs(static_cast<paramS>(idx)) < mRows;
 	}
-	bool colValidAbs(const integral auto idx) const noexcept {
+	bool colValidAbs(const Integral auto idx) const noexcept {
 		return std::abs(static_cast<paramS>(idx)) < mCols;
 	}
 	#pragma endregion
@@ -1701,19 +1701,19 @@ public:
 	#pragma region Accessors
 	/* bounds-checked accessors, reverse indexing allowed */
 
-	auto at(const integral auto row, const integral auto col)
+	auto at(const Integral auto row, const Integral auto col)
 	-> T&
 	{ return at_raw(checkRowBounds(static_cast<paramS>(row)), checkColBounds(static_cast<paramS>(col))); }
 
-	auto at(const integral auto row, const integral auto col) const
+	auto at(const Integral auto row, const Integral auto col) const
 	-> const T&
 	{ return at_raw(checkRowBounds(static_cast<paramS>(row)), checkColBounds(static_cast<paramS>(col))); }
 
-	auto at(const integral auto row)
+	auto at(const Integral auto row)
 	-> RowProxy
 	{ return RowProxy(mBegin() + checkRowBounds(static_cast<paramS>(row)) * mCols, mCols); }
 
-	auto at(const integral auto row) const
+	auto at(const Integral auto row) const
 	-> const RowProxy
 	{ return RowProxy(mBegin() + checkRowBounds(static_cast<paramS>(row)) * mCols, mCols); }
 
