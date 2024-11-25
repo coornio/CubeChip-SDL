@@ -20,6 +20,7 @@
 #include <bit>
 
 #include "../Assistants/Typedefs.hpp"
+#include "../Assistants/Concepts.hpp"
 
 #include "GameFileChecker.hpp"
 

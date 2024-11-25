@@ -8,18 +8,29 @@
 
 #include <type_traits>
 #include <concepts>
+#include <ranges>
 
 template<class T>
-concept Integral = std::is_integral_v<T>;
+concept IsIntegral = std::is_integral_v<T>;
 
 template<class T>
-concept Arithmetic = std::is_arithmetic_v<T>;
+concept IsArithmetic = std::is_arithmetic_v<T>;
 
 template<class T>
-concept ArithmeticPtr = std::is_pointer_v<T> && std::is_arithmetic_v<std::remove_pointer_t<T>>;
+concept IsArithmeticPtr = std::is_pointer_v<T> && std::is_arithmetic_v<std::remove_pointer_t<T>>;
+
+template <typename T, typename U>
+concept SameValueTypes = std::same_as<typename T::value_type, typename U::value_type>;
+
+template <typename T, typename U>
+concept MatchesValueType = std::same_as<T, typename U::value_type>;
 
 template <typename T>
-concept ContiguousContainer = requires(const T & c) {
-	{ std::data(c) } -> std::same_as<const typename T::value_type*>;
+concept IsContiguousContainer = requires(const T& c) {
+	typename T::value_type;
+	requires std::same_as<
+		std::remove_cv_t<typename T::value_type>,
+		std::remove_cv_t<std::remove_pointer_t<decltype(std::data(c))>>
+	>;
 	{ std::size(c) } -> std::convertible_to<std::size_t>;
 };

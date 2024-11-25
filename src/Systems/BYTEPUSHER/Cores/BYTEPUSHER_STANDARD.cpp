@@ -44,20 +44,21 @@ void BYTEPUSHER_STANDARD::instructionLoop() noexcept {
 }
 
 void BYTEPUSHER_STANDARD::renderAudioData() {
-	const std::span<u8, cAudioLength>
-		samplesOffset{ mMemoryBank.data() + (readData<2>(6) << 8), cAudioLength };
+	const auto samplesOffset{ mMemoryBank.data() + (readData<2>(6) << 8) };
 
-	std::vector<s8> samplesBuffer0 \
-		(samplesOffset.begin(), samplesOffset.end());
+	std::vector<s8> samplesBuffer \
+		(samplesOffset, samplesOffset + cAudioLength);
 
-	ASB->pushAudioData(STREAM::CHANN0, samplesBuffer0);
+	ASB->pushAudioData(STREAM::CHANN0, samplesBuffer);
 }
 
 void BYTEPUSHER_STANDARD::renderVideoData() {
-	const std::span<u8, cScreenSizeT>
-		displayBuffer{ mMemoryBank.data() + (readData<1>(5) << 16), cScreenSizeT };
+	const auto displayOffset{ mMemoryBank.data() + (readData<1>(5) << 16) };
 
-	BVS->modifyTexture<u8>(displayBuffer,
+	const std::span<const u8, cScreenSizeT>
+		displayBuffer{ displayOffset, cScreenSizeT };
+
+	BVS->modifyTexture(displayBuffer,
 		[](const u32 pixel) noexcept {
 			return 0xFF000000 | cBitsColor[pixel];
 		}

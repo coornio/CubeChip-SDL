@@ -148,17 +148,17 @@ inline auto writeFileData(const Path& filePath, const T* fileData, const usz fil
 
 /*==================================================================*/
 
-template <typename T> requires ContiguousContainer<T>
+template <IsContiguousContainer T>
 [[maybe_unused]]
 inline bool writeFileData(const Path& filePath, const T& fileData, std::error_code& ioError) noexcept {
-	return writeFileData(filePath, fileData.data(), fileData.size(), ioError);
+	return writeFileData(filePath, std::data(fileData), std::size(fileData), ioError);
 }
 
-template <typename T> requires ContiguousContainer<T>
+template <IsContiguousContainer T>
 [[maybe_unused]]
 inline bool writeFileData(const Path& filePath, const T& fileData) noexcept {
 	std::error_code ioError;
-	return writeFileData(filePath, fileData.data(), fileData.size(), ioError);
+	return writeFileData(filePath, std::data(fileData), std::size(fileData), ioError);
 }
 
 template <typename T, usz N>

@@ -32,25 +32,8 @@ Chip8_CoreInterface::~Chip8_CoreInterface() noexcept {}
 
 /*==================================================================*/
 
-void Chip8_CoreInterface::loadPresetBinds() {
-	static constexpr auto _{ SDL_SCANCODE_UNKNOWN };
-	static constexpr SimpleKeyMapping defaultKeyMappings[]{
-		{0x1, KEY(1), _}, {0x2, KEY(2), _}, {0x3, KEY(3), _}, {0xC, KEY(4), _},
-		{0x4, KEY(Q), _}, {0x5, KEY(W), _}, {0x6, KEY(E), _}, {0xD, KEY(R), _},
-		{0x7, KEY(A), _}, {0x8, KEY(S), _}, {0x9, KEY(D), _}, {0xE, KEY(F), _},
-		{0xA, KEY(Z), _}, {0x0, KEY(X), _}, {0xB, KEY(C), _}, {0xF, KEY(V), _},
-	};
-
-	loadCustomBinds(defaultKeyMappings);
-}
-
-void Chip8_CoreInterface::loadCustomBinds(std::span<const SimpleKeyMapping> binds) {
-	mCustomBinds.assign(binds.begin(), binds.end());
-	mKeysPrev = mKeysCurr = mKeysLock = 0;
-}
-
 void Chip8_CoreInterface::updateKeyStates() {
-	if (!mCustomBinds.size()) { return; }
+	if (!std::size(mCustomBinds)) { return; }
 
 	mKeysPrev = mKeysCurr;
 	mKeysCurr = 0;
@@ -64,8 +47,20 @@ void Chip8_CoreInterface::updateKeyStates() {
 	mKeysLoop &= mKeysLock &= ~(mKeysPrev ^ mKeysCurr);
 }
 
+void Chip8_CoreInterface::loadPresetBinds() {
+	static constexpr auto _{ SDL_SCANCODE_UNKNOWN };
+	static constexpr SimpleKeyMapping defaultKeyMappings[]{
+		{0x1, KEY(1), _}, {0x2, KEY(2), _}, {0x3, KEY(3), _}, {0xC, KEY(4), _},
+		{0x4, KEY(Q), _}, {0x5, KEY(W), _}, {0x6, KEY(E), _}, {0xD, KEY(R), _},
+		{0x7, KEY(A), _}, {0x8, KEY(S), _}, {0x9, KEY(D), _}, {0xE, KEY(F), _},
+		{0xA, KEY(Z), _}, {0x0, KEY(X), _}, {0xB, KEY(C), _}, {0xF, KEY(V), _},
+	};
+
+	loadCustomBinds(std::span(defaultKeyMappings));
+}
+
 bool Chip8_CoreInterface::keyPressed(u8* returnKey, const u32 tickCount) noexcept {
-	if (!mCustomBinds.size()) { return false; }
+	if (!std::size(mCustomBinds)) { return false; }
 
 	if (tickCount >= mTickLast + mTickSpan) {
 		mKeysPrev &= ~mKeysLoop;
@@ -126,8 +121,8 @@ void Chip8_CoreInterface::handleEndFrameInterrupt() noexcept {
 	{
 		case Interrupt::INPUT:
 			if (keyPressed(mInputReg, mTotalFrames)) {
-				mInterrupt  = Interrupt::CLEAR;
-				mActiveCPF  = std::abs(mActiveCPF);
+				mInterrupt = Interrupt::CLEAR;
+				mActiveCPF = std::abs(mActiveCPF);
 				startAudioAtChannel(STREAM::BUZZER, 2);
 			}
 			return;

@@ -267,7 +267,7 @@ void XOCHIP::renderAudioData() {
 	pushSquareTone(STREAM::BUZZER);
 
 	BVS->setFrameColor(mBitColors[0],
-		std::accumulate(mAudioTimer.begin(), mAudioTimer.end(), 0)
+		mAudioTimer[STREAM::BUZZER]
 		? mBitColors[1] : mBitColors[0]
 	);
 }
@@ -289,9 +289,10 @@ void XOCHIP::renderVideoData() {
 		}
 	);
 
-	BVS->modifyTexture<u8>(textureBuffer,
-		[this](const u32 pixel) noexcept {
-			return 0xFF000000 | mBitColors[pixel];
+	const auto pBitColors{ mBitColors.data()};
+	BVS->modifyTexture(textureBuffer,
+		[pBitColors](const u32 pixel) noexcept {
+			return 0xFF000000 | pBitColors[pixel];
 		}
 	);
 }

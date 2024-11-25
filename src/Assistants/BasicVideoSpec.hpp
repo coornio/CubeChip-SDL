@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include <span>
 #include <string>
 #include <utility>
 #include <concepts>
@@ -15,6 +14,7 @@
 #include <SDL3/SDL.h>
 
 #include "Typedefs.hpp"
+#include "Concepts.hpp"
 #include "LifetimeWrapperSDL.hpp"
 
 /*==================================================================*/
@@ -112,15 +112,24 @@ private:
 	void unlockTexture();
 
 public:
-	void modifyTexture(const std::span<u32> colorData);
+	template <IsContiguousContainer T>
+	void modifyTexture(const T colorData) {
+		std::move(
+			std::execution::unseq,
+			colorData.begin(),
+			colorData.end(),
+			lockTexture()
+		);
+		unlockTexture();
+	}
 
-	template <typename T, typename Lambda>
+	template <IsContiguousContainer T, typename Lambda>
 	void modifyTexture(
-		const std::span<const T> pixelData,
+		const T pixelData,
 		Lambda&& function
 	) {
 		std::transform(
-			//std::execution::unseq,
+			std::execution::unseq,
 			pixelData.begin(),
 			pixelData.end(),
 			lockTexture(),
@@ -129,10 +138,10 @@ public:
 		unlockTexture();
 	}
 
-	template <typename T, typename Lambda>
+	template <IsContiguousContainer T, typename Lambda>
 	void modifyTexture(
-		const std::span<const T> pixelData1,
-		const std::span<const T> pixelData2,
+		const T pixelData1,
+		const T pixelData2,
 		Lambda&& function
 	) {
 		std::transform(

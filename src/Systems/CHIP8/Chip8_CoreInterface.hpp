@@ -36,10 +36,15 @@ private:
 	u32  mKeysLoop{}; // bitfield of keys repeating input on Fx0A
 
 protected:
-	void loadPresetBinds();
-	void loadCustomBinds(std::span<const SimpleKeyMapping> binds);
-
 	void updateKeyStates();
+	void loadPresetBinds();
+
+	template <IsContiguousContainer T> requires
+		SameValueTypes<T, decltype(mCustomBinds)>
+	void loadCustomBinds(const T& binds) {
+		mCustomBinds.assign(std::begin(binds), std::end(binds));
+		mKeysPrev = mKeysCurr = mKeysLock = 0;
+	}
 
 	bool keyPressed(u8* returnKey, u32 tickCount) noexcept;
 	bool keyHeld_P1(u32 keyIndex) const noexcept;

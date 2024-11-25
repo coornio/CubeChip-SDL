@@ -24,16 +24,16 @@ private:
 		mMemoryBank{};
 
 	template<u32 T> requires (T >= 1 && T <= 3)
-	u32 readData(const u32 pos) const noexcept {
+		u32 readData(const u32 pos) const noexcept {
 		if        constexpr (T == 1) {
 			return mMemoryBank[pos + 0];
 		} else if constexpr (T == 2) {
-			return mMemoryBank[pos + 0] <<  8
-				 | mMemoryBank[pos + 1];
+			return mMemoryBank[pos + 0] << 8
+				| mMemoryBank[pos + 1];
 		} else if constexpr (T == 3) {
 			return mMemoryBank[pos + 0] << 16
-				 | mMemoryBank[pos + 1] <<  8
-				 | mMemoryBank[pos + 2];
+				| mMemoryBank[pos + 1] << 8
+				| mMemoryBank[pos + 2];
 		}
 	}
 

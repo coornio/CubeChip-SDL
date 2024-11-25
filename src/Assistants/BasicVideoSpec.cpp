@@ -147,16 +147,6 @@ void BasicVideoSpec::unlockTexture() {
 	SDL_UnlockTexture(mMainTexture);
 }
 
-void BasicVideoSpec::modifyTexture(const std::span<u32> colorData) {
-	std::move(
-		std::execution::unseq,
-		colorData.begin(),
-		colorData.end(),
-		lockTexture()
-	);
-	unlockTexture();
-}
-
 void BasicVideoSpec::setViewportOpacity(const u32 alpha) {
 	SDL_SetTextureAlphaMod(mMainTexture, static_cast<Uint8>(alpha));
 }

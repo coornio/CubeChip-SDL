@@ -46,11 +46,7 @@ void BytePusher_CoreInterface::loadPresetBinds() {
 		{0xA, KEY(Z), _}, {0x0, KEY(X), _}, {0xB, KEY(C), _}, {0xF, KEY(V), _},
 	};
 
-	loadCustomBinds(defaultKeyMappings);
-}
-
-void BytePusher_CoreInterface::loadCustomBinds(std::span<const SimpleKeyMapping> binds) {
-	mCustomBinds.assign(binds.begin(), binds.end());
+	loadCustomBinds(std::span(defaultKeyMappings));
 }
 
 u32  BytePusher_CoreInterface::getKeyStates() const {

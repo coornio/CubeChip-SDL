@@ -101,7 +101,7 @@ public:
 	 * @param[in] sampleData :: pointer to audio samples buffer.
 	 * @param[in] bufferSize :: size of buffer in bytes.
 	 */
-	template <typename T> requires Arithmetic<T>
+	template <IsArithmetic T>
 	void pushAudioData(const u32 index, T* const sampleData, const usz bufferSize) const {
 		if (isStreamPaused(index) || !bufferSize) { return; }
 
@@ -128,8 +128,8 @@ public:
 	 * @param[in] index :: the device/stream to push audio to.
 	 * @param[in] samplesBuffer :: audio samples buffer (C style).
 	 */
-	template <typename T, usz N> requires Arithmetic<T>
-	void pushAudioData(const u32 index, T(&samplesBuffer)[N]) const noexcept {
+	template <IsArithmetic T, usz N>
+	void pushAudioData(const u32 index, T(&samplesBuffer)[N]) const {
 		pushAudioData(index, samplesBuffer, N);
 	}
 
@@ -138,8 +138,8 @@ public:
 	 * @param[in] index :: the device/stream to push audio to.
 	 * @param[in] samplesBuffer :: audio samples buffer (C++ style).
 	 */
-	template <typename T> requires ContiguousContainer<T>
-	void pushAudioData(const u32 index, T& samplesBuffer) const noexcept {
-		pushAudioData(index, samplesBuffer.data(), samplesBuffer.size());
+	template <IsContiguousContainer T>
+	void pushAudioData(const u32 index, T& samplesBuffer) const {
+		pushAudioData(index, std::data(samplesBuffer), std::size(samplesBuffer));
 	}
 };

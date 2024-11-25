@@ -55,22 +55,21 @@ StrV BasicLogger::getSeverity(BLOG type) const noexcept {
 }
 
 void BasicLogger::writeEntry(const BLOG type, const Str& message) noexcept {
-	static std::size_t lineCount;
-
 	std::ostringstream output;
-	output << ++lineCount << " :: " << getSeverity(type) << " :: " << message;
-
-	std::cout << output.str() << std::endl;
+	output << getSeverity(type) << " :: " << message;
 
 	if (!mLogPath.empty()) {
 		std::ofstream logFile(mLogPath, std::ios::app);
 		if (!logFile) {
-			std::cerr << ":: ERROR :: " << "Unable to open log file: " << mLogPath << std::endl;
+			std::cerr << getSeverity(BLOG::ERROR)
+				<< "Unable to open log file: " << mLogPath << std::endl;
 			mLogPath.clear();
 			return;
 		} else {
 			logFile << output.str() << std::endl;
 		}
+	} else {
+		std::cout << output.str() << std::endl;
 	}
 }
 

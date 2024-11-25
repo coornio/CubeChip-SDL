@@ -320,7 +320,7 @@ void MEGACHIP::renderAudioData() {
 void MEGACHIP::renderVideoData() {
 	if (isManualRefresh()) { return; }
 
-	BVS->modifyTexture<u8>(mDisplayBuffer[0].span(), isPixelTrailing()
+	BVS->modifyTexture(mDisplayBuffer[0].span(), isPixelTrailing()
 		? [](const u32 pixel) noexcept {
 			static constexpr u32 layer[4]{ 0xFF, 0xE7, 0x6F, 0x37 };
 			const auto opacity{ layer[std::countl_zero(pixel) & 0x3] };
@@ -459,7 +459,7 @@ void MEGACHIP::flushAllVideoBuffers() {
 }
 
 void MEGACHIP::blendAndFlushBuffers() const {
-	BVS->modifyTexture<u32>(
+	BVS->modifyTexture(
 		mForegroundBuffer.span(),
 		mBackgroundBuffer.span(),
 		[this](const u32 src, const u32 dst) noexcept {
