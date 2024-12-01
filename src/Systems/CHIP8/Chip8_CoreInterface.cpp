@@ -194,8 +194,8 @@ void Chip8_CoreInterface::startAudio(const s32 duration, const s32 tone) noexcep
 void Chip8_CoreInterface::startAudioAtChannel(const u32 index, const s32 duration, const s32 tone) noexcept {
 	if (index >= STREAM::COUNT) { return; }
 
-	mAudioTimer[index] = duration & 0xFF;
-	mPhaseStep[index] = (160.0f + (tone ? tone
+	mAudioTimer[index] = static_cast<u8>(duration);
+	mPhaseStep[index] = (sTonalOffset + (tone ? tone
 		: 8 * ((mCurrentPC >> 1) + mStackTop + 1 & 0x3E)
 	)) / ASB->getFrequency();
 }
@@ -324,33 +324,16 @@ bool Chip8_CoreInterface::getPermaRegs(const u32 X) noexcept {
 
 /*==================================================================*/
 
-void Chip8_CoreInterface::copyGameToMemory(
-	u8* dest, const u32 offset
-) noexcept {
-	std::copy_n(
-		std::execution::unseq,
-		HDM->getFileData(),
-		HDM->getFileSize(),
-		dest + offset
-	);
+void Chip8_CoreInterface::copyGameToMemory(void* dest) noexcept {
+	std::memcpy(dest, HDM->getFileData(), HDM->getFileSize());
 }
 
-void Chip8_CoreInterface::copyFontToMemory(
-	u8* dest, const u32 offset, const usz size
-) noexcept {
-	std::copy_n(
-		std::execution::unseq,
-		sFontsData.begin(), size, dest + offset
-	);
+void Chip8_CoreInterface::copyFontToMemory(void* dest, const usz size) noexcept {
+	std::memcpy(dest, std::data(sFontsData), size);
 }
 
-void Chip8_CoreInterface::copyColorsToCore(
-	u32* dest, const usz size
-) noexcept {
-	std::copy_n(
-		std::execution::unseq,
-		sBitColors.begin(), size, dest
-	);
+void Chip8_CoreInterface::copyColorsToCore(void* dest) noexcept {
+	std::memcpy(dest, std::data(sBitColors), std::size(sBitColors) * sizeof(decltype(sBitColors)::value_type));
 }
 
 /*==================================================================*/

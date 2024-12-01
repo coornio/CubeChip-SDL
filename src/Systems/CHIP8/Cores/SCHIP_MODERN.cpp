@@ -23,8 +23,8 @@ SCHIP_MODERN::SCHIP_MODERN()
 			mMemoryBank.end(), u8{ 0xFF }
 		);
 
-		copyGameToMemory(mMemoryBank.data(), cGameLoadPos);
-		copyFontToMemory(mMemoryBank.data(), 0x0, 0xF0);
+		copyGameToMemory(mMemoryBank.data() + cGameLoadPos);
+		copyFontToMemory(mMemoryBank.data(), 0xF0);
 
 		setDisplayResolution(cScreenSizeX, cScreenSizeY);
 

@@ -29,9 +29,9 @@ XOCHIP::XOCHIP()
 			mMemoryBank.end(), u8{ 0xFF }
 		);
 
-		copyGameToMemory(mMemoryBank.data(), cGameLoadPos);
-		copyFontToMemory(mMemoryBank.data(), 0x0, 0x50);
-		copyColorsToCore(mBitColors.data(), mBitColors.size());
+		copyGameToMemory(mMemoryBank.data() + cGameLoadPos);
+		copyFontToMemory(mMemoryBank.data(), 0x50);
+		copyColorsToCore(mBitColors.data());
 
 		setDisplayResolution(cScreenSizeX, cScreenSizeY);
 

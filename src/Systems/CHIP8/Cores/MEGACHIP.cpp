@@ -17,8 +17,8 @@ MEGACHIP::MEGACHIP()
 {
 	if (getCoreState() != EmuState::FATAL) {
 
-		copyGameToMemory(mMemoryBank.data(), cGameLoadPos);
-		copyFontToMemory(mMemoryBank.data(), 0x0, 0xB4);
+		copyGameToMemory(mMemoryBank.data() + cGameLoadPos);
+		copyFontToMemory(mMemoryBank.data(), 0xB4);
 
 		mForegroundBuffer.resize(false, cScreenMegaY, cScreenMegaX);
 		mBackgroundBuffer.resize(false, cScreenMegaY, cScreenMegaX);

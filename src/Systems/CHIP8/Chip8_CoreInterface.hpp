@@ -15,6 +15,7 @@ class Chip8_CoreInterface : public EmuInterface {
 protected:
 	static inline Path* sPermaRegsPath{};
 	static inline Path* sSavestatePath{};
+	static inline f32   sTonalOffset{ 160.0f };
 
 	std::unique_ptr<AudioSpecBlock> ASB;
 
@@ -169,9 +170,9 @@ protected:
 	bool setPermaRegs(const u32 X) noexcept;
 	bool getPermaRegs(const u32 X) noexcept;
 
-	void copyGameToMemory(u8* dest, const u32 offset) noexcept;
-	void copyFontToMemory(u8* dest, const u32 offset, const usz size) noexcept;
-	void copyColorsToCore(u32* dest, const usz size) noexcept;
+	void copyGameToMemory(void* dest) noexcept;
+	void copyFontToMemory(void* dest, const usz size) noexcept;
+	void copyColorsToCore(void* dest) noexcept;
 
 	virtual void handlePreFrameInterrupt() noexcept;
 	virtual void handleEndFrameInterrupt() noexcept;

@@ -4,6 +4,7 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include "../../../Assistants/HomeDirManager.hpp"
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/BasicAudioSpec.hpp"
 #include "../../../Assistants/Well512.hpp"
@@ -21,8 +22,8 @@ CHIP8_MODERN::CHIP8_MODERN() {
 			mMemoryBank.end(), u8{ 0xFF }
 		);
 
-		copyGameToMemory(mMemoryBank.data(), cGameLoadPos);
-		copyFontToMemory(mMemoryBank.data(), 0x0, 0x50);
+		copyGameToMemory(mMemoryBank.data() + cGameLoadPos);
+		copyFontToMemory(mMemoryBank.data(), 0x50);
 
 		setDisplayResolution(cScreenSizeX, cScreenSizeY);
 

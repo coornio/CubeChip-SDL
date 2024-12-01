@@ -31,8 +31,8 @@ SCHIP_LEGACY::SCHIP_LEGACY()
 			mMemoryBank.end(), u8{ 0xFF }
 		);
 
-		copyGameToMemory(mMemoryBank.data(), cGameLoadPos);
-		copyFontToMemory(mMemoryBank.data(), 0x0, 0xB4);
+		copyGameToMemory(mMemoryBank.data() + cGameLoadPos);
+		copyFontToMemory(mMemoryBank.data(), 0xB4);
 
 		setDisplayResolution(cScreenSizeX, cScreenSizeY);
 
