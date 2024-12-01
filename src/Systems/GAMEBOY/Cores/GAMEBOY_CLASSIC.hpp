@@ -14,7 +14,7 @@
 /*==================================================================*/
 
 class GAMEBOY_CLASSIC final : public GameBoy_CoreInterface {
-	static constexpr u32 cTotalMemory{  0x10000 };
+	static constexpr u32 cTotalMemory{ ::CalcBytes(64, KiB) };
 	static constexpr u32 cSafezoneOOB{        8 };
 	static constexpr f32 cRefreshRate{ 59.7275f };
 	static constexpr s32 cResSizeMult{        2 };
@@ -323,7 +323,11 @@ private:
 public:
 	GAMEBOY_CLASSIC();
 
-	static constexpr bool isGameFileValid(std::span<const char> game) noexcept {
-		return true;
+	static constexpr bool isGameFileValid(
+		const char* fileData,
+		const usz   fileSize
+	) noexcept {
+		if (!fileData || !fileSize) { return false; }
+		return false;
 	}
 };

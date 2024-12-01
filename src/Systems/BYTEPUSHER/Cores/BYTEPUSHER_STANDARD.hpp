@@ -11,7 +11,7 @@
 /*==================================================================*/
 
 class BYTEPUSHER_STANDARD final : public BytePusher_CoreInterface {
-	static constexpr u32 cTotalMemory{  16777216 };
+	static constexpr u32 cTotalMemory{ ::CalcBytes(16, MiB) };
 	static constexpr u32 cSafezoneOOB{         8 };
 	static constexpr f32 cRefreshRate{    60.00f };
 	static constexpr s32 cAudioLength{       256 };
@@ -29,11 +29,11 @@ private:
 			return mMemoryBank[pos + 0];
 		} else if constexpr (T == 2) {
 			return mMemoryBank[pos + 0] << 8
-				| mMemoryBank[pos + 1];
+				 | mMemoryBank[pos + 1];
 		} else if constexpr (T == 3) {
 			return mMemoryBank[pos + 0] << 16
-				| mMemoryBank[pos + 1] << 8
-				| mMemoryBank[pos + 2];
+				 | mMemoryBank[pos + 1] << 8
+				 | mMemoryBank[pos + 2];
 		}
 	}
 
@@ -44,7 +44,11 @@ private:
 public:
 	BYTEPUSHER_STANDARD();
 
-	static constexpr bool isGameFileValid(std::span<const char> game) noexcept {
-		return game.size() <= cTotalMemory;
+	static constexpr bool isGameFileValid(
+		const char* fileData,
+		const usz   fileSize
+	) noexcept {
+		if (!fileData || !fileSize) { return false; }
+		return fileSize <= cTotalMemory;
 	}
 };

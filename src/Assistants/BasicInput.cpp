@@ -12,7 +12,7 @@
 /*==================================================================*/
 	#pragma region BasicKeyboard Singleton Class
 
-void BasicKeyboard::updateCopy() noexcept {
+void BasicKeyboard::storeOldState() noexcept {
 	std::copy_n(
 		std::execution::par_unseq,
 		SDL_GetKeyboardState(nullptr),
@@ -39,7 +39,7 @@ bool BasicKeyboard::isReleased(const SDL_Scancode key) const noexcept {
 /*==================================================================*/
 	#pragma region BasicMouse Singleton Class
 
-void BasicMouse::updateCopy() noexcept {
+void BasicMouse::storeOldState() noexcept {
 	const auto oldX{ posX };
 	const auto oldY{ posY };
 	oldState = SDL_GetMouseState(&posX, &posY);

@@ -42,7 +42,8 @@ public:
 		return &self;
 	}
 
-	void updateCopy();
+	void storeOldState() noexcept;
+
 	bool isHeldPrev(const SDL_Scancode key) const noexcept;
 	bool isHeld(const SDL_Scancode key) const noexcept;
 	bool isPressed(const SDL_Scancode key) const noexcept;
@@ -82,7 +83,7 @@ public:
 		return &self;
 	}
 
-	void updateCopy() noexcept;
+	void storeOldState() noexcept;
 
 	float getRelX() const noexcept { return relX; }
 	float getRelY() const noexcept { return relY; }

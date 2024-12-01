@@ -22,9 +22,10 @@ class HomeDirManager final {
 	HomeDirManager& operator=(const HomeDirManager&) = delete;
 
 	using GameValidator = bool (*)(
-		std::span<const char> fileData,
-		const Str& fileExts,
-		const Str& fileSHA1
+		const char* fileData,
+		const usz   fileSize,
+		const Str&  fileExts,
+		const Str&  fileSHA1
 	) noexcept;
 
 	Path mFilePath{};

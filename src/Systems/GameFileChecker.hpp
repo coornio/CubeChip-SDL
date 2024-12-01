@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include <span>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -67,8 +66,9 @@ class GameFileChecker final {
 	}
 
 	static bool validate(
-		std::span<const char> game,
-		const Str& type
+		const char* fileData,
+		const usz   fileSize,
+		const Str& fileType
 	) noexcept;
 
 	[[nodiscard]]
@@ -77,9 +77,10 @@ class GameFileChecker final {
 
 public:
 	static bool validate(
-		std::span<const char> game,
-		const Str& type,
-		const Str& sha1
+		const char* fileData,
+		const usz   fileSize,
+		const Str& fileType,
+		const Str& fileSHA1
 	) noexcept;
 
 	[[nodiscard]]

@@ -62,8 +62,8 @@ const Str& EmuHost::getStats() const {
 /*==================================================================*/
 
 void EmuHost::discardCore() {
-	binput::kb.updateCopy();
-	binput::mb.updateCopy();
+	binput::kb.storeOldState();
+	binput::mb.storeOldState();
 
 	iGuest.reset();
 	BVS->resetMainWindow();
@@ -74,8 +74,8 @@ void EmuHost::discardCore() {
 }
 
 void EmuHost::replaceCore() {
-	binput::kb.updateCopy();
-	binput::mb.updateCopy();
+	binput::kb.storeOldState();
+	binput::mb.storeOldState();
 
 	iGuest = GameFileChecker::initGameCore();
 
@@ -130,32 +130,30 @@ void EmuHost::processFrame() {
 			BVS->renderPresent(nullptr);
 		}
 
-		binput::kb.updateCopy();
-		binput::mb.updateCopy();
+		binput::kb.storeOldState();
+		binput::mb.storeOldState();
 	}
 }
 
 void EmuHost::checkForHotkeys() {
-	using namespace binput;
-
-	if (kb.isPressed(KEY(RIGHT))) {
+	if (binput::kb.isPressed(KEY(RIGHT))) {
 		BAS->addGlobalGain(+15);
 	}
-	if (kb.isPressed(KEY(LEFT))) {
+	if (binput::kb.isPressed(KEY(LEFT))) {
 		BAS->addGlobalGain(-15);
 	}
 
 	if (iGuest) {
-		if (kb.isPressed(KEY(ESCAPE))) {
+		if (binput::kb.isPressed(KEY(ESCAPE))) {
 			discardCore();
 			return;
 		}
-		if (kb.isPressed(KEY(BACKSPACE))) {
+		if (binput::kb.isPressed(KEY(BACKSPACE))) {
 			replaceCore();
 			return;
 		}
 
-		if (kb.isPressed(KEY(RSHIFT))) {
+		if (binput::kb.isPressed(KEY(RSHIFT))) {
 			unlimitedMode = !unlimitedMode;
 		}
 	}

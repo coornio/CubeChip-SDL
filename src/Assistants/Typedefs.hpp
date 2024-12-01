@@ -41,3 +41,11 @@ struct Epsilon {
 	constexpr static ::f32 f32{ std::numeric_limits<::f32>::epsilon() };
 	constexpr static ::f64 f64{ std::numeric_limits<::f64>::epsilon() };
 };
+
+inline constexpr u32 KiB{ 1024 };
+inline constexpr u32 MiB{ 1024 * KiB };
+inline constexpr u32 GiB{ 1024 * MiB };
+
+inline constexpr u32 CalcBytes(const u32 value, const u32 unit) noexcept {
+	return value * unit;
+}

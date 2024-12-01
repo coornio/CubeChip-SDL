@@ -9,24 +9,44 @@
 
 #pragma once
 
-#include <span>
 #include <string>
 #include <cstdint>
 #include <sstream>
 #include <filesystem>
 
+#include "Typedefs.hpp"
+#include "Concepts.hpp"
+
 class SHA1 {
-	std::uint32_t digest[5]{};
-	std::string   buffer{};
-	std::uint64_t transforms{};
+	u32 digest[5]{};
+	Str buffer{};
+	u64 transforms{};
+
+	void transform(u32* block);
+	void buffer_to_block(u32* block);
 
 public:
 	SHA1();
-	void update(const std::string& s);
+
+	void reset();
+
+	void update(const Str& s);
 	void update(std::istream& is);
-	void update(std::span<const char> data);
+
+	void update(const char* data, const usz size);
+
+	template <IsContiguousContainer T> requires MatchingValueType<char, T>
+	void update(const T& data) noexcept {
+		update(std::data(data), std::size(data));
+	}
+
 	std::string final();
 
-	static std::string from_file(const std::filesystem::path& filePath);
-	static std::string from_span(const std::span<const char> fileData);
+	static std::string from_file(const Path& filePath);
+	static std::string from_data(const char* data, const usz size);
+
+	template <IsContiguousContainer T> requires MatchingValueType<char, T>
+	static std::string from_data(const T& data) {
+		return from_data(std::data(data), std::size(data));
+	}
 };

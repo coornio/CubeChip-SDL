@@ -60,7 +60,4 @@ public:
 	f32  getFramerate() const noexcept override { return mFramerate; }
 
 	s32  addCPF(const s32) noexcept override { return mActiveCPF; }
-
-protected:
-
 };

@@ -4,9 +4,6 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include <fstream>
-#include <execution>
-
 #include "HomeDirManager.hpp"
 
 #include "../Assistants/SHA1.hpp"
@@ -34,13 +31,12 @@ HomeDirManager::HomeDirManager(const char* const org, const char* const app) noe
 Path* HomeDirManager::addSystemDir(const Path& sub, const Path& sys) noexcept {
 	if (sub.empty()) { return nullptr; }
 	
-	const Path newDir{ getHomePath() / sys / sub };
+	const Path newDirPath{ getHomePath() / sys / sub };
 
 	auto it = std::find_if(
-		std::execution::unseq,
-		mDirectories.begin(), mDirectories.end(),
-		[&newDir](const Path& dirEntry) {
-			return dirEntry == newDir;
+		std::begin(mDirectories), std::end(mDirectories),
+		[&newDirPath](const Path& dirEntry) {
+			return dirEntry == newDirPath;
 		}
 	);
 
@@ -48,17 +44,17 @@ Path* HomeDirManager::addSystemDir(const Path& sub, const Path& sys) noexcept {
 
 	std::error_code error;
 
-	std::filesystem::create_directories(newDir, error);
-	if (!std::filesystem::exists(newDir, error) || error) {
+	std::filesystem::create_directories(newDirPath, error);
+	if (!std::filesystem::exists(newDirPath, error) || error) {
 		mSuccessful = false;
 		SDL_ShowSimpleMessageBox(
 			SDL_MESSAGEBOX_ERROR, "Filesystem Error",
-			(newDir.string() + "\nUnable to create subdirectories!").c_str(), nullptr
+			(newDirPath.string() + "\nUnable to create subdirectories!").c_str(), nullptr
 		);
 		return nullptr;
 	}
 
-	mDirectories.push_back(newDir);
+	mDirectories.push_back(newDirPath);
 	return &mDirectories.back();
 }
 
@@ -87,7 +83,7 @@ bool HomeDirManager::validateGameFile(const Path gamePath) noexcept {
 		return false;
 	}
 
-	if (fileSize >= 33'554'432) { // 32 MB upper limit
+	if (fileSize >= ::CalcBytes(32, MiB)) {
 		blog.newEntry(BLOG::WARN, "Game file is too large!");
 		return false;
 	}
@@ -98,9 +94,13 @@ bool HomeDirManager::validateGameFile(const Path gamePath) noexcept {
 		return false;
 	}
 
-	const auto tempSHA1{ SHA1::from_span(mFileData) };
+	const auto tempSHA1{ SHA1::from_data(mFileData) };
+	blog.newEntry(BLOG::INFO, "SHA1: {}", tempSHA1);
 
-	if (checkGame(mFileData, gamePath.extension().string(), tempSHA1)) {
+	if (checkGame(
+		std::data(mFileData), std::size(mFileData),
+		gamePath.extension().string(), tempSHA1)
+	) {
 		mFilePath = gamePath;
 		mFileSHA1 = tempSHA1;
 		return true;

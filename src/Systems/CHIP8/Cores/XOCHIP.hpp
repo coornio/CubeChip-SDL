@@ -13,7 +13,7 @@
 /*==================================================================*/
 
 class XOCHIP final : public Chip8_CoreInterface {
-	static constexpr u32 cTotalMemory{ 65536 };
+	static constexpr u32 cTotalMemory{ ::CalcBytes(16, KiB) };
 	static constexpr u32 cSafezoneOOB{    32 };
 	static constexpr u32 cGameLoadPos{   512 };
 	static constexpr u32 cStartOffset{   512 };
@@ -61,8 +61,12 @@ private:
 public:
 	XOCHIP();
 
-	static constexpr bool isGameFileValid(std::span<const char> game) noexcept {
-		return game.size() + cGameLoadPos <= cTotalMemory;
+	static constexpr bool isGameFileValid(
+		const char* fileData,
+		const usz   fileSize
+	) noexcept {
+		if (!fileData || !fileSize) { return false; }
+		return fileSize + cGameLoadPos <= cTotalMemory;
 	}
 
 private:

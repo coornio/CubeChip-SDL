@@ -120,21 +120,23 @@ std::unique_ptr<EmuInterface> GameFileChecker::initGameCore() noexcept {
 /*==================================================================*/
 
 bool GameFileChecker::validate(
-	std::span<const char> game,
-	const Str& type,
-	const Str& sha1
+	const char* fileData,
+	const usz   fileSize,
+	const Str&  fileType,
+	const Str&  fileSHA1
 ) noexcept {
-	if (sha1.empty()) {
-		return validate(game, type);
+	if (fileSHA1.empty()) {
+		return validate(fileData, fileSize, fileType);
 	} else {
 		/* database check here */
-		return validate(game, type); // placeholder
+		return validate(fileData, fileSize, fileType); // placeholder
 	}
 }
 
 bool GameFileChecker::validate(
-	std::span<const char> game,
-	const Str& type
+	const char* fileData,
+	const usz   fileSize,
+	const Str&  fileType
 ) noexcept {
 	static const std::unordered_map <std::string_view, GameFileType> sExtMap{
 		{".c2x", GameFileType::c2x},
@@ -156,7 +158,7 @@ bool GameFileChecker::validate(
 		{".gbc", GameFileType::gbc},
 	};
 
-	const auto it{ sExtMap.find(type) };
+	const auto it{ sExtMap.find(fileType) };
 	if (it == sExtMap.end()) {
 		blog.newEntry(BLOG::WARN, "Cannot match Game to a supported system/platform!");
 		return false;
@@ -170,81 +172,81 @@ bool GameFileChecker::validate(
 		case (GameFileType::c4x):
 			return testGame(
 				true,
-				//CHIP8X_HIRES::isGameFileValid(game),
+				//CHIP8X_HIRES::isGameFileValid(fileData, fileSize),
 				GameCoreType::CHIP8X_HIRES
 			);
 
 		case (GameFileType::c8x):
 			return testGame(
 				true,
-				//CHIP8X::isGameFileValid(game),
+				//CHIP8X::isGameFileValid(fileData, fileSize),
 				GameCoreType::CHIP8X
 			);
 
 		case (GameFileType::c2h):
 			return testGame(
 				true,
-				//CHIP8_2P::isGameFileValid(game),
+				//CHIP8_2P::isGameFileValid(fileData, fileSize),
 				GameCoreType::CHIP8_2P
 			);
 
 		case (GameFileType::c4h):
 			return testGame(
 				true,
-				//CHIP8_4P::isGameFileValid(game),
+				//CHIP8_4P::isGameFileValid(fileData, fileSize),
 				GameCoreType::CHIP8_4P
 			);
 
 		case (GameFileType::mc8):
 			return testGame(
-				MEGACHIP::isGameFileValid(game),
+				MEGACHIP::isGameFileValid(fileData, fileSize),
 				GameCoreType::MEGACHIP
 			);
 
 		case (GameFileType::gc8):
 			return testGame(
 				true,
-				//GIGACHIP::isGameFileValid(game),
+				//GIGACHIP::isGameFileValid(fileData, fileSize),
 				GameCoreType::GIGACHIP
 			);
 
 		case (GameFileType::xo8):
 			return testGame(
-				XOCHIP::isGameFileValid(game),
+				XOCHIP::isGameFileValid(fileData, fileSize),
 				GameCoreType::XOCHIP
 			);
 
 		case (GameFileType::hwc):
 			return testGame(
 				true,
-				//HWCHIP64::isGameFileValid(game),
+				//HWCHIP64::isGameFileValid(fileData, fileSize),
 				GameCoreType::HWCHIP64
 			);
 
 		case (GameFileType::c8e):
 			return testGame(
 				true,
-				//CHIP8E::isGameFileValid(game),
+				//CHIP8E::isGameFileValid(fileData, fileSize),
 				GameCoreType::CHIP8E
 			);
 
 		case (GameFileType::c8h):
 			return testGame(
 				true,
-				//CHIP8_2P::isGameFileValid(game),
+				//CHIP8_2P::isGameFileValid(fileData, fileSize),
 				GameCoreType::CHIP8_2P
 			); // patched!
 
 		case (GameFileType::bnc):
 		case (GameFileType::ch8):
 			return testGame(
-				CHIP8_MODERN::isGameFileValid(game),
+				CHIP8_MODERN::isGameFileValid(fileData, fileSize),
 				GameCoreType::CHIP8_MODERN
 			);
 
 		case (GameFileType::sc8):
 			return testGame(
-				SCHIP_LEGACY::isGameFileValid(game),
+				SCHIP_LEGACY::isGameFileValid(fileData, fileSize),
 				GameCoreType::SCHIP_LEGACY
 			);
 
@@ -256,7 +258,7 @@ bool GameFileChecker::validate(
 
 		case (GameFileType::BytePusher):
 			return testGame(
-				BYTEPUSHER_STANDARD::isGameFileValid(game),
+				BYTEPUSHER_STANDARD::isGameFileValid(fileData, fileSize),
 				GameCoreType::BYTEPUSHER_STANDARD
 			);
 
@@ -268,13 +270,13 @@ bool GameFileChecker::validate(
 
 		case (GameFileType::gb):
 			return testGame(
-				GAMEBOY_CLASSIC::isGameFileValid(game),
+				GAMEBOY_CLASSIC::isGameFileValid(fileData, fileSize),
 				GameCoreType::GAMEBOY_CLASSIC
 			);
 
 		case (GameFileType::gbc):
 			return testGame(
-				GAMEBOY_CLASSIC::isGameFileValid(game),
+				GAMEBOY_CLASSIC::isGameFileValid(fileData, fileSize),
 				GameCoreType::GAMEBOY_CLASSIC
 			);
 
