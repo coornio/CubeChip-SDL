@@ -10,7 +10,6 @@
 #include <SDL3/SDL_scancode.h>
 #include <SDL3/SDL_mouse.h>
 
-#include <array>
 #include <concepts>
 
 /*==================================================================*/
@@ -30,7 +29,7 @@ enum BIC_Button {
 	#pragma region BasicKeyboard Singleton Class
 
 class BasicKeyboard final {
-	std::array<Uint8, SDL_SCANCODE_COUNT> oldState{};
+	Uint8 oldState[SDL_SCANCODE_COUNT]{};
 
 	BasicKeyboard() noexcept = default;
 	~BasicKeyboard() noexcept = default;
@@ -38,37 +37,27 @@ class BasicKeyboard final {
 	BasicKeyboard& operator=(const BasicKeyboard&) = delete;
 
 public:
-	static auto* create() {
+	static auto* create() noexcept {
 		static BasicKeyboard self;
 		return &self;
 	}
 
 	void updateCopy();
-	bool isHeldPrev(const SDL_Scancode key) const noexcept {
-		return oldState[key];
-	}
-	bool isHeld(const SDL_Scancode key) const noexcept {
-		return SDL_GetKeyboardState(nullptr)[key];
-	}
-	bool isPressed(const SDL_Scancode key) const noexcept {
-		return !isHeldPrev(key) && isHeld(key);
-	}
-	bool isReleased(const SDL_Scancode key) const noexcept {
-		return isHeldPrev(key) && !isHeld(key);
-	}
+	bool isHeldPrev(const SDL_Scancode key) const noexcept;
+	bool isHeld(const SDL_Scancode key) const noexcept;
+	bool isPressed(const SDL_Scancode key) const noexcept;
+	bool isReleased(const SDL_Scancode key) const noexcept;
 
 	template <std::same_as<SDL_Scancode>... S>
 		requires (sizeof...(S) >= 1)
 	bool areAllHeld(const S... code) const noexcept {
-		const auto* const state{ SDL_GetKeyboardState(nullptr) };
-		return (state[code] && ...) && true;
+		return (isHeld(code) && ...);
 	}
 
 	template <std::same_as<SDL_Scancode>... S>
 		requires (sizeof...(S) >= 1)
 	bool areAnyHeld(const S... code) const noexcept {
-		const auto* const state{ SDL_GetKeyboardState(nullptr) };
-		return (state[code] || ...);
+		return (isHeld(code) || ...);
 	}
 };
 
@@ -93,38 +82,28 @@ public:
 		return &self;
 	}
 
-	void updateCopy();
+	void updateCopy() noexcept;
 
 	float getRelX() const noexcept { return relX; }
 	float getRelY() const noexcept { return relY; }
 	float getPosX() const noexcept { return posX; }
 	float getPosY() const noexcept { return posY; }
 
-	bool isHeldPrev(const BIC_Button key) const noexcept {
-		return oldState & key;
-	}
-	bool isHeld(const BIC_Button key) const noexcept {
-		return SDL_GetMouseState(nullptr, nullptr) & key;
-	}
-	bool isPressed(const BIC_Button key) const noexcept {
-		return !isHeldPrev(key) && isHeld(key);
-	}
-	bool isReleased(const BIC_Button key) const noexcept {
-		return isHeldPrev(key) && !isHeld(key);
-	}
+	bool isHeldPrev(const BIC_Button key) const noexcept;
+	bool isHeld(const BIC_Button key) const noexcept;
+	bool isPressed(const BIC_Button key) const noexcept;
+	bool isReleased(const BIC_Button key) const noexcept;
 
-	template <std::same_as<BIC_Button>... S>
+	template <std::convertible_to<BIC_Button>... S>
 		requires (sizeof...(S) >= 1)
 	bool areAllHeld(const S... code) const noexcept {
-		const auto state{ SDL_GetMouseState(nullptr, nullptr) };
-		return ((state & code) && ...) && true;
+		return (isHeld(code) && ...);
 	}
 
-	template <std::same_as<BIC_Button>... S>
+	template <std::convertible_to<BIC_Button>... S>
 		requires (sizeof...(S) >= 1)
 	bool areAnyHeld(const S... code) const noexcept {
-		const auto state{ SDL_GetMouseState(nullptr, nullptr) };
-		return ((state & code) || ...);
+		return (isHeld(code) || ...);
 	}
 };
 
