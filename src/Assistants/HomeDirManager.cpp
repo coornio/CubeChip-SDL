@@ -65,34 +65,37 @@ void HomeDirManager::clearCachedFileData() noexcept {
 }
 
 bool HomeDirManager::validateGameFile(const Path gamePath) noexcept {
-	std::error_code error;
 
-	if (!::doesFileExist(gamePath, error) || error) {
-		blog.newEntry(BLOG::WARN, "Path is ineligible: {}", error.message());
+	const auto fileExists{ fs::is_regular_file(gamePath) };
+	if (!fileExists || !fileExists.value()) {
+		blog.newEntry(BLOG::WARN, "Path is ineligible: \"{}\" [{}]",
+			gamePath.string(), fileExists.error().message());
 		return false;
 	}
 
-	const auto fileSize{ ::getFileSize(gamePath, error) };
-	if (error) {
-		blog.newEntry(BLOG::WARN, "Path is ineligible: {}", error.message());
+	const auto fileSize{ fs::file_size(gamePath) };
+	if (!fileSize) {
+		blog.newEntry(BLOG::WARN, "Path is ineligible: \"{}\" [{}]",
+			gamePath.string(), fileExists.error().message());
 		return false;
 	}
-
-	if (fileSize == 0) {
+	if (fileSize.value() == 0) {
 		blog.newEntry(BLOG::WARN, "Game file must not be empty!");
 		return false;
 	}
-
-	if (fileSize >= ::CalcBytes(32, MiB)) {
+	if (fileSize.value() >= ::CalcBytes(32, MiB)) {
 		blog.newEntry(BLOG::WARN, "Game file is too large!");
 		return false;
 	}
 
-	mFileData = std::move(::readFileData(gamePath, error));
-	if (error) {
-		blog.newEntry(BLOG::WARN, "Path is ineligible: {}", error.message());
+	auto fileData{ ::readFileData(gamePath) };
+	if (!fileData) {
+		blog.newEntry(BLOG::WARN, "Path is ineligible: \"{}\" [{}]",
+			gamePath.string(), fileExists.error().message());
 		return false;
 	}
+
+	mFileData = std::move(fileData.value());
 
 	const auto tempSHA1{ SHA1::from_data(mFileData) };
 	blog.newEntry(BLOG::INFO, "SHA1: {}", tempSHA1);

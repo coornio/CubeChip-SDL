@@ -233,50 +233,52 @@ void Chip8_CoreInterface::triggerCritError(const Str& msg) noexcept {
 
 bool Chip8_CoreInterface::setPermaRegs(const u32 X) noexcept {
 	const auto path{ *sPermaRegsPath / HDM->getFileSHA1() };
-	std::error_code error_code;
 
-	const bool fileExists{ doesFileExist(path, error_code) };
-	if (error_code) {
+	const auto fileExists{ fs::is_regular_file(path) };
+	if (!fileExists) {
 		blog.newEntry(BLOG::ERROR, "Path is ineligible: \"{}\" [{}]",
-			path.string(), error_code.message()
+			path.string(), fileExists.error().message()
 		);
 		return false;
 	}
 
-	if (fileExists) {
-		auto regsData{ readFileData(path, error_code) };
+	if (fileExists.value()) {
+		auto regsData{ readFileData(path) };
 
-		if (error_code) {
+		if (!regsData) {
 			blog.newEntry(BLOG::ERROR, "File IO error: \"{}\" [{}]",
-				path.string(), error_code.message()
+				path.string(), regsData.error().message()
 			);
 			return false;
 		}
-		if (regsData.size() > mRegisterV.size()) {
+		if (regsData.value().size() > mRegisterV.size()) {
 			blog.newEntry(BLOG::ERROR, "File is too large: \"{}\" [{} bytes]",
-				path.string(), regsData.size()
+				path.string(), regsData.value().size()
 			);
 			return false;
 		}
 
-		regsData.resize(mRegisterV.size());
-		std::copy_n(mRegisterV.begin(), X, regsData.begin());
+		regsData.value().resize(mRegisterV.size());
+		std::copy_n(mRegisterV.begin(), X, regsData.value().begin());
 
-		if (!writeFileData(path, regsData, error_code)) {
+		auto fileWritten{ writeFileData(path, regsData.value()) };
+		if (!fileWritten) {
 			blog.newEntry(BLOG::ERROR, "File IO error: \"{}\" [{}]",
-				path.string(), error_code.message()
+				path.string(), fileWritten.error().message()
 			);
 			return false;
 		} else {
 			return true;
 		}
 	} else {
+		std::error_code error_code;
 		char regsData[sizeof(mRegisterV)]{};
 		std::copy_n(mRegisterV.begin(), X, regsData);
 
-		if (!writeFileData(path, regsData, error_code)) {
+		auto fileWritten{ writeFileData(path, regsData) };
+		if (!fileWritten) {
 			blog.newEntry(BLOG::ERROR, "File IO error: \"{}\" [{}]",
-				path.string(), error_code.message()
+				path.string(), fileWritten.error().message()
 			);
 			return false;
 		} else {
@@ -287,34 +289,33 @@ bool Chip8_CoreInterface::setPermaRegs(const u32 X) noexcept {
 
 bool Chip8_CoreInterface::getPermaRegs(const u32 X) noexcept {
 	const auto path{ *sPermaRegsPath / HDM->getFileSHA1() };
-	std::error_code error_code;
 
-	const bool fileExists{ doesFileExist(path, error_code) };
-	if (error_code) {
+	const auto fileExists{ fs::is_regular_file(path) };
+	if (!fileExists) {
 		blog.newEntry(BLOG::ERROR, "Path is ineligible: \"{}\" [{}]",
-			path.string(), error_code.message()
+			path.string(), fileExists.error().message()
 		);
 		return false;
 	}
 
 	if (fileExists) {
-		auto regsData{ readFileData(path, error_code) };
+		auto regsData{ readFileData(path) };
 
-		if (error_code) {
+		if (!regsData) {
 			blog.newEntry(BLOG::ERROR, "File IO error: \"{}\" [{}]",
-				path.string(), error_code.message()
+				path.string(), regsData.error().message()
 			);
 			return false;
 		}
-		if (regsData.size() > mRegisterV.size()) {
+		if (regsData.value().size() > mRegisterV.size()) {
 			blog.newEntry(BLOG::ERROR, "File is too large: \"{}\" [{} bytes]",
-				path.string(), regsData.size()
+				path.string(), regsData.value().size()
 			);
 			return false;
 		}
 
-		regsData.resize(mRegisterV.size());
-		std::copy_n(regsData.begin(), X, mRegisterV.begin());
+		regsData.value().resize(mRegisterV.size());
+		std::copy_n(regsData.value().begin(), X, mRegisterV.begin());
 		return true;
 	} else {
 		std::fill_n(mRegisterV.begin(), X, u8{});

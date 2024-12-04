@@ -9,28 +9,39 @@
 #include <fstream>
 
 #include "BasicLogger.hpp"
+#include "SimpleFileIO.hpp"
 
 /*==================================================================*/
 	#pragma region BasicLogger Singleton Class
 
 bool BasicLogger::initLogFile(const Str& filename, const Path& directory) noexcept {
 	if (filename.empty() || directory.empty()) {
-		std::cerr << ":: ERROR :: " << "Log file name/path is invalid!" << std::endl;
-		return true;
+		newEntry(BLOG::ERROR, "Log file name/path cannot be blank!");
+		return false;
 	}
 
 	const auto newPath{ directory / filename.c_str()};
-	std::error_code error;
 
-	if (std::filesystem::exists(newPath, error)) {
-		if (!std::filesystem::remove_all(newPath, error) || error) {
-			std::cerr << ":: ERROR :: " << "Unable to remove previous log file!" << std::endl;
-			return true;
-		}
+	const auto fileExists{ fs::is_regular_file(newPath) };
+	if (!fileExists) {
+		newEntry(BLOG::ERROR,
+			"Unable to ascertain if path to Log file is valid: \"{}\" [{}]",
+			newPath.string(), fileExists.error().message()
+		);
+		return false;
+	}
+
+	const auto fileDelete{ fs::remove_all(newPath) };
+	if (!fileDelete) {
+		newEntry(BLOG::ERROR,
+			"Unable to remove previous Log file: \"{}\" [{}]",
+			newPath.string(), fileDelete.error().message()
+		);
+		return false;
 	}
 
 	mLogPath.assign(newPath);
-	return false;
+	return true;
 }
 
 /*==================================================================*/
@@ -60,13 +71,14 @@ void BasicLogger::writeEntry(const BLOG type, const Str& message) noexcept {
 
 	if (!mLogPath.empty()) {
 		std::ofstream logFile(mLogPath, std::ios::app);
-		if (!logFile) {
+		if (logFile) {
+			logFile << output.str() << std::endl;
+			
+		} else {
 			std::cerr << getSeverity(BLOG::ERROR)
 				<< "Unable to open log file: " << mLogPath << std::endl;
 			mLogPath.clear();
 			return;
-		} else {
-			logFile << output.str() << std::endl;
 		}
 	} else {
 		std::cout << output.str() << std::endl;

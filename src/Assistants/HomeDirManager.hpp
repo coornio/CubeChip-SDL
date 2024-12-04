@@ -9,6 +9,7 @@
 #include <span>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 #include "Typedefs.hpp"
 
