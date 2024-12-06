@@ -19,12 +19,14 @@
 Chip8_CoreInterface::Chip8_CoreInterface() noexcept
 	: ASB{ std::make_unique<AudioSpecBlock>(SDL_AUDIO_S8, 1, 48'000, STREAM::COUNT) }
 {
-	sSavestatePath = HDM->addSystemDir("savestate", "CHIP8");
-	if (sSavestatePath) { *sSavestatePath /= HDM->getFileSHA1(); }
-	sPermaRegsPath = HDM->addSystemDir("permaRegs", "CHIP8");
-	if (sPermaRegsPath) { *sPermaRegsPath /= HDM->getFileSHA1(); }
-
-	if (!checkFileValidity(sPermaRegsPath)) { sPermaRegsPath = nullptr; }
+	if ((sSavestatePath = HDM->addSystemDir("savestate", "CHIP8"))) {
+		*sSavestatePath /= HDM->getFileSHA1();
+		if (!checkFileValidity(*sSavestatePath)) { sSavestatePath = nullptr; }
+	}
+	if ((sPermaRegsPath = HDM->addSystemDir("permaRegs", "CHIP8"))) {
+		*sPermaRegsPath /= HDM->getFileSHA1();
+		if (!checkFileValidity(*sPermaRegsPath)) { sPermaRegsPath = nullptr; }
+	}
 
 	ASB->resumeStreams();
 	loadPresetBinds();
@@ -228,32 +230,32 @@ void Chip8_CoreInterface::triggerInterrupt(const Interrupt type) noexcept {
 
 /*==================================================================*/
 
-bool Chip8_CoreInterface::checkFileValidity(const Path* filePath) noexcept {
-	if (!filePath) { return false; }
+bool Chip8_CoreInterface::checkFileValidity(const Path& filePath) noexcept {
+	if (filePath.empty()) { return false; }
 
-	const auto fileExists{ fs::exists(*filePath) };
+	const auto fileExists{ fs::exists(filePath) };
 	if (!fileExists) {
 		blog.newEntry(BLOG::ERROR, "\"{}\" [{}]",
-			filePath->string(), fileExists.error().message()
+			filePath.string(), fileExists.error().message()
 		);
 		return false;
 	}
 
 	if (fileExists.value()) {
-		const auto fileNormal{ fs::is_regular_file(*filePath) };
+		const auto fileNormal{ fs::is_regular_file(filePath) };
 		if (!fileNormal) {
 			blog.newEntry(BLOG::ERROR, "\"{}\" [{}]",
-				filePath->string(), fileExists.error().message()
+				filePath.string(), fileNormal.error().message()
 			);
 			return false;
 		}
 
 		if (fileNormal.value()) { return true; }
 		else {
-			const auto fileRemove{ fs::remove(*filePath) };
+			const auto fileRemove{ fs::remove(filePath) };
 			if (!fileRemove) {
 				blog.newEntry(BLOG::ERROR, "\"{}\" [{}]",
-					filePath->string(), fileExists.error().message()
+					filePath.string(), fileRemove.error().message()
 				);
 				return false;
 			}
@@ -261,18 +263,18 @@ bool Chip8_CoreInterface::checkFileValidity(const Path* filePath) noexcept {
 			if (fileRemove.value()) { return true; }
 			else {
 				blog.newEntry(BLOG::WARN, "{}: \"{}\"",
-					"Cannot remove irregular file", filePath->string()
+					"Cannot remove irregular file", filePath.string()
 				);
 				return false;
 			}
 		}
 	} else {
 		const char blankRegs[sPermRegsV.size()]{};
-		const auto fileWritten{ writeFileData(*filePath, blankRegs) };
+		const auto fileWritten{ ::writeFileData(filePath, blankRegs) };
 		if (fileWritten) { return true; }
 		else {
 			blog.newEntry(BLOG::WARN, "{}: \"{}\"",
-				"Cannot write new file", filePath->string()
+				"Cannot write new file", filePath.string()
 			);
 			return false;
 		}
@@ -280,7 +282,7 @@ bool Chip8_CoreInterface::checkFileValidity(const Path* filePath) noexcept {
 }
 
 void Chip8_CoreInterface::setFilePermaRegs(const u32 X) noexcept {
-	auto fileData{ writeFileData(*sPermaRegsPath, mRegisterV, X) };
+	auto fileData{ ::writeFileData(*sPermaRegsPath, mRegisterV, X) };
 	if (!fileData) {
 		blog.newEntry(BLOG::ERROR, "File IO error: \"{}\" [{}]",
 			sPermaRegsPath->string(), fileData.error().message()
@@ -289,7 +291,7 @@ void Chip8_CoreInterface::setFilePermaRegs(const u32 X) noexcept {
 }
 
 void Chip8_CoreInterface::getFilePermaRegs(const u32 X) noexcept {
-	auto fileData{ readFileData(*sPermaRegsPath, X) };
+	auto fileData{ ::readFileData(*sPermaRegsPath, X) };
 	if (!fileData) {
 		blog.newEntry(BLOG::ERROR, "File IO error: \"{}\" [{}]",
 			sPermaRegsPath->string(), fileData.error().message()
@@ -301,7 +303,7 @@ void Chip8_CoreInterface::getFilePermaRegs(const u32 X) noexcept {
 
 void Chip8_CoreInterface::setPermaRegs(const u32 X) noexcept {
 	if (sPermaRegsPath) {
-		if (checkFileValidity(sPermaRegsPath)) { setFilePermaRegs(X); }
+		if (checkFileValidity(*sPermaRegsPath)) { setFilePermaRegs(X); }
 		else { sPermaRegsPath = nullptr; }
 	}
 	std::copy_n(mRegisterV.begin(), X, sPermRegsV.begin());
@@ -309,7 +311,7 @@ void Chip8_CoreInterface::setPermaRegs(const u32 X) noexcept {
 
 void Chip8_CoreInterface::getPermaRegs(const u32 X) noexcept {
 	if (sPermaRegsPath) {
-		if (checkFileValidity(sPermaRegsPath)) { getFilePermaRegs(X); }
+		if (checkFileValidity(*sPermaRegsPath)) { getFilePermaRegs(X); }
 		else { sPermaRegsPath = nullptr; }
 	}
 	std::copy_n(sPermRegsV.begin(), X, mRegisterV.begin());

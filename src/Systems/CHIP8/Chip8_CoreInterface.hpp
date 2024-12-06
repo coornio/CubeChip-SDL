@@ -171,7 +171,7 @@ protected:
 	void triggerInterrupt(const Interrupt type) noexcept;
 
 private:
-	bool checkFileValidity(const Path* filePath) noexcept;
+	bool checkFileValidity(const Path& filePath) noexcept;
 	void setFilePermaRegs(const u32 X) noexcept;
 	void getFilePermaRegs(const u32 X) noexcept;
 

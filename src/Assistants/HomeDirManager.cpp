@@ -64,7 +64,7 @@ void HomeDirManager::clearCachedFileData() noexcept {
 	mFileData.resize(0);
 }
 
-bool HomeDirManager::validateGameFile(const Path gamePath) noexcept {
+bool HomeDirManager::validateGameFile(const Path& gamePath) noexcept {
 
 	const auto fileExists{ fs::is_regular_file(gamePath) };
 	if (!fileExists || !fileExists.value()) {
@@ -91,14 +91,14 @@ bool HomeDirManager::validateGameFile(const Path gamePath) noexcept {
 	auto fileData{ ::readFileData(gamePath) };
 	if (!fileData) {
 		blog.newEntry(BLOG::WARN, "Path is ineligible: \"{}\" [{}]",
-			gamePath.string(), fileExists.error().message());
+			gamePath.string(), fileData.error().message());
 		return false;
+	} else {
+		mFileData = std::move(fileData.value());
 	}
 
-	mFileData = std::move(fileData.value());
-
 	const auto tempSHA1{ SHA1::from_data(mFileData) };
-	blog.newEntry(BLOG::INFO, "SHA1: {}", tempSHA1);
+	blog.newEntry(BLOG::INFO, "File SHA1: {}", tempSHA1);
 
 	if (checkGame(
 		std::data(mFileData), std::size(mFileData),

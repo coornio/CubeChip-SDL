@@ -68,7 +68,7 @@ public:
 	void setValidator(GameValidator func) noexcept { checkGame = func; }
 
 	void clearCachedFileData() noexcept;
-	bool validateGameFile(const Path) noexcept;
+	bool validateGameFile(const Path& gamePath) noexcept;
 };
 
 	#pragma endregion

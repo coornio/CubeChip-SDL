@@ -73,12 +73,8 @@ void BasicLogger::writeEntry(const BLOG type, const Str& message) noexcept {
 		std::ofstream logFile(mLogPath, std::ios::app);
 		if (logFile) {
 			logFile << output.str() << std::endl;
-			
 		} else {
-			std::cerr << getSeverity(BLOG::ERROR)
-				<< "Unable to open log file: " << mLogPath << std::endl;
-			mLogPath.clear();
-			return;
+			newEntry(BLOG::ERROR, "Unable to write to Log file: \"{}\"", std::move(mLogPath).string());
 		}
 	} else {
 		std::cout << output.str() << std::endl;
