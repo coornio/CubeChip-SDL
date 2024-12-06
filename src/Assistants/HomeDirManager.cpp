@@ -16,16 +16,13 @@
 /*==================================================================*/
 	#pragma region HomeDirManager Class
 
-HomeDirManager::HomeDirManager(const char* const org, const char* const app) noexcept {
-	mSuccessful = getHomePath(org, app);
-	if (!mSuccessful) {
-		SDL_ShowSimpleMessageBox(
-			SDL_MESSAGEBOX_ERROR, "Filesystem Error",
-			"Unable to get home directory!", nullptr
-		);
-	} else {
-		blog.initLogFile("program.log", getHomePath());
-	}
+HomeDirManager::HomeDirManager(const char* homePath) noexcept {
+	if (homePath) { blog.initLogFile("program.log", homePath); }
+}
+
+HomeDirManager* HomeDirManager::create(const char* const org, const char* const app) noexcept {
+	static HomeDirManager self(getHomePath(org, app));
+	return getHomePath() ? &self : nullptr;
 }
 
 Path* HomeDirManager::addSystemDir(const Path& sub, const Path& sys) noexcept {
@@ -33,29 +30,24 @@ Path* HomeDirManager::addSystemDir(const Path& sub, const Path& sys) noexcept {
 	
 	const Path newDirPath{ getHomePath() / sys / sub };
 
-	auto it = std::find_if(
+	const auto it{ std::find_if(
 		std::begin(mDirectories), std::end(mDirectories),
 		[&newDirPath](const Path& dirEntry) {
 			return dirEntry == newDirPath;
 		}
-	);
+	) };
 
-	if (it != mDirectories.end()) { return &(*it); }
+	if (it != std::end(mDirectories)) { return &(*it); }
 
-	std::error_code error;
-
-	std::filesystem::create_directories(newDirPath, error);
-	if (!std::filesystem::exists(newDirPath, error) || error) {
-		mSuccessful = false;
-		SDL_ShowSimpleMessageBox(
-			SDL_MESSAGEBOX_ERROR, "Filesystem Error",
-			(newDirPath.string() + "\nUnable to create subdirectories!").c_str(), nullptr
-		);
+	const auto dirCreated{ fs::create_directories(newDirPath) };
+	if (!dirCreated) {
+		blog.newEntry(BLOG::ERROR, "Unable to create directory: \"{}\" [{}]",
+			newDirPath.string(), dirCreated.error().message());
 		return nullptr;
+	} else {
+		mDirectories.push_back(newDirPath);
+		return &mDirectories.back();
 	}
-
-	mDirectories.push_back(newDirPath);
-	return &mDirectories.back();
 }
 
 void HomeDirManager::clearCachedFileData() noexcept {
@@ -65,11 +57,15 @@ void HomeDirManager::clearCachedFileData() noexcept {
 }
 
 bool HomeDirManager::validateGameFile(const Path& gamePath) noexcept {
-
 	const auto fileExists{ fs::is_regular_file(gamePath) };
-	if (!fileExists || !fileExists.value()) {
+	if (!fileExists) {
 		blog.newEntry(BLOG::WARN, "Path is ineligible: \"{}\" [{}]",
 			gamePath.string(), fileExists.error().message());
+		return false;
+	}
+	if (!fileExists.value()) {
+		blog.newEntry(BLOG::WARN, "{}: \"{}\"",
+			"Path is not a regular file", gamePath.string());
 		return false;
 	}
 
@@ -80,11 +76,11 @@ bool HomeDirManager::validateGameFile(const Path& gamePath) noexcept {
 		return false;
 	}
 	if (fileSize.value() == 0) {
-		blog.newEntry(BLOG::WARN, "Game file must not be empty!");
+		blog.newEntry(BLOG::WARN, "File must not be empty!");
 		return false;
 	}
 	if (fileSize.value() >= ::CalcBytes(32, MiB)) {
-		blog.newEntry(BLOG::WARN, "Game file is too large!");
+		blog.newEntry(BLOG::WARN, "File is too large!");
 		return false;
 	}
 

@@ -9,19 +9,11 @@
 #include <vector>
 #include <fstream>
 #include <utility>
-#include <expected>
-#include <filesystem>
 
 #include "Typedefs.hpp"
 #include "Concepts.hpp"
 
 /*==================================================================*/
-
-/* factory for std::expected type, <E> should be able to override as a boolean. */
-template<typename T, typename E>
-std::expected<T, E> make_expected(T&& value, E&& error) {
-	if (error) { return std::unexpected(error); } else { return (value); }
-}
 
 namespace fs {
 	/* Get last modification date of file at the designated path, if any. */
@@ -29,7 +21,7 @@ namespace fs {
 	inline auto last_write_time(const Path& filePath) noexcept {
 		std::error_code error;
 		auto value{ std::filesystem::last_write_time(filePath, error) };
-		return make_expected(std::move(value), std::move(error));
+		return makeExpected(std::move(value), std::move(error));
 	}
 
 	/* Get size of file at the designated path, if any. */
@@ -37,7 +29,7 @@ namespace fs {
 	inline auto file_size(const Path& filePath) noexcept {
 		std::error_code error;
 		auto value{ std::filesystem::file_size(filePath, error) };
-		return make_expected(std::move(value), std::move(error));
+		return makeExpected(std::move(value), std::move(error));
 	}
 
 	/*==================================================================*/
@@ -47,7 +39,7 @@ namespace fs {
 	inline auto remove(const Path& filePath) noexcept {
 		std::error_code error;
 		auto value{ std::filesystem::remove(filePath, error) };
-		return make_expected(std::move(value), std::move(error));
+		return makeExpected(std::move(value), std::move(error));
 	}
 
 	/* Removes all files/folders at the designated path, if any. */
@@ -55,21 +47,21 @@ namespace fs {
 	inline auto remove_all(const Path& filePath) noexcept {
 		std::error_code error;
 		auto value{ std::filesystem::remove_all(filePath, error) };
-		return make_expected(std::move(value), std::move(error));
+		return makeExpected(std::move(value), std::move(error));
 	}
 
 	[[maybe_unused]]
 	inline auto create_directory(const Path& filePath) noexcept {
 		std::error_code error;
 		auto value{ std::filesystem::create_directory(filePath, error) };
-		return make_expected(std::move(value), std::move(error));
+		return makeExpected(std::move(value), std::move(error));
 	}
 
 	[[maybe_unused]]
 	inline auto create_directory(const Path& filePath1, const Path& filePath2) noexcept {
 		std::error_code error;
 		auto value{ std::filesystem::create_directory(filePath1, filePath2, error) };
-		return make_expected(std::move(value), std::move(error));
+		return makeExpected(std::move(value), std::move(error));
 	}
 
 	/* Create all required directories up to the designated path. */
@@ -77,7 +69,7 @@ namespace fs {
 	inline auto create_directories(const Path& filePath) noexcept {
 		std::error_code error;
 		auto value{ std::filesystem::create_directories(filePath, error) };
-		return make_expected(std::move(value), std::move(error));
+		return makeExpected(std::move(value), std::move(error));
 	}
 
 	/* Check if the designated path leads to an existing location. */
@@ -85,7 +77,7 @@ namespace fs {
 	inline auto exists(const Path& filePath) noexcept {
 		std::error_code error;
 		auto value{ std::filesystem::exists(filePath, error) };
-		return make_expected(std::move(value), std::move(error));
+		return makeExpected(std::move(value), std::move(error));
 	}
 
 	/* Check if the designated path leads to an existing, regular file. */
@@ -93,7 +85,7 @@ namespace fs {
 	inline auto is_regular_file(const Path& filePath) noexcept {
 		std::error_code error;
 		auto value{ std::filesystem::is_regular_file(filePath, error) };
-		return make_expected(std::move(value), std::move(error));
+		return makeExpected(std::move(value), std::move(error));
 	}
 }
 

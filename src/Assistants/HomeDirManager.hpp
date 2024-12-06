@@ -7,7 +7,6 @@
 #pragma once
 
 #include <span>
-#include <string>
 #include <vector>
 #include <algorithm>
 
@@ -17,7 +16,7 @@
 	#pragma region HomeDirManager Singleton Class
 
 class HomeDirManager final {
-	HomeDirManager(const char* const org, const char* const app) noexcept;
+	HomeDirManager(const char* homePath) noexcept;
 	~HomeDirManager() noexcept = default;
 	HomeDirManager(const HomeDirManager&) = delete;
 	HomeDirManager& operator=(const HomeDirManager&) = delete;
@@ -43,10 +42,7 @@ class HomeDirManager final {
 	static inline bool mSuccessful{ true };
 
 public:
-	static auto* create(const char* const org, const char* const app) noexcept {
-		static HomeDirManager self(org, app);
-		return mSuccessful ? &self : nullptr;
-	}
+	static HomeDirManager* create(const char* const org, const char* const app) noexcept;
 
 	static bool isSuccessful() noexcept { return mSuccessful; }
 

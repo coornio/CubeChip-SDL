@@ -26,8 +26,7 @@ bool BasicLogger::initLogFile(const Str& filename, const Path& directory) noexce
 	if (!fileExists) {
 		newEntry(BLOG::ERROR,
 			"Unable to ascertain if path to Log file is valid: \"{}\" [{}]",
-			newPath.string(), fileExists.error().message()
-		);
+			newPath.string(), fileExists.error().message());
 		return false;
 	}
 
@@ -35,8 +34,7 @@ bool BasicLogger::initLogFile(const Str& filename, const Path& directory) noexce
 	if (!fileDelete) {
 		newEntry(BLOG::ERROR,
 			"Unable to remove previous Log file: \"{}\" [{}]",
-			newPath.string(), fileDelete.error().message()
-		);
+			newPath.string(), fileDelete.error().message());
 		return false;
 	}
 
@@ -74,7 +72,8 @@ void BasicLogger::writeEntry(const BLOG type, const Str& message) noexcept {
 		if (logFile) {
 			logFile << output.str() << std::endl;
 		} else {
-			newEntry(BLOG::ERROR, "Unable to write to Log file: \"{}\"", std::move(mLogPath).string());
+			newEntry(BLOG::ERROR, "Unable to write to Log file: \"{}\"",
+				std::move(mLogPath).string());
 		}
 	} else {
 		std::cout << output.str() << std::endl;

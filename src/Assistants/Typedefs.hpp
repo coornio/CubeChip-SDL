@@ -10,6 +10,7 @@
 #include <string>
 #include <cstdint>
 #include <cstddef>
+#include <expected>
 #include <filesystem>
 #include <string_view>
 
@@ -48,4 +49,13 @@ inline constexpr u32 GiB{ 1024 * MiB };
 
 inline constexpr u32 CalcBytes(const u32 value, const u32 unit) noexcept {
 	return value * unit;
+}
+
+template <typename T, typename E>
+using Expected = std::expected<T, E>;
+
+// factory for Expected<T, E> type, <E> should be able to override as a boolean.
+template<typename T, typename E>
+Expected<T, E> makeExpected(T&& value, E&& error) {
+	if (error) { return std::unexpected(error); } else { return (value); }
 }
