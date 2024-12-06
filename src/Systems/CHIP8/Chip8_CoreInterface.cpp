@@ -20,9 +20,11 @@ Chip8_CoreInterface::Chip8_CoreInterface() noexcept
 	: ASB{ std::make_unique<AudioSpecBlock>(SDL_AUDIO_S8, 1, 48'000, STREAM::COUNT) }
 {
 	sSavestatePath = HDM->addSystemDir("savestate", "CHIP8");
-	if (!sSavestatePath) { setCoreState(EmuState::FATAL); }
+	if (sSavestatePath) { *sSavestatePath /= HDM->getFileSHA1(); }
 	sPermaRegsPath = HDM->addSystemDir("permaRegs", "CHIP8");
-	if (!sPermaRegsPath) { setCoreState(EmuState::FATAL); }
+	if (sPermaRegsPath) { *sPermaRegsPath /= HDM->getFileSHA1(); }
+
+	if (!checkFileValidity(sPermaRegsPath)) { sPermaRegsPath = nullptr; }
 
 	ASB->resumeStreams();
 	loadPresetBinds();
@@ -224,103 +226,93 @@ void Chip8_CoreInterface::triggerInterrupt(const Interrupt type) noexcept {
 	mActiveCPF = -std::abs(mActiveCPF);
 }
 
-void Chip8_CoreInterface::triggerCritError(const Str& msg) noexcept {
-	blog.newEntry(BLOG::WARN, msg);
-	triggerInterrupt(Interrupt::ERROR);
-}
-
 /*==================================================================*/
 
-bool Chip8_CoreInterface::setPermaRegs(const u32 X) noexcept {
-	const auto path{ *sPermaRegsPath / HDM->getFileSHA1() };
+bool Chip8_CoreInterface::checkFileValidity(const Path* filePath) noexcept {
+	if (!filePath) { return false; }
 
-	const auto fileExists{ fs::is_regular_file(path) };
+	const auto fileExists{ fs::exists(*filePath) };
 	if (!fileExists) {
-		blog.newEntry(BLOG::ERROR, "Path is ineligible: \"{}\" [{}]",
-			path.string(), fileExists.error().message()
+		blog.newEntry(BLOG::ERROR, "\"{}\" [{}]",
+			filePath->string(), fileExists.error().message()
 		);
 		return false;
 	}
 
 	if (fileExists.value()) {
-		auto regsData{ readFileData(path) };
-
-		if (!regsData) {
-			blog.newEntry(BLOG::ERROR, "File IO error: \"{}\" [{}]",
-				path.string(), regsData.error().message()
-			);
-			return false;
-		}
-		if (regsData.value().size() > mRegisterV.size()) {
-			blog.newEntry(BLOG::ERROR, "File is too large: \"{}\" [{} bytes]",
-				path.string(), regsData.value().size()
+		const auto fileNormal{ fs::is_regular_file(*filePath) };
+		if (!fileNormal) {
+			blog.newEntry(BLOG::ERROR, "\"{}\" [{}]",
+				filePath->string(), fileExists.error().message()
 			);
 			return false;
 		}
 
-		regsData.value().resize(mRegisterV.size());
-		std::copy_n(mRegisterV.begin(), X, regsData.value().begin());
+		if (fileNormal.value()) { return true; }
+		else {
+			const auto fileRemove{ fs::remove(*filePath) };
+			if (!fileRemove) {
+				blog.newEntry(BLOG::ERROR, "\"{}\" [{}]",
+					filePath->string(), fileExists.error().message()
+				);
+				return false;
+			}
 
-		auto fileWritten{ writeFileData(path, regsData.value()) };
-		if (!fileWritten) {
-			blog.newEntry(BLOG::ERROR, "File IO error: \"{}\" [{}]",
-				path.string(), fileWritten.error().message()
-			);
-			return false;
-		} else {
-			return true;
+			if (fileRemove.value()) { return true; }
+			else {
+				blog.newEntry(BLOG::WARN, "{}: \"{}\"",
+					"Cannot remove irregular file", filePath->string()
+				);
+				return false;
+			}
 		}
 	} else {
-		std::error_code error_code;
-		char regsData[sizeof(mRegisterV)]{};
-		std::copy_n(mRegisterV.begin(), X, regsData);
-
-		auto fileWritten{ writeFileData(path, regsData) };
-		if (!fileWritten) {
-			blog.newEntry(BLOG::ERROR, "File IO error: \"{}\" [{}]",
-				path.string(), fileWritten.error().message()
+		const char blankRegs[sPermRegsV.size()]{};
+		const auto fileWritten{ writeFileData(*filePath, blankRegs) };
+		if (fileWritten) { return true; }
+		else {
+			blog.newEntry(BLOG::WARN, "{}: \"{}\"",
+				"Cannot write new file", filePath->string()
 			);
 			return false;
-		} else {
-			return true;
 		}
 	}
 }
 
-bool Chip8_CoreInterface::getPermaRegs(const u32 X) noexcept {
-	const auto path{ *sPermaRegsPath / HDM->getFileSHA1() };
-
-	const auto fileExists{ fs::is_regular_file(path) };
-	if (!fileExists) {
-		blog.newEntry(BLOG::ERROR, "Path is ineligible: \"{}\" [{}]",
-			path.string(), fileExists.error().message()
+void Chip8_CoreInterface::setFilePermaRegs(const u32 X) noexcept {
+	auto fileData{ writeFileData(*sPermaRegsPath, mRegisterV, X) };
+	if (!fileData) {
+		blog.newEntry(BLOG::ERROR, "File IO error: \"{}\" [{}]",
+			sPermaRegsPath->string(), fileData.error().message()
 		);
-		return false;
 	}
+}
 
-	if (fileExists) {
-		auto regsData{ readFileData(path) };
-
-		if (!regsData) {
-			blog.newEntry(BLOG::ERROR, "File IO error: \"{}\" [{}]",
-				path.string(), regsData.error().message()
-			);
-			return false;
-		}
-		if (regsData.value().size() > mRegisterV.size()) {
-			blog.newEntry(BLOG::ERROR, "File is too large: \"{}\" [{} bytes]",
-				path.string(), regsData.value().size()
-			);
-			return false;
-		}
-
-		regsData.value().resize(mRegisterV.size());
-		std::copy_n(regsData.value().begin(), X, mRegisterV.begin());
-		return true;
+void Chip8_CoreInterface::getFilePermaRegs(const u32 X) noexcept {
+	auto fileData{ readFileData(*sPermaRegsPath, X) };
+	if (!fileData) {
+		blog.newEntry(BLOG::ERROR, "File IO error: \"{}\" [{}]",
+			sPermaRegsPath->string(), fileData.error().message()
+		);
 	} else {
-		std::fill_n(mRegisterV.begin(), X, u8{});
-		return true;
+		std::copy_n(fileData.value().begin(), X, sPermRegsV.begin());
 	}
+}
+
+void Chip8_CoreInterface::setPermaRegs(const u32 X) noexcept {
+	if (sPermaRegsPath) {
+		if (checkFileValidity(sPermaRegsPath)) { setFilePermaRegs(X); }
+		else { sPermaRegsPath = nullptr; }
+	}
+	std::copy_n(mRegisterV.begin(), X, sPermRegsV.begin());
+}
+
+void Chip8_CoreInterface::getPermaRegs(const u32 X) noexcept {
+	if (sPermaRegsPath) {
+		if (checkFileValidity(sPermaRegsPath)) { getFilePermaRegs(X); }
+		else { sPermaRegsPath = nullptr; }
+	}
+	std::copy_n(sPermRegsV.begin(), X, mRegisterV.begin());
 }
 
 /*==================================================================*/

@@ -642,12 +642,10 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 			{ mRegisterI = mRegisterI + N & 0xFFF; }
 	}
 	void SCHIP_LEGACY::instruction_FN75(const s32 N) noexcept {
-		if (!setPermaRegs(std::min(N, 7) + 1)) [[unlikely]]
-			{ triggerCritError("Error :: Failed writing persistent registers!"); }
+		setPermaRegs(std::min(N, 7) + 1);
 	}
 	void SCHIP_LEGACY::instruction_FN85(const s32 N) noexcept {
-		if (!getPermaRegs(std::min(N, 7) + 1)) [[unlikely]]
-			{ triggerCritError("Error :: Failed reading persistent registers!"); }
+		getPermaRegs(std::min(N, 7) + 1);
 	}
 
 	#pragma endregion

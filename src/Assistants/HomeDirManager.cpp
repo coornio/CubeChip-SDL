@@ -102,8 +102,8 @@ bool HomeDirManager::validateGameFile(const Path gamePath) noexcept {
 
 	if (checkGame(
 		std::data(mFileData), std::size(mFileData),
-		gamePath.extension().string(), tempSHA1)
-	) {
+		gamePath.extension().string(), tempSHA1
+	)) {
 		mFilePath = gamePath;
 		mFileSHA1 = tempSHA1;
 		return true;

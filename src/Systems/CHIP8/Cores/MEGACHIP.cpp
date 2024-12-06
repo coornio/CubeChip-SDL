@@ -1036,12 +1036,10 @@ void MEGACHIP::scrollBuffersRT() {
 			{ mRegisterV[idx] = readMemoryI(idx); }
 	}
 	void MEGACHIP::instruction_FN75(const s32 N) noexcept {
-		if (!setPermaRegs(std::min(N, 7) + 1)) [[unlikely]]
-			{ triggerCritError("Error :: Failed writing persistent registers!"); }
+		setPermaRegs(std::min(N, 7) + 1);
 	}
 	void MEGACHIP::instruction_FN85(const s32 N) noexcept {
-		if (!getPermaRegs(std::min(N, 7) + 1)) [[unlikely]]
-			{ triggerCritError("Error :: Failed reading persistent registers!"); }
+		getPermaRegs(std::min(N, 7) + 1);
 	}
 
 	#pragma endregion

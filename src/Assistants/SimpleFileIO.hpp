@@ -100,81 +100,88 @@ namespace fs {
 /*==================================================================*/
 
 [[maybe_unused]]
-inline auto readFileData(const Path& filePath) noexcept
--> std::expected<std::vector<char>, std::error_code>
-{
-	std::vector<char> fileData{};
-
-	// get file's last write time stamp before we begin
-	auto fileModStampBegin{ fs::last_write_time(filePath) };
-	if (!fileModStampBegin) {
-		return std::unexpected(std::move(fileModStampBegin.error()));
-	}
-
-	std::ifstream ifs(filePath, std::ios::binary);
-
-	// check if the stream was unable to access the file
-	if (!ifs) {
-		return std::unexpected(std::make_error_code(std::errc::permission_denied));
-	}
-
-	// ensure we could copy all the data into the vector
+inline auto readFileData(
+	const Path& filePath, const usz dataReadSize = 0,
+	const std::streamoff dataReadOffset = 0
+) noexcept -> std::expected<std::vector<char>, std::error_code> {
 	try {
-		fileData.assign(std::istreambuf_iterator(ifs), {});
-	} catch (const std::exception&) {
-		return std::unexpected(std::make_error_code(std::errc::not_enough_memory));
-	}
+		std::vector<char> fileData{};
 
-	// check if we failed in reading the file properly
-	if (!ifs.good()) {
+		auto fileModStampBegin{ fs::last_write_time(filePath) };
+		if (!fileModStampBegin) { return std::unexpected(std::move(fileModStampBegin.error())); }
+
+		std::ifstream inFile(filePath, std::ios::binary);
+		if (!inFile) { return std::unexpected(std::make_error_code(std::errc::permission_denied)); }
+
+		inFile.seekg(static_cast<std::streampos>(dataReadOffset));
+		if (!inFile) { return std::unexpected(std::make_error_code(std::errc::invalid_argument)); }
+		
+		if (dataReadSize) {
+			fileData.resize(dataReadSize);
+			inFile.read(fileData.data(), dataReadSize);
+		} else {
+			try {
+				fileData.assign(std::istreambuf_iterator<char>(inFile), {});
+			} catch (const std::exception&) {
+				return std::unexpected(std::make_error_code(std::errc::not_enough_memory));
+			}
+		}
+
+		if (!inFile.good()) { throw std::exception{}; }
+
+		auto fileModStampEnd{ fs::last_write_time(filePath) };
+		if (!fileModStampEnd) { return std::unexpected(std::move(fileModStampEnd.error())); }
+
+		if (fileModStampBegin.value() != fileModStampEnd.value()) {
+			return std::unexpected(std::make_error_code(std::errc::interrupted));
+		} else { return fileData; }
+	}
+	catch (const std::exception&) {
 		return std::unexpected(std::make_error_code(std::errc::io_error));
 	}
-
-	// get file's last write time stamp after our read ended
-	const auto fileModStampEnd{ fs::last_write_time(filePath) };
-	if (!fileModStampEnd) {
-		return std::unexpected(std::move(fileModStampEnd.error()));
-	}
-
-	// check if both timestamps are still the same
-	if (fileModStampBegin.value() != fileModStampEnd.value()) {
-		return std::unexpected(std::make_error_code(std::errc::interrupted));
-	}
-
-	return fileData;
 }
 
 /*==================================================================*/
 
 template <typename T>
 [[maybe_unused]]
-inline auto writeFileData(const Path& filePath, const T* fileData, const usz fileSize) noexcept
--> std::expected<void, std::error_code>
-{
-	std::ofstream ofs(filePath, std::ios::binary);
-
-	// check if the stream was unable to access the file
-	if (!ofs) {
-		return std::unexpected(std::make_error_code(std::errc::permission_denied));
-	}
-
-	// check if we failed in writing the file properly
+inline auto writeFileData(
+	const Path& filePath, const T* fileData, const usz dataWriteSize,
+	const std::streamoff dataWriteOffset = 0
+) noexcept -> std::expected<void, std::error_code> {
 	try {
-		ofs.write(reinterpret_cast<const char*>(fileData), fileSize * sizeof(T));
-		if (!ofs.good()) { throw std::exception{}; } else { return {}; }
-	} catch (const std::exception&) {
+		std::ofstream outFile(filePath, std::ios::binary | std::ios::out);
+		if (!outFile) { return std::unexpected(std::make_error_code(std::errc::permission_denied)); }
+
+		outFile.seekp(static_cast<std::streampos>(dataWriteOffset));
+		if (!outFile) { return std::unexpected(std::make_error_code(std::errc::invalid_argument)); }
+
+		outFile.write(reinterpret_cast<const char*>(fileData), dataWriteSize * sizeof(T));
+		if (!outFile.good()) { throw std::exception{}; } else { return {}; }
+	}
+	catch (const std::exception&) {
 		return std::unexpected(std::make_error_code(std::errc::io_error));
 	}
 }
 
 template <IsContiguousContainer T>
 [[maybe_unused]]
-inline auto writeFileData(const Path& filePath, const T& fileData) noexcept {
-	return writeFileData(filePath, std::data(fileData), std::size(fileData));
+inline auto writeFileData(
+	const Path& filePath, const T& fileData, const usz dataWriteSize = 0,
+	const std::streamoff dataWriteOffset = 0
+) noexcept {
+	return writeFileData(
+		filePath, std::data(fileData), dataWriteSize
+		? dataWriteSize : std::size(fileData),
+		dataWriteOffset
+	);
 }
 
 template <typename T, usz N>
 [[maybe_unused]]
-inline auto writeFileData(const Path& filePath, const T(&fileData)[N]) noexcept {
-	return writeFileData(filePath, fileData, N);
+inline auto writeFileData(
+	const Path& filePath, const T(&fileData)[N],
+	const std::streamoff dataWriteOffset = 0
+) noexcept {
+	return writeFileData(filePath, fileData, N, dataWriteOffset);
 }

@@ -13,7 +13,7 @@
 /*==================================================================*/
 
 class XOCHIP final : public Chip8_CoreInterface {
-	static constexpr u32 cTotalMemory{ ::CalcBytes(16, KiB) };
+	static constexpr u32 cTotalMemory{ ::CalcBytes(64, KiB) };
 	static constexpr u32 cSafezoneOOB{    32 };
 	static constexpr u32 cGameLoadPos{   512 };
 	static constexpr u32 cStartOffset{   512 };

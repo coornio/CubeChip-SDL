@@ -772,12 +772,10 @@ void XOCHIP::scrollDisplayRT() {
 			{ mRegisterI = mRegisterI + N + 1 & 0xFFFF; }
 	}
 	void XOCHIP::instruction_FN75(const s32 N) noexcept {
-		if (!setPermaRegs(N + 1)) [[unlikely]]
-			{ triggerCritError("Error :: Failed writing persistent registers!"); }
+		setPermaRegs(N + 1);
 	}
 	void XOCHIP::instruction_FN85(const s32 N) noexcept {
-		if (!getPermaRegs(N + 1)) [[unlikely]]
-			{ triggerCritError("Error :: Failed reading persistent registers!"); }
+		getPermaRegs(N + 1);
 	}
 
 	#pragma endregion

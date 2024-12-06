@@ -154,6 +154,10 @@ protected:
 	u32 mStackTop{};
 	u8* mInputReg{};
 
+	inline static
+	std::array<u8, 16>
+		sPermRegsV{};
+
 	std::array<u8, 16>
 		mRegisterV{};
 
@@ -165,10 +169,15 @@ protected:
 	void instructionError(const u32 HI, const u32 LO);
 
 	void triggerInterrupt(const Interrupt type) noexcept;
-	void triggerCritError(const Str& msg) noexcept;
 
-	bool setPermaRegs(const u32 X) noexcept;
-	bool getPermaRegs(const u32 X) noexcept;
+private:
+	bool checkFileValidity(const Path* filePath) noexcept;
+	void setFilePermaRegs(const u32 X) noexcept;
+	void getFilePermaRegs(const u32 X) noexcept;
+
+protected:
+	void setPermaRegs(const u32 X) noexcept;
+	void getPermaRegs(const u32 X) noexcept;
 
 	void copyGameToMemory(void* dest) noexcept;
 	void copyFontToMemory(void* dest, const usz size) noexcept;

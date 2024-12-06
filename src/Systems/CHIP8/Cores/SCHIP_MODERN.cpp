@@ -616,12 +616,10 @@ void SCHIP_MODERN::scrollDisplayRT() {
 			{ mRegisterI = mRegisterI + N + 1 & 0xFFF; }
 	}
 	void SCHIP_MODERN::instruction_FN75(const s32 N) noexcept {
-		if (!setPermaRegs(N + 1)) [[unlikely]]
-			{ triggerCritError("Error :: Failed writing persistent registers!"); }
+		setPermaRegs(N + 1);
 	}
 	void SCHIP_MODERN::instruction_FN85(const s32 N) noexcept {
-		if (!getPermaRegs(N + 1)) [[unlikely]]
-			{ triggerCritError("Error :: Failed reading persistent registers!"); }
+		getPermaRegs(N + 1);
 	}
 
 	#pragma endregion
