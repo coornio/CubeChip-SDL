@@ -91,14 +91,24 @@ namespace fs {
 
 /*==================================================================*/
 
+/**
+ * @brief Reads binary data from a file at the given path.
+ * @returns Vector of <char> binary data, unless an error_code occurred.
+ *
+ * @param[in] filePath       :: Path to the file in question.
+ * @param[in] dataReadSize   :: Amount of bytes to read. If 0, reads the entire file.
+ *                              If non-zero, it will attempt to read the requested amount of bytes, and if the read reaches EOF, will not throw an error.
+ * @param[in] dataReadOffset :: Absolute read position offset.
+ *
+ * @warning There are no limiters in place. You can repeat a pattern if you wish.
+ * @warning Elements in the View matrix must be dereferenced to be used.
+ */
 [[maybe_unused]]
 inline auto readFileData(
 	const Path& filePath, const usz dataReadSize = 0,
 	const std::streamoff dataReadOffset = 0
-) noexcept -> std::expected<std::vector<char>, std::error_code> {
+) noexcept -> Expected<std::vector<char>, std::error_code> {
 	try {
-		std::vector<char> fileData{};
-
 		auto fileModStampBegin{ fs::last_write_time(filePath) };
 		if (!fileModStampBegin) { return std::unexpected(std::move(fileModStampBegin.error())); }
 
@@ -108,18 +118,19 @@ inline auto readFileData(
 		inFile.seekg(static_cast<std::streampos>(dataReadOffset));
 		if (!inFile) { return std::unexpected(std::make_error_code(std::errc::invalid_argument)); }
 		
+		std::vector<char> fileData{};
+
 		if (dataReadSize) {
 			fileData.resize(dataReadSize);
 			inFile.read(fileData.data(), dataReadSize);
 		} else {
 			try {
-				fileData.assign(std::istreambuf_iterator<char>(inFile), {});
+				fileData.assign(std::istreambuf_iterator(inFile), {});
+				if (!inFile.good()) { throw std::exception{}; }
 			} catch (const std::exception&) {
 				return std::unexpected(std::make_error_code(std::errc::not_enough_memory));
 			}
 		}
-
-		if (!inFile.good()) { throw std::exception{}; }
 
 		auto fileModStampEnd{ fs::last_write_time(filePath) };
 		if (!fileModStampEnd) { return std::unexpected(std::move(fileModStampEnd.error())); }
@@ -140,7 +151,7 @@ template <typename T>
 inline auto writeFileData(
 	const Path& filePath, const T* fileData, const usz dataWriteSize,
 	const std::streamoff dataWriteOffset = 0
-) noexcept -> std::expected<void, std::error_code> {
+) noexcept -> Expected<bool, std::error_code> {
 	try {
 		std::ofstream outFile(filePath, std::ios::binary | std::ios::out);
 		if (!outFile) { return std::unexpected(std::make_error_code(std::errc::permission_denied)); }
@@ -149,7 +160,7 @@ inline auto writeFileData(
 		if (!outFile) { return std::unexpected(std::make_error_code(std::errc::invalid_argument)); }
 
 		outFile.write(reinterpret_cast<const char*>(fileData), dataWriteSize * sizeof(T));
-		if (!outFile.good()) { throw std::exception{}; } else { return {}; }
+		if (!outFile.good()) { throw std::exception{}; } else { return true; }
 	}
 	catch (const std::exception&) {
 		return std::unexpected(std::make_error_code(std::errc::io_error));

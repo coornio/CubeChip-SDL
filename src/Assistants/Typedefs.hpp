@@ -51,6 +51,39 @@ inline constexpr u32 CalcBytes(const u32 value, const u32 unit) noexcept {
 	return value * unit;
 }
 
+struct alignas(4) RGBA {
+	u8 R{}, G{}, B{}, A{};
+
+	constexpr RGBA() noexcept {}
+	constexpr RGBA(const u32 color) noexcept
+		: R{ color >> 24 & 0xFF }
+		, G{ color >> 16 & 0xFF }
+		, B{ color >>  8 & 0xFF }
+		, A{ color >>  0 & 0xFF }
+	{}
+	constexpr RGBA(const u8 R, const u8 G, const u8 B, const u8 A = 0xFF) noexcept
+		: R{ R }, G{ G }, B{ B }, A{ A }
+	{}
+
+	constexpr u32 RGB_()     const noexcept { return R << 24 | G << 16 | B << 8 | 0; }
+	constexpr u32 RBG_()     const noexcept { return R << 24 | B << 16 | G << 8 | 0; }
+	constexpr u32 GRB_()     const noexcept { return G << 24 | R << 16 | B << 8 | 0; }
+	constexpr u32 GBR_()     const noexcept { return G << 24 | B << 16 | R << 8 | 0; }
+	constexpr u32 BRG_()     const noexcept { return B << 24 | R << 16 | G << 8 | 0; }
+	constexpr u32 BGR_()     const noexcept { return B << 24 | G << 16 | R << 8 | 0; }
+
+	constexpr u32 RBGA()     const noexcept { return R << 24 | B << 16 | G << 8 | 0; }
+	constexpr u32 GRBA()     const noexcept { return G << 24 | R << 16 | B << 8 | 0; }
+	constexpr u32 GBRA()     const noexcept { return G << 24 | B << 16 | R << 8 | 0; }
+	constexpr u32 BRGA()     const noexcept { return B << 24 | R << 16 | G << 8 | 0; }
+	constexpr u32 BGRA()     const noexcept { return B << 24 | G << 16 | R << 8 | 0; }
+	constexpr operator u32() const noexcept { return R << 24 | G << 16 | B << 8 | A; }
+};
+
+inline constexpr u8 ChannelPremul(const u8 color, const u8 alpha) noexcept {
+	return ((color * (alpha | alpha << 8)) + 0x8080) >> 16;
+}
+
 template <typename T, typename E>
 using Expected = std::expected<T, E>;
 

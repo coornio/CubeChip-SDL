@@ -324,10 +324,10 @@ void MEGACHIP::renderVideoData() {
 		? [](const u32 pixel) noexcept {
 			static constexpr u32 layer[4]{ 0xFF, 0xE7, 0x6F, 0x37 };
 			const auto opacity{ layer[std::countl_zero(pixel) & 0x3] };
-			return opacity << 24 | sBitColors[pixel != 0];
+			return opacity | sBitColors[pixel != 0];
 		}
 		: [](const u32 pixel) noexcept {
-			return 0xFF000000 | sBitColors[pixel >> 3];
+			return 0xFF | sBitColors[pixel >> 3];
 		}
 	);
 }
@@ -384,62 +384,51 @@ void MEGACHIP::initializeFontColors() noexcept {
 		const auto G{ 0xFF * mult * 1.14f };
 		const auto B{ 0xFF * mult * 1.21f };
 
-		mFontColor[i] = 0xFF000000
-			| static_cast<u32>(std::min(std::round(R), 255.0f)) << 16
-			| static_cast<u32>(std::min(std::round(G), 255.0f)) <<  8
-			| static_cast<u32>(std::min(std::round(B), 255.0f));
+		mFontColor[i] = {
+			static_cast<u8>(std::min(std::round(R), 255.0f)),
+			static_cast<u8>(std::min(std::round(G), 255.0f)),
+			static_cast<u8>(std::min(std::round(B), 255.0f)),
+		};
 	}
 }
 
-u32  MEGACHIP::blendPixel(const u32 srcPixel, const u32 dstPixel) const noexcept {
-	static constexpr f32 minF{ 1.0f / 255.0f };
-	struct { f32 A, R, G, B; } src{}, dst{};
-
-	src.A =  (srcPixel >> 24) * mTexture.opacity * minF;
-	if (src.A < minF) [[unlikely]] { return dstPixel; }
-	src.R = ((srcPixel >> 16) & 0xFF) * minF;
-	src.G = ((srcPixel >>  8) & 0xFF) * minF;
-	src.B =  (srcPixel        & 0xFF) * minF;
-
-	dst.A =  (dstPixel >> 24)         * minF;
-	dst.R = ((dstPixel >> 16) & 0xFF) * minF;
-	dst.G = ((dstPixel >>  8) & 0xFF) * minF;
-	dst.B =  (dstPixel        & 0xFF) * minF;
-
-	auto R{ fpBlendAlgorithm(src.R, dst.R) };
-	auto G{ fpBlendAlgorithm(src.G, dst.G) };
-	auto B{ fpBlendAlgorithm(src.B, dst.B) };
-
-	if (src.A < 1.0f) {
-		const f32 sW{ src.A / 1.0f };
-		const f32 dW{ 1.0f - sW };
-
-		R = dW * dst.R + sW * R;
-		G = dW * dst.G + sW * G;
-		B = dW * dst.B + sW * B;
+RGBA MEGACHIP::blendPixel(RGBA src, RGBA dst) const noexcept {
+	src.A = (src.A * mTexture.opacity) >> 8 & 0xFF;
+	if (src.A == 0x00) [[unlikely]] { return dst; }
+	
+	RGBA out{
+		intBlendAlgo(src.R, dst.R),
+		intBlendAlgo(src.G, dst.G),
+		intBlendAlgo(src.B, dst.B)
+	};
+	
+	if (src.A < 0xFF) {
+		const auto dW{ static_cast<u8>(~src.A) };
+	
+		out.R = 0xFF & ChannelPremul(dst.R, dW) + ChannelPremul(out.R, src.A);
+		out.G = 0xFF & ChannelPremul(dst.G, dW) + ChannelPremul(out.G, src.A);
+		out.B = 0xFF & ChannelPremul(dst.B, dW) + ChannelPremul(out.B, src.A);
+		out.A = 0xFF & std::min(src.A + ((dst.A * dW) >> 8), 0xFF);
 	}
-
-	return 0xFF000000
-		| static_cast<u8>(std::roundf(R * 255.0f)) << 16
-		| static_cast<u8>(std::roundf(G * 255.0f)) <<  8
-		| static_cast<u8>(std::roundf(B * 255.0f));
+	
+	return out;
 }
 
 void MEGACHIP::setNewBlendAlgorithm(const s32 mode) noexcept {
 	switch (mode) {
 		case BlendMode::LINEAR_DODGE:
-			fpBlendAlgorithm = [](const f32 src, const f32 dst)
-				noexcept { return std::min(src + dst, 1.0f); };
+			intBlendAlgo = [](const u8 src, const u8 dst)
+				noexcept { return static_cast<u8>(std::min(src + dst, 0xFF)); };
 			break;
 
 		case BlendMode::MULTIPLY:
-			fpBlendAlgorithm = [](const f32 src, const f32 dst)
-				noexcept { return src * dst; };
+			intBlendAlgo = [](const u8 src, const u8 dst)
+				noexcept { return static_cast<u8>((src * dst) >> 8); };
 			break;
 
 		default:
 		case BlendMode::ALPHA_BLEND:
-			fpBlendAlgorithm = [](const f32 src, const f32)
+			intBlendAlgo = [](const u8 src, const u8)
 				noexcept { return src; };
 			break;
 	}
@@ -462,7 +451,7 @@ void MEGACHIP::blendAndFlushBuffers() const {
 	BVS->modifyTexture(
 		mForegroundBuffer.span(),
 		mBackgroundBuffer.span(),
-		[this](const u32 src, const u32 dst) noexcept {
+		[this](const RGBA src, const RGBA dst) noexcept {
 			return blendPixel(src, dst);
 		}
 	);
@@ -613,11 +602,12 @@ void MEGACHIP::scrollBuffersRT() {
 	}
 	void MEGACHIP::instruction_02NN(const s32 NN) noexcept {
 		for (auto pos{ 0 }, offset{ 0 }; pos < NN; offset += 4) {
-			mColorPalette.at_raw(++pos)
-				= readMemoryI(offset + 0) << 24
-				| readMemoryI(offset + 1) << 16
-				| readMemoryI(offset + 2) <<  8
-				| readMemoryI(offset + 3);
+			mColorPalette.at_raw(++pos) = {
+				readMemoryI(offset + 1),
+				readMemoryI(offset + 2),
+				readMemoryI(offset + 3),
+				readMemoryI(offset + 0),
+			};
 		}
 	}
 	void MEGACHIP::instruction_03NN(const s32 NN) noexcept {
@@ -636,7 +626,7 @@ void MEGACHIP::scrollBuffersRT() {
 		resetAudioTrack();
 	}
 	void MEGACHIP::instruction_080N(const s32 N) noexcept {
-		static constexpr float opacity[]{ 1.0f, 0.25f, 0.50f, 0.75f };
+		static constexpr u8 opacity[]{ 0xFF, 0x3F, 0x7F, 0xBF };
 		mTexture.opacity = opacity[N > 3 ? 0 : N];
 		setNewBlendAlgorithm(N);
 	}

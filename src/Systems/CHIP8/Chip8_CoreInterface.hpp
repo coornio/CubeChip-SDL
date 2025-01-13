@@ -171,7 +171,10 @@ protected:
 	void triggerInterrupt(const Interrupt type) noexcept;
 
 private:
-	bool checkFileValidity(const Path& filePath) noexcept;
+	bool checkRegularFile(const Path& filePath) const noexcept;
+	bool newPermaRegsFile(const Path& filePath) const noexcept;
+
+
 	void setFilePermaRegs(const u32 X) noexcept;
 	void getFilePermaRegs(const u32 X) noexcept;
 
@@ -273,19 +276,19 @@ protected:
 	} };
 	static inline std::array<u8, 240> sFontsData{ cFontsData };
 
-	static constexpr std::array<u32, 16> cBitColors{ { // 0-1 monochrome, 0-15 palette color
-		0x0C1218, 0xE4DCD4, 0x8C8884, 0x403C38,
-		0xD82010, 0x40D020, 0x1040D0, 0xE0C818,
-		0x501010, 0x105010, 0x50B0C0, 0xF08010,
-		0xE06090, 0xE0F090, 0xB050F0, 0x704020,
+	static constexpr std::array<RGBA, 16> cBitColors{ { // 0-1 monochrome, 0-15 palette color
+		0x0C121800, 0xE4DCD400, 0x8C888400, 0x403C3800,
+		0xD8201000, 0x40D02000, 0x1040D000, 0xE0C81800,
+		0x50101000, 0x10501000, 0x50B0C000, 0xF0801000,
+		0xE0609000, 0xE0F09000, 0xB050F000, 0x70402000,
 	} };
-	static inline std::array<u32, 16> sBitColors{ cBitColors };
+	static inline std::array<RGBA, 16> sBitColors{ cBitColors };
 
-	static constexpr std::array<u32,  8> cForeColor{ { // CHIP-8X foreground colors
-		0x000000, 0xEE1111, 0x1111EE, 0xEE11EE,
-		0x11EE11, 0xEEEE11, 0x11EEEE, 0xEEEEEE,
+	static constexpr std::array<RGBA,  8> cForeColor{ { // CHIP-8X foreground colors
+		0x00000000, 0xEE111100, 0x1111EE00, 0xEE11EE00,
+		0x11EE1100, 0xEEEE1100, 0x11EEEE00, 0xEEEEEE00,
 	} };
-	static constexpr std::array<u32,  4> cBackColor{ { // CHIP-8X background colors
-		0x111133, 0x111111, 0x113311, 0x331111,
+	static constexpr std::array<RGBA, 4> cBackColor{ { // CHIP-8X background colors
+		0x11113300, 0x11111100, 0x11331100, 0x33111100,
 	} };
 };

@@ -21,7 +21,7 @@
 #include <utility>
 
 #pragma region MapRow Class
-template<typename T> requires IsArithmetic<T> || IsArithmeticPtr<T>
+template<typename T>
 class MapRow : public std::vector<T> {
 	using std::vector<T>::vector;
 	using paramU = std::size_t;
@@ -454,7 +454,7 @@ public:
 #pragma endregion
 
 #pragma region Map2D Class
-template<typename T> requires IsArithmetic<T> || IsArithmeticPtr<T>
+template<typename T>
 class Map2D final {
 	using paramS = std::int32_t;
 	using paramU = std::size_t;
@@ -571,7 +571,7 @@ private:
 		 * @brief Clones the row's data and returns a vector of it.
 		 * @return Vector of the same type.
 		 */
-		MapRow<T> clone() const requires IsArithmetic<T> {
+		MapRow<T> clone() const {
 			return MapRow<T>(mBegin, mBegin + mLength);
 		}
 		#pragma endregion
@@ -597,7 +597,7 @@ private:
 		 *
 		 * @return Self reference for method chaining.
 		 */
-		RowProxy& wipeAll() requires IsArithmetic<T> {
+		RowProxy& wipeAll() {
 			std::fill(
 				std::execution::unseq,
 				begin(), end(), T()
@@ -618,7 +618,7 @@ private:
 		 */
 		RowProxy& wipe(
 			const IsIntegral auto cols
-		) requires IsArithmetic<T> {
+		) {
 			if (!colValidAbs(cols)) {
 				wipeAll();
 			} else {
@@ -684,7 +684,7 @@ private:
 		 */
 		RowProxy& shift(
 			const IsIntegral auto cols
-		) requires IsArithmetic<T> {
+		) {
 			if (colValidAbs(cols)) {
 				rotate(cols);
 			}
@@ -1244,7 +1244,7 @@ public:
 		const IsIntegral auto cols = 0,
 		const IsIntegral auto posY = 0,
 		const IsIntegral auto posX = 0
-	) const requires IsArithmetic<T> {
+	) const {
 		const auto _rows{ static_cast<paramS>(std::abs(rows)) };
 		const auto _cols{ static_cast<paramS>(std::abs(cols)) };
 
@@ -1372,7 +1372,7 @@ public:
 	 */
 	Map2D& copyLinear(
 		const Map2D& other
-	) requires IsArithmetic<T> {
+	) {
 		const auto _len{ std::min(size(), other.size())};
 		std::copy_n(
 			std::execution::unseq,
@@ -1396,7 +1396,7 @@ public:
 	Map2D& copyLinear(
 		const T* const other,
 		const IsIntegral auto len
-	) requires IsArithmetic<T> {
+	) {
 		const auto _len{ static_cast<paramU>(std::abs(len)) };
 		std::copy_n(
 			std::execution::unseq,
@@ -1422,7 +1422,7 @@ public:
 		const bool choice_copy,
 		const IsIntegral auto rows,
 		const IsIntegral auto cols
-	) requires IsArithmetic<T> {
+	) {
 		auto nRows{ static_cast<paramS>(std::abs(rows)) };
 		auto nCols{ static_cast<paramS>(std::abs(cols)) };
 
@@ -1492,7 +1492,7 @@ public:
 	 * @brief Wipes all of the matrix's data.
 	 * @return Self reference for method chaining.
 	 */
-	Map2D& wipeAll() requires IsArithmetic<T> {
+	Map2D& wipeAll() {
 		std::fill(
 			std::execution::unseq,
 			mBegin(), mEnd(), T()
@@ -1515,7 +1515,7 @@ public:
 	Map2D& wipe(
 		const IsIntegral auto rows,
 		const IsIntegral auto cols
-	) requires IsArithmetic<T> {
+	) {
 		if (!rowValidAbs(rows) || !colValidAbs(cols)) {
 			wipeAll();
 		} else {
@@ -1597,7 +1597,7 @@ public:
 	Map2D& shift(
 		const IsIntegral auto rows,
 		const IsIntegral auto cols
-	) requires IsArithmetic<T> {
+	) {
 		if (rowValidAbs(rows) && colValidAbs(cols)) {
 			rotate(rows, cols);
 		}

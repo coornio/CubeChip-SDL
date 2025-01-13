@@ -292,7 +292,7 @@ void XOCHIP::renderVideoData() {
 	const auto pBitColors{ mBitColors.data()};
 	BVS->modifyTexture(textureBuffer,
 		[pBitColors](const u32 pixel) noexcept {
-			return 0xFF000000 | pBitColors[pixel];
+			return 0xFF | pBitColors[pixel];
 		}
 	);
 }
@@ -319,9 +319,11 @@ void XOCHIP::setColorBit332(const s32 bit, const s32 color) noexcept {
 	static constexpr u8 map3b[]{ 0x00, 0x20, 0x40, 0x60, 0x80, 0xA0, 0xC0, 0xFF };
 	static constexpr u8 map2b[]{ 0x00,             0x60,       0xA0,       0xFF };
 
-	mBitColors[bit & 0xF] = map3b[color >> 5 & 0x7] << 16 // red
-						  | map3b[color >> 2 & 0x7] <<  8 // green
-						  | map2b[color      & 0x3];      // blue
+	mBitColors[bit & 0xF] = {
+		map3b[color >> 5 & 0x7], // red
+		map3b[color >> 2 & 0x7], // green
+		map2b[color      & 0x3], // blue
+	};
 }
 
 void XOCHIP::pushPatternTone(const u32 index) noexcept {

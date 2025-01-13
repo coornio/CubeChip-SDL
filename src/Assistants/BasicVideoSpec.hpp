@@ -36,7 +36,7 @@ class BasicVideoSpec final {
 	SDL_FRect mOuterFrame{};
 	SDL_FRect mInnerFrame{};
 
-	u32  mOuterFrameColor[2]{};
+	RGBA mOuterFrameColor[2]{};
 
 	bool enableBuzzGlow{};
 	bool enableScanLine{};

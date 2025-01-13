@@ -21,11 +21,11 @@ Chip8_CoreInterface::Chip8_CoreInterface() noexcept
 {
 	if ((sSavestatePath = HDM->addSystemDir("savestate", "CHIP8"))) {
 		*sSavestatePath /= HDM->getFileSHA1();
-		if (!checkFileValidity(*sSavestatePath)) { sSavestatePath = nullptr; }
+		//if (!checkRegularFile(*sSavestatePath)) { sSavestatePath = nullptr; }
 	}
 	if ((sPermaRegsPath = HDM->addSystemDir("permaRegs", "CHIP8"))) {
 		*sPermaRegsPath /= HDM->getFileSHA1();
-		if (!checkFileValidity(*sPermaRegsPath)) { sPermaRegsPath = nullptr; }
+		//if (!checkRegularFile(*sPermaRegsPath)) { sPermaRegsPath = nullptr; }
 	}
 
 	ASB->resumeStreams();
@@ -230,63 +230,31 @@ void Chip8_CoreInterface::triggerInterrupt(const Interrupt type) noexcept {
 
 /*==================================================================*/
 
-bool Chip8_CoreInterface::checkFileValidity(const Path& filePath) noexcept {
-	if (filePath.empty()) { return false; }
-
-	const auto fileExists{ fs::exists(filePath) };
-	if (!fileExists) {
+bool Chip8_CoreInterface::checkRegularFile(const Path& filePath) const noexcept {
+	const auto fileRegular{ fs::is_regular_file(filePath) };
+	if (!fileRegular) {
 		blog.newEntry(BLOG::ERROR, "\"{}\" [{}]",
-			filePath.string(), fileExists.error().message()
-		);
+			filePath.string(), fileRegular.error().message());
 		return false;
 	}
+	return fileRegular.value();
+}
 
-	if (fileExists.value()) {
-		const auto fileNormal{ fs::is_regular_file(filePath) };
-		if (!fileNormal) {
-			blog.newEntry(BLOG::ERROR, "\"{}\" [{}]",
-				filePath.string(), fileNormal.error().message()
-			);
-			return false;
-		}
-
-		if (fileNormal.value()) { return true; }
-		else {
-			const auto fileRemove{ fs::remove(filePath) };
-			if (!fileRemove) {
-				blog.newEntry(BLOG::ERROR, "\"{}\" [{}]",
-					filePath.string(), fileRemove.error().message()
-				);
-				return false;
-			}
-
-			if (fileRemove.value()) { return true; }
-			else {
-				blog.newEntry(BLOG::WARN, "{}: \"{}\"",
-					"Cannot remove irregular file", filePath.string()
-				);
-				return false;
-			}
-		}
-	} else {
-		const char blankRegs[sPermRegsV.size()]{};
-		const auto fileWritten{ ::writeFileData(filePath, blankRegs) };
-		if (fileWritten) { return true; }
-		else {
-			blog.newEntry(BLOG::WARN, "{}: \"{}\"",
-				"Cannot write new file", filePath.string()
-			);
-			return false;
-		}
+bool Chip8_CoreInterface::newPermaRegsFile(const Path& filePath) const noexcept {
+	static constexpr char dataPadding[std::size(sPermRegsV)]{};
+	const auto fileCreated{ ::writeFileData(filePath, dataPadding) };
+	if (!fileCreated) {
+		blog.newEntry(BLOG::ERROR, "\"{}\" [{}]",
+			filePath.string(), fileCreated.error().message());
 	}
+	return fileCreated.value();
 }
 
 void Chip8_CoreInterface::setFilePermaRegs(const u32 X) noexcept {
 	auto fileData{ ::writeFileData(*sPermaRegsPath, mRegisterV, X) };
 	if (!fileData) {
 		blog.newEntry(BLOG::ERROR, "File IO error: \"{}\" [{}]",
-			sPermaRegsPath->string(), fileData.error().message()
-		);
+			sPermaRegsPath->string(), fileData.error().message());
 	}
 }
 
@@ -294,8 +262,7 @@ void Chip8_CoreInterface::getFilePermaRegs(const u32 X) noexcept {
 	auto fileData{ ::readFileData(*sPermaRegsPath, X) };
 	if (!fileData) {
 		blog.newEntry(BLOG::ERROR, "File IO error: \"{}\" [{}]",
-			sPermaRegsPath->string(), fileData.error().message()
-		);
+			sPermaRegsPath->string(), fileData.error().message());
 	} else {
 		std::copy_n(fileData.value().begin(), X, sPermRegsV.begin());
 	}
@@ -303,7 +270,7 @@ void Chip8_CoreInterface::getFilePermaRegs(const u32 X) noexcept {
 
 void Chip8_CoreInterface::setPermaRegs(const u32 X) noexcept {
 	if (sPermaRegsPath) {
-		if (checkFileValidity(*sPermaRegsPath)) { setFilePermaRegs(X); }
+		if (checkRegularFile(*sPermaRegsPath)) { setFilePermaRegs(X); }
 		else { sPermaRegsPath = nullptr; }
 	}
 	std::copy_n(mRegisterV.begin(), X, sPermRegsV.begin());
@@ -311,7 +278,11 @@ void Chip8_CoreInterface::setPermaRegs(const u32 X) noexcept {
 
 void Chip8_CoreInterface::getPermaRegs(const u32 X) noexcept {
 	if (sPermaRegsPath) {
-		if (checkFileValidity(*sPermaRegsPath)) { getFilePermaRegs(X); }
+		if (!checkRegularFile(*sPermaRegsPath)) {
+			if (!newPermaRegsFile(*sPermaRegsPath)) { sPermaRegsPath = nullptr; }
+		}
+
+		if (checkRegularFile(*sPermaRegsPath)) { getFilePermaRegs(X); }
 		else { sPermaRegsPath = nullptr; }
 	}
 	std::copy_n(sPermRegsV.begin(), X, mRegisterV.begin());

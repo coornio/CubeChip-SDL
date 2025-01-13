@@ -156,7 +156,7 @@ bool BasicVideoSpec::setViewportDimensions(
 ) {
 	mSuccessful = mMainTexture = SDL_CreateTexture(
 		mMainRenderer,
-		SDL_PIXELFORMAT_ARGB8888,
+		SDL_PIXELFORMAT_RGBA8888,
 		SDL_TEXTUREACCESS_STREAMING,
 		texture_W, texture_H
 	);
@@ -230,9 +230,10 @@ void BasicVideoSpec::drawViewportTexture(SDL_Texture* viewportTexture) {
 
 		SDL_SetRenderDrawColor(
 			mMainRenderer,
-			static_cast<u8>(mOuterFrameColor[enableBuzzGlow] >> 16),
-			static_cast<u8>(mOuterFrameColor[enableBuzzGlow] >> 8),
-			static_cast<u8>(mOuterFrameColor[enableBuzzGlow]), SDL_ALPHA_OPAQUE
+			mOuterFrameColor[enableBuzzGlow].R,
+			mOuterFrameColor[enableBuzzGlow].G,
+			mOuterFrameColor[enableBuzzGlow].B,
+			SDL_ALPHA_OPAQUE
 		);
 		SDL_RenderFillRect(mMainRenderer, &mOuterFrame);
 

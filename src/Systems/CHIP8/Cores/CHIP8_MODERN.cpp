@@ -204,10 +204,10 @@ void CHIP8_MODERN::renderVideoData() {
 		? [](const u32 pixel) noexcept {
 			static constexpr u32 layer[4]{ 0xFF, 0xE7, 0x6F, 0x37 };
 			const auto opacity{ layer[std::countl_zero(pixel) & 0x3] };
-			return opacity << 24 | sBitColors[pixel != 0];
+			return opacity | sBitColors[pixel != 0];
 		}
 		: [](const u32 pixel) noexcept {
-			return 0xFF000000 | sBitColors[pixel >> 3];
+			return 0xFF | sBitColors[pixel >> 3];
 		}
 	);
 

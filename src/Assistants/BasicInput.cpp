@@ -14,7 +14,7 @@
 
 void BasicKeyboard::storeOldState() noexcept {
 	std::copy_n(
-		std::execution::par_unseq,
+		std::execution::unseq,
 		SDL_GetKeyboardState(nullptr),
 		0 + SDL_SCANCODE_COUNT, oldState
 	);

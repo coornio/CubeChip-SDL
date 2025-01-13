@@ -34,22 +34,22 @@ class MEGACHIP final : public Chip8_CoreInterface {
 
 	Map2D<u8>  mDisplayBuffer[1];
 
-	Map2D<u32> mForegroundBuffer;
-	Map2D<u32> mBackgroundBuffer;
+	Map2D<RGBA> mForegroundBuffer;
+	Map2D<RGBA> mBackgroundBuffer;
 	Map2D<u8>  mCollisionMap;
-	Map2D<u32> mColorPalette;
+	Map2D<RGBA> mColorPalette;
 
-	std::array<u32, 10> mFontColor{};
+	std::array<RGBA, 10> mFontColor{};
 
 	void initializeFontColors() noexcept;
 
 	struct Texture {
 		s32 W{}, H{};
 		s32 collide{ 0xFF };
-		f32 opacity{ 1.0f };
+		s32 opacity{ 0xFF };
 	} mTexture;
 
-	u32 blendPixel(const u32 srcPixel, const u32 dstPixel) const noexcept;
+	RGBA blendPixel(RGBA src, RGBA dst) const noexcept;
 
 	enum BlendMode {
 		ALPHA_BLEND  = 0,
@@ -57,7 +57,8 @@ class MEGACHIP final : public Chip8_CoreInterface {
 		MULTIPLY     = 5,
 	};
 
-	f32(*fpBlendAlgorithm)(const f32 src, const f32 dst) noexcept {};
+	//f32(*fpBlendAlgorithm)(const f32 src, const f32 dst) noexcept {};
+	u8(*intBlendAlgo)(const u8 src, const u8 dst) noexcept {};
 
 	void setNewBlendAlgorithm(const s32 mode) noexcept;
 	void scrapAllVideoBuffers();

@@ -58,9 +58,7 @@ void BYTEPUSHER_STANDARD::renderVideoData() {
 	const std::span<const u8, cScreenSizeT>
 		displayBuffer{ displayOffset, cScreenSizeT };
 
-	BVS->modifyTexture(displayBuffer,
-		[](const u32 pixel) noexcept {
-			return 0xFF000000 | cBitsColor[pixel];
-		}
-	);
+	BVS->modifyTexture(displayBuffer, [](const u32 pixel) noexcept {
+		return cBitsColor[pixel];
+	});
 }
