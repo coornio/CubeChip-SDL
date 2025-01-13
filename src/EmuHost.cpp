@@ -48,16 +48,16 @@ const StrV EmuHost::getStats() const {
 
 			stats = std::format(
 				" ::   MIPS:{:8.2f}\n"
-				"Time Since:{:9.4f} ms\n"
-				"Frame Work:{:9.4f} ms\n",
+				"Time Since:{:9.3f} ms\n"
+				"Frame Work:{:9.3f} ms\n",
 				iGuest->addCPF(static_cast<s32>(workCycleDelta))
 					* iGuest->getFramerate() / 1'000'000.0f,
 				Limiter->getElapsedMillisLast(), currentFrameTime
 			);
 		} else {
 			stats = std::format(
-				"Time Since:{:9.4f} ms\n"
-				"Frame Work:{:9.4f} ms\n",
+				"Time Since:{:9.3f} ms\n"
+				"Frame Work:{:9.3f} ms\n",
 				Limiter->getElapsedMillisLast(), currentFrameTime
 			);
 		}
