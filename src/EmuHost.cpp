@@ -34,26 +34,33 @@ EmuHost::EmuHost(const Path& gamePath) noexcept
 
 /*==================================================================*/
 
-const Str& EmuHost::getStats() const {
-	if (!unlimitedMode || iGuest->isSystemStopped()) 
-		[[unlikely]] { static Str none{}; return none; }
+const StrV EmuHost::getStats() const {
+	if (!mFrameStat || iGuest->isSystemStopped())
+		[[unlikely]] { return ""; }
 
 	static Str stats{};
 	if (Limiter->getValidFrameCounter() & 0x1) [[likely]] {
 		const auto currentFrameTime{ Limiter->getElapsedMicrosSince() / 1000.0f };
 
-		const auto frameTimeDelta{ currentFrameTime * 1.04f / Limiter->getFramespan() };
-		const auto workCycleDelta{ 1e5f * std::sin((1 - frameTimeDelta) * 1.5707963f) };
+		if (mUnlimited) {
+			const auto frameTimeDelta{ currentFrameTime * 1.04f / Limiter->getFramespan() };
+			const auto workCycleDelta{ 1e5f * std::sin((1 - frameTimeDelta) * 1.5707963f) };
 
-		stats = std::format(
-			"Frame time:{:9.4f} ms\n"
-			"Time since:{:9.4f} ms\n"
-			" ::   MIPS:{:8.2f}",
-			currentFrameTime,
-			Limiter->getElapsedMillisLast(),
-			iGuest->addCPF(static_cast<s32>(workCycleDelta))
-				* iGuest->getFramerate() / 1'000'000.0f
-		);
+			stats = std::format(
+				" ::   MIPS:{:8.2f}\n"
+				"Time Since:{:9.4f} ms\n"
+				"Frame Work:{:9.4f} ms\n",
+				iGuest->addCPF(static_cast<s32>(workCycleDelta))
+					* iGuest->getFramerate() / 1'000'000.0f,
+				Limiter->getElapsedMillisLast(), currentFrameTime
+			);
+		} else {
+			stats = std::format(
+				"Time Since:{:9.4f} ms\n"
+				"Frame Work:{:9.4f} ms\n",
+				Limiter->getElapsedMillisLast(), currentFrameTime
+			);
+		}
 	}
 	
 	return stats;
@@ -81,7 +88,7 @@ void EmuHost::replaceCore() {
 
 	if (iGuest) {
 		Limiter->setLimiter(iGuest->getFramerate());
-		BVS->setMainWindowTitle(reinterpret_cast<const char*>(HDM->getFileStem().c_str()));
+		BVS->setMainWindowTitle(HDM->getFileStem().c_str());
 	}
 }
 
@@ -125,7 +132,7 @@ void EmuHost::processFrame() {
 
 		if (iGuest) [[likely]] {
 			iGuest->processFrame();
-			BVS->renderPresent(getStats().c_str());
+			BVS->renderPresent(getStats().data());
 		} else {
 			BVS->renderPresent(nullptr);
 		}
@@ -154,7 +161,11 @@ void EmuHost::checkForHotkeys() {
 		}
 
 		if (binput::kb.isPressed(KEY(RSHIFT))) {
-			unlimitedMode = !unlimitedMode;
+			mFrameStat = !mFrameStat;
+			if (!mFrameStat) { mUnlimited = false; }
+		}
+		if (binput::kb.isPressed(KEY(F11))) {
+			if (mFrameStat) { mUnlimited = !mUnlimited; }
 		}
 	}
 }

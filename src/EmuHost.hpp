@@ -41,10 +41,11 @@ public:
 	std::mutex Mutex;
 
 private:
-	bool unlimitedMode{};
+	bool mFrameStat{};
+	bool mUnlimited{};
 
 	void checkForHotkeys();
-	const Str& getStats() const;
+	const StrV getStats() const;
 
 	void discardCore();
 	void replaceCore();
