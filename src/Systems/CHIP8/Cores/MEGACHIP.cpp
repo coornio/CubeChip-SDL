@@ -393,8 +393,8 @@ void MEGACHIP::initializeFontColors() noexcept {
 }
 
 RGBA MEGACHIP::blendPixel(RGBA src, RGBA dst) const noexcept {
-	src.A = (src.A * mTexture.opacity) >> 8 & 0xFF;
-	if (src.A == 0x00) [[unlikely]] { return dst; }
+	src.A = IntColorMult(src.A, mTexture.opacity);
+	if (src.A == 0x0) [[unlikely]] { return dst; }
 	
 	RGBA out{
 		intBlendAlgo(src.R, dst.R),
@@ -405,9 +405,9 @@ RGBA MEGACHIP::blendPixel(RGBA src, RGBA dst) const noexcept {
 	if (src.A < 0xFF) {
 		const auto dW{ static_cast<u8>(~src.A) };
 	
-		out.R = 0xFF & ChannelPremul(dst.R, dW) + ChannelPremul(out.R, src.A);
-		out.G = 0xFF & ChannelPremul(dst.G, dW) + ChannelPremul(out.G, src.A);
-		out.B = 0xFF & ChannelPremul(dst.B, dW) + ChannelPremul(out.B, src.A);
+		out.R = 0xFF & IntColorMult(dst.R, dW) + IntColorMult(out.R, src.A);
+		out.G = 0xFF & IntColorMult(dst.G, dW) + IntColorMult(out.G, src.A);
+		out.B = 0xFF & IntColorMult(dst.B, dW) + IntColorMult(out.B, src.A);
 		out.A = 0xFF & std::min(src.A + ((dst.A * dW) >> 8), 0xFF);
 	}
 	
@@ -423,7 +423,7 @@ void MEGACHIP::setNewBlendAlgorithm(const s32 mode) noexcept {
 
 		case BlendMode::MULTIPLY:
 			intBlendAlgo = [](const u8 src, const u8 dst)
-				noexcept { return static_cast<u8>((src * dst) >> 8); };
+				noexcept { return IntColorMult(src, dst); };
 			break;
 
 		default:
