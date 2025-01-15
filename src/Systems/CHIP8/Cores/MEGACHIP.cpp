@@ -395,20 +395,19 @@ void MEGACHIP::initializeFontColors() noexcept {
 RGBA MEGACHIP::blendPixel(RGBA src, RGBA dst) const noexcept {
 	src.A = IntColorMult(src.A, mTexture.opacity);
 	if (src.A == 0x0) [[unlikely]] { return dst; }
-	
+
 	RGBA out{
 		intBlendAlgo(src.R, dst.R),
 		intBlendAlgo(src.G, dst.G),
-		intBlendAlgo(src.B, dst.B)
+		intBlendAlgo(src.B, dst.B),
 	};
 	
 	if (src.A < 0xFF) {
 		const auto dW{ static_cast<u8>(~src.A) };
-	
+
 		out.R = 0xFF & IntColorMult(dst.R, dW) + IntColorMult(out.R, src.A);
 		out.G = 0xFF & IntColorMult(dst.G, dW) + IntColorMult(out.G, src.A);
 		out.B = 0xFF & IntColorMult(dst.B, dW) + IntColorMult(out.B, src.A);
-		out.A = 0xFF & std::min(src.A + ((dst.A * dW) >> 8), 0xFF);
 	}
 	
 	return out;

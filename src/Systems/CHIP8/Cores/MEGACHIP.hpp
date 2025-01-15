@@ -57,7 +57,6 @@ class MEGACHIP final : public Chip8_CoreInterface {
 		MULTIPLY     = 5,
 	};
 
-	//f32(*fpBlendAlgorithm)(const f32 src, const f32 dst) noexcept {};
 	u8(*intBlendAlgo)(const u8 src, const u8 dst) noexcept {};
 
 	void setNewBlendAlgorithm(const s32 mode) noexcept;

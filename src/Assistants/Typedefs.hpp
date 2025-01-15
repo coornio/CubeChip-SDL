@@ -72,11 +72,11 @@ struct alignas(4) RGBA {
 	constexpr u32 BRG_()     const noexcept { return B << 24 | R << 16 | G << 8 | 0; }
 	constexpr u32 BGR_()     const noexcept { return B << 24 | G << 16 | R << 8 | 0; }
 
-	constexpr u32 RBGA()     const noexcept { return R << 24 | B << 16 | G << 8 | 0; }
-	constexpr u32 GRBA()     const noexcept { return G << 24 | R << 16 | B << 8 | 0; }
-	constexpr u32 GBRA()     const noexcept { return G << 24 | B << 16 | R << 8 | 0; }
-	constexpr u32 BRGA()     const noexcept { return B << 24 | R << 16 | G << 8 | 0; }
-	constexpr u32 BGRA()     const noexcept { return B << 24 | G << 16 | R << 8 | 0; }
+	constexpr u32 RBGA()     const noexcept { return R << 24 | B << 16 | G << 8 | A; }
+	constexpr u32 GRBA()     const noexcept { return G << 24 | R << 16 | B << 8 | A; }
+	constexpr u32 GBRA()     const noexcept { return G << 24 | B << 16 | R << 8 | A; }
+	constexpr u32 BRGA()     const noexcept { return B << 24 | R << 16 | G << 8 | A; }
+	constexpr u32 BGRA()     const noexcept { return B << 24 | G << 16 | R << 8 | A; }
 	constexpr operator u32() const noexcept { return R << 24 | G << 16 | B << 8 | A; }
 };
 
