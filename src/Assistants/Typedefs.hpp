@@ -80,8 +80,8 @@ struct alignas(4) RGBA {
 	constexpr operator u32() const noexcept { return R << 24 | G << 16 | B << 8 | A; }
 };
 
-inline constexpr u8 IntColorMult(const u8 color1, const u8 color2) noexcept {
-	return ((color1 * (color2 | color2 << 8)) + 0x8080) >> 16;
+inline constexpr auto intByteMult(const u32 color1, const u32 color2) noexcept {
+	return static_cast<u8>(((color1 * (color2 | color2 << 8)) + 0x8080) >> 16);
 }
 
 template <typename T, typename E>
