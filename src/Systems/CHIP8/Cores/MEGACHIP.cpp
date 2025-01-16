@@ -394,23 +394,30 @@ void MEGACHIP::initializeFontColors() noexcept {
 
 RGBA MEGACHIP::blendPixel(const RGBA src, const RGBA dst) const noexcept {
 	const auto alpha{ intByteMult(src.A, mTexture.opacity) };
-	if (alpha == 0u) [[unlikely]] { return dst; }
 
-	RGBA out{
-		intBlendAlgo(src.R, dst.R),
-		intBlendAlgo(src.G, dst.G),
-		intBlendAlgo(src.B, dst.B),
-	};
-	
-	if (alpha < 0xFFu) {
-		const auto dW{ ~alpha & 0xFFu };
+	switch (alpha) {
+		[[unlikely]]
+		case 0x00u:
+			return dst;
 
-		out.R = intByteMult(dst.R, dW) + intByteMult(out.R, alpha);
-		out.G = intByteMult(dst.G, dW) + intByteMult(out.G, alpha);
-		out.B = intByteMult(dst.B, dW) + intByteMult(out.B, alpha);
+		[[likely]]
+		case 0xFFu:
+			return RGBA(
+				intBlendAlgo(src.R, dst.R),
+				intBlendAlgo(src.G, dst.G),
+				intBlendAlgo(src.B, dst.B)
+			);
+
+		[[unlikely]]
+		default: {
+			const auto dW{ ~alpha & 0xFFu };
+			return RGBA(
+				intByteMult(dst.R, dW) + intByteMult(intBlendAlgo(src.R, dst.R), alpha),
+				intByteMult(dst.G, dW) + intByteMult(intBlendAlgo(src.G, dst.G), alpha),
+				intByteMult(dst.B, dW) + intByteMult(intBlendAlgo(src.B, dst.B), alpha)
+			);
+		}
 	}
-	
-	return out;
 }
 
 void MEGACHIP::setNewBlendAlgorithm(const s32 mode) noexcept {
