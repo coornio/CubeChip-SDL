@@ -113,11 +113,11 @@ private:
 
 public:
 	template <IsContiguousContainer T>
-	void modifyTexture(const T colorData) {
-		std::move(
+	void modifyTexture(const T& pixelData) {
+		std::copy(
 			std::execution::unseq,
-			colorData.begin(),
-			colorData.end(),
+			pixelData.begin(),
+			pixelData.end(),
 			lockTexture()
 		);
 		unlockTexture();
@@ -125,7 +125,7 @@ public:
 
 	template <IsContiguousContainer T, typename Lambda>
 	void modifyTexture(
-		const T pixelData,
+		const T& pixelData,
 		Lambda&& function
 	) {
 		std::transform(
@@ -140,8 +140,8 @@ public:
 
 	template <IsContiguousContainer T, typename Lambda>
 	void modifyTexture(
-		const T pixelData1,
-		const T pixelData2,
+		const T& pixelData1,
+		const T& pixelData2,
 		Lambda&& function
 	) {
 		std::transform(

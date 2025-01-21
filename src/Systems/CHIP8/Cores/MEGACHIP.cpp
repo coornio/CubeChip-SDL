@@ -898,11 +898,11 @@ void MEGACHIP::scrollBuffersRT() {
 			for (auto rowN{ 0 }, offsetY{ originY }; rowN < mTexture.H; ++rowN)
 			{
 				if (Quirk.wrapSprite && offsetY >= mDisplayH) { continue; }
-				auto I = rowN * mTexture.W;
+				auto I = mRegisterI + rowN * mTexture.W;
 
 				for (auto colN{ 0 }, offsetX{ originX }; colN < mTexture.W; ++colN, ++I)
 				{
-					if (const auto sourceColorIdx{ readMemoryI(I) }; sourceColorIdx)
+					if (const auto sourceColorIdx{ readMemory(I) }; sourceColorIdx)
 					{
 						auto& collideCoord{ mCollisionMap.at_raw(offsetY, offsetX) };
 						auto& backbufCoord{ mBackgroundBuffer.at_raw(offsetY, offsetX) };
@@ -911,9 +911,7 @@ void MEGACHIP::scrollBuffersRT() {
 							[[unlikely]] { mRegisterV[0xF] = 1; }
 
 						collideCoord = sourceColorIdx;
-						backbufCoord = blendPixel(
-							mColorPalette.at_raw(sourceColorIdx),
-							backbufCoord);
+						backbufCoord = blendPixel(mColorPalette.at_raw(sourceColorIdx), backbufCoord);
 					}
 					if (!Quirk.wrapSprite && offsetX == mDisplayWb) { break; }
 					else { ++offsetX &= mDisplayWb; }
