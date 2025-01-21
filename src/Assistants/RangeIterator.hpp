@@ -4,128 +4,144 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#pragma once
+
+#include "Concepts.hpp"
+
 #include <cstddef>
-#include <span>
+#include <stdexcept>
 
 #pragma region RangeProxy Class
 template <typename T>
-class RangeProxy {
-    using diff_t = std::ptrdiff_t;
-    using size_t = std::size_t;
+struct RangeProxy {
+	using element_type      = T;
+	using size_type         = std::size_t;
+	using difference_type   = std::ptrdiff_t;
+	using value_type        = std::remove_cv_t<T>;
+
+	using pointer       = T*;
+	using const_pointer = const T*;
+
+	using reference       = T&;
+	using const_reference = const T&;
+
+	using iterator       = T*;
+	using const_iterator = const T*;
+
+	using reverse_iterator       = std::reverse_iterator<iterator>;
+	using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
 protected:
-	T*           mBegin;
-	const diff_t mLength;
+	pointer   mBegin;
+	size_type mSize;
 
 public:
-	auto size() const { return mLength; }
-
-	T& front() { return mBegin[0]; }
-	T& back()  { return mBegin[mLength - 1]; }
-	T* data()  { return mBegin; }
-
-	const T& front() const { return mBegin[0]; }
-	const T& back()  const { return mBegin[mLength - 1]; }
-	const T* data()  const { return mBegin; }
-
-	auto span()       { return std::span<      T>{ mBegin, mLength }; }
-	auto span() const { return std::span<const T>{ mBegin, mLength }; }
-
-public:
-	#pragma region Ctor
-	RangeProxy(
-		T* const     begin,
-		const diff_t length
-	) noexcept
-		: mBegin { begin  }
-		, mLength{ length }
+	constexpr RangeProxy(pointer begin, size_type length) noexcept
+		: mBegin { begin  }, mSize{ length }
 	{}
-	#pragma endregion
 
-public:
-	#pragma region Accessors
-	/* bounds-checked accessors, reverse indexing allowed */
+	template <size_type N>
+	constexpr RangeProxy(T(&array)[N]) noexcept
+		: mBegin{ array }, mSize{ N }
+	{}
 
-	T& at(const diff_t idx) {
-		return *(begin() + col + (col < 0 ? mLength : 0);
+	template <IsContiguousContainer Object>
+	constexpr RangeProxy(Object& array) noexcept
+		: mBegin{ std::data(array) }, mSize{ std::size(array) }
+	{}
+
+	constexpr size_type size()       const noexcept { return mSize; }
+	constexpr size_type size_bytes() const noexcept { return size() * sizeof(value_type); }
+	constexpr bool      empty()      const noexcept { return size() == 0; }
+
+	constexpr pointer   data()  const { return mBegin; }
+	constexpr reference front() const { return data()[0]; }
+	constexpr reference back()  const { return data()[size() - 1]; }
+
+	constexpr RangeProxy first(size_type count) const { return RangeProxy(data(), count); }
+	constexpr RangeProxy last(size_type count)  const { return RangeProxy(data(), size() - count); }
+
+	constexpr reference operator[](size_type idx) const { return data()[idx]; }
+	constexpr reference at(size_type pos) const {
+		if (pos >= size()) {
+			throw std::out_of_range("RangeProxy.at() :: Index out of range.");
+		}
+		return data()[idx];
 	}
-	const T& at(const diff_t idx) const {
-		return *(begin() + col + (col < 0 ? mLength : 0);
-	}
 
-	/* unsafe accessors */
+	constexpr iterator begin() const noexcept { return data(); }
+	constexpr iterator end()   const noexcept { return data() + size(); }
 
-	T& operator[](const diff_t idx) {
-		return *(begin() + idx);
-	}
-	const T& operator[](const diff_t idx) const {
-		return *(begin() + idx);
-	}
-	#pragma endregion
+	constexpr reverse_iterator rbegin() const noexcept { return end() - 1; }
+	constexpr reverse_iterator rend()   const noexcept { return begin() - 1; }
 
-public:
-	#pragma region Iterator begin/end
-	T* begin() const noexcept { return mBegin; }
-	T* end()   const noexcept { return mBegin + mLength; }
+	constexpr const_iterator cbegin() const noexcept { return begin(); }
+	constexpr const_iterator cend()   const noexcept { return end(); }
 
-	T* rbegin() const noexcept { return end() - 1; }
-	T* rend()   const noexcept { return begin() - 1; }
-
-	const T* cbegin() const noexcept { return begin(); }
-	const T* cend()   const noexcept { return end(); }
-
-	const T* crbegin() const noexcept { return rbegin(); }
-	const T* crend()   const noexcept { return rend(); }
-	#pragma endregion
+	constexpr const_reverse_iterator crbegin() const noexcept { return rbegin(); }
+	constexpr const_reverse_iterator crend()   const noexcept { return rend(); }
 };
 #pragma endregion
 
 #pragma region RangeIterator Class
 template <typename T>
-class RangeIterator final : private RangeProxy<T> {
-	using diff_t = std::ptrdiff_t;
-    using size_t = std::size_t;
+struct RangeIterator final : private RangeProxy<T> {
+	using element_type    = T;
+	using value_type      = std::remove_cv_t<T>;
+	using size_type       = std::size_t;
+	using difference_type = std::ptrdiff_t;
+
+	using iterator_category = std::contiguous_iterator_tag;
+
+	using pointer        = RangeProxy<T>*;
+	using const_pointer  = const RangeProxy<T>*;
+
+	using reference       = RangeProxy<T>&;
+	using const_reference = const RangeProxy<T>&;
 
 public:
-	#pragma region Ctor
-	RangeIterator(
-		T* const     begin,
-		const diff_t length
-	) noexcept
+	constexpr RangeIterator(pointer begin, size_type length) noexcept
 		: RangeProxy<T>{ begin, length }
 	{}
-	#pragma endregion
+
+	template <size_type N>
+	constexpr RangeIterator(T(&array)[N]) noexcept
+		: RangeProxy<T>{ array, N }
+	{}
+
+	template <IsContiguousContainer Object>
+	constexpr RangeIterator(Object& array) noexcept
+		: RangeProxy<T>{ std::data(array), std::size(array) }
+	{}
 
 public:
-	#pragma region Iterator Overloads
-	RangeProxy<T>& operator* () noexcept { return *this; }
-	RangeProxy<T>* operator->() noexcept { return  this; }
+	constexpr RangeProxy<T>& operator* () const noexcept { return *this; }
+	constexpr RangeProxy<T>* operator->() const noexcept { return  this; }
 
-	RangeIterator& operator++() noexcept { this->mBegin += this->mLength; return *this; }
-	RangeIterator& operator--() noexcept { this->mBegin -= this->mLength; return *this; }
+	constexpr auto& operator++() noexcept { this->mBegin += this->mLength; return *this; }
+	constexpr auto& operator--() noexcept { this->mBegin -= this->mLength; return *this; }
 
-	RangeIterator operator++(int) noexcept { auto tmp{ *this }; this->mBegin += this->mLength; return tmp; }
-	RangeIterator operator--(int) noexcept { auto tmp{ *this }; this->mBegin -= this->mLength; return tmp; }
-		
-	RangeIterator  operator+ (const diff_t rhs) const { return RangeIterator(this->mBegin + rhs * this->mLength, this->mLength); }
-	RangeIterator  operator- (const diff_t rhs) const { return RangeIterator(this->mBegin - rhs * this->mLength, this->mLength); }
-		
-	RangeIterator& operator+=(const diff_t rhs) { this->mBegin += rhs * this->mLength; return *this; }
-	RangeIterator& operator-=(const diff_t rhs) { this->mBegin -= rhs * this->mLength; return *this; }
+	constexpr auto& operator+=(difference_type rhs) noexcept { this->mBegin += rhs * this->mLength; return *this; }
+	constexpr auto& operator-=(difference_type rhs) noexcept { this->mBegin -= rhs * this->mLength; return *this; }
 
-	friend RangeIterator operator+(const diff_t lhs, const RangeIterator& rhs) { return rhs + lhs; }
-	friend RangeIterator operator-(const diff_t lhs, const RangeIterator& rhs) { return rhs - lhs; }
+	constexpr auto  operator++(int) noexcept { auto tmp{ *this }; this->mBegin += this->mLength; return tmp; }
+	constexpr auto  operator--(int) noexcept { auto tmp{ *this }; this->mBegin -= this->mLength; return tmp; }
 
-	diff_t operator-(const RangeIterator& other) const { return this->mBegin - other.mBegin; }
+	constexpr auto  operator+ (difference_type rhs) const noexcept { return RangeIterator(this->mBegin + rhs * this->mLength, this->mLength); }
+	constexpr auto  operator- (difference_type rhs) const noexcept { return RangeIterator(this->mBegin - rhs * this->mLength, this->mLength); }
 
-	bool operator==(const RangeIterator& other) const noexcept { return this->mBegin == other.mBegin; }
-	bool operator!=(const RangeIterator& other) const noexcept { return this->mBegin != other.mBegin; }
-    bool operator< (const RangeIterator& other) const noexcept { return this->mBegin <  other.mBegin; }
-	bool operator> (const RangeIterator& other) const noexcept { return this->mBegin >  other.mBegin; }
-	bool operator<=(const RangeIterator& other) const noexcept { return this->mBegin <= other.mBegin; }
-	bool operator>=(const RangeIterator& other) const noexcept { return this->mBegin >= other.mBegin; }
+	constexpr friend auto operator+(difference_type lhs, const RangeIterator& rhs) noexcept { return rhs + lhs; }
+	constexpr friend auto operator-(difference_type lhs, const RangeIterator& rhs) noexcept { return rhs - lhs; }
 
-	RangeProxy<T>& operator[](const diff_t rhs) const { return *(this->mBegin + rhs * this->mLength); }
-	#pragma endregion
+	constexpr difference_type operator-(const RangeIterator& other) const noexcept { return this->mBegin - other.mBegin; }
+
+	constexpr bool operator==(const RangeIterator& other) const noexcept { return this->mBegin == other.mBegin; }
+	constexpr bool operator!=(const RangeIterator& other) const noexcept { return this->mBegin != other.mBegin; }
+	constexpr bool operator< (const RangeIterator& other) const noexcept { return this->mBegin <  other.mBegin; }
+	constexpr bool operator> (const RangeIterator& other) const noexcept { return this->mBegin >  other.mBegin; }
+	constexpr bool operator<=(const RangeIterator& other) const noexcept { return this->mBegin <= other.mBegin; }
+	constexpr bool operator>=(const RangeIterator& other) const noexcept { return this->mBegin >= other.mBegin; }
+
+	constexpr auto operator[](difference_type rhs) const noexcept { return RangeProxy<T>(this->mBegin + rhs * this->mLength, this->mLength); }
 };
 #pragma endregion
