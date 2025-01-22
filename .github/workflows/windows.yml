@@ -2,7 +2,7 @@ name: Build Windows
 on: [push,pull_request]
 jobs:
   build-and-deploy:
-    runs-on: windows-latest
+    runs-on: windows-2025
     steps:
       - name: Checkout
         uses: actions/checkout@v4
