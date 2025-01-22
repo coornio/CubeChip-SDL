@@ -24,7 +24,7 @@
 
 EmuHost::~EmuHost() noexcept = default;
 EmuHost::EmuHost(const Path& gamePath) noexcept
-	: Limiter{ std::make_unique<FrameLimiter>(60.0f, true, false) }
+	: Limiter{ std::make_unique<FrameLimiter>(60.0f, true, true) }
 {
 	EmuInterface::assignComponents(HDM, BVS);
 	HDM->setValidator(GameFileChecker::validate);
