@@ -17,7 +17,7 @@
 /*==================================================================*/
 
 Chip8_CoreInterface::Chip8_CoreInterface() noexcept
-	: ASB{ std::make_unique<AudioSpecBlock>(SDL_AUDIO_S8, 1, 48'000, STREAM::COUNT) }
+	: ASB{ std::make_unique<AudioSpecBlock>(SDL_AUDIO_S16, 1, 48'000, STREAM::COUNT) }
 {
 	if ((sSavestatePath = HDM->addSystemDir("savestate", "CHIP8"))) {
 		*sSavestatePath /= HDM->getFileSHA1();
@@ -205,12 +205,12 @@ void Chip8_CoreInterface::startAudioAtChannel(const u32 index, const s32 duratio
 }
 
 void Chip8_CoreInterface::pushSquareTone(const u32 index, const f32 framerate) noexcept {
-	std::vector<s8> samplesBuffer \
+	std::vector<s16> samplesBuffer \
 		(static_cast<usz>(ASB->getSampleRate(framerate)));
 
 	if (mAudioTimer[index]) {
 		for (auto& audioSample : samplesBuffer) {
-			audioSample        = static_cast<s8>(mAudioPhase[index] > 0.5f ? 16 : -16);
+			audioSample        = static_cast<s16>(mAudioPhase[index] > 0.5f ? 4096 : -4096);
 			mAudioPhase[index] = std::fmod(mAudioPhase[index] + mPhaseStep[index], 1.0f);
 		}
 	} else { mAudioPhase[index] = 0.0f; }

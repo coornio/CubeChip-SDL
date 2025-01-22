@@ -488,13 +488,13 @@ void MEGACHIP::startAudioTrack(const bool repeat) noexcept {
 
 void MEGACHIP::pushByteAudio(const u32 index) noexcept {
 	static const auto samplesTotal{ ASB->getSampleRate(cRefreshRate) };
-	std::vector<s8> samplesBuffer(static_cast<usz>(samplesTotal));
+	std::vector<s16> samplesBuffer(static_cast<usz>(samplesTotal));
 
 	if (mTrackTotalLen) {
 		for (auto& sample : samplesBuffer) {
-			sample = static_cast<s8>((readMemory(
+			sample = static_cast<s16>((readMemory(
 				mTrackStartIdx + static_cast<u32>(mTrackPosition)
-			) - 128));
+			) - 128) << 8);
 
 			if ((mTrackPosition += mTrackStepping) >= std::abs(mTrackTotalLen)) {
 				if (mTrackTotalLen < 0) {

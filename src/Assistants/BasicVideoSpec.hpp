@@ -123,11 +123,20 @@ public:
 		unlockTexture();
 	}
 
+	template <typename T, typename Lambda>
+	void modifyTexture(const T* pixelData, const usz N, Lambda&& function) {
+		std::transform(
+			std::execution::unseq,
+			pixelData,
+			pixelData + N,
+			lockTexture(),
+			function
+		);
+		unlockTexture();
+	}
+
 	template <IsContiguousContainer T, typename Lambda>
-	void modifyTexture(
-		const T& pixelData,
-		Lambda&& function
-	) {
+	void modifyTexture(const T& pixelData, Lambda&& function) {
 		std::transform(
 			std::execution::unseq,
 			pixelData.begin(),
@@ -139,11 +148,7 @@ public:
 	}
 
 	template <IsContiguousContainer T, typename Lambda>
-	void modifyTexture(
-		const T& pixelData1,
-		const T& pixelData2,
-		Lambda&& function
-	) {
+	void modifyTexture(const T& pixelData1, const T& pixelData2, Lambda&& function) {
 		std::transform(
 			std::execution::unseq,
 			pixelData1.begin(),
