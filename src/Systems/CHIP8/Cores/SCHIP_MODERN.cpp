@@ -13,7 +13,7 @@
 /*==================================================================*/
 
 SCHIP_MODERN::SCHIP_MODERN()
-	: mDisplayBuffer{ {cScreenSizeY, cScreenSizeX} }
+	: mDisplayBuffer{ {cScreenSizeX, cScreenSizeY} }
 {
 	if (getCoreState() != EmuState::FATAL) {
 
@@ -231,7 +231,7 @@ void SCHIP_MODERN::renderAudioData() {
 }
 
 void SCHIP_MODERN::renderVideoData() {
-	BVS->modifyTexture(mDisplayBuffer[0].span(), isPixelTrailing()
+	BVS->modifyTexture(mDisplayBuffer[0], isPixelTrailing()
 		? [](const u32 pixel) noexcept {
 			static constexpr u32 layer[4]{ 0xFF, 0xE7, 0x6F, 0x37 };
 			const auto opacity{ layer[std::countl_zero(pixel) & 0x3] };
@@ -244,9 +244,9 @@ void SCHIP_MODERN::renderVideoData() {
 
 	std::transform(
 		std::execution::unseq,
-		mDisplayBuffer[0].raw_begin(),
-		mDisplayBuffer[0].raw_end(),
-		mDisplayBuffer[0].raw_begin(),
+		mDisplayBuffer[0].begin(),
+		mDisplayBuffer[0].end(),
+		mDisplayBuffer[0].begin(),
 		[](const u32 pixel) noexcept {
 			return static_cast<u8>(
 				(pixel & 0x8) | (pixel >> 1)
@@ -266,20 +266,20 @@ void SCHIP_MODERN::prepDisplayArea(const Resolution mode) {
 	if (!BVS->setViewportDimensions(W, H)) [[unlikely]] {
 		triggerInterrupt(Interrupt::ERROR);
 	} else {
-		mDisplayBuffer[0].resize(false, H, W);
+		mDisplayBuffer[0].resizeClean(W, H);
 	}
 };
 
 /*==================================================================*/
 
 void SCHIP_MODERN::scrollDisplayDN(const s32 N) {
-	mDisplayBuffer[0].shift(+N, 0);
+	mDisplayBuffer[0].shift(0, +N);
 }
 void SCHIP_MODERN::scrollDisplayLT() {
-	mDisplayBuffer[0].shift(0, -4);
+	mDisplayBuffer[0].shift(-4, 0);
 }
 void SCHIP_MODERN::scrollDisplayRT() {
-	mDisplayBuffer[0].shift(0, +4);
+	mDisplayBuffer[0].shift(+4, 0);
 }
 
 /*==================================================================*/
@@ -293,7 +293,7 @@ void SCHIP_MODERN::scrollDisplayRT() {
 	void SCHIP_MODERN::instruction_00E0() noexcept {
 		if (Quirk.waitVblank) [[unlikely]]
 			{ triggerInterrupt(Interrupt::FRAME); }
-		mDisplayBuffer[0].wipeAll();
+		mDisplayBuffer[0].initialize();
 	}
 	void SCHIP_MODERN::instruction_00EE() noexcept {
 		mCurrentPC = mStackBank[--mStackTop & 0xF];
@@ -498,7 +498,7 @@ void SCHIP_MODERN::scrollDisplayRT() {
 			case 0b10000000:
 				if (Quirk.wrapSprite) { X &= mDisplayWb; }
 				if (X < mDisplayW) {
-					if (!((mDisplayBuffer[0].at_raw(Y, X) ^= 0x8) & 0x8))
+					if (!((mDisplayBuffer[0](X, Y) ^= 0x8) & 0x8))
 						{ mRegisterV[0xF] = 1; }
 				}
 				return;
@@ -510,7 +510,7 @@ void SCHIP_MODERN::scrollDisplayRT() {
 
 				for (auto B{ 0 }; B < 8; ++B, ++X &= mDisplayWb) {
 					if (DATA & 0x80 >> B) {
-						if (!((mDisplayBuffer[0].at_raw(Y, X) ^= 0x8) & 0x8))
+						if (!((mDisplayBuffer[0](X, Y) ^= 0x8) & 0x8))
 							{ mRegisterV[0xF] = 1; }
 					}
 					if (!Quirk.wrapSprite && X == mDisplayWb) { return; }

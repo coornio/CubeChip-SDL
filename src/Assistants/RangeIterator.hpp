@@ -13,11 +13,11 @@
 
 #pragma region RangeProxy Class
 template <typename T>
-struct RangeProxy {
-	using element_type      = T;
-	using size_type         = std::size_t;
-	using difference_type   = std::ptrdiff_t;
-	using value_type        = std::remove_cv_t<T>;
+struct RangeProxy final {
+	using element_type    = T;
+	using size_type       = std::size_t;
+	using difference_type = std::ptrdiff_t;
+	using value_type      = std::remove_cv_t<T>;
 
 	using pointer       = T*;
 	using const_pointer = const T*;
@@ -32,29 +32,29 @@ struct RangeProxy {
 	using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
 protected:
-	pointer   mBegin;
+	pointer   mData;
 	size_type mSize;
 
 public:
-	constexpr RangeProxy(pointer begin, size_type length) noexcept
-		: mBegin { begin  }, mSize{ length }
+	constexpr RangeProxy(pointer data, size_type length) noexcept
+		: mData { data  }, mSize{ length }
 	{}
 
 	template <size_type N>
 	constexpr RangeProxy(T(&array)[N]) noexcept
-		: mBegin{ array }, mSize{ N }
+		: mData{ array }, mSize{ N }
 	{}
 
 	template <IsContiguousContainer Object>
 	constexpr RangeProxy(Object& array) noexcept
-		: mBegin{ std::data(array) }, mSize{ std::size(array) }
+		: mData{ std::data(array) }, mSize{ std::size(array) }
 	{}
 
 	constexpr size_type size()       const noexcept { return mSize; }
 	constexpr size_type size_bytes() const noexcept { return size() * sizeof(value_type); }
 	constexpr bool      empty()      const noexcept { return size() == 0; }
 
-	constexpr pointer   data()  const { return mBegin; }
+	constexpr pointer   data()  const { return mData; }
 	constexpr reference front() const { return data()[0]; }
 	constexpr reference back()  const { return data()[size() - 1]; }
 
@@ -62,8 +62,8 @@ public:
 	constexpr RangeProxy last(size_type count)  const { return RangeProxy(data(), size() - count); }
 
 	constexpr reference operator[](size_type idx) const { return data()[idx]; }
-	constexpr reference at(size_type pos) const {
-		if (pos >= size()) {
+	constexpr reference at(size_type idx) const {
+		if (idx >= size()) {
 			throw std::out_of_range("RangeProxy.at() :: Index out of range.");
 		}
 		return data()[idx];
@@ -85,7 +85,7 @@ public:
 
 #pragma region RangeIterator Class
 template <typename T>
-struct RangeIterator final : private RangeProxy<T> {
+struct RangeIterator final {
 	using element_type    = T;
 	using value_type      = std::remove_cv_t<T>;
 	using size_type       = std::size_t;
@@ -99,49 +99,52 @@ struct RangeIterator final : private RangeProxy<T> {
 	using reference       = RangeProxy<T>&;
 	using const_reference = const RangeProxy<T>&;
 
+protected:
+	RangeProxy<T> mRange;
+
 public:
-	constexpr RangeIterator(pointer begin, size_type length) noexcept
-		: RangeProxy<T>{ begin, length }
+	constexpr RangeIterator(T* begin, size_type length) noexcept
+		: mRange{ begin, length }
 	{}
 
 	template <size_type N>
-	constexpr RangeIterator(T(&array)[N]) noexcept
-		: RangeProxy<T>{ array, N }
+	explicit constexpr RangeIterator(T(&array)[N]) noexcept
+		: mRange{ array, N }
 	{}
 
 	template <IsContiguousContainer Object>
-	constexpr RangeIterator(Object& array) noexcept
-		: RangeProxy<T>{ std::data(array), std::size(array) }
+	explicit constexpr RangeIterator(Object& array) noexcept
+		: mRange{ std::data(array), std::size(array) }
 	{}
 
 public:
-	constexpr RangeProxy<T>& operator* () const noexcept { return *this; }
-	constexpr RangeProxy<T>* operator->() const noexcept { return  this; }
+	constexpr auto& operator* () const noexcept { return mRange; }
+	constexpr auto* operator->() const noexcept { return &mRange; }
 
-	constexpr auto& operator++() noexcept { this->mBegin += this->mLength; return *this; }
-	constexpr auto& operator--() noexcept { this->mBegin -= this->mLength; return *this; }
+	constexpr auto& operator++() noexcept { mRange.data() += mRange.size(); return *this; }
+	constexpr auto& operator--() noexcept { mRange.data() -= mRange.size(); return *this; }
 
-	constexpr auto& operator+=(difference_type rhs) noexcept { this->mBegin += rhs * this->mLength; return *this; }
-	constexpr auto& operator-=(difference_type rhs) noexcept { this->mBegin -= rhs * this->mLength; return *this; }
+	constexpr auto& operator+=(difference_type rhs) noexcept { mRange.data() += rhs * mRange.size(); return *this; }
+	constexpr auto& operator-=(difference_type rhs) noexcept { mRange.data() -= rhs * mRange.size(); return *this; }
 
-	constexpr auto  operator++(int) noexcept { auto tmp{ *this }; this->mBegin += this->mLength; return tmp; }
-	constexpr auto  operator--(int) noexcept { auto tmp{ *this }; this->mBegin -= this->mLength; return tmp; }
+	constexpr auto  operator++(int) noexcept { auto tmp{ *this }; mRange.data() += mRange.size(); return tmp; }
+	constexpr auto  operator--(int) noexcept { auto tmp{ *this }; mRange.data() -= mRange.size(); return tmp; }
 
-	constexpr auto  operator+ (difference_type rhs) const noexcept { return RangeIterator(this->mBegin + rhs * this->mLength, this->mLength); }
-	constexpr auto  operator- (difference_type rhs) const noexcept { return RangeIterator(this->mBegin - rhs * this->mLength, this->mLength); }
+	constexpr auto  operator+ (difference_type rhs) const noexcept { return RangeIterator(mRange.data() + rhs * mRange.size(), mRange.size()); }
+	constexpr auto  operator- (difference_type rhs) const noexcept { return RangeIterator(mRange.data() - rhs * mRange.size(), mRange.size()); }
 
 	constexpr friend auto operator+(difference_type lhs, const RangeIterator& rhs) noexcept { return rhs + lhs; }
 	constexpr friend auto operator-(difference_type lhs, const RangeIterator& rhs) noexcept { return rhs - lhs; }
 
-	constexpr difference_type operator-(const RangeIterator& other) const noexcept { return this->mBegin - other.mBegin; }
+	constexpr difference_type operator-(const RangeIterator& other) const noexcept { return mRange.data() - other.mRange.data(); }
 
-	constexpr bool operator==(const RangeIterator& other) const noexcept { return this->mBegin == other.mBegin; }
-	constexpr bool operator!=(const RangeIterator& other) const noexcept { return this->mBegin != other.mBegin; }
-	constexpr bool operator< (const RangeIterator& other) const noexcept { return this->mBegin <  other.mBegin; }
-	constexpr bool operator> (const RangeIterator& other) const noexcept { return this->mBegin >  other.mBegin; }
-	constexpr bool operator<=(const RangeIterator& other) const noexcept { return this->mBegin <= other.mBegin; }
-	constexpr bool operator>=(const RangeIterator& other) const noexcept { return this->mBegin >= other.mBegin; }
+	constexpr bool operator==(const RangeIterator& other) const noexcept { return mRange.data() == other.mRange.data(); }
+	constexpr bool operator!=(const RangeIterator& other) const noexcept { return mRange.data() != other.mRange.data(); }
+	constexpr bool operator< (const RangeIterator& other) const noexcept { return mRange.data() <  other.mRange.data(); }
+	constexpr bool operator> (const RangeIterator& other) const noexcept { return mRange.data() >  other.mRange.data(); }
+	constexpr bool operator<=(const RangeIterator& other) const noexcept { return mRange.data() <= other.mRange.data(); }
+	constexpr bool operator>=(const RangeIterator& other) const noexcept { return mRange.data() >= other.mRange.data(); }
 
-	constexpr auto operator[](difference_type rhs) const noexcept { return RangeProxy<T>(this->mBegin + rhs * this->mLength, this->mLength); }
+	constexpr auto operator[](difference_type rhs) const noexcept { return RangeProxy<T>(mRange.data() + rhs * mRange.size(), mRange.size()); }
 };
 #pragma endregion

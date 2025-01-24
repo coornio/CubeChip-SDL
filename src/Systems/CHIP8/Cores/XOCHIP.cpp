@@ -14,10 +14,10 @@
 
 XOCHIP::XOCHIP()
 	: mDisplayBuffer{
-		{cScreenSizeY, cScreenSizeX},
-		{cScreenSizeY, cScreenSizeX},
-		{cScreenSizeY, cScreenSizeX},
-		{cScreenSizeY, cScreenSizeX},
+		{cScreenSizeX, cScreenSizeY},
+		{cScreenSizeX, cScreenSizeY},
+		{cScreenSizeX, cScreenSizeY},
+		{cScreenSizeX, cScreenSizeY},
 	}
 {
 	if (getCoreState() != EmuState::FATAL) {
@@ -282,10 +282,10 @@ void XOCHIP::renderVideoData() {
 		[&](u8& pixel) noexcept {
 			const auto idx{ &pixel - textureBuffer.data() };
 			pixel = static_cast<u8>(
-				mDisplayBuffer[3].at_raw(idx) << 3 |
-				mDisplayBuffer[2].at_raw(idx) << 2 |
-				mDisplayBuffer[1].at_raw(idx) << 1 |
-				mDisplayBuffer[0].at_raw(idx));
+				mDisplayBuffer[3](idx) << 3 |
+				mDisplayBuffer[2](idx) << 2 |
+				mDisplayBuffer[1](idx) << 1 |
+				mDisplayBuffer[0](idx));
 		}
 	);
 
@@ -308,10 +308,10 @@ void XOCHIP::prepDisplayArea(const Resolution mode) {
 	if (!BVS->setViewportDimensions(W, H)) [[unlikely]] {
 		triggerInterrupt(Interrupt::ERROR);
 	} else {
-		mDisplayBuffer[0].resize(false, H, W);
-		mDisplayBuffer[1].resize(false, H, W);
-		mDisplayBuffer[2].resize(false, H, W);
-		mDisplayBuffer[3].resize(false, H, W);
+		mDisplayBuffer[0].resizeClean(W, H);
+		mDisplayBuffer[1].resizeClean(W, H);
+		mDisplayBuffer[2].resizeClean(W, H);
+		mDisplayBuffer[3].resizeClean(W, H);
 	}
 };
 
@@ -356,7 +356,7 @@ void XOCHIP::scrollDisplayUP(const s32 N) {
 
 	for (auto P{ 0 }; P < 4; ++P) {
 		if (mPlanarMask & (1 << P))
-			{ mDisplayBuffer[P].shift(-N, 0); }
+			{ mDisplayBuffer[P].shift(0, -N); }
 	}
 }
 void XOCHIP::scrollDisplayDN(const s32 N) {
@@ -364,7 +364,7 @@ void XOCHIP::scrollDisplayDN(const s32 N) {
 
 	for (auto P{ 0 }; P < 4; ++P) {
 		if (mPlanarMask & (1 << P))
-			{ mDisplayBuffer[P].shift(+N, 0); }
+			{ mDisplayBuffer[P].shift(0, +N); }
 	}
 }
 void XOCHIP::scrollDisplayLT() {
@@ -372,7 +372,7 @@ void XOCHIP::scrollDisplayLT() {
 
 	for (auto P{ 0 }; P < 4; ++P) {
 		if (mPlanarMask & (1 << P)) 
-			{ mDisplayBuffer[P].shift(0, -4); }
+			{ mDisplayBuffer[P].shift(-4, 0); }
 	}
 }
 void XOCHIP::scrollDisplayRT() {
@@ -380,7 +380,7 @@ void XOCHIP::scrollDisplayRT() {
 
 	for (auto P{ 0 }; P < 4; ++P) {
 		if (mPlanarMask & (1 << P))
-			{ mDisplayBuffer[P].shift(0, +4); }
+			{ mDisplayBuffer[P].shift(+4, 0); }
 	}
 }
 
@@ -400,7 +400,7 @@ void XOCHIP::scrollDisplayRT() {
 	void XOCHIP::instruction_00E0() noexcept {
 		for (auto P{ 0 }; P < 4; ++P) {
 			if (!(mPlanarMask & (1 << P))) { continue; }
-			mDisplayBuffer[P].wipeAll();
+			mDisplayBuffer[P].initialize();
 		}
 	}
 	void XOCHIP::instruction_00EE() noexcept {
@@ -638,7 +638,7 @@ void XOCHIP::scrollDisplayRT() {
 			case 0b10000000:
 				if (Quirk.wrapSprite) { X &= mDisplayWb; }
 				if (X < mDisplayW) {
-					if (!((mDisplayBuffer[P].at_raw(Y, X) ^= 1) & 1))
+					if (!((mDisplayBuffer[P](X, Y) ^= 1) & 1))
 						{ mRegisterV[0xF] = 1; }
 				}
 				return;
@@ -650,7 +650,7 @@ void XOCHIP::scrollDisplayRT() {
 
 				for (auto B{ 0 }; B < 8; ++B, ++X &= mDisplayWb) {
 					if (DATA & 0x80 >> B) {
-						if (!((mDisplayBuffer[P].at_raw(Y, X) ^= 1) & 1))
+						if (!((mDisplayBuffer[P](X, Y) ^= 1) & 1))
 							{ mRegisterV[0xF] = 1; }
 					}
 					if (!Quirk.wrapSprite && X == mDisplayWb) { return; }

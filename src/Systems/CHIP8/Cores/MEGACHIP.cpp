@@ -20,10 +20,10 @@ MEGACHIP::MEGACHIP()
 		copyGameToMemory(mMemoryBank.data() + cGameLoadPos);
 		copyFontToMemory(mMemoryBank.data(), 0xB4);
 
-		mForegroundBuffer.resize(false, cScreenMegaY, cScreenMegaX);
-		mBackgroundBuffer.resize(false, cScreenMegaY, cScreenMegaX);
-		mCollisionMap.resize(false, cScreenMegaY, cScreenMegaX);
-		mColorPalette.resize(false, 1, 256);
+		mForegroundBuffer.resizeClean(cScreenMegaX, cScreenMegaY);
+		mBackgroundBuffer.resizeClean(cScreenMegaX, cScreenMegaY);
+		mCollisionMap.resizeClean(cScreenMegaX, cScreenMegaY);
+		mColorPalette.resizeClean(256, 1);
 
 		mCurrentPC = cStartOffset;
 		mFramerate = cRefreshRate;
@@ -320,7 +320,7 @@ void MEGACHIP::renderAudioData() {
 void MEGACHIP::renderVideoData() {
 	if (isManualRefresh()) { return; }
 
-	BVS->modifyTexture(mDisplayBuffer[0].span(), isPixelTrailing()
+	BVS->modifyTexture(mDisplayBuffer[0], isPixelTrailing()
 		? [](const u32 pixel) noexcept {
 			static constexpr u32 layer[4]{ 0xFF, 0xE7, 0x6F, 0x37 };
 			const auto opacity{ layer[std::countl_zero(pixel) & 0x3] };
@@ -363,16 +363,16 @@ void MEGACHIP::skipInstruction() noexcept {
 }
 
 void MEGACHIP::scrollDisplayUP(const s32 N) {
-	mDisplayBuffer[0].shift(-N, 0);
+	mDisplayBuffer[0].shift(0, -N);
 }
 void MEGACHIP::scrollDisplayDN(const s32 N) {
-	mDisplayBuffer[0].shift(+N, 0);
+	mDisplayBuffer[0].shift(0, +N);
 }
 void MEGACHIP::scrollDisplayLT() {
-	mDisplayBuffer[0].shift(0, -4);
+	mDisplayBuffer[0].shift(-4, 0);
 }
 void MEGACHIP::scrollDisplayRT() {
-	mDisplayBuffer[0].shift(0, +4);
+	mDisplayBuffer[0].shift(+4, 0);
 }
 
 /*==================================================================*/
@@ -441,22 +441,22 @@ void MEGACHIP::setNewBlendAlgorithm(const s32 mode) noexcept {
 }
 
 void MEGACHIP::scrapAllVideoBuffers() {
-	mBackgroundBuffer.wipeAll();
-	mCollisionMap.wipeAll();
+	mBackgroundBuffer.initialize();
+	mCollisionMap.initialize();
 }
 
 void MEGACHIP::flushAllVideoBuffers() {
 	mForegroundBuffer = mBackgroundBuffer;
-	mBackgroundBuffer.wipeAll();
-	mCollisionMap.wipeAll();
+	mBackgroundBuffer.initialize();
+	mCollisionMap.initialize();
 
-	BVS->modifyTexture(mForegroundBuffer.span());
+	BVS->modifyTexture(mForegroundBuffer);
 }
 
 void MEGACHIP::blendAndFlushBuffers() const {
 	BVS->modifyTexture(
-		mForegroundBuffer.span(),
-		mBackgroundBuffer.span(),
+		mForegroundBuffer,
+		mBackgroundBuffer,
 		[this](const RGBA src, const RGBA dst) noexcept {
 			return blendPixel(src, dst);
 		}
@@ -510,19 +510,19 @@ void MEGACHIP::pushByteAudio(const u32 index) noexcept {
 }
 
 void MEGACHIP::scrollBuffersUP(const s32 N) {
-	mForegroundBuffer.shift(-N, 0);
+	mForegroundBuffer.shift(0, -N);
 	blendAndFlushBuffers();
 }
 void MEGACHIP::scrollBuffersDN(const s32 N) {
-	mForegroundBuffer.shift(+N, 0);
+	mForegroundBuffer.shift(0, +N);
 	blendAndFlushBuffers();
 }
 void MEGACHIP::scrollBuffersLT() {
-	mForegroundBuffer.shift(0, -4);
+	mForegroundBuffer.shift(-4, 0);
 	blendAndFlushBuffers();
 }
 void MEGACHIP::scrollBuffersRT() {
-	mForegroundBuffer.shift(0, +4);
+	mForegroundBuffer.shift(+4, 0);
 	blendAndFlushBuffers();
 }
 
@@ -548,7 +548,7 @@ void MEGACHIP::scrollBuffersRT() {
 		if (isManualRefresh()) {
 			flushAllVideoBuffers();
 		} else {
-			mDisplayBuffer[0].wipeAll();
+			mDisplayBuffer[0].initialize();
 		}
 	}
 	void MEGACHIP::instruction_00EE() noexcept {
@@ -608,7 +608,7 @@ void MEGACHIP::scrollBuffersRT() {
 	}
 	void MEGACHIP::instruction_02NN(const s32 NN) noexcept {
 		for (auto pos{ 0 }, offset{ 0 }; pos < NN; offset += 4) {
-			mColorPalette.at_raw(++pos) = {
+			mColorPalette(++pos) = {
 				readMemoryI(offset + 1),
 				readMemoryI(offset + 2),
 				readMemoryI(offset + 3),
@@ -820,7 +820,7 @@ void MEGACHIP::scrollBuffersRT() {
 			const auto offsetX{ originX + B };
 
 			if (DATA >> (WIDTH - 1 - B) & 0x1) {
-				auto& pixel{ mDisplayBuffer[0].at_raw(originY, offsetX) };
+				auto& pixel{ mDisplayBuffer[0](offsetX, originY) };
 				if (!((pixel ^= 0x8) & 0x8)) { collided = true; }
 			}
 			if (offsetX == 0x7F) { return collided; }
@@ -838,8 +838,8 @@ void MEGACHIP::scrollBuffersRT() {
 		for (auto B{ 0 }; B < WIDTH; ++B) {
 			const auto offsetX{ originX + B };
 
-			auto& pixelHI{ mDisplayBuffer[0].at_raw(originY + 0, offsetX) };
-			auto& pixelLO{ mDisplayBuffer[0].at_raw(originY + 1, offsetX) };
+			auto& pixelHI{ mDisplayBuffer[0](offsetX, originY + 0) };
+			auto& pixelLO{ mDisplayBuffer[0](offsetX, originY + 1) };
 
 			if (DATA >> (WIDTH - 1 - B) & 0x1) {
 				if (pixelHI & 0x8) { collided = true; }
@@ -874,8 +874,8 @@ void MEGACHIP::scrollBuffersRT() {
 				{
 					if (octoPixelBatch >> colN & 0x1)
 					{
-						auto& collideCoord{ mCollisionMap.at_raw(offsetY, offsetX) };
-						auto& backbufCoord{ mBackgroundBuffer.at_raw(offsetY, offsetX) };
+						auto& collideCoord{ mCollisionMap(offsetX, offsetY) };
+						auto& backbufCoord{ mBackgroundBuffer(offsetX, offsetY) };
 
 						if (collideCoord) [[unlikely]] {
 							collideCoord = 0;
@@ -904,14 +904,14 @@ void MEGACHIP::scrollBuffersRT() {
 				{
 					if (const auto sourceColorIdx{ readMemory(I) }; sourceColorIdx)
 					{
-						auto& collideCoord{ mCollisionMap.at_raw(offsetY, offsetX) };
-						auto& backbufCoord{ mBackgroundBuffer.at_raw(offsetY, offsetX) };
+						auto& collideCoord{ mCollisionMap(offsetX, offsetY) };
+						auto& backbufCoord{ mBackgroundBuffer(offsetX, offsetY) };
 
 						if (collideCoord == mTexture.collide)
 							[[unlikely]] { mRegisterV[0xF] = 1; }
 
 						collideCoord = sourceColorIdx;
-						backbufCoord = blendPixel(mColorPalette.at_raw(sourceColorIdx), backbufCoord);
+						backbufCoord = blendPixel(mColorPalette(sourceColorIdx), backbufCoord);
 					}
 					if (!Quirk.wrapSprite && offsetX == mDisplayWb) { break; }
 					else { ++offsetX &= mDisplayWb; }

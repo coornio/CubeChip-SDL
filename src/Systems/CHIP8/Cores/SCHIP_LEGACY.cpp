@@ -14,7 +14,7 @@
 /*==================================================================*/
 
 SCHIP_LEGACY::SCHIP_LEGACY()
-	: mDisplayBuffer{ {cScreenSizeY, cScreenSizeX} }
+	: mDisplayBuffer{ {cScreenSizeX, cScreenSizeY} }
 {
 	if (getCoreState() != EmuState::FATAL) {
 
@@ -240,7 +240,7 @@ void SCHIP_LEGACY::renderAudioData() {
 }
 
 void SCHIP_LEGACY::renderVideoData() {
-	BVS->modifyTexture(mDisplayBuffer[0].span(), isPixelTrailing()
+	BVS->modifyTexture(mDisplayBuffer[0], isPixelTrailing()
 		? [](const u32 pixel) noexcept {
 			static constexpr u32 layer[4]{ 0xFF, 0xE7, 0x6F, 0x37 };
 			const auto opacity{ layer[std::countl_zero(pixel) & 0x3] };
@@ -253,9 +253,9 @@ void SCHIP_LEGACY::renderVideoData() {
 
 	std::transform(
 		std::execution::unseq,
-		mDisplayBuffer[0].raw_begin(),
-		mDisplayBuffer[0].raw_end(),
-		mDisplayBuffer[0].raw_begin(),
+		mDisplayBuffer[0].begin(),
+		mDisplayBuffer[0].end(),
+		mDisplayBuffer[0].begin(),
 		[](const u32 pixel) noexcept {
 			return static_cast<u8>(
 				(pixel & 0x8) | (pixel >> 1)
@@ -274,13 +274,13 @@ void SCHIP_LEGACY::prepDisplayArea(const Resolution mode) {
 /*==================================================================*/
 
 void SCHIP_LEGACY::scrollDisplayDN(const s32 N) {
-	mDisplayBuffer[0].shift(+N, 0);
+	mDisplayBuffer[0].shift(0, +N);
 }
 void SCHIP_LEGACY::scrollDisplayLT() {
-	mDisplayBuffer[0].shift(0, -4);
+	mDisplayBuffer[0].shift(-4, 0);
 }
 void SCHIP_LEGACY::scrollDisplayRT() {
-	mDisplayBuffer[0].shift(0, +4);
+	mDisplayBuffer[0].shift(+4, 0);
 }
 
 /*==================================================================*/
@@ -291,7 +291,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 	}
 	void SCHIP_LEGACY::instruction_00E0() noexcept {
 		triggerInterrupt(Interrupt::FRAME);
-		mDisplayBuffer[0].wipeAll();
+		mDisplayBuffer[0].initialize();
 	}
 	void SCHIP_LEGACY::instruction_00EE() noexcept {
 		mCurrentPC = mStackBank[--mStackTop & 0xF];
@@ -494,7 +494,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 			const auto offsetX{ originX + B };
 
 			if (DATA >> (WIDTH - 1 - B) & 0x1) {
-				auto& pixel{ mDisplayBuffer[0].at_raw(originY, offsetX) };
+				auto& pixel{ mDisplayBuffer[0](offsetX, originY) };
 				if (!((pixel ^= 0x8) & 0x8)) { collided = true; }
 			}
 			if (offsetX == 0x7F) { return collided; }
@@ -512,8 +512,8 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 		for (auto B{ 0 }; B < WIDTH; ++B) {
 			const auto offsetX{ originX + B };
 
-			auto& pixelHI{ mDisplayBuffer[0].at_raw(originY + 0, offsetX) };
-			auto& pixelLO{ mDisplayBuffer[0].at_raw(originY + 1, offsetX) };
+			auto& pixelHI{ mDisplayBuffer[0](offsetX, originY + 0) };
+			auto& pixelLO{ mDisplayBuffer[0](offsetX, originY + 1) };
 
 			if (DATA >> (WIDTH - 1 - B) & 0x1) {
 				if (pixelHI & 0x8) { collided = true; }
