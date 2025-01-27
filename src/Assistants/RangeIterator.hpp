@@ -50,36 +50,37 @@ public:
 		: mData{ std::data(array) }, mSize{ std::size(array) }
 	{}
 
+	constexpr pointer   data()       const noexcept { return mData; }
 	constexpr size_type size()       const noexcept { return mSize; }
-	constexpr size_type size_bytes() const noexcept { return size() * sizeof(value_type); }
+	constexpr size_type size_bytes() const noexcept { return size() * sizeof(element_type); }
 	constexpr bool      empty()      const noexcept { return size() == 0; }
 
-	constexpr pointer   data()  const { return mData; }
-	constexpr reference front() const { return data()[0]; }
-	constexpr reference back()  const { return data()[size() - 1]; }
+	constexpr void reseat(pointer data)   noexcept { mData = data; }
+	constexpr void resize(size_type size) noexcept { mSize = size; }
+
+	constexpr reference front() const noexcept { return data()[0]; }
+	constexpr reference back()  const noexcept { return data()[size() - 1]; }
 
 	constexpr RangeProxy first(size_type count) const { return RangeProxy(data(), count); }
 	constexpr RangeProxy last(size_type count)  const { return RangeProxy(data(), size() - count); }
 
 	constexpr reference operator[](size_type idx) const { return data()[idx]; }
 	constexpr reference at(size_type idx) const {
-		if (idx >= size()) {
-			throw std::out_of_range("RangeProxy.at() :: Index out of range.");
-		}
-		return data()[idx];
+		if (idx < size()) { return data()[idx]; }
+		else { throw std::out_of_range("RangeProxy.at() :: Index out of range."); }
 	}
 
 	constexpr iterator begin() const noexcept { return data(); }
 	constexpr iterator end()   const noexcept { return data() + size(); }
 
-	constexpr reverse_iterator rbegin() const noexcept { return end() - 1; }
-	constexpr reverse_iterator rend()   const noexcept { return begin() - 1; }
+	constexpr reverse_iterator rbegin() const noexcept { return std::make_reverse_iterator(end()); }
+	constexpr reverse_iterator rend()   const noexcept { return std::make_reverse_iterator(begin()); }
 
 	constexpr const_iterator cbegin() const noexcept { return begin(); }
 	constexpr const_iterator cend()   const noexcept { return end(); }
 
-	constexpr const_reverse_iterator crbegin() const noexcept { return rbegin(); }
-	constexpr const_reverse_iterator crend()   const noexcept { return rend(); }
+	constexpr const_reverse_iterator crbegin() const noexcept { return std::make_reverse_iterator(cend()); }
+	constexpr const_reverse_iterator crend()   const noexcept { return std::make_reverse_iterator(cbegin()); }
 };
 #pragma endregion
 
@@ -87,9 +88,9 @@ public:
 template <typename T>
 struct RangeIterator final {
 	using element_type    = T;
-	using value_type      = std::remove_cv_t<T>;
 	using size_type       = std::size_t;
 	using difference_type = std::ptrdiff_t;
+	using value_type      = std::remove_cv_t<RangeProxy<T>>;
 
 	using iterator_category = std::contiguous_iterator_tag;
 
@@ -121,14 +122,14 @@ public:
 	constexpr auto& operator* () const noexcept { return mRange; }
 	constexpr auto* operator->() const noexcept { return &mRange; }
 
-	constexpr auto& operator++() noexcept { mRange.data() += mRange.size(); return *this; }
-	constexpr auto& operator--() noexcept { mRange.data() -= mRange.size(); return *this; }
+	constexpr auto& operator++() noexcept { mRange.reseat(mRange.data() + mRange.size()); return *this; }
+	constexpr auto& operator--() noexcept { mRange.reseat(mRange.data() - mRange.size()); return *this; }
 
-	constexpr auto& operator+=(difference_type rhs) noexcept { mRange.data() += rhs * mRange.size(); return *this; }
-	constexpr auto& operator-=(difference_type rhs) noexcept { mRange.data() -= rhs * mRange.size(); return *this; }
+	constexpr auto& operator+=(difference_type rhs) noexcept { mRange.reseat(mRange.data() + rhs * mRange.size()); return *this; }
+	constexpr auto& operator-=(difference_type rhs) noexcept { mRange.reseat(mRange.data() - rhs * mRange.size()); return *this; }
 
-	constexpr auto  operator++(int) noexcept { auto tmp{ *this }; mRange.data() += mRange.size(); return tmp; }
-	constexpr auto  operator--(int) noexcept { auto tmp{ *this }; mRange.data() -= mRange.size(); return tmp; }
+	constexpr auto  operator++(int) noexcept { auto tmp{ *this }; mRange.reseat(mRange.data() + mRange.size()); return tmp; }
+	constexpr auto  operator--(int) noexcept { auto tmp{ *this }; mRange.reseat(mRange.data() - mRange.size()); return tmp; }
 
 	constexpr auto  operator+ (difference_type rhs) const noexcept { return RangeIterator(mRange.data() + rhs * mRange.size(), mRange.size()); }
 	constexpr auto  operator- (difference_type rhs) const noexcept { return RangeIterator(mRange.data() - rhs * mRange.size(), mRange.size()); }
@@ -146,5 +147,66 @@ public:
 	constexpr bool operator>=(const RangeIterator& other) const noexcept { return mRange.data() >= other.mRange.data(); }
 
 	constexpr auto operator[](difference_type rhs) const noexcept { return RangeProxy<T>(mRange.data() + rhs * mRange.size(), mRange.size()); }
+};
+#pragma endregion
+
+#pragma region RangeProxy2D Class
+template <typename T>
+struct RangeProxy2D final {
+	using element_type    = T;
+	using axis_size       = std::uint32_t;
+	using size_type       = std::size_t;
+	using difference_type = std::ptrdiff_t;
+	using value_type      = RangeProxy<T>;
+
+	using iterator       = RangeIterator<T>;
+	using const_iterator = const RangeIterator<T>;
+
+	using reverse_iterator       = std::reverse_iterator<iterator>;
+	using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+
+protected:
+	element_type* mData;
+	axis_size mCols;
+	axis_size mRows;
+
+public:
+	constexpr RangeProxy2D(element_type* data, size_type cols, size_type rows) noexcept
+		: mData{ data }
+		, mCols{ static_cast<axis_size>(cols) }
+		, mRows{ static_cast<axis_size>(rows) }
+	{}
+
+	constexpr element_type* data()   const noexcept { return mData; }
+	constexpr size_type size()       const noexcept { return mCols * mRows; }
+	constexpr size_type size_bytes() const noexcept { return size() * sizeof(element_type); }
+	constexpr bool      empty()      const noexcept { return size() == 0; }
+
+	constexpr size_type  lenX() const noexcept { return mCols; }
+	constexpr size_type  lenY() const noexcept { return mRows; }
+
+	constexpr value_type front() const noexcept { return value_type(data(), lenX()); }
+	constexpr value_type back()  const noexcept { return value_type(data() + (lenY() - 1) * lenX()); }
+
+	constexpr value_type first(size_type count) const { return value_type(data(), count); }
+	constexpr value_type last(size_type count)  const { return value_type(data(), size() - count); }
+
+	constexpr value_type operator[](size_type idx) const { return value_type(data() + idx * lenX(), lenX()); }
+	constexpr value_type at(size_type idx) const {
+		if (idx < lenY()) { return value_type(data() + idx * lenX(), lenX()); }
+		else { throw std::out_of_range("RangeProxy2D.at() :: Index out of range."); }
+	}
+
+	constexpr auto begin()   const noexcept { return iterator(data(), lenX()); }
+	constexpr auto end()     const noexcept { return iterator(data() + size(), lenX()); }
+
+	constexpr auto rbegin()  const noexcept { return std::make_reverse_iterator(end()); }
+	constexpr auto rend()    const noexcept { return std::make_reverse_iterator(begin()); }
+
+	constexpr auto cbegin()  const noexcept { return const_iterator(data(), lenX()); }
+	constexpr auto cend()    const noexcept { return const_iterator(data() + size(), lenX()); }
+
+	constexpr auto crbegin() const noexcept { return std::make_reverse_iterator(cend()); }
+	constexpr auto crend()   const noexcept { return std::make_reverse_iterator(cbegin()); }
 };
 #pragma endregion

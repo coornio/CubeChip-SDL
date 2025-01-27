@@ -10,12 +10,10 @@
 
 #include <cmath>
 #include <cassert>
-#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <algorithm>
 #include <execution>
-#include <stdexcept>
 #include <utility>
 
 #ifdef WIN32
@@ -71,6 +69,8 @@ public:
 
 	constexpr auto makeIter()  const { return RangeIterator<T>(data(), lenX()); }
 	constexpr auto makeProxy() const { return *makeIter(); }
+
+	constexpr auto makeProxy2D() const { return RangeProxy2D(data(), lenX(), lenY()); }
 
 	#pragma region Trivial Ctor
 	constexpr Map2D() : Map2D{ 1u, 1u } {}
@@ -412,13 +412,13 @@ public:
 	constexpr iterator begin() const noexcept { return data(); }
 	constexpr iterator end()   const noexcept { return data() + size(); }
 
-	constexpr reverse_iterator rbegin() const noexcept { return end() - 1; }
-	constexpr reverse_iterator rend()   const noexcept { return begin() - 1; }
+	constexpr reverse_iterator rbegin() const noexcept { return std::make_reverse_iterator(end()); }
+	constexpr reverse_iterator rend()   const noexcept { return std::make_reverse_iterator(begin()); }
 
 	constexpr const_iterator cbegin() const noexcept { return begin(); }
 	constexpr const_iterator cend()   const noexcept { return end(); }
 
-	constexpr const_reverse_iterator crbegin() const noexcept { return rbegin(); }
-	constexpr const_reverse_iterator crend()   const noexcept { return rend(); }
+	constexpr const_reverse_iterator crbegin() const noexcept { return std::make_reverse_iterator(cend()); }
+	constexpr const_reverse_iterator crend()   const noexcept { return std::make_reverse_iterator(cbegin()); }
 };
 #pragma endregion
