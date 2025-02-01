@@ -328,7 +328,7 @@ void XOCHIP::setColorBit332(const s32 bit, const s32 color) noexcept {
 
 void XOCHIP::pushPatternTone(const u32 index) noexcept {
 	static const auto samplesTotal{ ASB->getSampleRate(cRefreshRate) };
-	std::vector<s8> samplesBuffer(static_cast<usz>(samplesTotal));
+	std::vector<s16> samplesBuffer(static_cast<usz>(samplesTotal));
 
 	if (mAudioTimer[index]) {
 		const auto audioTone{ std::pow(2.0f, (mAudioPitch - 64.0f) / 48.0f) };
@@ -337,7 +337,7 @@ void XOCHIP::pushPatternTone(const u32 index) noexcept {
 		for (auto& audioSample : samplesBuffer) {
 			const auto bitOffset{ static_cast<s32>(std::clamp(mAudioPhase[index] * 128.0f, 0.0f, 127.0f)) };
 			const auto bytePhase{ 1 << (7 ^ (bitOffset & 7)) };
-			audioSample = mPatternBuf[bitOffset >> 3] & bytePhase ? 0x0F : 0xF0;
+			audioSample = (mPatternBuf[bitOffset >> 3] & bytePhase ? 0x0F : 0xF0) << 8;
 			mAudioPhase[index] = std::fmod(mAudioPhase[index] + audioStep, 1.0f);
 		}
 	} else { mAudioPhase[index] = 0.0f; }
