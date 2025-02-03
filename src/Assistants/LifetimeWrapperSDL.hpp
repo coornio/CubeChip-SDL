@@ -51,7 +51,8 @@ class SDL_Unique {
 
 public:
 	SDL_Unique(T* ptr = nullptr) noexcept
-		: mPtr{ ptr, SDL_Deleter<T>::deleter } {}
+		: mPtr{ ptr, SDL_Deleter<T>::deleter }
+	{}
 
 	SDL_Unique(SDL_Unique&&) noexcept = default; // move constructor
 	SDL_Unique(const SDL_Unique&) = delete; // copy constructor

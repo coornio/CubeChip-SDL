@@ -69,7 +69,6 @@ protected:
 		bool mDisplayLarger{};
 		bool mManualRefresh{};
 		bool mPixelTrailing{};
-		bool mBuzzerEnabled{};
 	} Trait;
 
 	enum class Interrupt {
@@ -106,11 +105,9 @@ protected:
 	bool isDisplayLarger() const noexcept { return Trait.mDisplayLarger; }
 	bool isManualRefresh() const noexcept { return Trait.mManualRefresh; }
 	bool isPixelTrailing() const noexcept { return Trait.mPixelTrailing; }
-	bool isBuzzerEnabled() const noexcept { return Trait.mBuzzerEnabled; }
 	void isDisplayLarger(const bool state) noexcept { Trait.mDisplayLarger = state; }
 	void isManualRefresh(const bool state) noexcept { Trait.mManualRefresh = state; }
 	void isPixelTrailing(const bool state) noexcept { Trait.mPixelTrailing = state; }
-	void isBuzzerEnabled(const bool state) noexcept { Trait.mBuzzerEnabled = state; }
 
 /*==================================================================*/
 

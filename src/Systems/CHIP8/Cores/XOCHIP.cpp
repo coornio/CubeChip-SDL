@@ -289,7 +289,7 @@ void XOCHIP::renderVideoData() {
 		}
 	);
 
-	const auto pBitColors{ mBitColors.data()};
+	const auto* pBitColors{ mBitColors.data()};
 	BVS->modifyTexture(textureBuffer,
 		[pBitColors](const u32 pixel) noexcept {
 			return 0xFF | pBitColors[pixel];
@@ -305,13 +305,13 @@ void XOCHIP::prepDisplayArea(const Resolution mode) {
 
 	setDisplayResolution(W, H);
 
-	if (!BVS->setViewportDimensions(W, H)) [[unlikely]] {
-		triggerInterrupt(Interrupt::ERROR);
-	} else {
+	if (BVS->setViewportDimensions(W, H)) [[likely]] {
 		mDisplayBuffer[0].resizeClean(W, H);
 		mDisplayBuffer[1].resizeClean(W, H);
 		mDisplayBuffer[2].resizeClean(W, H);
 		mDisplayBuffer[3].resizeClean(W, H);
+	} else {
+		triggerInterrupt(Interrupt::ERROR);
 	}
 };
 
@@ -352,36 +352,28 @@ void XOCHIP::skipInstruction() noexcept {
 }
 
 void XOCHIP::scrollDisplayUP(const s32 N) {
-	if (!mPlanarMask) { return; }
-
-	for (auto P{ 0 }; P < 4; ++P) {
-		if (mPlanarMask & (1 << P))
-			{ mDisplayBuffer[P].shift(0, -N); }
-	}
+	if (mPlanarMask & 0x1) { mDisplayBuffer[0].shift(0, -N); }
+	if (mPlanarMask & 0x2) { mDisplayBuffer[1].shift(0, -N); }
+	if (mPlanarMask & 0x4) { mDisplayBuffer[2].shift(0, -N); }
+	if (mPlanarMask & 0x8) { mDisplayBuffer[3].shift(0, -N); }
 }
 void XOCHIP::scrollDisplayDN(const s32 N) {
-	if (!mPlanarMask) { return; }
-
-	for (auto P{ 0 }; P < 4; ++P) {
-		if (mPlanarMask & (1 << P))
-			{ mDisplayBuffer[P].shift(0, +N); }
-	}
+	if (mPlanarMask & 0x1) { mDisplayBuffer[0].shift(0, +N); }
+	if (mPlanarMask & 0x2) { mDisplayBuffer[1].shift(0, +N); }
+	if (mPlanarMask & 0x4) { mDisplayBuffer[2].shift(0, +N); }
+	if (mPlanarMask & 0x8) { mDisplayBuffer[3].shift(0, +N); }
 }
 void XOCHIP::scrollDisplayLT() {
-	if (!mPlanarMask) { return; }
-
-	for (auto P{ 0 }; P < 4; ++P) {
-		if (mPlanarMask & (1 << P)) 
-			{ mDisplayBuffer[P].shift(-4, 0); }
-	}
+	if (mPlanarMask & 0x1) { mDisplayBuffer[0].shift(-4, 0); }
+	if (mPlanarMask & 0x2) { mDisplayBuffer[1].shift(-4, 0); }
+	if (mPlanarMask & 0x4) { mDisplayBuffer[2].shift(-4, 0); }
+	if (mPlanarMask & 0x8) { mDisplayBuffer[3].shift(-4, 0); }
 }
 void XOCHIP::scrollDisplayRT() {
-	if (!mPlanarMask) { return; }
-
-	for (auto P{ 0 }; P < 4; ++P) {
-		if (mPlanarMask & (1 << P))
-			{ mDisplayBuffer[P].shift(+4, 0); }
-	}
+	if (mPlanarMask & 0x1) { mDisplayBuffer[0].shift(+4, 0); }
+	if (mPlanarMask & 0x2) { mDisplayBuffer[1].shift(+4, 0); }
+	if (mPlanarMask & 0x4) { mDisplayBuffer[2].shift(+4, 0); }
+	if (mPlanarMask & 0x8) { mDisplayBuffer[3].shift(+4, 0); }
 }
 
 /*==================================================================*/
@@ -398,10 +390,10 @@ void XOCHIP::scrollDisplayRT() {
 		if (N) { scrollDisplayUP(N); }
 	}
 	void XOCHIP::instruction_00E0() noexcept {
-		for (auto P{ 0 }; P < 4; ++P) {
-			if (!(mPlanarMask & (1 << P))) { continue; }
-			mDisplayBuffer[P].initialize();
-		}
+		if (mPlanarMask & 0x1) { mDisplayBuffer[0].initialize(); }
+		if (mPlanarMask & 0x2) { mDisplayBuffer[1].initialize(); }
+		if (mPlanarMask & 0x4) { mDisplayBuffer[2].initialize(); }
+		if (mPlanarMask & 0x8) { mDisplayBuffer[3].initialize(); }
 	}
 	void XOCHIP::instruction_00EE() noexcept {
 		mCurrentPC = mStackBank[--mStackTop & 0xF];
@@ -478,39 +470,21 @@ void XOCHIP::scrollDisplayRT() {
 	}
 	void XOCHIP::instruction_5xy2(const s32 X, const s32 Y) noexcept {
 		const auto dist{ std::abs(X - Y) + 1 };
-		if (X < Y) {
-			for (auto Z{ 0 }; Z < dist; ++Z) {
-				writeMemoryI(mRegisterV[X + Z], Z);
-			}
-		} else {
-			for (auto Z{ 0 }; Z < dist; ++Z) {
-				writeMemoryI(mRegisterV[X - Z], Z);
-			}
-		}
+		const auto flip{ X < Y ? 1 : -1 };
+		for (auto Z{ 0 }; Z < dist; ++Z)
+			{ writeMemoryI(mRegisterV[X + Z * flip], Z); }
 	}
 	void XOCHIP::instruction_5xy3(const s32 X, const s32 Y) noexcept {
 		const auto dist{ std::abs(X - Y) + 1 };
-		if (X < Y) {
-			for (auto Z{ 0 }; Z < dist; ++Z) {
-				mRegisterV[X + Z] = readMemoryI(Z);
-			}
-		} else {
-			for (auto Z{ 0 }; Z < dist; ++Z) {
-				mRegisterV[X - Z] = readMemoryI(Z);
-			}
-		}
+		const auto flip{ X < Y ? 1 : -1 };
+		for (auto Z{ 0 }; Z < dist; ++Z)
+			{ mRegisterV[X + Z * flip] = readMemoryI(Z); }
 	}
 	void XOCHIP::instruction_5xy4(const s32 X, const s32 Y) noexcept {
 		const auto dist{ std::abs(X - Y) + 1 };
-		if (X < Y) {
-			for (auto Z{ 0 }; Z < dist; ++Z) {
-				setColorBit332(X + Z, readMemoryI(Z));
-			}
-		} else {
-			for (auto Z{ 0 }; Z < dist; ++Z) {
-				setColorBit332(X - Z, readMemoryI(Z));
-			}
-		}
+		const auto flip{ X < Y ? 1 : -1 };
+		for (auto Z{ 0 }; Z < dist; ++Z)
+			{ setColorBit332(X + Z * flip, readMemoryI(Z)); }
 	}
 
 	#pragma endregion
@@ -722,10 +696,8 @@ void XOCHIP::scrollDisplayRT() {
 		nextInstruction();
 	}
 	void XOCHIP::instruction_F002() noexcept {
-		for (auto idx{ 0 }; idx < 16; ++idx) {
-			mPatternBuf[idx] = readMemoryI(idx);
-		}
-		isBuzzerEnabled(false);
+		for (auto idx{ 0 }; idx < 16; ++idx)
+			{ mPatternBuf[idx] = readMemoryI(idx); }
 	}
 	void XOCHIP::instruction_FN01(const s32 N) noexcept {
 		mPlanarMask = N;
@@ -759,7 +731,6 @@ void XOCHIP::scrollDisplayRT() {
 	}
 	void XOCHIP::instruction_Fx3A(const s32 X) noexcept {
 		mAudioPitch = mRegisterV[X];
-		isBuzzerEnabled(false);
 	}
 	void XOCHIP::instruction_FN55(const s32 N) noexcept {
 		for (auto idx{ 0 }; idx <= N; ++idx)
