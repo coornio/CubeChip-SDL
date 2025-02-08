@@ -12,29 +12,20 @@
 #include <atomic>
 
 template <typename T>
-class TripleTextureBuffer {
+class TripleBuffer {
 	using size_type = std::size_t;
 	Map2D<T> dataBuffer[3u];
 
-	std::atomic<u32> readBuffer{0u};
-	std::atomic<u32> workBuffer{1u};
-	std::atomic<u32> swapBuffer{2u};
-	std::atomic_flag activeWriter{};
-	std::shared_mutex resizeMutex{};
+	std::atomic<u32> readBuffer{ 0u };
+	std::atomic<u32> workBuffer{ 1u };
+	std::atomic<u32> swapBuffer{ 2u };
+	std::shared_mutex reader{};
+	std::shared_mutex worker{};
 
-	void commitWriteOp() noexcept {
+	void swapBufferIndices() noexcept {
 		readBuffer.store((readBuffer.load(std::memory_order_relaxed) + 1u) % 3u, std::memory_order_release);
 		workBuffer.store((workBuffer.load(std::memory_order_relaxed) + 1u) % 3u, std::memory_order_release);
 		swapBuffer.store((swapBuffer.load(std::memory_order_relaxed) + 1u) % 3u, std::memory_order_release);
-
-		activeWriter.clear(std::memory_order_release);
-		activeWriter.notify_one();
-	}
-
-	void acquireWriter() noexcept {
-		while (activeWriter.test_and_set(std::memory_order_acquire)) {
-			activeWriter.wait(true, std::memory_order_acquire);
-		}
 	}
 
 public:
@@ -43,27 +34,28 @@ public:
 	{}
 
 	void resize(size_type cols, size_type rows) noexcept {
-		std::unique_lock lock(resizeMutex);
+		std::unique_lock lock1(reader);
+		std::unique_lock lock2(worker);
+
 		dataBuffer[0u].resizeClean(cols, rows);
 		dataBuffer[1u].resizeClean(cols, rows);
 		dataBuffer[2u].resizeClean(cols, rows);
 	}
 
 	auto read() const noexcept {
-		std::shared_lock lock(resizeMutex);
+		std::shared_lock lock(reader);
+
 		return Map2D<T>(dataBuffer[readBuffer.load(std::memory_order_acquire)]);
 	}
 
 	template <IsContiguousContainer T>
 	void write(const T& pixelData) {
-		std::shared_lock lock(resizeMutex);
-		acquireWriter();
-		std::copy(
-			std::execution::unseq,
-			pixelData.begin(),
-			pixelData.end(),
-			dataBuffer[workBuffer.load(std::memory_order_relaxed)].data()
-		);
-		commitWriteOp();
+		std::unique_lock lock(worker);
+
+		std::copy(std::execution::unseq,
+			pixelData.begin(), pixelData.end(),
+			dataBuffer[workBuffer.load(std::memory_order_relaxed)].data());
+
+		swapBufferIndices();
 	}
 };

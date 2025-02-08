@@ -85,7 +85,7 @@ public:
 	#pragma region Copy/Move Ctor
 	constexpr Map2D(Map2D&&) = default; // move constructor
 	constexpr Map2D(const Map2D& other) // copy constructor
-		: Map2D{ other.lenX(), other.lenY() }
+		: Map2D{ other.mCols, other.mRows }
 	{
 		std::copy(std::execution::unseq,
 			other.begin(), other.end(), begin());
@@ -99,8 +99,8 @@ public:
 			std::copy(std::execution::unseq,
 				other.begin(), other.end(), begin());
 			
-			mCols = other.lenX();
-			mRows = other.lenY();
+			mCols = other.mCols;
+			mRows = other.mRows;
 		}
 		return *this;
 	}
