@@ -85,12 +85,10 @@ public:
 	#pragma region Copy/Move Ctor
 	constexpr Map2D(Map2D&&) = default; // move constructor
 	constexpr Map2D(const Map2D& other) // copy constructor
-		: Map2D{ other.mRows, other.mCols }
+		: Map2D{ other.lenX(), other.lenY() }
 	{
-		std::copy(
-			std::execution::unseq,
-			other.begin(), other.end(), begin()
-		);
+		std::copy(std::execution::unseq,
+			other.begin(), other.end(), begin());
 	}
 	#pragma endregion
 
@@ -98,11 +96,11 @@ public:
 	constexpr Map2D& operator=(Map2D&&) = default;   // move assignment
 	constexpr Map2D& operator=(const Map2D& other) { // copy assignment
 		if (this != &other && size() == other.size()) {
-			std::copy(
-				std::execution::unseq,
-				other.begin(), other.end(), begin()
-			);
-			mRows = other.mRows; mCols = other.mCols;
+			std::copy(std::execution::unseq,
+				other.begin(), other.end(), begin());
+			
+			mCols = other.lenX();
+			mRows = other.lenY();
 		}
 		return *this;
 	}
@@ -119,12 +117,8 @@ public:
 	 */
 	template <IsContiguousContainer Object>
 	constexpr Map2D& linearCopy(const Object& other) {
-		std::copy_n(
-			std::execution::unseq,
-			std::begin(other),
-			std::min(size(), std::size(other)),
-			begin()
-		);
+		std::copy_n(std::execution::unseq,
+			std::begin(other), std::min(size(), std::size(other)), begin());
 		return *this;
 	}
 	#pragma endregion
@@ -142,12 +136,8 @@ public:
 	 */
 	template <size_type N>
 	constexpr Map2D& linearCopy(T(&other)[N], size_type len = N) {
-		std::copy_n(
-			std::execution::unseq,
-			other,
-			std::min(len, size()),
-			begin()
-		);
+		std::copy_n(std::execution::unseq,
+			other, std::min(len, size()), begin());
 		return *this;
 	}
 	#pragma endregion
@@ -183,10 +173,8 @@ public:
 		for (size_type row{ 0u }; row < minRows; ++row) {
 			const auto srcIdx{ pData.get() + row * lenX() };
 			const auto dstIdx{ pCopy.get() + row * cols };
-			std::move_if_noexcept(
-				std::execution::unseq,
-				srcIdx, srcIdx + minCols, dstIdx
-			);
+			std::move_if_noexcept(std::execution::unseq,
+				srcIdx, srcIdx + minCols, dstIdx);
 		}
 
 		mRows = rows;
@@ -214,7 +202,8 @@ public:
 	 * @return Self reference for method chaining.
 	 */
 	constexpr Map2D& initialize(T value = T{}) {
-		std::fill(std::execution::unseq, begin(), end(), value);
+		std::fill(std::execution::unseq,
+			begin(), end(), value);
 		return *this;
 	}
 	#pragma endregion
@@ -237,23 +226,27 @@ public:
 				if (shift >= lenX()) { return initialize(value); }
 				for (size_type row{ 0u }; row < lenY(); ++row) {
 					const auto offset{ end() - row * lenX() };
-					std::fill(std::execution::unseq, offset - shift, offset, value);
+					std::fill(std::execution::unseq,
+						offset - shift, offset, value);
 				}
 			} else {
 				if (shift >= lenX()) { return initialize(value); }
 				for (size_type row{ 0u }; row < lenY(); ++row) {
 					const auto offset{ begin() + row * lenX() };
-					std::fill(std::execution::unseq, offset, offset + shift, value);
+					std::fill(std::execution::unseq,
+						offset, offset + shift, value);
 				}
 			}
 		}
 		if (const auto shift{ 0ull + std::abs(rows) }; shift) {
 			if (rows < 0) {
 				if (shift >= lenY()) { return initialize(value); }
-				std::fill(std::execution::unseq, end() - shift * lenX(), end(), value);
+				std::fill(std::execution::unseq,
+					end() - shift * lenX(), end(), value);
 			} else {
 				if (shift >= lenY()) { return initialize(value); }
-				std::fill(std::execution::unseq, begin(), begin() + shift * lenX(), value);
+				std::fill(std::execution::unseq,
+					begin(), begin() + shift * lenX(), value);
 			}
 		}
 		return *this;
@@ -275,20 +268,24 @@ public:
 			if (cols < 0) {
 				for (size_type row{ 0u }; row < lenY(); ++row) {
 					const auto offset{ begin() + row * lenX() };
-					std::rotate(std::execution::unseq, offset, offset + shift, offset + lenX());
+					std::rotate(std::execution::unseq,
+						offset, offset + shift, offset + lenX());
 				}
 			} else {
 				for (size_type row{ 0u }; row < lenY(); ++row) {
 					const auto offset{ begin() + row * lenX() };
-					std::rotate(std::execution::unseq, offset, offset + lenX() - shift, offset + lenX());
+					std::rotate(std::execution::unseq,
+						offset, offset + lenX() - shift, offset + lenX());
 				}
 			}
 		}
 		if (const auto shift{ 0ull + std::abs(rows) % lenY() * lenX() }; shift) {
 			if (rows < 0) {
-				std::rotate(std::execution::unseq, begin(), begin() + shift, end());
+				std::rotate(std::execution::unseq,
+					begin(), begin() + shift, end());
 			} else {
-				std::rotate(std::execution::unseq, begin(), end() - shift, end());
+				std::rotate(std::execution::unseq,
+					begin(), end() - shift, end());
 			}
 		}
 		return *this;

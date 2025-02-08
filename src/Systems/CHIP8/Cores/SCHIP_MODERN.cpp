@@ -256,17 +256,17 @@ void SCHIP_MODERN::renderVideoData() {
 }
 
 void SCHIP_MODERN::prepDisplayArea(const Resolution mode) {
-	isDisplayLarger(mode != Resolution::LO);
+	isLargerDisplay(mode != Resolution::LO);
 
-	const auto W{ isDisplayLarger() ? 128 : 64 };
-	const auto H{ isDisplayLarger() ?  64 : 32 };
+	const auto W{ isLargerDisplay() ? 128 : 64 };
+	const auto H{ isLargerDisplay() ?  64 : 32 };
 
 	setDisplayResolution(W, H);
 
-	if (!BVS->setViewportDimensions(W, H)) [[unlikely]] {
-		triggerInterrupt(Interrupt::ERROR);
-	} else {
+	if (BVS->setViewportDimensions(W, H)) [[likely]] {
 		mDisplayBuffer[0].resizeClean(W, H);
+	} else {
+		triggerInterrupt(Interrupt::ERROR);
 	}
 };
 

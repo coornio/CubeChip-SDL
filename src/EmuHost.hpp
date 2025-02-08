@@ -7,7 +7,7 @@
 #pragma once
 
 #include <memory>
-#include <mutex>
+#include <shared_mutex>
 
 #include "Assistants/Typedefs.hpp"
 
@@ -38,7 +38,7 @@ class EmuHost final {
 	std::unique_ptr<FrameLimiter> Limiter;
 
 public:
-	std::mutex Mutex;
+	std::shared_mutex Mutex;
 
 private:
 	bool mFrameStat{};

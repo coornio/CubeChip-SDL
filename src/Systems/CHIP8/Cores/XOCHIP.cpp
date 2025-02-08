@@ -298,10 +298,10 @@ void XOCHIP::renderVideoData() {
 }
 
 void XOCHIP::prepDisplayArea(const Resolution mode) {
-	isDisplayLarger(mode != Resolution::LO);
+	isLargerDisplay(mode != Resolution::LO);
 
-	const auto W{ isDisplayLarger() ? 128 : 64 };
-	const auto H{ isDisplayLarger() ?  64 : 32 };
+	const auto W{ isLargerDisplay() ? 128 : 64 };
+	const auto H{ isLargerDisplay() ?  64 : 32 };
 
 	setDisplayResolution(W, H);
 

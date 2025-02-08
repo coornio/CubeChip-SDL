@@ -16,6 +16,7 @@ BasicAudioSpec::BasicAudioSpec() noexcept {
 			SDL_MESSAGEBOX_ERROR, "Failed to init SDL audio!",
 			SDL_GetError(), nullptr
 		);
+		
 	}
 }
 

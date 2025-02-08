@@ -66,7 +66,7 @@ protected:
 
 	struct PlatformTraits final {
 		u32  mCoreState{ EmuState::NORMAL };
-		bool mDisplayLarger{};
+		bool mLargerDisplay{};
 		bool mManualRefresh{};
 		bool mPixelTrailing{};
 	} Trait;
@@ -102,10 +102,10 @@ protected:
 	bool isSystemStopped() const noexcept override { return getCoreState() || getSystemState(); }
 	bool isCoreStopped()   const noexcept override { return getCoreState(); }
 
-	bool isDisplayLarger() const noexcept { return Trait.mDisplayLarger; }
+	bool isLargerDisplay() const noexcept { return Trait.mLargerDisplay; }
 	bool isManualRefresh() const noexcept { return Trait.mManualRefresh; }
 	bool isPixelTrailing() const noexcept { return Trait.mPixelTrailing; }
-	void isDisplayLarger(const bool state) noexcept { Trait.mDisplayLarger = state; }
+	void isLargerDisplay(const bool state) noexcept { Trait.mLargerDisplay = state; }
 	void isManualRefresh(const bool state) noexcept { Trait.mManualRefresh = state; }
 	void isPixelTrailing(const bool state) noexcept { Trait.mPixelTrailing = state; }
 

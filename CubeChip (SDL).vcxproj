@@ -64,6 +64,7 @@
     <ClInclude Include="src\Assistants\RangeIterator.hpp" />
     <ClInclude Include="src\Assistants\SHA1.hpp" />
     <ClInclude Include="src\Assistants\SimpleFileIO.hpp" />
+    <ClInclude Include="src\Assistants\TripleBuffer.hpp" />
     <ClInclude Include="src\Assistants\Typedefs.hpp" />
     <ClInclude Include="src\Assistants\Well512.hpp" />
     <ClInclude Include="src\Cubechip.hpp" />
@@ -211,7 +212,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdclatest</LanguageStandard_C>
-      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <DisableSpecificWarnings>4324;4619;4061;4062;4365;4623;4625;4626;4668;4710;4711;4820;5026;5027;5031;5032;5045;4514;4464;5219;4800;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>

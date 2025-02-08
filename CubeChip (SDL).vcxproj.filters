@@ -259,6 +259,9 @@
     <ClInclude Include="src\Cubechip.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\Assistants\TripleBuffer.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="external\imgui\misc\debuggers\imgui.natvis" />

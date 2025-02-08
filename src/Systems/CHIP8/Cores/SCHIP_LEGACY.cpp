@@ -265,10 +265,10 @@ void SCHIP_LEGACY::renderVideoData() {
 }
 
 void SCHIP_LEGACY::prepDisplayArea(const Resolution mode) {
-	isDisplayLarger(mode != Resolution::LO);
+	isLargerDisplay(mode != Resolution::LO);
 
-	Quirk.waitVblank = !isDisplayLarger();
-	mActiveCPF = isDisplayLarger() ? cInstSpeedLo : cInstSpeedHi;
+	Quirk.waitVblank = !isLargerDisplay();
+	mActiveCPF = isLargerDisplay() ? cInstSpeedLo : cInstSpeedHi;
 };
 
 /*==================================================================*/
@@ -530,7 +530,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 		if (Quirk.waitVblank) [[unlikely]]
 			{ triggerInterrupt(Interrupt::FRAME); }
 
-		if (isDisplayLarger()) {
+		if (isLargerDisplay()) {
 			const auto offsetX{ 8 - (mRegisterV[X] & 7) };
 			const auto originX{ mRegisterV[X] & 0x78 };
 			const auto originY{ mRegisterV[Y] & 0x3F };

@@ -333,7 +333,7 @@ void MEGACHIP::renderVideoData() {
 }
 
 void MEGACHIP::prepDisplayArea(const Resolution mode) {
-	isDisplayLarger(mode != Resolution::LO);
+	isLargerDisplay(mode != Resolution::LO);
 	isManualRefresh(mode == Resolution::MC);
 
 	if (isManualRefresh()) {
@@ -351,8 +351,8 @@ void MEGACHIP::prepDisplayArea(const Resolution mode) {
 		if (!BVS->setViewportDimensions(cScreenSizeX, cScreenSizeY, cResSizeMult, +2))
 			[[unlikely]] { triggerInterrupt(Interrupt::ERROR); }
 
-		Quirk.waitVblank = !isDisplayLarger();
-		mActiveCPF = isDisplayLarger() ? cInstSpeedLo : cInstSpeedHi;
+		Quirk.waitVblank = !isLargerDisplay();
+		mActiveCPF = isLargerDisplay() ? cInstSpeedLo : cInstSpeedHi;
 	}
 };
 
@@ -920,7 +920,7 @@ void MEGACHIP::scrollBuffersRT() {
 				else { ++offsetY %= mDisplayH; }
 			}
 		} else {
-			if (isDisplayLarger()) {
+			if (isLargerDisplay()) {
 				const auto offsetX{ 8 - (mRegisterV[X] & 7) };
 				const auto originX{ mRegisterV[X] & 0x78 };
 				const auto originY{ mRegisterV[Y] & 0x3F };
