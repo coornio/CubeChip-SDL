@@ -6,8 +6,6 @@
 
 #pragma once
 
-#include <span>
-
 constexpr auto* AppName{ "CubeChip" };
 constexpr auto* AppVer{ "22/11/2024" };
 
@@ -1381,5 +1379,3 @@ constexpr unsigned AppFontData[]{ // Roboto Mono
 	0x01d894fe, 0xd62b012b, 0xe10194fe, 0xfec20197, 0xfe91016f, 0x1ffe973e, 0x64fe9c01, 0x8b47e101, 0x60042806, 0x06064d04, 0x83008901, 0xd9df185d,
 	0xe3fa0516, 0x00dc9c26,
 };
-
-constexpr auto AppFont{ std::span{ AppFontData } };

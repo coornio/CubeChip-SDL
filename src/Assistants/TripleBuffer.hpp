@@ -9,53 +9,115 @@
 #include "Map2D.hpp"
 
 #include <shared_mutex>
+#include <algorithm>
 #include <atomic>
 
-template <typename T>
+template <typename U> requires std::is_trivially_copyable_v<U>
 class TripleBuffer {
 	using size_type = std::size_t;
-	Map2D<T> dataBuffer[3u];
+	Map2D<U> mDataBuffer[3u];
 
-	std::atomic<u32> readBuffer{ 0u };
-	std::atomic<u32> workBuffer{ 1u };
-	std::atomic<u32> swapBuffer{ 2u };
-	std::shared_mutex reader{};
-	std::shared_mutex worker{};
+	std::atomic<u32> mReadPos{ 0u };
+	std::atomic<u32> mWorkPos{ 1u };
+	std::atomic<u32> mSwapPos{ 2u };
 
-	void swapBufferIndices() noexcept {
-		readBuffer.store((readBuffer.load(std::memory_order_relaxed) + 1u) % 3u, std::memory_order_release);
-		workBuffer.store((workBuffer.load(std::memory_order_relaxed) + 1u) % 3u, std::memory_order_release);
-		swapBuffer.store((swapBuffer.load(std::memory_order_relaxed) + 1u) % 3u, std::memory_order_release);
+	mutable std::shared_mutex mReadLock{};
+	mutable std::shared_mutex mWorkLock{};
+
+	void mSwapPosIndices() noexcept {
+		mReadPos.store((mReadPos.load(std::memory_order_relaxed) + 1u) % 3u, std::memory_order_release);
+		mWorkPos.store((mWorkPos.load(std::memory_order_relaxed) + 1u) % 3u, std::memory_order_release);
+		mSwapPos.store((mSwapPos.load(std::memory_order_relaxed) + 1u) % 3u, std::memory_order_release);
 	}
 
+	/*==================================================================*/
+
 public:
-	constexpr TripleTextureBuffer(size_type cols, size_type rows) noexcept
-		: dataBuffer{ Map2D<T>(cols, rows), Map2D<T>(cols, rows), Map2D<T>(cols, rows) }
+	constexpr TripleBuffer(size_type cols = 1u, size_type rows = 1u) noexcept
+		: mDataBuffer{ Map2D<U>(cols, rows), Map2D<U>(cols, rows), Map2D<U>(cols, rows) }
 	{}
 
 	void resize(size_type cols, size_type rows) noexcept {
-		std::unique_lock lock1(reader);
-		std::unique_lock lock2(worker);
+		std::unique_lock read(mReadLock);
+		std::unique_lock work(mWorkLock);
 
-		dataBuffer[0u].resizeClean(cols, rows);
-		dataBuffer[1u].resizeClean(cols, rows);
-		dataBuffer[2u].resizeClean(cols, rows);
+		mDataBuffer[0u].resizeClean(cols, rows);
+		mDataBuffer[1u].resizeClean(cols, rows);
+		mDataBuffer[2u].resizeClean(cols, rows);
 	}
 
-	auto read() const noexcept {
-		std::shared_lock lock(reader);
+	/*==================================================================*/
 
-		return Map2D<T>(dataBuffer[readBuffer.load(std::memory_order_acquire)]);
+private:
+	inline const Map2D<U>& getReadBuffer() const noexcept {
+		return mDataBuffer[mReadPos.load(std::memory_order_acquire)];
+	}
+
+public:
+	template <typename T>
+		requires (sizeof(T) == sizeof(U) && std::is_trivially_copyable_v<T>)
+	void read(T* output) const {
+		std::shared_lock read(mReadLock);
+
+		std::copy(std::execution::unseq,
+			getReadBuffer().begin(), getReadBuffer().end(), output);
 	}
 
 	template <IsContiguousContainer T>
-	void write(const T& pixelData) {
-		std::unique_lock lock(worker);
+		requires MatchingValueType<T, U>
+	void read(T& output) const noexcept {
+		std::shared_lock read(mReadLock);
 
 		std::copy(std::execution::unseq,
-			pixelData.begin(), pixelData.end(),
-			dataBuffer[workBuffer.load(std::memory_order_relaxed)].data());
+			getReadBuffer().begin(), getReadBuffer().end(), std::data(output));
+	}
 
-		swapBufferIndices();
+	/*==================================================================*/
+
+private:
+	inline Map2D<U>& getWorkBuffer() noexcept {
+		return mDataBuffer[mWorkPos.load(std::memory_order_relaxed)];
+	}
+
+public:
+	template <typename T, typename Lambda>
+	void write(const T* data, size_type N, Lambda&& function) {
+		std::unique_lock work(mWorkLock);
+
+		std::transform(std::execution::unseq,
+			data, data + N, getWorkBuffer().data(), function);
+
+		mSwapPosIndices();
+	}
+
+	template <IsContiguousContainer T>
+		requires (sizeof(ValueType<T>) == sizeof(U) && std::is_trivially_copyable_v<ValueType<T>>)
+	void write(const T& data) {
+		std::unique_lock work(mWorkLock);
+
+		std::copy(std::execution::unseq,
+			std::begin(data), std::end(data), getWorkBuffer().data());
+
+		mSwapPosIndices();
+	}
+
+	template <IsContiguousContainer T, typename Lambda>
+	void write(const T& data, Lambda&& function) {
+		std::unique_lock work(mWorkLock);
+
+		std::transform(std::execution::unseq,
+			std::begin(data), std::end(data), getWorkBuffer().data(), function);
+
+		mSwapPosIndices();
+	}
+
+	template <IsContiguousContainer T, typename Lambda>
+	void write(const T& data1, const T& data2, Lambda&& function) {
+		std::unique_lock work(mWorkLock);
+
+		std::transform(std::execution::unseq,
+			std::begin(data1), std::end(data1), std::begin(data2), getWorkBuffer().data(), function);
+
+		mSwapPosIndices();
 	}
 };

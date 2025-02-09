@@ -71,11 +71,11 @@ public:
 		BVS = pBVS;
 	}
 
-	static void addSystemState(const EmuState state) noexcept { mGlobalState |=  state; }
-	static void subSystemState(const EmuState state) noexcept { mGlobalState &= ~state; }
-	static void xorSystemState(const EmuState state) noexcept { mGlobalState ^=  state; }
+	static void addSystemState(EmuState state) noexcept { mGlobalState |=  state; }
+	static void subSystemState(EmuState state) noexcept { mGlobalState &= ~state; }
+	static void xorSystemState(EmuState state) noexcept { mGlobalState ^=  state; }
 
-	static void setSystemState(const EmuState state) noexcept { mGlobalState  =  state; }
+	static void setSystemState(EmuState state) noexcept { mGlobalState  =  state; }
 	static auto getSystemState()                     noexcept { return mGlobalState;    }
 
 	virtual u32 getTotalFrames() const noexcept = 0;
@@ -83,7 +83,7 @@ public:
 	virtual s32 getCPF()       const noexcept = 0;
 	virtual f32 getFramerate() const noexcept = 0;
 
-	virtual s32 addCPF(const s32 delta) noexcept = 0;
+	virtual s32 addCPF(s32 delta) noexcept = 0;
 
 	[[nodiscard]]
 	virtual bool isSystemStopped() const noexcept = 0;

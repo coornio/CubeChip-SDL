@@ -290,9 +290,9 @@ void XOCHIP::renderVideoData() {
 	);
 
 	const auto* pBitColors{ mBitColors.data()};
-	BVS->modifyTexture(textureBuffer,
+	BVS->display.write(textureBuffer,
 		[pBitColors](const u32 pixel) noexcept {
-			return 0xFF | pBitColors[pixel];
+			return static_cast<u32>(0xFF | pBitColors[pixel]);
 		}
 	);
 }
@@ -328,7 +328,7 @@ void XOCHIP::setColorBit332(const s32 bit, const s32 color) noexcept {
 
 void XOCHIP::pushPatternTone(const u32 index) noexcept {
 	static const auto samplesTotal{ ASB->getSampleRate(cRefreshRate) };
-	std::vector<s16> samplesBuffer(static_cast<usz>(samplesTotal));
+	std::vector<s16> samplesBuffer(static_cast<ust>(samplesTotal));
 
 	if (mAudioTimer[index]) {
 		const auto audioTone{ std::pow(2.0f, (mAudioPitch - 64.0f) / 48.0f) };

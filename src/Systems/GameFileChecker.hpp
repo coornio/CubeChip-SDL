@@ -67,7 +67,7 @@ class GameFileChecker final {
 
 	static bool validate(
 		const char* fileData,
-		const usz   fileSize,
+		const ust   fileSize,
 		const Str& fileType
 	) noexcept;
 
@@ -78,7 +78,7 @@ class GameFileChecker final {
 public:
 	static bool validate(
 		const char* fileData,
-		const usz   fileSize,
+		const ust   fileSize,
 		const Str& fileType,
 		const Str& fileSHA1
 	) noexcept;

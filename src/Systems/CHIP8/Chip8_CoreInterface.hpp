@@ -92,12 +92,12 @@ protected:
 
 /*==================================================================*/
 
-	void addCoreState(const EmuState state) noexcept { Trait.mCoreState |=  state; }
-	void subCoreState(const EmuState state) noexcept { Trait.mCoreState &= ~state; }
-	void xorCoreState(const EmuState state) noexcept { Trait.mCoreState ^=  state; }
+	void addCoreState(EmuState state) noexcept { Trait.mCoreState |=  state; }
+	void subCoreState(EmuState state) noexcept { Trait.mCoreState &= ~state; }
+	void xorCoreState(EmuState state) noexcept { Trait.mCoreState ^=  state; }
 
-	void setCoreState(const EmuState state) noexcept { Trait.mCoreState = state; }
-	auto getCoreState()               const noexcept { return Trait.mCoreState;  }
+	void setCoreState(EmuState state) noexcept { Trait.mCoreState = state; }
+	auto getCoreState()         const noexcept { return Trait.mCoreState;  }
 
 	bool isSystemStopped() const noexcept override { return getCoreState() || getSystemState(); }
 	bool isCoreStopped()   const noexcept override { return getCoreState(); }
@@ -105,9 +105,9 @@ protected:
 	bool isLargerDisplay() const noexcept { return Trait.mLargerDisplay; }
 	bool isManualRefresh() const noexcept { return Trait.mManualRefresh; }
 	bool isPixelTrailing() const noexcept { return Trait.mPixelTrailing; }
-	void isLargerDisplay(const bool state) noexcept { Trait.mLargerDisplay = state; }
-	void isManualRefresh(const bool state) noexcept { Trait.mManualRefresh = state; }
-	void isPixelTrailing(const bool state) noexcept { Trait.mPixelTrailing = state; }
+	void isLargerDisplay(bool state) noexcept { Trait.mLargerDisplay = state; }
+	void isManualRefresh(bool state) noexcept { Trait.mManualRefresh = state; }
+	void isPixelTrailing(bool state) noexcept { Trait.mPixelTrailing = state; }
 
 /*==================================================================*/
 
@@ -122,7 +122,7 @@ protected:
 	s32 mDisplayW{},  mDisplayH{};
 	s32 mDisplayWb{}, mDisplayHb{};
 
-	void setDisplayResolution(const s32 W, const s32 H) noexcept {
+	void setDisplayResolution(s32 W, s32 H) noexcept {
 		mDisplayW = W; mDisplayWb = W - 1;
 		mDisplayH = H; mDisplayHb = H - 1;
 	}
@@ -141,9 +141,9 @@ protected:
 	std::array<u8,  STREAM::COUNT>
 		mAudioTimer{};
 
-	void startAudio(const s32 duration, const s32 tone = 0) noexcept;
-	void startAudioAtChannel(const u32 index, const s32 duration, const s32 tone = 0) noexcept;
-	void pushSquareTone(const u32 index, const f32 framerate = 60.0f) noexcept;
+	void startAudio(s32 duration, s32 tone = 0) noexcept;
+	void startAudioAtChannel(u32 index, s32 duration, s32 tone = 0) noexcept;
+	void pushSquareTone(u32 index, f32 framerate = 60.0f) noexcept;
 
 	u32 mDelayTimer{};
 	u32 mInputTimer{};
@@ -163,24 +163,24 @@ protected:
 
 /*==================================================================*/
 
-	void instructionError(const u32 HI, const u32 LO);
+	void instructionError(u32 HI, u32 LO);
 
-	void triggerInterrupt(const Interrupt type) noexcept;
+	void triggerInterrupt(Interrupt type) noexcept;
 
 private:
 	bool checkRegularFile(const Path& filePath) const noexcept;
 	bool newPermaRegsFile(const Path& filePath) const noexcept;
 
 
-	void setFilePermaRegs(const u32 X) noexcept;
-	void getFilePermaRegs(const u32 X) noexcept;
+	void setFilePermaRegs(u32 X) noexcept;
+	void getFilePermaRegs(u32 X) noexcept;
 
 protected:
-	void setPermaRegs(const u32 X) noexcept;
-	void getPermaRegs(const u32 X) noexcept;
+	void setPermaRegs(u32 X) noexcept;
+	void getPermaRegs(u32 X) noexcept;
 
 	void copyGameToMemory(void* dest) noexcept;
-	void copyFontToMemory(void* dest, const usz size) noexcept;
+	void copyFontToMemory(void* dest, ust size) noexcept;
 	void copyColorsToCore(void* dest) noexcept;
 
 	virtual void handlePreFrameInterrupt() noexcept;
@@ -191,8 +191,8 @@ protected:
 
 	virtual void nextInstruction() noexcept;
 	virtual void skipInstruction() noexcept;
-	virtual void performProgJump(const u32 next) noexcept;
-	virtual void prepDisplayArea(const Resolution mode) = 0;
+	virtual void performProgJump(u32 next) noexcept;
+	virtual void prepDisplayArea(Resolution mode) = 0;
 
 	virtual void renderAudioData() = 0;
 	virtual void renderVideoData() = 0;
@@ -209,7 +209,7 @@ public:
 	s32 getCPF()       const noexcept override { return mActiveCPF; }
 	f32 getFramerate() const noexcept override { return mFramerate; }
 
-	s32 addCPF(const s32 delta) noexcept override {
+	s32 addCPF(s32 delta) noexcept override {
 		if (stateRunning() && !stateWaiting()) {
 			mActiveCPF += mActiveCPF > 0
 				? delta : -delta;

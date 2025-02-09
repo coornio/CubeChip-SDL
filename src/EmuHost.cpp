@@ -105,7 +105,7 @@ void EmuHost::loadGameFile(const Path& gameFile) {
 	}
 }
 
-void EmuHost::pauseSystem(const bool state) const noexcept {
+void EmuHost::pauseSystem(bool state) const noexcept {
 	if (state) {
 		EmuInterface::addSystemState(EmuState::HIDDEN);
 	} else {
@@ -117,7 +117,7 @@ void EmuHost::quitApplication() noexcept {
 	discardCore();
 }
 
-bool EmuHost::isMainWindow(const u32 windowID) const noexcept {
+bool EmuHost::isMainWindow(u32 windowID) const noexcept {
 	return windowID == BVS->getMainWindowID();
 }
 

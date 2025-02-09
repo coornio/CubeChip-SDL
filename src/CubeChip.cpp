@@ -123,7 +123,7 @@ SDL_AppResult SDL_AppEvent(void *pHost, SDL_Event *Event) {
 
 			case SDL_EVENT_WINDOW_DISPLAY_CHANGED:
 			case SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED:
-				Host.scaleInterface(AppFont);
+				Host.scaleInterface(AppFontData);
 				break;
 		}
 	}

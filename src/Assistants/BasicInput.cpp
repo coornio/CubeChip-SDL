@@ -20,16 +20,16 @@ void BasicKeyboard::storeOldState() noexcept {
 	);
 }
 
-bool BasicKeyboard::isHeldPrev(const SDL_Scancode key) const noexcept {
+bool BasicKeyboard::isHeldPrev(SDL_Scancode key) const noexcept {
 	return oldState[key];
 }
-bool BasicKeyboard::isHeld(const SDL_Scancode key) const noexcept {
+bool BasicKeyboard::isHeld(SDL_Scancode key) const noexcept {
 	return SDL_GetKeyboardState(nullptr)[key];
 }
-bool BasicKeyboard::isPressed(const SDL_Scancode key) const noexcept {
+bool BasicKeyboard::isPressed(SDL_Scancode key) const noexcept {
 	return !isHeldPrev(key) && isHeld(key);
 }
-bool BasicKeyboard::isReleased(const SDL_Scancode key) const noexcept {
+bool BasicKeyboard::isReleased(SDL_Scancode key) const noexcept {
 	return isHeldPrev(key) && !isHeld(key);
 }
 
@@ -47,19 +47,18 @@ void BasicMouse::storeOldState() noexcept {
 	relY = posY - oldY;
 }
 
-bool BasicMouse::isHeldPrev(const BIC_Button key) const noexcept {
+bool BasicMouse::isHeldPrev(BIC_Button key) const noexcept {
 	return oldState & key;
 }
-bool BasicMouse::isHeld(const BIC_Button key) const noexcept {
+bool BasicMouse::isHeld(BIC_Button key) const noexcept {
 	return SDL_GetMouseState(nullptr, nullptr) & key;
 }
-bool BasicMouse::isPressed(const BIC_Button key) const noexcept {
+bool BasicMouse::isPressed(BIC_Button key) const noexcept {
 	return !isHeldPrev(key) && isHeld(key);
 }
-bool BasicMouse::isReleased(const BIC_Button key) const noexcept {
+bool BasicMouse::isReleased(BIC_Button key) const noexcept {
 	return isHeldPrev(key) && !isHeld(key);
 }
-
 
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/

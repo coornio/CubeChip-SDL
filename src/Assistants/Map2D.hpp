@@ -73,9 +73,7 @@ public:
 	constexpr auto makeProxy2D() const { return RangeProxy2D(data(), lenX(), lenY()); }
 
 	#pragma region Trivial Ctor
-	constexpr Map2D() : Map2D{ 1u, 1u } {}
-
-	constexpr Map2D(size_type cols, size_type rows)
+	constexpr Map2D(size_type cols = 1u, size_type rows = 1u)
 		: mCols{ std::max(1u, static_cast<axis_size>(cols)) }
 		, mRows{ std::max(1u, static_cast<axis_size>(rows)) }
 		, pData{ std::make_unique<T[]>(size()) }

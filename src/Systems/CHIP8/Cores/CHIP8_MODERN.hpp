@@ -45,7 +45,7 @@ public:
 
 	static constexpr bool isGameFileValid(
 		const char* fileData,
-		const usz   fileSize
+		const ust   fileSize
 	) noexcept {
 		if (!fileData || !fileSize) { return false; }
 		return fileSize + cGameLoadPos <= cTotalMemory;

@@ -118,7 +118,7 @@ void BasicVideoSpec::raiseWindow(SDL_Window* window) {
 	SDL_RaiseWindow(window);
 }
 
-void BasicVideoSpec::resetMainWindow(const s32 window_W, const s32 window_H) {
+void BasicVideoSpec::resetMainWindow(s32 window_W, s32 window_H) {
 	SDL_SetWindowSize(mMainWindow, window_W, window_H);
 
 	SDL_ShowWindow(mMainWindow);
@@ -129,31 +129,16 @@ void BasicVideoSpec::resetMainWindow(const s32 window_W, const s32 window_H) {
 	mMainTexture.reset();
 }
 
-void BasicVideoSpec::setWindowSize(SDL_Window* window, const s32 window_W, const s32 window_H) {
+void BasicVideoSpec::setWindowSize(SDL_Window* window, s32 window_W, s32 window_H) {
 	SDL_SetWindowSize(window, window_W, window_H);
 	SDL_SyncWindow(window);
 }
 
-u32* BasicVideoSpec::lockTexture() {
-	void* pixel_ptr{};
-	s32 pixel_pitch{};
-	SDL_LockTexture(
-		mMainTexture, nullptr,
-		&pixel_ptr, &pixel_pitch
-	);
-	return static_cast<u32*>(pixel_ptr);
-}
-void BasicVideoSpec::unlockTexture() {
-	SDL_UnlockTexture(mMainTexture);
-}
-
-void BasicVideoSpec::setViewportOpacity(const u32 alpha) {
+void BasicVideoSpec::setViewportOpacity(u32 alpha) {
 	SDL_SetTextureAlphaMod(mMainTexture, static_cast<Uint8>(alpha));
 }
 
-bool BasicVideoSpec::setViewportDimensions(
-	const s32 texture_W, const s32 texture_H
-) {
+bool BasicVideoSpec::setViewportDimensions(s32 texture_W, s32 texture_H) {
 	mSuccessful = mMainTexture = SDL_CreateTexture(
 		mMainRenderer,
 		SDL_PIXELFORMAT_RGBA8888,
@@ -165,15 +150,13 @@ bool BasicVideoSpec::setViewportDimensions(
 		showErrorBox("Failed to create Viewport texture!");
 	} else {
 		SDL_SetTextureScaleMode(mMainTexture, SDL_SCALEMODE_NEAREST);
+		display.resize(texture_W, texture_H);
 	}
 
 	return mMainTexture ? true : false;
 }
 
-bool BasicVideoSpec::setViewportDimensions(
-	const s32 texture_W, const s32 texture_H,
-	const s32 upscale_M, const s32 padding_S
-) {
+bool BasicVideoSpec::setViewportDimensions(s32 texture_W, s32 texture_H, s32 upscale_M, s32 padding_S) {
 	const auto padding_A{ std::abs(padding_S) };
 
 	enableScanLine = padding_S > 0;
@@ -198,7 +181,7 @@ void BasicVideoSpec::processInterfaceEvent(SDL_Event* event) const noexcept {
 	ImGui_ImplSDL3_ProcessEvent(event);
 }
 
-void BasicVideoSpec::updateInterfacePixelScaling(const void* fontData, const s32 fontSize, const f32 newScale) {
+void BasicVideoSpec::updateInterfacePixelScaling(const void* fontData, s32 fontSize, f32 newScale) {
 	static auto currentScale{ 0.0f };
 
 	if (newScale < 1.0f) { return; }
@@ -240,6 +223,7 @@ void BasicVideoSpec::drawViewportTexture(SDL_Texture* viewportTexture) {
 		SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 		SDL_RenderFillRect(mMainRenderer, &mInnerFrame);
 
+		pushLatestFrameToTexture();
 		SDL_RenderTexture(mMainRenderer, mMainTexture, nullptr, &mInnerFrame);
 
 		if (enableScanLine) {
@@ -284,9 +268,9 @@ namespace ImGui {
 	[[maybe_unused]]
 	static void writeText(
 		const Str& textString,
-		const ImVec2 textAlign   = ImVec2{ 0.5f, 0.5f },
-		const ImVec4 textColor   = ImVec4{ 1.0f, 1.0f, 1.0f, 1.0f },
-		const ImVec2 textPadding = ImVec2{ 6.0f, 6.0f }
+		ImVec2 textAlign   = ImVec2{ 0.5f, 0.5f },
+		ImVec4 textColor   = ImVec4{ 1.0f, 1.0f, 1.0f, 1.0f },
+		ImVec2 textPadding = ImVec2{ 6.0f, 6.0f }
 	) {
 		using namespace ImGui;
 		const auto textPos{ (
@@ -302,10 +286,10 @@ namespace ImGui {
 	[[maybe_unused]]
 	static void writeShadowedText(
 		const Str& textString,
-		const ImVec2 textAlign   = ImVec2{ 0.5f, 0.5f },
-		const ImVec4 textColor   = ImVec4{ 1.0f, 1.0f, 1.0f, 1.0f },
-		const ImVec2 textPadding = ImVec2{ 6.0f, 6.0f },
-		const ImVec2 shadowDist  = ImVec2{ 2.0f, 2.0f }
+		ImVec2 textAlign   = ImVec2{ 0.5f, 0.5f },
+		ImVec4 textColor   = ImVec4{ 1.0f, 1.0f, 1.0f, 1.0f },
+		ImVec2 textPadding = ImVec2{ 6.0f, 6.0f },
+		ImVec2 shadowDist  = ImVec2{ 2.0f, 2.0f }
 	) {
 		using namespace ImGui;
 		const auto textPos{ (
@@ -323,6 +307,14 @@ namespace ImGui {
 		TextUnformatted(textString.c_str());
 		PopStyleColor();
 	}
+}
+
+void BasicVideoSpec::pushLatestFrameToTexture() {
+	void* pixels{}; s32 pitch;
+
+	SDL_LockTexture(mMainTexture, nullptr, &pixels, &pitch);
+	display.read(static_cast<u32*>(pixels));
+	SDL_UnlockTexture(mMainTexture);
 }
 
 void BasicVideoSpec::renderPresent(const char* const stats) {
@@ -412,7 +404,6 @@ void BasicVideoSpec::renderPresent(const char* const stats) {
 		ImGui::Render();
 		ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), mMainRenderer);
 	#pragma endregion
-
 
 	SDL_RenderPresent(mMainRenderer);
 }

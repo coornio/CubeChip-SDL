@@ -38,11 +38,11 @@ public:
 	bool initLogFile(const Str& filename, const Path& directory) noexcept;
 
 private:
-	void writeEntry(const BLOG type, const Str& message) noexcept;
+	void writeEntry(BLOG type, const Str& message) noexcept;
 
 public:
 	template <typename... Args>
-	void newEntry(const BLOG type, const Str& message, Args&&... args) noexcept {
+	void newEntry(BLOG type, const Str& message, Args&&... args) noexcept {
 		if constexpr (sizeof...(Args) == 0) {
 			writeEntry(type, message);
 		} else {

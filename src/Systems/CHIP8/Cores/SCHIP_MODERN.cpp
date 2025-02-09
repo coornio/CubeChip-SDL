@@ -231,7 +231,7 @@ void SCHIP_MODERN::renderAudioData() {
 }
 
 void SCHIP_MODERN::renderVideoData() {
-	BVS->modifyTexture(mDisplayBuffer[0], isPixelTrailing()
+	BVS->display.write(mDisplayBuffer[0], isPixelTrailing()
 		? [](const u32 pixel) noexcept {
 			static constexpr u32 layer[4]{ 0xFF, 0xE7, 0x6F, 0x37 };
 			const auto opacity{ layer[std::countl_zero(pixel) & 0x3] };

@@ -15,12 +15,12 @@
 #include <iomanip>
 #include <utility>
 
-static constexpr usz BLOCK_INTS  { 16 }; // number of 32-bit integers per SHA1 block
-static constexpr usz BLOCK_BYTES { BLOCK_INTS * 4 };
+static constexpr ust BLOCK_INTS  { 16 }; // number of 32-bit integers per SHA1 block
+static constexpr ust BLOCK_BYTES { BLOCK_INTS * 4 };
 
 inline static u32 blk(
 	const u32* block,
-	const usz  index
+	const ust  index
 ) {
 	return std::rotl(
 		block[index + 13 & 15] ^
@@ -40,7 +40,7 @@ inline static void R0(
 	const u32  x,
 	const u32  y,
 		  u32& z,
-	const usz  i
+	const ust  i
 ) {
 	z += ((w & (x ^ y)) ^ y) + block[i] + 0x5A827999 + std::rotl(v, 5);
 	w  = std::rotl(w, 30);
@@ -53,7 +53,7 @@ inline static void R1(
 	const u32  x,
 	const u32  y,
 		  u32& z,
-	const usz  i
+	const ust  i
 ) {
 	block[i] = blk(block, i);
 	z += ((w & (x ^ y)) ^ y) + block[i] + 0x5A827999 + std::rotl(v, 5);
@@ -67,7 +67,7 @@ inline static void R2(
 	const u32  x,
 	const u32  y,
 		  u32& z,
-	const usz  i
+	const ust  i
 ) {
 	block[i] = blk(block, i);
 	z += (w ^ x ^ y) + block[i] + 0x6ED9EBA1 + std::rotl(v, 5);
@@ -81,7 +81,7 @@ inline static void R3(
 	const u32  x,
 	const u32  y,
 		  u32& z,
-	const usz  i
+	const ust  i
 ) {
 	block[i] = blk(block, i);
 	z += (((w | x) & y) | (w & x)) + block[i] + 0x8F1BBCDC + std::rotl(v, 5);
@@ -95,7 +95,7 @@ inline static void R4(
 	const u32  x,
 	const u32  y,
 		  u32& z,
-	const usz  i
+	const ust  i
 ) {
 	block[i] = blk(block, i);
 	z += (w ^ x ^ y) + block[i] + 0xCA62C1D6 + std::rotl(v, 5);
@@ -150,7 +150,7 @@ void SHA1::transform(u32* block) {
 // Hash a single 512-bit block
 void SHA1::buffer_to_block(u32* block) {
 	// convert the string (byte buffer) to a u32 array (MSB)
-	for (usz i{ 0 }; i < BLOCK_INTS; ++i) {
+	for (ust i{ 0 }; i < BLOCK_INTS; ++i) {
 		block[i] = (buffer[4 * i + 3] & 0xFF)
 				 | (buffer[4 * i + 2] & 0xFF) <<  8
 				 | (buffer[4 * i + 1] & 0xFF) << 16
@@ -184,7 +184,7 @@ void SHA1::update(std::istream& is) {
 		const auto chunksize{ BLOCK_BYTES - buffer.size() };
 		is.read(sbuf, static_cast<std::streamsize>(chunksize));
 
-		buffer.append(sbuf, static_cast<usz>(is.gcount()));
+		buffer.append(sbuf, static_cast<ust>(is.gcount()));
 		if (buffer.size() != BLOCK_BYTES) { return; }
 
 		u32 block[BLOCK_INTS]{};
@@ -194,8 +194,8 @@ void SHA1::update(std::istream& is) {
 	}
 }
 
-void SHA1::update(const char* data, const usz size) {
-	usz offset{};
+void SHA1::update(const char* data, const ust size) {
+	ust offset{};
 
 	while (offset < size) {
 		const auto chunksize{ std::min(BLOCK_BYTES - buffer.size(), size - offset) };
@@ -218,7 +218,7 @@ Str SHA1::final() {
 
 	// add padding
 	buffer += static_cast<char>(0x80);
-	const usz orig_size{ buffer.size() };
+	const ust orig_size{ buffer.size() };
 	while (buffer.size() < BLOCK_BYTES)
 		buffer += static_cast<char>(0x00);
 
@@ -227,7 +227,7 @@ Str SHA1::final() {
 
 	if (orig_size > BLOCK_BYTES - 8) {
 		transform(block);
-		for (usz i{ 0 }; i < BLOCK_INTS - 2; ++i)
+		for (ust i{ 0 }; i < BLOCK_INTS - 2; ++i)
 			block[i] = 0;
 	}
 
@@ -254,7 +254,7 @@ Str SHA1::from_file(const Path& filePath) {
 	return checksum.final();
 }
 
-Str SHA1::from_data(const char* data, const usz size) {
+Str SHA1::from_data(const char* data, const ust size) {
 	SHA1 checksum;
 	checksum.update(data, size);
 	return checksum.final();

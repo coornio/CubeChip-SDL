@@ -63,7 +63,7 @@ StrV BasicLogger::getSeverity(BLOG type) const noexcept {
 	}
 }
 
-void BasicLogger::writeEntry(const BLOG type, const Str& message) noexcept {
+void BasicLogger::writeEntry(BLOG type, const Str& message) noexcept {
 	std::ostringstream output;
 	output << getSeverity(type) << " :: " << message;
 

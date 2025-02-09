@@ -320,7 +320,7 @@ void MEGACHIP::renderAudioData() {
 void MEGACHIP::renderVideoData() {
 	if (isManualRefresh()) { return; }
 
-	BVS->modifyTexture(mDisplayBuffer[0], isPixelTrailing()
+	BVS->display.write(mDisplayBuffer[0], isPixelTrailing()
 		? [](const u32 pixel) noexcept {
 			static constexpr u32 layer[4]{ 0xFF, 0xE7, 0x6F, 0x37 };
 			const auto opacity{ layer[std::countl_zero(pixel) & 0x3] };
@@ -450,11 +450,11 @@ void MEGACHIP::flushAllVideoBuffers() {
 	mBackgroundBuffer.initialize();
 	mCollisionMap.initialize();
 
-	BVS->modifyTexture(mForegroundBuffer);
+	BVS->display.write(mForegroundBuffer);
 }
 
 void MEGACHIP::blendAndFlushBuffers() const {
-	BVS->modifyTexture(
+	BVS->display.write(
 		mForegroundBuffer,
 		mBackgroundBuffer,
 		[this](const RGBA src, const RGBA dst) noexcept {
@@ -488,7 +488,7 @@ void MEGACHIP::startAudioTrack(const bool repeat) noexcept {
 
 void MEGACHIP::pushByteAudio(const u32 index) noexcept {
 	static const auto samplesTotal{ ASB->getSampleRate(cRefreshRate) };
-	std::vector<s16> samplesBuffer(static_cast<usz>(samplesTotal));
+	std::vector<s16> samplesBuffer(static_cast<ust>(samplesTotal));
 
 	if (mTrackTotalLen) {
 		for (auto& sample : samplesBuffer) {

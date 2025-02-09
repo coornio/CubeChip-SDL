@@ -67,7 +67,7 @@ public:
 		return HDM && BVS && BAS;
 	}
 
-	bool isMainWindow(const u32 windowID) const noexcept;
+	bool isMainWindow(u32 windowID) const noexcept;
 
 	template <typename T>
 	void scaleInterface(T&& appFont) const noexcept {
@@ -79,7 +79,7 @@ public:
 		BVS->processInterfaceEvent(std::forward<T>(event));
 	}
 
-	void pauseSystem(const bool state) const noexcept;
+	void pauseSystem(bool state) const noexcept;
 	void quitApplication() noexcept;
 	void loadGameFile(const Path&);
 

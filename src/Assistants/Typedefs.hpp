@@ -19,13 +19,17 @@
 using f64 = long double;
 using f32 = float;
 
-using usz = std::size_t;
+using size_type       = std::size_t;
+using difference_type = std::ptrdiff_t;
+
+using ust = size_type;
+using sst = difference_type;
+
 using u64 = std::uint64_t;
 using u32 = std::uint32_t;
 using u16 = std::uint16_t;
 using u8  = std::uint8_t;
 
-using ssz = std::ptrdiff_t;
 using s64 = std::int64_t;
 using s32 = std::int32_t;
 using s16 = std::int16_t;

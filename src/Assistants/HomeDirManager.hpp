@@ -23,7 +23,7 @@ class HomeDirManager final {
 
 	using GameValidator = bool (*)(
 		const char* fileData,
-		const usz   fileSize,
+		const ust   fileSize,
 		const Str&  fileExts,
 		const Str&  fileSHA1
 	) noexcept;

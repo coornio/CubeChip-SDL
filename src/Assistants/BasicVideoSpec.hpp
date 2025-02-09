@@ -8,13 +8,13 @@
 
 #include <string>
 #include <utility>
-#include <concepts>
 #include <execution>
 
 #include <SDL3/SDL.h>
 
 #include "Typedefs.hpp"
 #include "Concepts.hpp"
+#include "TripleBuffer.hpp"
 #include "LifetimeWrapperSDL.hpp"
 
 /*==================================================================*/
@@ -42,6 +42,8 @@ class BasicVideoSpec final {
 	bool enableScanLine{};
 
 public:
+	TripleBuffer<u32> display;
+
 	static auto* create(const char* appName) noexcept {
 		sAppName = appName;
 		static BasicVideoSpec self;
@@ -52,45 +54,43 @@ public:
 
 	static void showErrorBox(const char* const title) noexcept;
 
-	static auto getDisplayWidth(const u32 displayID) noexcept {
+	static auto getDisplayWidth( u32 displayID) noexcept {
 		const auto displayMode{ SDL_GetCurrentDisplayMode(displayID) };
 		return displayMode ? displayMode->w : 0;
 	}
-	static auto getDisplayHeight(const u32 displayID) noexcept {
+	static auto getDisplayHeight(u32 displayID) noexcept {
 		const auto displayMode{ SDL_GetCurrentDisplayMode(displayID) };
 		return displayMode ? displayMode->h : 0;
 	}
 
-	void setFrameColor(const u32 color_off, const u32 color_on) noexcept {
+	void setFrameColor(u32 color_off, u32 color_on) noexcept {
 		mOuterFrameColor[0] = color_off;
 		mOuterFrameColor[1] = color_on;
 	}
 
-	template <typename T, std::size_t N = std::dynamic_extent>
-	void scaleInterface(std::span<const T, N> appFont) {
-		updateInterfacePixelScaling(
-			appFont.data(), static_cast<s32>(appFont.size()),
-			SDL_GetWindowDisplayScale(mMainWindow)
-		);
+	template <typename T, size_type N>
+	void scaleInterface(T(&appFont)[N]) {
+		updateInterfacePixelScaling(appFont, static_cast<s32>(N),
+			SDL_GetWindowDisplayScale(mMainWindow));
 	}
 
 	void processInterfaceEvent(SDL_Event* event) const noexcept;
 
 private:
-	void updateInterfacePixelScaling(const void* fontData, const s32 fontSize, const f32 newScale);
+	void updateInterfacePixelScaling(const void* fontData, s32 fontSize, f32 newScale);
 	void drawViewportTexture(SDL_Texture* viewportTexture);
 
 public:
-	void setViewportOpacity(const u32 alpha);
+	void setViewportOpacity(u32 alpha);
 	bool setViewportDimensions(
-		const s32 texture_W, const s32 texture_H
+		s32 texture_W, s32 texture_H
 	);
 	bool setViewportDimensions(
-		const s32 texture_W, const s32 texture_H,
-		const s32 upscale_M, const s32 padding_S
+		s32 texture_W, s32 texture_H,
+		s32 upscale_M, s32 padding_S
 	);
 
-	void resetMainWindow(const s32 window_W = 640, const s32 window_H = 480);
+	void resetMainWindow(s32 window_W = 640, s32 window_H = 480);
 	void setMainWindowTitle(const Str& title);
 	auto getMainWindowID() const noexcept {
 		return SDL_GetWindowID(mMainWindow.get());
@@ -98,67 +98,14 @@ public:
 	void raiseMainWindow();
 
 	void setWindowTitle(SDL_Window* window, const Str& title);
-	void setWindowSize(SDL_Window* window, const s32 window_W, const s32 window_H);
+	void setWindowSize(SDL_Window* window, s32 window_W, s32 window_H);
 	auto getWindowID(SDL_Window* window) const noexcept {
 		return SDL_GetWindowID(window);
 	}
 	void raiseWindow(SDL_Window* window);
 
+	void pushLatestFrameToTexture();
 	void renderPresent(const char* const stats);
-
-private:
-	[[nodiscard]]
-	u32* lockTexture();
-	void unlockTexture();
-
-public:
-	template <IsContiguousContainer T>
-	void modifyTexture(const T& pixelData) {
-		std::copy(
-			std::execution::unseq,
-			pixelData.begin(),
-			pixelData.end(),
-			lockTexture()
-		);
-		unlockTexture();
-	}
-
-	template <typename T, typename Lambda>
-	void modifyTexture(const T* pixelData, const usz N, Lambda&& function) {
-		std::transform(
-			std::execution::unseq,
-			pixelData,
-			pixelData + N,
-			lockTexture(),
-			function
-		);
-		unlockTexture();
-	}
-
-	template <IsContiguousContainer T, typename Lambda>
-	void modifyTexture(const T& pixelData, Lambda&& function) {
-		std::transform(
-			std::execution::unseq,
-			pixelData.begin(),
-			pixelData.end(),
-			lockTexture(),
-			function
-		);
-		unlockTexture();
-	}
-
-	template <IsContiguousContainer T, typename Lambda>
-	void modifyTexture(const T& pixelData1, const T& pixelData2, Lambda&& function) {
-		std::transform(
-			std::execution::unseq,
-			pixelData1.begin(),
-			pixelData1.end(),
-			pixelData2.begin(),
-			lockTexture(),
-			function
-		);
-		unlockTexture();
-	}
 };
 
 	#pragma endregion

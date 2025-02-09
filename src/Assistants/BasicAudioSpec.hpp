@@ -43,15 +43,16 @@ public:
 	static auto getGlobalGain()     noexcept { return mGlobalGain; }
 	static auto getGlobalGainByte() noexcept { return static_cast<s32>(mGlobalGain * 255.0f); }
 
-	static void setGlobalGain(const f32 gain) noexcept;
-	static void addGlobalGain(const f32 gain) noexcept;
-	static void addGlobalGain(const s32 gain) noexcept;
+	static void setGlobalGain(f32 gain) noexcept;
+	static void addGlobalGain(f32 gain) noexcept;
+	static void addGlobalGain(s32 gain) noexcept;
 };
 
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 class AudioSpecBlock {
+	using size_type = std::size_t;
 
 	SDL_AudioSpec mAudioSpec;
 	std::vector<SDL_Unique<SDL_AudioStream>>
@@ -59,8 +60,8 @@ class AudioSpecBlock {
 
 public:
 	AudioSpecBlock(
-		const SDL_AudioFormat format, const s32 channels, const s32 frequency, const s32 streams,
-		const SDL_AudioDeviceID device = SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK
+		SDL_AudioFormat format, s32 channels, s32 frequency, s32 streams,
+		SDL_AudioDeviceID device = SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK
 	) noexcept
 		: mAudioStreams(std::max(streams, 1))
 	{
@@ -78,22 +79,22 @@ public:
 	auto getFrequency()   const noexcept { return mAudioSpec.freq; }
 	auto getStreamCount() const noexcept { return static_cast<s32>(mAudioStreams.size()); }
 
-	bool isStreamPaused(const u32 index)    const noexcept;
-	f32  getSampleRate(const f32 framerate) const noexcept;
-	f32  getGain(const u32 index)           const noexcept;
-	s32  getGainByte(const u32 index)       const noexcept;
+	bool isStreamPaused(u32 index)    const noexcept;
+	f32  getSampleRate(f32 framerate) const noexcept;
+	f32  getGain(u32 index)           const noexcept;
+	s32  getGainByte(u32 index)       const noexcept;
 
 	/*==================================================================*/
 
-	void pauseStream(const u32 index) noexcept;
+	void pauseStream(u32 index) noexcept;
 	void pauseStreams() noexcept;
 
-	void resumeStream(const u32 index) noexcept;
+	void resumeStream(u32 index) noexcept;
 	void resumeStreams() noexcept;
 
-	void setGain(const u32 index, const f32 gain) noexcept;
-	void addGain(const u32 index, const f32 gain) noexcept;
-	void addGain(const u32 index, const s32 gain) noexcept;
+	void setGain(u32 index, f32 gain) noexcept;
+	void addGain(u32 index, f32 gain) noexcept;
+	void addGain(u32 index, s32 gain) noexcept;
 
 	/**
 	 * @brief Pushes buffer of audio samples to SDL device/stream.
@@ -101,17 +102,14 @@ public:
 	 * @param[in] sampleData :: pointer to audio samples buffer.
 	 * @param[in] bufferSize :: size of buffer in bytes.
 	 */
-	template <IsArithmetic T>
-	void pushAudioData(const u32 index, T* const sampleData, const usz bufferSize) const {
+	template <typename T> requires std::is_arithmetic_v<T>
+	void pushAudioData(u32 index, T* sampleData, ust bufferSize) const {
 		if (isStreamPaused(index) || !bufferSize) { return; }
 
 		const auto globalGain{ BasicAudioSpec::getGlobalGain() };
 
-		std::transform(
-			std::execution::unseq,
-			sampleData,
-			sampleData + bufferSize,
-			sampleData,
+		std::transform(std::execution::unseq,
+			sampleData, sampleData + bufferSize, sampleData,
 			[globalGain](const T sample) noexcept {
 				return static_cast<T>(sample * globalGain);
 			}
@@ -128,8 +126,8 @@ public:
 	 * @param[in] index :: the device/stream to push audio to.
 	 * @param[in] samplesBuffer :: audio samples buffer (C style).
 	 */
-	template <IsArithmetic T, usz N>
-	void pushAudioData(const u32 index, T(&samplesBuffer)[N]) const {
+	template <typename T, size_type N> requires std::is_arithmetic_v<T>
+	void pushAudioData(u32 index, T(&samplesBuffer)[N]) const {
 		pushAudioData(index, samplesBuffer, N);
 	}
 
@@ -139,7 +137,7 @@ public:
 	 * @param[in] samplesBuffer :: audio samples buffer (C++ style).
 	 */
 	template <IsContiguousContainer T>
-	void pushAudioData(const u32 index, T& samplesBuffer) const {
+	void pushAudioData(u32 index, T& samplesBuffer) const {
 		pushAudioData(index, std::data(samplesBuffer), std::size(samplesBuffer));
 	}
 };

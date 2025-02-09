@@ -44,20 +44,20 @@ public:
 
 	void storeOldState() noexcept;
 
-	bool isHeldPrev(const SDL_Scancode key) const noexcept;
-	bool isHeld(const SDL_Scancode key) const noexcept;
-	bool isPressed(const SDL_Scancode key) const noexcept;
-	bool isReleased(const SDL_Scancode key) const noexcept;
+	bool isHeldPrev(SDL_Scancode key) const noexcept;
+	bool isHeld(SDL_Scancode key) const noexcept;
+	bool isPressed(SDL_Scancode key) const noexcept;
+	bool isReleased(SDL_Scancode key) const noexcept;
 
 	template <std::same_as<SDL_Scancode>... S>
 		requires (sizeof...(S) >= 1)
-	bool areAllHeld(const S... code) const noexcept {
+	bool areAllHeld(S... code) const noexcept {
 		return (isHeld(code) && ...);
 	}
 
 	template <std::same_as<SDL_Scancode>... S>
 		requires (sizeof...(S) >= 1)
-	bool areAnyHeld(const S... code) const noexcept {
+	bool areAnyHeld(S... code) const noexcept {
 		return (isHeld(code) || ...);
 	}
 };
@@ -90,20 +90,20 @@ public:
 	float getPosX() const noexcept { return posX; }
 	float getPosY() const noexcept { return posY; }
 
-	bool isHeldPrev(const BIC_Button key) const noexcept;
-	bool isHeld(const BIC_Button key) const noexcept;
-	bool isPressed(const BIC_Button key) const noexcept;
-	bool isReleased(const BIC_Button key) const noexcept;
+	bool isHeldPrev(BIC_Button key) const noexcept;
+	bool isHeld(BIC_Button key) const noexcept;
+	bool isPressed(BIC_Button key) const noexcept;
+	bool isReleased(BIC_Button key) const noexcept;
 
 	template <std::convertible_to<BIC_Button>... S>
 		requires (sizeof...(S) >= 1)
-	bool areAllHeld(const S... code) const noexcept {
+	bool areAllHeld(S... code) const noexcept {
 		return (isHeld(code) && ...);
 	}
 
 	template <std::convertible_to<BIC_Button>... S>
 		requires (sizeof...(S) >= 1)
-	bool areAnyHeld(const S... code) const noexcept {
+	bool areAnyHeld(S... code) const noexcept {
 		return (isHeld(code) || ...);
 	}
 };

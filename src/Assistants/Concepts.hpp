@@ -8,19 +8,15 @@
 
 #include <type_traits>
 #include <concepts>
-#include <ranges>
 
-template<class T>
-concept IsIntegral = std::is_integral_v<T>;
-
-template<class T>
-concept IsArithmetic = std::is_arithmetic_v<T>;
-
-template<class T>
-concept IsArithmeticPtr = std::is_pointer_v<T> && std::is_arithmetic_v<std::remove_pointer_t<T>>;
+template <typename T>
+using ValueType = typename T::value_type;
 
 template <typename T, typename U>
-concept SameValueTypes = std::same_as<typename T::value_type, typename U::value_type>;
+concept SameValueSizes = (sizeof(ValueType<T>) == sizeof(ValueType<U>));
+
+template <typename T, typename U>
+concept SameValueTypes = std::same_as<ValueType<T>, ValueType<U>>;
 
 template <typename T, typename U>
 concept MatchingValueType = std::same_as<std::remove_cv_t<T>, std::remove_cv_t<typename U::value_type>>;

@@ -63,7 +63,7 @@ void Chip8_CoreInterface::loadPresetBinds() {
 	loadCustomBinds(std::span(defaultKeyMappings));
 }
 
-bool Chip8_CoreInterface::keyPressed(u8* returnKey, const u32 tickCount) noexcept {
+bool Chip8_CoreInterface::keyPressed(u8* returnKey, u32 tickCount) noexcept {
 	if (!std::size(mCustomBinds)) { return false; }
 
 	if (tickCount >= mTickLast + mTickSpan) {
@@ -84,11 +84,11 @@ bool Chip8_CoreInterface::keyPressed(u8* returnKey, const u32 tickCount) noexcep
 	return pressKeys;
 }
 
-bool Chip8_CoreInterface::keyHeld_P1(const u32 keyIndex) const noexcept {
+bool Chip8_CoreInterface::keyHeld_P1(u32 keyIndex) const noexcept {
 	return mKeysCurr & ~mKeysLock & 0x01 << (keyIndex & 0xF);
 }
 
-bool Chip8_CoreInterface::keyHeld_P2(const u32 keyIndex) const noexcept {
+bool Chip8_CoreInterface::keyHeld_P2(u32 keyIndex) const noexcept {
 	return mKeysCurr & ~mKeysLock & 0x10 << (keyIndex & 0xF);
 }
 
@@ -159,7 +159,7 @@ void Chip8_CoreInterface::skipInstruction() noexcept {
 	mCurrentPC += 2;
 }
 
-void Chip8_CoreInterface::performProgJump(const u32 next) noexcept {
+void Chip8_CoreInterface::performProgJump(u32 next) noexcept {
 	const auto NNN{ next & 0xFFF };
 	if (mCurrentPC - 2u != NNN) [[likely]] {
 		mCurrentPC = NNN & 0xFFF;
@@ -187,15 +187,16 @@ void Chip8_CoreInterface::processFrame() {
 
 /*==================================================================*/
 
-void Chip8_CoreInterface::startAudio(const s32 duration, const s32 tone) noexcept {
-	if constexpr(STREAM::COUNT == 0) { return; }
+void Chip8_CoreInterface::startAudio(s32 duration, s32 tone) noexcept {
+	if constexpr (STREAM::COUNT == 0) { return; }
 	
 	static auto index{ 0 };
 	startAudioAtChannel(index, duration, tone);
 	++index %= STREAM::COUNT - 1;
 }
 
-void Chip8_CoreInterface::startAudioAtChannel(const u32 index, const s32 duration, const s32 tone) noexcept {
+void Chip8_CoreInterface::startAudioAtChannel(u32 index, s32 duration, s32 tone) noexcept {
+	if constexpr (STREAM::COUNT == 0) { return; }
 	if (index >= STREAM::COUNT) { return; }
 
 	mAudioTimer[index] = static_cast<u8>(duration);
@@ -204,9 +205,9 @@ void Chip8_CoreInterface::startAudioAtChannel(const u32 index, const s32 duratio
 	)) / ASB->getFrequency();
 }
 
-void Chip8_CoreInterface::pushSquareTone(const u32 index, const f32 framerate) noexcept {
+void Chip8_CoreInterface::pushSquareTone(u32 index, f32 framerate) noexcept {
 	std::vector<s16> samplesBuffer \
-		(static_cast<usz>(ASB->getSampleRate(framerate)));
+		(static_cast<ust>(ASB->getSampleRate(framerate)));
 
 	if (mAudioTimer[index]) {
 		for (auto& audioSample : samplesBuffer) {
@@ -218,12 +219,12 @@ void Chip8_CoreInterface::pushSquareTone(const u32 index, const f32 framerate) n
 	ASB->pushAudioData(index, samplesBuffer);
 }
 
-void Chip8_CoreInterface::instructionError(const u32 HI, const u32 LO) {
+void Chip8_CoreInterface::instructionError(u32 HI, u32 LO) {
 	blog.newEntry(BLOG::INFO, "Unknown instruction: 0x{:04X}", HI << 8 | LO);
 	triggerInterrupt(Interrupt::ERROR);
 }
 
-void Chip8_CoreInterface::triggerInterrupt(const Interrupt type) noexcept {
+void Chip8_CoreInterface::triggerInterrupt(Interrupt type) noexcept {
 	mInterrupt = type;
 	mActiveCPF = -std::abs(mActiveCPF);
 }
@@ -250,7 +251,7 @@ bool Chip8_CoreInterface::newPermaRegsFile(const Path& filePath) const noexcept 
 	return fileCreated.value();
 }
 
-void Chip8_CoreInterface::setFilePermaRegs(const u32 X) noexcept {
+void Chip8_CoreInterface::setFilePermaRegs(u32 X) noexcept {
 	auto fileData{ ::writeFileData(*sPermaRegsPath, mRegisterV, X) };
 	if (!fileData) {
 		blog.newEntry(BLOG::ERROR, "File IO error: \"{}\" [{}]",
@@ -258,7 +259,7 @@ void Chip8_CoreInterface::setFilePermaRegs(const u32 X) noexcept {
 	}
 }
 
-void Chip8_CoreInterface::getFilePermaRegs(const u32 X) noexcept {
+void Chip8_CoreInterface::getFilePermaRegs(u32 X) noexcept {
 	auto fileData{ ::readFileData(*sPermaRegsPath, X) };
 	if (!fileData) {
 		blog.newEntry(BLOG::ERROR, "File IO error: \"{}\" [{}]",
@@ -268,7 +269,7 @@ void Chip8_CoreInterface::getFilePermaRegs(const u32 X) noexcept {
 	}
 }
 
-void Chip8_CoreInterface::setPermaRegs(const u32 X) noexcept {
+void Chip8_CoreInterface::setPermaRegs(u32 X) noexcept {
 	if (sPermaRegsPath) {
 		if (checkRegularFile(*sPermaRegsPath)) { setFilePermaRegs(X); }
 		else { sPermaRegsPath = nullptr; }
@@ -276,7 +277,7 @@ void Chip8_CoreInterface::setPermaRegs(const u32 X) noexcept {
 	std::copy_n(mRegisterV.begin(), X, sPermRegsV.begin());
 }
 
-void Chip8_CoreInterface::getPermaRegs(const u32 X) noexcept {
+void Chip8_CoreInterface::getPermaRegs(u32 X) noexcept {
 	if (sPermaRegsPath) {
 		if (!checkRegularFile(*sPermaRegsPath)) {
 			if (!newPermaRegsFile(*sPermaRegsPath)) { sPermaRegsPath = nullptr; }
@@ -294,7 +295,7 @@ void Chip8_CoreInterface::copyGameToMemory(void* dest) noexcept {
 	std::memcpy(dest, HDM->getFileData(), HDM->getFileSize());
 }
 
-void Chip8_CoreInterface::copyFontToMemory(void* dest, const usz size) noexcept {
+void Chip8_CoreInterface::copyFontToMemory(void* dest, ust size) noexcept {
 	std::memcpy(dest, std::data(sFontsData), size);
 }
 

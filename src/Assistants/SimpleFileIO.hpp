@@ -105,8 +105,8 @@ namespace fs {
  */
 [[maybe_unused]]
 inline auto readFileData(
-	const Path& filePath, const usz dataReadSize = 0,
-	const std::streamoff dataReadOffset = 0
+	const Path& filePath, ust dataReadSize = 0,
+	std::streamoff dataReadOffset = 0
 ) noexcept -> Expected<std::vector<char>, std::error_code> {
 	try {
 		auto fileModStampBegin{ fs::last_write_time(filePath) };
@@ -149,8 +149,8 @@ inline auto readFileData(
 template <typename T>
 [[maybe_unused]]
 inline auto writeFileData(
-	const Path& filePath, const T* fileData, const usz dataWriteSize,
-	const std::streamoff dataWriteOffset = 0
+	const Path& filePath, const T* fileData, ust dataWriteSize,
+	std::streamoff dataWriteOffset = 0
 ) noexcept -> Expected<bool, std::error_code> {
 	try {
 		std::ofstream outFile(filePath, std::ios::binary | std::ios::out);
@@ -170,8 +170,8 @@ inline auto writeFileData(
 template <IsContiguousContainer T>
 [[maybe_unused]]
 inline auto writeFileData(
-	const Path& filePath, const T& fileData, const usz dataWriteSize = 0,
-	const std::streamoff dataWriteOffset = 0
+	const Path& filePath, const T& fileData, ust dataWriteSize = 0,
+	std::streamoff dataWriteOffset = 0
 ) noexcept {
 	return writeFileData(
 		filePath, std::data(fileData), dataWriteSize
@@ -180,11 +180,11 @@ inline auto writeFileData(
 	);
 }
 
-template <typename T, usz N>
+template <typename T, size_type N>
 [[maybe_unused]]
 inline auto writeFileData(
 	const Path& filePath, const T(&fileData)[N],
-	const std::streamoff dataWriteOffset = 0
+	std::streamoff dataWriteOffset = 0
 ) noexcept {
 	return writeFileData(filePath, fileData, N, dataWriteOffset);
 }

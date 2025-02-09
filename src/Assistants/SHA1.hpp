@@ -33,7 +33,7 @@ public:
 	void update(const Str& s);
 	void update(std::istream& is);
 
-	void update(const char* data, const usz size);
+	void update(const char* data, const ust size);
 
 	template <IsContiguousContainer T> requires MatchingValueType<char, T>
 	void update(const T& data) noexcept {
@@ -43,7 +43,7 @@ public:
 	std::string final();
 
 	static std::string from_file(const Path& filePath);
-	static std::string from_data(const char* data, const usz size);
+	static std::string from_data(const char* data, const ust size);
 
 	template <IsContiguousContainer T> requires MatchingValueType<char, T>
 	static std::string from_data(const T& data) {

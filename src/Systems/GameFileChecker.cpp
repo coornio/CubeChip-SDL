@@ -121,7 +121,7 @@ std::unique_ptr<EmuInterface> GameFileChecker::initGameCore() noexcept {
 
 bool GameFileChecker::validate(
 	const char* fileData,
-	const usz   fileSize,
+	const ust   fileSize,
 	const Str&  fileType,
 	const Str&  fileSHA1
 ) noexcept {
@@ -135,10 +135,10 @@ bool GameFileChecker::validate(
 
 bool GameFileChecker::validate(
 	const char* fileData,
-	const usz   fileSize,
+	const ust   fileSize,
 	const Str&  fileType
 ) noexcept {
-	static const std::unordered_map <std::string_view, GameFileType> sExtMap{
+	static const std::unordered_map<StrV, GameFileType> sExtMap{
 		{".c2x", GameFileType::c2x},
 		{".c4x", GameFileType::c4x},
 		{".c8x", GameFileType::c8x},
