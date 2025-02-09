@@ -8,6 +8,7 @@
 #include "Concepts.hpp"
 #include "Map2D.hpp"
 
+#include <mutex>
 #include <shared_mutex>
 #include <algorithm>
 #include <atomic>
@@ -54,6 +55,8 @@ private:
 	}
 
 public:
+	auto copy() const { return Map2D<U>{ getReadBuffer() }; }
+
 	template <typename T>
 		requires (sizeof(T) == sizeof(U) && std::is_trivially_copyable_v<T>)
 	void read(T* output) const {
