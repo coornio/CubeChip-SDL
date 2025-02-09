@@ -49,11 +49,7 @@ void GameBoy_CoreInterface::loadPresetBinds() {
 		{0x0, KEY(D), _}, // →
 	};
 
-	loadCustomBinds(defaultKeyMappings);
-}
-
-void GameBoy_CoreInterface::loadCustomBinds(std::span<const SimpleKeyMapping> binds) {
-	mCustomBinds.assign(binds.begin(), binds.end());
+	loadCustomBinds(std::span(defaultKeyMappings));
 }
 
 u32  GameBoy_CoreInterface::getKeyStates() const {

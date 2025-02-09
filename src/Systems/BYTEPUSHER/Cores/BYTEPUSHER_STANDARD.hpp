@@ -24,7 +24,7 @@ private:
 		mMemoryBank{};
 
 	template<u32 T> requires (T >= 1 && T <= 3)
-		u32 readData(const u32 pos) const noexcept {
+		u32 readData(u32 pos) const noexcept {
 		if        constexpr (T == 1) {
 			return mMemoryBank[pos + 0];
 		} else if constexpr (T == 2) {

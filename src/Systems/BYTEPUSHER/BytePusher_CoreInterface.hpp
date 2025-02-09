@@ -65,7 +65,7 @@ public:
 	s32  getCPF()       const noexcept override { return mActiveCPF; }
 	f32  getFramerate() const noexcept override { return mFramerate; }
 
-	s32  addCPF(const s32) noexcept override { return mActiveCPF; }
+	s32  addCPF(s32) noexcept override { return mActiveCPF; }
 
 protected:
 	static constexpr u32 cBitsColor[]{

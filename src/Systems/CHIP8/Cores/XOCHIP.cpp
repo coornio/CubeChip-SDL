@@ -291,7 +291,7 @@ void XOCHIP::renderVideoData() {
 
 	const auto* pBitColors{ mBitColors.data()};
 	BVS->display.write(textureBuffer,
-		[pBitColors](const u32 pixel) noexcept {
+		[pBitColors](u32 pixel) noexcept {
 			return static_cast<u32>(0xFF | pBitColors[pixel]);
 		}
 	);
@@ -315,7 +315,7 @@ void XOCHIP::prepDisplayArea(const Resolution mode) {
 	}
 };
 
-void XOCHIP::setColorBit332(const s32 bit, const s32 color) noexcept {
+void XOCHIP::setColorBit332(s32 bit, s32 color) noexcept {
 	static constexpr u8 map3b[]{ 0x00, 0x20, 0x40, 0x60, 0x80, 0xA0, 0xC0, 0xFF };
 	static constexpr u8 map2b[]{ 0x00,             0x60,       0xA0,       0xFF };
 
@@ -326,7 +326,7 @@ void XOCHIP::setColorBit332(const s32 bit, const s32 color) noexcept {
 	};
 }
 
-void XOCHIP::pushPatternTone(const u32 index) noexcept {
+void XOCHIP::pushPatternTone(u32 index) noexcept {
 	static const auto samplesTotal{ ASB->getSampleRate(cRefreshRate) };
 	std::vector<s16> samplesBuffer(static_cast<ust>(samplesTotal));
 
@@ -351,13 +351,13 @@ void XOCHIP::skipInstruction() noexcept {
 	mCurrentPC += NNNN() == 0xF000 ? 4 : 2;
 }
 
-void XOCHIP::scrollDisplayUP(const s32 N) {
+void XOCHIP::scrollDisplayUP(s32 N) {
 	if (mPlanarMask & 0x1) { mDisplayBuffer[0].shift(0, -N); }
 	if (mPlanarMask & 0x2) { mDisplayBuffer[1].shift(0, -N); }
 	if (mPlanarMask & 0x4) { mDisplayBuffer[2].shift(0, -N); }
 	if (mPlanarMask & 0x8) { mDisplayBuffer[3].shift(0, -N); }
 }
-void XOCHIP::scrollDisplayDN(const s32 N) {
+void XOCHIP::scrollDisplayDN(s32 N) {
 	if (mPlanarMask & 0x1) { mDisplayBuffer[0].shift(0, +N); }
 	if (mPlanarMask & 0x2) { mDisplayBuffer[1].shift(0, +N); }
 	if (mPlanarMask & 0x4) { mDisplayBuffer[2].shift(0, +N); }
@@ -379,12 +379,12 @@ void XOCHIP::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 0 instruction branch
 
-	void XOCHIP::instruction_00CN(const s32 N) noexcept {
+	void XOCHIP::instruction_00CN(s32 N) noexcept {
 		if (Quirk.waitScroll) [[unlikely]]
 			{ triggerInterrupt(Interrupt::FRAME); }
 		if (N) { scrollDisplayDN(N); }
 	}
-	void XOCHIP::instruction_00DN(const s32 N) noexcept {
+	void XOCHIP::instruction_00DN(s32 N) noexcept {
 		if (Quirk.waitScroll) [[unlikely]]
 			{ triggerInterrupt(Interrupt::FRAME); }
 		if (N) { scrollDisplayUP(N); }
@@ -424,7 +424,7 @@ void XOCHIP::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 1 instruction branch
 
-	void XOCHIP::instruction_1NNN(const s32 NNN) noexcept {
+	void XOCHIP::instruction_1NNN(s32 NNN) noexcept {
 		performProgJump(NNN);
 	}
 
@@ -434,7 +434,7 @@ void XOCHIP::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 2 instruction branch
 
-	void XOCHIP::instruction_2NNN(const s32 NNN) noexcept {
+	void XOCHIP::instruction_2NNN(s32 NNN) noexcept {
 		mStackBank[mStackTop++ & 0xF] = mCurrentPC;
 		performProgJump(NNN);
 	}
@@ -445,7 +445,7 @@ void XOCHIP::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 3 instruction branch
 
-	void XOCHIP::instruction_3xNN(const s32 X, const s32 NN) noexcept {
+	void XOCHIP::instruction_3xNN(s32 X, s32 NN) noexcept {
 		if (mRegisterV[X] == NN) { skipInstruction(); }
 	}
 
@@ -455,7 +455,7 @@ void XOCHIP::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 4 instruction branch
 
-	void XOCHIP::instruction_4xNN(const s32 X, const s32 NN) noexcept {
+	void XOCHIP::instruction_4xNN(s32 X, s32 NN) noexcept {
 		if (mRegisterV[X] != NN) { skipInstruction(); }
 	}
 
@@ -465,22 +465,22 @@ void XOCHIP::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 5 instruction branch
 
-	void XOCHIP::instruction_5xy0(const s32 X, const s32 Y) noexcept {
+	void XOCHIP::instruction_5xy0(s32 X, s32 Y) noexcept {
 		if (mRegisterV[X] == mRegisterV[Y]) { skipInstruction(); }
 	}
-	void XOCHIP::instruction_5xy2(const s32 X, const s32 Y) noexcept {
+	void XOCHIP::instruction_5xy2(s32 X, s32 Y) noexcept {
 		const auto dist{ std::abs(X - Y) + 1 };
 		const auto flip{ X < Y ? 1 : -1 };
 		for (auto Z{ 0 }; Z < dist; ++Z)
 			{ writeMemoryI(mRegisterV[X + Z * flip], Z); }
 	}
-	void XOCHIP::instruction_5xy3(const s32 X, const s32 Y) noexcept {
+	void XOCHIP::instruction_5xy3(s32 X, s32 Y) noexcept {
 		const auto dist{ std::abs(X - Y) + 1 };
 		const auto flip{ X < Y ? 1 : -1 };
 		for (auto Z{ 0 }; Z < dist; ++Z)
 			{ mRegisterV[X + Z * flip] = readMemoryI(Z); }
 	}
-	void XOCHIP::instruction_5xy4(const s32 X, const s32 Y) noexcept {
+	void XOCHIP::instruction_5xy4(s32 X, s32 Y) noexcept {
 		const auto dist{ std::abs(X - Y) + 1 };
 		const auto flip{ X < Y ? 1 : -1 };
 		for (auto Z{ 0 }; Z < dist; ++Z)
@@ -493,7 +493,7 @@ void XOCHIP::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 6 instruction branch
 
-	void XOCHIP::instruction_6xNN(const s32 X, const s32 NN) noexcept {
+	void XOCHIP::instruction_6xNN(s32 X, s32 NN) noexcept {
 		mRegisterV[X] = static_cast<u8>(NN);
 	}
 
@@ -503,7 +503,7 @@ void XOCHIP::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 7 instruction branch
 
-	void XOCHIP::instruction_7xNN(const s32 X, const s32 NN) noexcept {
+	void XOCHIP::instruction_7xNN(s32 X, s32 NN) noexcept {
 		mRegisterV[X] += static_cast<u8>(NN);
 	}
 
@@ -513,40 +513,40 @@ void XOCHIP::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 8 instruction branch
 
-	void XOCHIP::instruction_8xy0(const s32 X, const s32 Y) noexcept {
+	void XOCHIP::instruction_8xy0(s32 X, s32 Y) noexcept {
 		mRegisterV[X] = mRegisterV[Y];
 	}
-	void XOCHIP::instruction_8xy1(const s32 X, const s32 Y) noexcept {
+	void XOCHIP::instruction_8xy1(s32 X, s32 Y) noexcept {
 		mRegisterV[X] |= mRegisterV[Y];
 	}
-	void XOCHIP::instruction_8xy2(const s32 X, const s32 Y) noexcept {
+	void XOCHIP::instruction_8xy2(s32 X, s32 Y) noexcept {
 		mRegisterV[X] &= mRegisterV[Y];
 	}
-	void XOCHIP::instruction_8xy3(const s32 X, const s32 Y) noexcept {
+	void XOCHIP::instruction_8xy3(s32 X, s32 Y) noexcept {
 		mRegisterV[X] ^= mRegisterV[Y];
 	}
-	void XOCHIP::instruction_8xy4(const s32 X, const s32 Y) noexcept {
+	void XOCHIP::instruction_8xy4(s32 X, s32 Y) noexcept {
 		const auto sum{ mRegisterV[X] + mRegisterV[Y] };
 		mRegisterV[X]   = static_cast<u8>(sum);
 		mRegisterV[0xF] = static_cast<u8>(sum >> 8);
 	}
-	void XOCHIP::instruction_8xy5(const s32 X, const s32 Y) noexcept {
+	void XOCHIP::instruction_8xy5(s32 X, s32 Y) noexcept {
 		const bool nborrow{ mRegisterV[X] >= mRegisterV[Y] };
 		mRegisterV[X]   = static_cast<u8>(mRegisterV[X] - mRegisterV[Y]);
 		mRegisterV[0xF] = static_cast<u8>(nborrow);
 	}
-	void XOCHIP::instruction_8xy7(const s32 X, const s32 Y) noexcept {
+	void XOCHIP::instruction_8xy7(s32 X, s32 Y) noexcept {
 		const bool nborrow{ mRegisterV[Y] >= mRegisterV[X] };
 		mRegisterV[X]   = static_cast<u8>(mRegisterV[Y] - mRegisterV[X]);
 		mRegisterV[0xF] = static_cast<u8>(nborrow);
 	}
-	void XOCHIP::instruction_8xy6(const s32 X, const s32 Y) noexcept {
+	void XOCHIP::instruction_8xy6(s32 X, s32 Y) noexcept {
 		if (!Quirk.shiftVX) { mRegisterV[X] = mRegisterV[Y]; }
 		const bool lsb{ (mRegisterV[X] & 1) == 1 };
 		mRegisterV[X]   = static_cast<u8>(mRegisterV[X] >> 1);
 		mRegisterV[0xF] = static_cast<u8>(lsb);
 	}
-	void XOCHIP::instruction_8xyE(const s32 X, const s32 Y) noexcept {
+	void XOCHIP::instruction_8xyE(s32 X, s32 Y) noexcept {
 		if (!Quirk.shiftVX) { mRegisterV[X] = mRegisterV[Y]; }
 		const bool msb{ (mRegisterV[X] >> 7) == 1 };
 		mRegisterV[X]   = static_cast<u8>(mRegisterV[X] << 1);
@@ -559,7 +559,7 @@ void XOCHIP::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 9 instruction branch
 
-	void XOCHIP::instruction_9xy0(const s32 X, const s32 Y) noexcept {
+	void XOCHIP::instruction_9xy0(s32 X, s32 Y) noexcept {
 		if (mRegisterV[X] != mRegisterV[Y]) { skipInstruction(); }
 	}
 
@@ -569,7 +569,7 @@ void XOCHIP::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region A instruction branch
 
-	void XOCHIP::instruction_ANNN(const s32 NNN) noexcept {
+	void XOCHIP::instruction_ANNN(s32 NNN) noexcept {
 		mRegisterI = NNN & 0xFFF;
 	}
 
@@ -579,7 +579,7 @@ void XOCHIP::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region B instruction branch
 
-	void XOCHIP::instruction_BNNN(const s32 NNN) noexcept {
+	void XOCHIP::instruction_BNNN(s32 NNN) noexcept {
 		performProgJump(NNN + mRegisterV[0]);
 	}
 
@@ -589,7 +589,7 @@ void XOCHIP::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region C instruction branch
 
-	void XOCHIP::instruction_CxNN(const s32 X, const s32 NN) noexcept {
+	void XOCHIP::instruction_CxNN(s32 X, s32 NN) noexcept {
 		mRegisterV[X] = Wrand->get<u8>() & NN;
 	}
 
@@ -600,8 +600,8 @@ void XOCHIP::scrollDisplayRT() {
 	#pragma region D instruction branch
 
 	void XOCHIP::drawByte(
-		s32 X, s32 Y, const s32 P,
-		const u32 DATA
+		s32 X, s32 Y, s32 P,
+		u32 DATA
 	) noexcept {
 		switch (DATA) {
 			[[unlikely]]
@@ -633,7 +633,7 @@ void XOCHIP::scrollDisplayRT() {
 		}
 	}
 
-	void XOCHIP::instruction_DxyN(const s32 X, const s32 Y, const s32 N) noexcept {
+	void XOCHIP::instruction_DxyN(s32 X, s32 Y, s32 N) noexcept {
 		if (!mPlanarMask) {
 			mRegisterV[0xF] = 0;
 			return;
@@ -678,10 +678,10 @@ void XOCHIP::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region E instruction branch
 
-	void XOCHIP::instruction_Ex9E(const s32 X) noexcept {
+	void XOCHIP::instruction_Ex9E(s32 X) noexcept {
 		if (keyHeld_P1(mRegisterV[X])) { skipInstruction(); }
 	}
-	void XOCHIP::instruction_ExA1(const s32 X) noexcept {
+	void XOCHIP::instruction_ExA1(s32 X) noexcept {
 		if (!keyHeld_P1(mRegisterV[X])) { skipInstruction(); }
 	}
 
@@ -699,55 +699,55 @@ void XOCHIP::scrollDisplayRT() {
 		for (auto idx{ 0 }; idx < 16; ++idx)
 			{ mPatternBuf[idx] = readMemoryI(idx); }
 	}
-	void XOCHIP::instruction_FN01(const s32 N) noexcept {
+	void XOCHIP::instruction_FN01(s32 N) noexcept {
 		mPlanarMask = N;
 	}
-	void XOCHIP::instruction_Fx07(const s32 X) noexcept {
+	void XOCHIP::instruction_Fx07(s32 X) noexcept {
 		mRegisterV[X] = static_cast<u8>(mDelayTimer);
 	}
-	void XOCHIP::instruction_Fx0A(const s32 X) noexcept {
+	void XOCHIP::instruction_Fx0A(s32 X) noexcept {
 		triggerInterrupt(Interrupt::INPUT);
 		mInputReg = &mRegisterV[X];
 	}
-	void XOCHIP::instruction_Fx15(const s32 X) noexcept {
+	void XOCHIP::instruction_Fx15(s32 X) noexcept {
 		mDelayTimer = mRegisterV[X];
 	}
-	void XOCHIP::instruction_Fx18(const s32 X) noexcept {
+	void XOCHIP::instruction_Fx18(s32 X) noexcept {
 		startAudioAtChannel(STREAM::UNIQUE, mRegisterV[X] + (mRegisterV[X] == 1));
 	}
-	void XOCHIP::instruction_Fx1E(const s32 X) noexcept {
+	void XOCHIP::instruction_Fx1E(s32 X) noexcept {
 		mRegisterI = mRegisterI + mRegisterV[X] & 0xFFFF;
 	}
-	void XOCHIP::instruction_Fx29(const s32 X) noexcept {
+	void XOCHIP::instruction_Fx29(s32 X) noexcept {
 		mRegisterI = (mRegisterV[X] & 0xF) * 5;
 	}
-	void XOCHIP::instruction_Fx30(const s32 X) noexcept {
+	void XOCHIP::instruction_Fx30(s32 X) noexcept {
 		mRegisterI = (mRegisterV[X] & 0xF) * 10 + 80;
 	}
-	void XOCHIP::instruction_Fx33(const s32 X) noexcept {
+	void XOCHIP::instruction_Fx33(s32 X) noexcept {
 		writeMemoryI(mRegisterV[X] / 100,     0);
 		writeMemoryI(mRegisterV[X] / 10 % 10, 1);
 		writeMemoryI(mRegisterV[X]      % 10, 2);
 	}
-	void XOCHIP::instruction_Fx3A(const s32 X) noexcept {
+	void XOCHIP::instruction_Fx3A(s32 X) noexcept {
 		mAudioPitch = mRegisterV[X];
 	}
-	void XOCHIP::instruction_FN55(const s32 N) noexcept {
+	void XOCHIP::instruction_FN55(s32 N) noexcept {
 		for (auto idx{ 0 }; idx <= N; ++idx)
 			{ writeMemoryI(mRegisterV[idx], idx); }
 		if (!Quirk.idxRegNoInc) [[likely]]
 			{ mRegisterI = mRegisterI + N + 1 & 0xFFFF; }
 	}
-	void XOCHIP::instruction_FN65(const s32 N) noexcept {
+	void XOCHIP::instruction_FN65(s32 N) noexcept {
 		for (auto idx{ 0 }; idx <= N; ++idx)
 			{ mRegisterV[idx] = readMemoryI(idx); }
 		if (!Quirk.idxRegNoInc) [[likely]]
 			{ mRegisterI = mRegisterI + N + 1 & 0xFFFF; }
 	}
-	void XOCHIP::instruction_FN75(const s32 N) noexcept {
+	void XOCHIP::instruction_FN75(s32 N) noexcept {
 		setPermaRegs(N + 1);
 	}
-	void XOCHIP::instruction_FN85(const s32 N) noexcept {
+	void XOCHIP::instruction_FN85(s32 N) noexcept {
 		getPermaRegs(N + 1);
 	}
 

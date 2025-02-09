@@ -241,12 +241,12 @@ void SCHIP_LEGACY::renderAudioData() {
 
 void SCHIP_LEGACY::renderVideoData() {
 	BVS->display.write(mDisplayBuffer[0], isPixelTrailing()
-		? [](const u32 pixel) noexcept {
+		? [](u32 pixel) noexcept {
 			static constexpr u32 layer[4]{ 0xFF, 0xE7, 0x6F, 0x37 };
 			const auto opacity{ layer[std::countl_zero(pixel) & 0x3] };
 			return opacity | sBitColors[pixel != 0];
 		}
-		: [](const u32 pixel) noexcept {
+		: [](u32 pixel) noexcept {
 			return 0xFF | sBitColors[pixel >> 3];
 		}
 	);
@@ -256,7 +256,7 @@ void SCHIP_LEGACY::renderVideoData() {
 		mDisplayBuffer[0].begin(),
 		mDisplayBuffer[0].end(),
 		mDisplayBuffer[0].begin(),
-		[](const u32 pixel) noexcept {
+		[](u32 pixel) noexcept {
 			return static_cast<u8>(
 				(pixel & 0x8) | (pixel >> 1)
 			);
@@ -273,7 +273,7 @@ void SCHIP_LEGACY::prepDisplayArea(const Resolution mode) {
 
 /*==================================================================*/
 
-void SCHIP_LEGACY::scrollDisplayDN(const s32 N) {
+void SCHIP_LEGACY::scrollDisplayDN(s32 N) {
 	mDisplayBuffer[0].shift(0, +N);
 }
 void SCHIP_LEGACY::scrollDisplayLT() {
@@ -286,7 +286,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 0 instruction branch
 
-	void SCHIP_LEGACY::instruction_00CN(const s32 N) noexcept {
+	void SCHIP_LEGACY::instruction_00CN(s32 N) noexcept {
 		scrollDisplayDN(N);
 	}
 	void SCHIP_LEGACY::instruction_00E0() noexcept {
@@ -320,7 +320,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 1 instruction branch
 
-	void SCHIP_LEGACY::instruction_1NNN(const s32 NNN) noexcept {
+	void SCHIP_LEGACY::instruction_1NNN(s32 NNN) noexcept {
 		performProgJump(NNN);
 	}
 
@@ -330,7 +330,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 2 instruction branch
 
-	void SCHIP_LEGACY::instruction_2NNN(const s32 NNN) noexcept {
+	void SCHIP_LEGACY::instruction_2NNN(s32 NNN) noexcept {
 		mStackBank[mStackTop++ & 0xF] = mCurrentPC;
 		performProgJump(NNN);
 	}
@@ -341,7 +341,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 3 instruction branch
 
-	void SCHIP_LEGACY::instruction_3xNN(const s32 X, const s32 NN) noexcept {
+	void SCHIP_LEGACY::instruction_3xNN(s32 X, s32 NN) noexcept {
 		if (mRegisterV[X] == NN) { skipInstruction(); }
 	}
 
@@ -351,7 +351,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 4 instruction branch
 
-	void SCHIP_LEGACY::instruction_4xNN(const s32 X, const s32 NN) noexcept {
+	void SCHIP_LEGACY::instruction_4xNN(s32 X, s32 NN) noexcept {
 		if (mRegisterV[X] != NN) { skipInstruction(); }
 	}
 
@@ -361,7 +361,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 5 instruction branch
 
-	void SCHIP_LEGACY::instruction_5xy0(const s32 X, const s32 Y) noexcept {
+	void SCHIP_LEGACY::instruction_5xy0(s32 X, s32 Y) noexcept {
 		if (mRegisterV[X] == mRegisterV[Y]) { skipInstruction(); }
 	}
 
@@ -371,7 +371,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 6 instruction branch
 
-	void SCHIP_LEGACY::instruction_6xNN(const s32 X, const s32 NN) noexcept {
+	void SCHIP_LEGACY::instruction_6xNN(s32 X, s32 NN) noexcept {
 		mRegisterV[X] = static_cast<u8>(NN);
 	}
 
@@ -381,7 +381,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 7 instruction branch
 
-	void SCHIP_LEGACY::instruction_7xNN(const s32 X, const s32 NN) noexcept {
+	void SCHIP_LEGACY::instruction_7xNN(s32 X, s32 NN) noexcept {
 		mRegisterV[X] += static_cast<u8>(NN);
 	}
 
@@ -391,39 +391,39 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 8 instruction branch
 
-	void SCHIP_LEGACY::instruction_8xy0(const s32 X, const s32 Y) noexcept {
+	void SCHIP_LEGACY::instruction_8xy0(s32 X, s32 Y) noexcept {
 		mRegisterV[X] = mRegisterV[Y];
 	}
-	void SCHIP_LEGACY::instruction_8xy1(const s32 X, const s32 Y) noexcept {
+	void SCHIP_LEGACY::instruction_8xy1(s32 X, s32 Y) noexcept {
 		mRegisterV[X] |= mRegisterV[Y];
 	}
-	void SCHIP_LEGACY::instruction_8xy2(const s32 X, const s32 Y) noexcept {
+	void SCHIP_LEGACY::instruction_8xy2(s32 X, s32 Y) noexcept {
 		mRegisterV[X] &= mRegisterV[Y];
 	}
-	void SCHIP_LEGACY::instruction_8xy3(const s32 X, const s32 Y) noexcept {
+	void SCHIP_LEGACY::instruction_8xy3(s32 X, s32 Y) noexcept {
 		mRegisterV[X] ^= mRegisterV[Y];
 	}
-	void SCHIP_LEGACY::instruction_8xy4(const s32 X, const s32 Y) noexcept {
+	void SCHIP_LEGACY::instruction_8xy4(s32 X, s32 Y) noexcept {
 		const auto sum{ mRegisterV[X] + mRegisterV[Y] };
 		mRegisterV[X]   = static_cast<u8>(sum);
 		mRegisterV[0xF] = static_cast<u8>(sum >> 8);
 	}
-	void SCHIP_LEGACY::instruction_8xy5(const s32 X, const s32 Y) noexcept {
+	void SCHIP_LEGACY::instruction_8xy5(s32 X, s32 Y) noexcept {
 		const bool nborrow{ mRegisterV[X] >= mRegisterV[Y] };
 		mRegisterV[X]   = static_cast<u8>(mRegisterV[X] - mRegisterV[Y]);
 		mRegisterV[0xF] = static_cast<u8>(nborrow);
 	}
-	void SCHIP_LEGACY::instruction_8xy7(const s32 X, const s32 Y) noexcept {
+	void SCHIP_LEGACY::instruction_8xy7(s32 X, s32 Y) noexcept {
 		const bool nborrow{ mRegisterV[Y] >= mRegisterV[X] };
 		mRegisterV[X]   = static_cast<u8>(mRegisterV[Y] - mRegisterV[X]);
 		mRegisterV[0xF] = static_cast<u8>(nborrow);
 	}
-	void SCHIP_LEGACY::instruction_8xy6(const s32 X, const s32  ) noexcept {
+	void SCHIP_LEGACY::instruction_8xy6(s32 X, s32  ) noexcept {
 		const bool lsb{ (mRegisterV[X] & 1) == 1 };
 		mRegisterV[X]   = static_cast<u8>(mRegisterV[X] >> 1);
 		mRegisterV[0xF] = static_cast<u8>(lsb);
 	}
-	void SCHIP_LEGACY::instruction_8xyE(const s32 X, const s32  ) noexcept {
+	void SCHIP_LEGACY::instruction_8xyE(s32 X, s32  ) noexcept {
 		const bool msb{ (mRegisterV[X] >> 7) == 1 };
 		mRegisterV[X]   = static_cast<u8>(mRegisterV[X] << 1);
 		mRegisterV[0xF] = static_cast<u8>(msb);
@@ -435,7 +435,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 9 instruction branch
 
-	void SCHIP_LEGACY::instruction_9xy0(const s32 X, const s32 Y) noexcept {
+	void SCHIP_LEGACY::instruction_9xy0(s32 X, s32 Y) noexcept {
 		if (mRegisterV[X] != mRegisterV[Y]) { skipInstruction(); }
 	}
 
@@ -445,7 +445,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region A instruction branch
 
-	void SCHIP_LEGACY::instruction_ANNN(const s32 NNN) noexcept {
+	void SCHIP_LEGACY::instruction_ANNN(s32 NNN) noexcept {
 		mRegisterI = NNN & 0xFFF;
 	}
 
@@ -455,7 +455,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region B instruction branch
 
-	void SCHIP_LEGACY::instruction_BXNN(const s32 X, const s32 NNN) noexcept {
+	void SCHIP_LEGACY::instruction_BXNN(s32 X, s32 NNN) noexcept {
 		performProgJump(NNN + mRegisterV[X]);
 	}
 
@@ -465,7 +465,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region C instruction branch
 
-	void SCHIP_LEGACY::instruction_CxNN(const s32 X, const s32 NN) noexcept {
+	void SCHIP_LEGACY::instruction_CxNN(s32 X, s32 NN) noexcept {
 		mRegisterV[X] = Wrand->get<u8>() & NN;
 	}
 
@@ -484,8 +484,8 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 	}
 
 	bool SCHIP_LEGACY::drawSingleBytes(
-		const s32 originX, const s32 originY,
-		const s32 WIDTH,   const s32 DATA
+		s32 originX, s32 originY,
+		s32 WIDTH,   s32 DATA
 	) noexcept {
 		if (!DATA) { return false; }
 		bool collided{ false };
@@ -503,8 +503,8 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 	}
 
 	bool SCHIP_LEGACY::drawDoubleBytes(
-		const s32 originX, const s32 originY,
-		const s32 WIDTH,   const s32 DATA
+		s32 originX, s32 originY,
+		s32 WIDTH,   s32 DATA
 	) noexcept {
 		if (!DATA) { return false; }
 		bool collided{ false };
@@ -526,7 +526,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 		return collided;
 	}
 
-	void SCHIP_LEGACY::instruction_DxyN(const s32 X, const s32 Y, const s32 N) noexcept {
+	void SCHIP_LEGACY::instruction_DxyN(s32 X, s32 Y, s32 N) noexcept {
 		if (Quirk.waitVblank) [[unlikely]]
 			{ triggerInterrupt(Interrupt::FRAME); }
 
@@ -589,10 +589,10 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region E instruction branch
 
-	void SCHIP_LEGACY::instruction_Ex9E(const s32 X) noexcept {
+	void SCHIP_LEGACY::instruction_Ex9E(s32 X) noexcept {
 		if (keyHeld_P1(mRegisterV[X])) { skipInstruction(); }
 	}
-	void SCHIP_LEGACY::instruction_ExA1(const s32 X) noexcept {
+	void SCHIP_LEGACY::instruction_ExA1(s32 X) noexcept {
 		if (!keyHeld_P1(mRegisterV[X])) { skipInstruction(); }
 	}
 
@@ -602,49 +602,49 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region F instruction branch
 
-	void SCHIP_LEGACY::instruction_Fx07(const s32 X) noexcept {
+	void SCHIP_LEGACY::instruction_Fx07(s32 X) noexcept {
 		mRegisterV[X] = static_cast<u8>(mDelayTimer);
 	}
-	void SCHIP_LEGACY::instruction_Fx0A(const s32 X) noexcept {
+	void SCHIP_LEGACY::instruction_Fx0A(s32 X) noexcept {
 		triggerInterrupt(Interrupt::INPUT);
 		mInputReg = &mRegisterV[X];
 	}
-	void SCHIP_LEGACY::instruction_Fx15(const s32 X) noexcept {
+	void SCHIP_LEGACY::instruction_Fx15(s32 X) noexcept {
 		mDelayTimer = mRegisterV[X];
 	}
-	void SCHIP_LEGACY::instruction_Fx18(const s32 X) noexcept {
+	void SCHIP_LEGACY::instruction_Fx18(s32 X) noexcept {
 		startAudio(mRegisterV[X] + (mRegisterV[X] == 1));
 	}
-	void SCHIP_LEGACY::instruction_Fx1E(const s32 X) noexcept {
+	void SCHIP_LEGACY::instruction_Fx1E(s32 X) noexcept {
 		mRegisterI = mRegisterI + mRegisterV[X] & 0xFFF;
 	}
-	void SCHIP_LEGACY::instruction_Fx29(const s32 X) noexcept {
+	void SCHIP_LEGACY::instruction_Fx29(s32 X) noexcept {
 		mRegisterI = (mRegisterV[X] & 0xF) * 5;
 	}
-	void SCHIP_LEGACY::instruction_Fx30(const s32 X) noexcept {
+	void SCHIP_LEGACY::instruction_Fx30(s32 X) noexcept {
 		mRegisterI = (mRegisterV[X] & 0xF) * 10 + 80;
 	}
-	void SCHIP_LEGACY::instruction_Fx33(const s32 X) noexcept {
+	void SCHIP_LEGACY::instruction_Fx33(s32 X) noexcept {
 		writeMemoryI(mRegisterV[X] / 100,     0);
 		writeMemoryI(mRegisterV[X] / 10 % 10, 1);
 		writeMemoryI(mRegisterV[X]      % 10, 2);
 	}
-	void SCHIP_LEGACY::instruction_FN55(const s32 N) noexcept {
+	void SCHIP_LEGACY::instruction_FN55(s32 N) noexcept {
 		for (auto idx{ 0 }; idx <= N; ++idx)
 			{ writeMemoryI(mRegisterV[idx], idx); }
 		if (Quirk.idxRegMinus) [[unlikely]]
 			{ mRegisterI = mRegisterI + N & 0xFFF; }
 	}
-	void SCHIP_LEGACY::instruction_FN65(const s32 N) noexcept {
+	void SCHIP_LEGACY::instruction_FN65(s32 N) noexcept {
 		for (auto idx{ 0 }; idx <= N; ++idx)
 			{ mRegisterV[idx] = readMemoryI(idx); }
 		if (Quirk.idxRegMinus) [[unlikely]]
 			{ mRegisterI = mRegisterI + N & 0xFFF; }
 	}
-	void SCHIP_LEGACY::instruction_FN75(const s32 N) noexcept {
+	void SCHIP_LEGACY::instruction_FN75(s32 N) noexcept {
 		setPermaRegs(std::min(N, 7) + 1);
 	}
-	void SCHIP_LEGACY::instruction_FN85(const s32 N) noexcept {
+	void SCHIP_LEGACY::instruction_FN85(s32 N) noexcept {
 		getPermaRegs(std::min(N, 7) + 1);
 	}
 

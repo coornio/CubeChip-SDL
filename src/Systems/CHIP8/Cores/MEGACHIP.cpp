@@ -321,12 +321,12 @@ void MEGACHIP::renderVideoData() {
 	if (isManualRefresh()) { return; }
 
 	BVS->display.write(mDisplayBuffer[0], isPixelTrailing()
-		? [](const u32 pixel) noexcept {
+		? [](u32 pixel) noexcept {
 			static constexpr u32 layer[4]{ 0xFF, 0xE7, 0x6F, 0x37 };
 			const auto opacity{ layer[std::countl_zero(pixel) & 0x3] };
 			return opacity | sBitColors[pixel != 0];
 		}
-		: [](const u32 pixel) noexcept {
+		: [](u32 pixel) noexcept {
 			return 0xFF | sBitColors[pixel >> 3];
 		}
 	);
@@ -362,10 +362,10 @@ void MEGACHIP::skipInstruction() noexcept {
 	mCurrentPC += readMemory(mCurrentPC) == 0x1 ? 4 : 2;
 }
 
-void MEGACHIP::scrollDisplayUP(const s32 N) {
+void MEGACHIP::scrollDisplayUP(s32 N) {
 	mDisplayBuffer[0].shift(0, -N);
 }
-void MEGACHIP::scrollDisplayDN(const s32 N) {
+void MEGACHIP::scrollDisplayDN(s32 N) {
 	mDisplayBuffer[0].shift(0, +N);
 }
 void MEGACHIP::scrollDisplayLT() {
@@ -420,7 +420,7 @@ RGBA MEGACHIP::blendPixel(const RGBA src, const RGBA dst) const noexcept {
 	}
 }
 
-void MEGACHIP::setNewBlendAlgorithm(const s32 mode) noexcept {
+void MEGACHIP::setNewBlendAlgorithm(s32 mode) noexcept {
 	switch (mode) {
 		case BlendMode::LINEAR_DODGE:
 			intBlendAlgo = [](const u8 src, const u8 dst)
@@ -486,7 +486,7 @@ void MEGACHIP::startAudioTrack(const bool repeat) noexcept {
 	mTrackStartIdx = mRegisterI + 6;
 }
 
-void MEGACHIP::pushByteAudio(const u32 index) noexcept {
+void MEGACHIP::pushByteAudio(u32 index) noexcept {
 	static const auto samplesTotal{ ASB->getSampleRate(cRefreshRate) };
 	std::vector<s16> samplesBuffer(static_cast<ust>(samplesTotal));
 
@@ -509,11 +509,11 @@ void MEGACHIP::pushByteAudio(const u32 index) noexcept {
 	ASB->pushAudioData(index, samplesBuffer);
 }
 
-void MEGACHIP::scrollBuffersUP(const s32 N) {
+void MEGACHIP::scrollBuffersUP(s32 N) {
 	mForegroundBuffer.shift(0, -N);
 	blendAndFlushBuffers();
 }
-void MEGACHIP::scrollBuffersDN(const s32 N) {
+void MEGACHIP::scrollBuffersDN(s32 N) {
 	mForegroundBuffer.shift(0, +N);
 	blendAndFlushBuffers();
 }
@@ -529,14 +529,14 @@ void MEGACHIP::scrollBuffersRT() {
 /*==================================================================*/
 	#pragma region 0 instruction branch
 
-	void MEGACHIP::instruction_00BN(const s32 N) noexcept {
+	void MEGACHIP::instruction_00BN(s32 N) noexcept {
 		if (isManualRefresh()) {
 			scrollBuffersUP(N);
 		} else {
 			scrollDisplayUP(N);
 		}
 	}
-	void MEGACHIP::instruction_00CN(const s32 N) noexcept {
+	void MEGACHIP::instruction_00CN(s32 N) noexcept {
 		if (isManualRefresh()) {
 			scrollBuffersDN(N);
 		} else {
@@ -602,11 +602,11 @@ void MEGACHIP::scrollBuffersRT() {
 
 		prepDisplayArea(Resolution::MC);
 	}
-	void MEGACHIP::instruction_01NN(const s32 NN) noexcept {
+	void MEGACHIP::instruction_01NN(s32 NN) noexcept {
 		mRegisterI = (NN << 16) | NNNN();
 		nextInstruction();
 	}
-	void MEGACHIP::instruction_02NN(const s32 NN) noexcept {
+	void MEGACHIP::instruction_02NN(s32 NN) noexcept {
 		for (auto pos{ 0 }, offset{ 0 }; pos < NN; offset += 4) {
 			mColorPalette(++pos) = {
 				readMemoryI(offset + 1),
@@ -616,27 +616,27 @@ void MEGACHIP::scrollBuffersRT() {
 			};
 		}
 	}
-	void MEGACHIP::instruction_03NN(const s32 NN) noexcept {
+	void MEGACHIP::instruction_03NN(s32 NN) noexcept {
 		mTexture.W = NN ? NN : 256;
 	}
-	void MEGACHIP::instruction_04NN(const s32 NN) noexcept {
+	void MEGACHIP::instruction_04NN(s32 NN) noexcept {
 		mTexture.H = NN ? NN : 256;
 	}
-	void MEGACHIP::instruction_05NN(const s32 NN) noexcept {
+	void MEGACHIP::instruction_05NN(s32 NN) noexcept {
 		BVS->setViewportOpacity(NN);
 	}
-	void MEGACHIP::instruction_060N(const s32 N) noexcept {
+	void MEGACHIP::instruction_060N(s32 N) noexcept {
 		startAudioTrack(N == 0);
 	}
 	void MEGACHIP::instruction_0700() noexcept {
 		resetAudioTrack();
 	}
-	void MEGACHIP::instruction_080N(const s32 N) noexcept {
+	void MEGACHIP::instruction_080N(s32 N) noexcept {
 		static constexpr u8 opacity[]{ 0xFF, 0x3F, 0x7F, 0xBF };
 		mTexture.opacity = opacity[N > 3 ? 0 : N];
 		setNewBlendAlgorithm(N);
 	}
-	void MEGACHIP::instruction_09NN(const s32 NN) noexcept {
+	void MEGACHIP::instruction_09NN(s32 NN) noexcept {
 		mTexture.collide = NN;
 	}
 
@@ -646,7 +646,7 @@ void MEGACHIP::scrollBuffersRT() {
 /*==================================================================*/
 	#pragma region 1 instruction branch
 
-	void MEGACHIP::instruction_1NNN(const s32 NNN) noexcept {
+	void MEGACHIP::instruction_1NNN(s32 NNN) noexcept {
 		performProgJump(NNN);
 	}
 
@@ -656,7 +656,7 @@ void MEGACHIP::scrollBuffersRT() {
 /*==================================================================*/
 	#pragma region 2 instruction branch
 
-	void MEGACHIP::instruction_2NNN(const s32 NNN) noexcept {
+	void MEGACHIP::instruction_2NNN(s32 NNN) noexcept {
 		mStackBank[mStackTop++ & 0xF] = mCurrentPC;
 		performProgJump(NNN);
 	}
@@ -667,7 +667,7 @@ void MEGACHIP::scrollBuffersRT() {
 /*==================================================================*/
 	#pragma region 3 instruction branch
 
-	void MEGACHIP::instruction_3xNN(const s32 X, const s32 NN) noexcept {
+	void MEGACHIP::instruction_3xNN(s32 X, s32 NN) noexcept {
 		if (mRegisterV[X] == NN) { skipInstruction(); }
 	}
 
@@ -677,7 +677,7 @@ void MEGACHIP::scrollBuffersRT() {
 /*==================================================================*/
 	#pragma region 4 instruction branch
 
-	void MEGACHIP::instruction_4xNN(const s32 X, const s32 NN) noexcept {
+	void MEGACHIP::instruction_4xNN(s32 X, s32 NN) noexcept {
 		if (mRegisterV[X] != NN) { skipInstruction(); }
 	}
 
@@ -687,7 +687,7 @@ void MEGACHIP::scrollBuffersRT() {
 /*==================================================================*/
 	#pragma region 5 instruction branch
 
-	void MEGACHIP::instruction_5xy0(const s32 X, const s32 Y) noexcept {
+	void MEGACHIP::instruction_5xy0(s32 X, s32 Y) noexcept {
 		if (mRegisterV[X] == mRegisterV[Y]) { skipInstruction(); }
 	}
 
@@ -697,7 +697,7 @@ void MEGACHIP::scrollBuffersRT() {
 /*==================================================================*/
 	#pragma region 6 instruction branch
 
-	void MEGACHIP::instruction_6xNN(const s32 X, const s32 NN) noexcept {
+	void MEGACHIP::instruction_6xNN(s32 X, s32 NN) noexcept {
 		mRegisterV[X] = static_cast<u8>(NN);
 	}
 
@@ -707,7 +707,7 @@ void MEGACHIP::scrollBuffersRT() {
 /*==================================================================*/
 	#pragma region 7 instruction branch
 
-	void MEGACHIP::instruction_7xNN(const s32 X, const s32 NN) noexcept {
+	void MEGACHIP::instruction_7xNN(s32 X, s32 NN) noexcept {
 		mRegisterV[X] += static_cast<u8>(NN);
 	}
 
@@ -717,39 +717,39 @@ void MEGACHIP::scrollBuffersRT() {
 /*==================================================================*/
 	#pragma region 8 instruction branch
 
-	void MEGACHIP::instruction_8xy0(const s32 X, const s32 Y) noexcept {
+	void MEGACHIP::instruction_8xy0(s32 X, s32 Y) noexcept {
 		mRegisterV[X] = mRegisterV[Y];
 	}
-	void MEGACHIP::instruction_8xy1(const s32 X, const s32 Y) noexcept {
+	void MEGACHIP::instruction_8xy1(s32 X, s32 Y) noexcept {
 		mRegisterV[X] |= mRegisterV[Y];
 	}
-	void MEGACHIP::instruction_8xy2(const s32 X, const s32 Y) noexcept {
+	void MEGACHIP::instruction_8xy2(s32 X, s32 Y) noexcept {
 		mRegisterV[X] &= mRegisterV[Y];
 	}
-	void MEGACHIP::instruction_8xy3(const s32 X, const s32 Y) noexcept {
+	void MEGACHIP::instruction_8xy3(s32 X, s32 Y) noexcept {
 		mRegisterV[X] ^= mRegisterV[Y];
 	}
-	void MEGACHIP::instruction_8xy4(const s32 X, const s32 Y) noexcept {
+	void MEGACHIP::instruction_8xy4(s32 X, s32 Y) noexcept {
 		const auto sum{ mRegisterV[X] + mRegisterV[Y] };
 		mRegisterV[X]   = static_cast<u8>(sum);
 		mRegisterV[0xF] = static_cast<u8>(sum >> 8);
 	}
-	void MEGACHIP::instruction_8xy5(const s32 X, const s32 Y) noexcept {
+	void MEGACHIP::instruction_8xy5(s32 X, s32 Y) noexcept {
 		const bool nborrow{ mRegisterV[X] >= mRegisterV[Y] };
 		mRegisterV[X]   = static_cast<u8>(mRegisterV[X] - mRegisterV[Y]);
 		mRegisterV[0xF] = static_cast<u8>(nborrow);
 	}
-	void MEGACHIP::instruction_8xy7(const s32 X, const s32 Y) noexcept {
+	void MEGACHIP::instruction_8xy7(s32 X, s32 Y) noexcept {
 		const bool nborrow{ mRegisterV[Y] >= mRegisterV[X] };
 		mRegisterV[X]   = static_cast<u8>(mRegisterV[Y] - mRegisterV[X]);
 		mRegisterV[0xF] = static_cast<u8>(nborrow);
 	}
-	void MEGACHIP::instruction_8xy6(const s32 X, const s32  ) noexcept {
+	void MEGACHIP::instruction_8xy6(s32 X, s32  ) noexcept {
 		const bool lsb{ (mRegisterV[X] & 1) == 1 };
 		mRegisterV[X]   = static_cast<u8>(mRegisterV[X] >> 1);
 		mRegisterV[0xF] = static_cast<u8>(lsb);
 	}
-	void MEGACHIP::instruction_8xyE(const s32 X, const s32  ) noexcept {
+	void MEGACHIP::instruction_8xyE(s32 X, s32  ) noexcept {
 		const bool msb{ (mRegisterV[X] >> 7) == 1 };
 		mRegisterV[X]   = static_cast<u8>(mRegisterV[X] << 1);
 		mRegisterV[0xF] = static_cast<u8>(msb);
@@ -761,7 +761,7 @@ void MEGACHIP::scrollBuffersRT() {
 /*==================================================================*/
 	#pragma region 9 instruction branch
 
-	void MEGACHIP::instruction_9xy0(const s32 X, const s32 Y) noexcept {
+	void MEGACHIP::instruction_9xy0(s32 X, s32 Y) noexcept {
 		if (mRegisterV[X] != mRegisterV[Y]) { skipInstruction(); }
 	}
 
@@ -771,7 +771,7 @@ void MEGACHIP::scrollBuffersRT() {
 /*==================================================================*/
 	#pragma region A instruction branch
 
-	void MEGACHIP::instruction_ANNN(const s32 NNN) noexcept {
+	void MEGACHIP::instruction_ANNN(s32 NNN) noexcept {
 		mRegisterI = NNN & 0xFFF;
 	}
 
@@ -781,7 +781,7 @@ void MEGACHIP::scrollBuffersRT() {
 /*==================================================================*/
 	#pragma region B instruction branch
 
-	void MEGACHIP::instruction_BXNN(const s32 X, const s32 NNN) noexcept {
+	void MEGACHIP::instruction_BXNN(s32 X, s32 NNN) noexcept {
 		performProgJump(NNN + mRegisterV[X]);
 	}
 
@@ -791,7 +791,7 @@ void MEGACHIP::scrollBuffersRT() {
 /*==================================================================*/
 	#pragma region C instruction branch
 
-	void MEGACHIP::instruction_CxNN(const s32 X, const s32 NN) noexcept {
+	void MEGACHIP::instruction_CxNN(s32 X, s32 NN) noexcept {
 		mRegisterV[X] = Wrand->get<u8>() & NN;
 	}
 
@@ -810,8 +810,8 @@ void MEGACHIP::scrollBuffersRT() {
 	}
 
 	bool MEGACHIP::drawSingleBytes(
-		const s32 originX, const s32 originY,
-		const s32 WIDTH,   const s32 DATA
+		s32 originX, s32 originY,
+		s32 WIDTH,   s32 DATA
 	) noexcept {
 		if (!DATA) { return false; }
 		bool collided{ false };
@@ -829,8 +829,8 @@ void MEGACHIP::scrollBuffersRT() {
 	}
 
 	bool MEGACHIP::drawDoubleBytes(
-		const s32 originX, const s32 originY,
-		const s32 WIDTH,   const s32 DATA
+		s32 originX, s32 originY,
+		s32 WIDTH,   s32 DATA
 	) noexcept {
 		if (!DATA) { return false; }
 		bool collided{ false };
@@ -852,7 +852,7 @@ void MEGACHIP::scrollBuffersRT() {
 		return collided;
 	}
 
-	void MEGACHIP::instruction_DxyN(const s32 X, const s32 Y, const s32 N) noexcept {
+	void MEGACHIP::instruction_DxyN(s32 X, s32 Y, s32 N) noexcept {
 		if (Quirk.waitVblank) [[unlikely]]
 			{ triggerInterrupt(Interrupt::FRAME); }
 
@@ -979,10 +979,10 @@ void MEGACHIP::scrollBuffersRT() {
 /*==================================================================*/
 	#pragma region E instruction branch
 
-	void MEGACHIP::instruction_Ex9E(const s32 X) noexcept {
+	void MEGACHIP::instruction_Ex9E(s32 X) noexcept {
 		if (keyHeld_P1(mRegisterV[X])) { skipInstruction(); }
 	}
-	void MEGACHIP::instruction_ExA1(const s32 X) noexcept {
+	void MEGACHIP::instruction_ExA1(s32 X) noexcept {
 		if (!keyHeld_P1(mRegisterV[X])) { skipInstruction(); }
 	}
 
@@ -992,47 +992,47 @@ void MEGACHIP::scrollBuffersRT() {
 /*==================================================================*/
 	#pragma region F instruction branch
 
-	void MEGACHIP::instruction_Fx07(const s32 X) noexcept {
+	void MEGACHIP::instruction_Fx07(s32 X) noexcept {
 		mRegisterV[X] = static_cast<u8>(mDelayTimer);
 	}
-	void MEGACHIP::instruction_Fx0A(const s32 X) noexcept {
+	void MEGACHIP::instruction_Fx0A(s32 X) noexcept {
 		triggerInterrupt(Interrupt::INPUT);
 		mInputReg = &mRegisterV[X];
 		if (isManualRefresh()) [[unlikely]]
 			{ flushAllVideoBuffers(); }
 	}
-	void MEGACHIP::instruction_Fx15(const s32 X) noexcept {
+	void MEGACHIP::instruction_Fx15(s32 X) noexcept {
 		mDelayTimer = mRegisterV[X];
 	}
-	void MEGACHIP::instruction_Fx18(const s32 X) noexcept {
+	void MEGACHIP::instruction_Fx18(s32 X) noexcept {
 		startAudio(mRegisterV[X] + (mRegisterV[X] == 1));
 	}
-	void MEGACHIP::instruction_Fx1E(const s32 X) noexcept {
+	void MEGACHIP::instruction_Fx1E(s32 X) noexcept {
 		mRegisterI = mRegisterI + mRegisterV[X];
 	}
-	void MEGACHIP::instruction_Fx29(const s32 X) noexcept {
+	void MEGACHIP::instruction_Fx29(s32 X) noexcept {
 		mRegisterI = (mRegisterV[X] & 0xF) * 5;
 	}
-	void MEGACHIP::instruction_Fx30(const s32 X) noexcept {
+	void MEGACHIP::instruction_Fx30(s32 X) noexcept {
 		mRegisterI = (mRegisterV[X] & 0xF) * 10 + 80;
 	}
-	void MEGACHIP::instruction_Fx33(const s32 X) noexcept {
+	void MEGACHIP::instruction_Fx33(s32 X) noexcept {
 		writeMemoryI(mRegisterV[X] / 100,     0);
 		writeMemoryI(mRegisterV[X] / 10 % 10, 1);
 		writeMemoryI(mRegisterV[X]      % 10, 2);
 	}
-	void MEGACHIP::instruction_FN55(const s32 N) noexcept {
+	void MEGACHIP::instruction_FN55(s32 N) noexcept {
 		for (auto idx{ 0 }; idx <= N; ++idx)
 			{ writeMemoryI(mRegisterV[idx], idx); }
 	}
-	void MEGACHIP::instruction_FN65(const s32 N) noexcept {
+	void MEGACHIP::instruction_FN65(s32 N) noexcept {
 		for (auto idx{ 0 }; idx <= N; ++idx)
 			{ mRegisterV[idx] = readMemoryI(idx); }
 	}
-	void MEGACHIP::instruction_FN75(const s32 N) noexcept {
+	void MEGACHIP::instruction_FN75(s32 N) noexcept {
 		setPermaRegs(std::min(N, 7) + 1);
 	}
-	void MEGACHIP::instruction_FN85(const s32 N) noexcept {
+	void MEGACHIP::instruction_FN85(s32 N) noexcept {
 		getPermaRegs(std::min(N, 7) + 1);
 	}
 

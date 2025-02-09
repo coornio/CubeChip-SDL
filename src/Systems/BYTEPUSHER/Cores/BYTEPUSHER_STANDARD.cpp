@@ -62,5 +62,5 @@ void BYTEPUSHER_STANDARD::renderAudioData() {
 
 void BYTEPUSHER_STANDARD::renderVideoData() {
 	BVS->display.write(mMemoryBank.data() + (readData<1>(5) << 16), cScreenSizeT,
-		[](const u32 pixel) noexcept { return cBitsColor[pixel]; });
+		[](u32 pixel) noexcept { return cBitsColor[pixel]; });
 }

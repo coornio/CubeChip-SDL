@@ -21,7 +21,12 @@ protected:
 
 	u32  getKeyStates() const;
 	void loadPresetBinds();
-	void loadCustomBinds(std::span<const SimpleKeyMapping> binds);
+
+	template <IsContiguousContainer T> requires
+		SameValueTypes<T, decltype(mCustomBinds)>
+	void loadCustomBinds(const T& binds) {
+		mCustomBinds.assign(std::begin(binds), std::end(binds));
+	}
 
 	u64  mTotalCycles{};
 	u32  mTotalFrames{};

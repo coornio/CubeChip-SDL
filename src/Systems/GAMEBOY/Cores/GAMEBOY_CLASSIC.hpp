@@ -158,7 +158,7 @@ private:
 		mInputData[1] = ~keysBTNS & 0xF;
 	}
 
-	void setJOYP(const u32 addr, const u32 value) noexcept {
+	void setJOYP(u32 addr, u32 value) noexcept {
 		if (addr != 0xFF00) {
 			blog.newEntry(BLOG::WARN, "JoyPad cannot write to 0x{:04X}", addr);
 			return;
@@ -167,7 +167,7 @@ private:
 		}
 	}
 
-	u32 getJOYP(const u32 addr) const noexcept {
+	u32 getJOYP(u32 addr) const noexcept {
 		if (addr != 0xFF00) {
 			blog.newEntry(BLOG::WARN, "JoyPad cannot read from 0x{:04X}", addr);
 			return 0;
@@ -201,7 +201,7 @@ private:
 
 		public:
 			template <RegChar T>
-			void set(const u32 value) noexcept {
+			void set(u32 value) noexcept {
 				       if constexpr (T == A) {
 					mA = static_cast<u8>(value);
 				} else if constexpr (T == B) {
@@ -300,15 +300,15 @@ private:
 	struct Opcode {
 		using InstrStep = void(*)(CPU* const, MMU* const);
 
-		const u32 mOpcode{};
-		const u32 mLength{};
-		const u32 mCyclesT{};
-		const u32 mCyclesM{};
+		u32 mOpcode{};
+		u32 mLength{};
+		u32 mCyclesT{};
+		u32 mCyclesM{};
 		std::vector<InstrStep>
 			mInstrSteps{};
 
 		Opcode(
-			const u32 opcode, const u32 length, const u32 cyclesT,
+			u32 opcode, u32 length, u32 cyclesT,
 			std::initializer_list<InstrStep> steps
 		) noexcept
 			: mOpcode{ opcode }

@@ -58,30 +58,21 @@ class GameFileChecker final {
 
 	[[nodiscard]]
 	static bool testGame(
-		const bool condition,
-		const GameCoreType type
+		bool condition,
+		GameCoreType type
 	) noexcept {
 		if (condition) { sEmuCore = type; }
 		return condition;
 	}
 
-	static bool validate(
-		const char* fileData,
-		const ust   fileSize,
-		const Str& fileType
-	) noexcept;
+	static bool validate(const char* fileData, ust fileSize, const Str& fileType) noexcept;
 
 	[[nodiscard]]
 	static std::unique_ptr<EmuInterface>
 		constructCore();
 
 public:
-	static bool validate(
-		const char* fileData,
-		const ust   fileSize,
-		const Str& fileType,
-		const Str& fileSHA1
-	) noexcept;
+	static bool validate(const char* fileData, ust fileSize, const Str& fileType, const Str& fileSHA1) noexcept;
 
 	[[nodiscard]]
 	static std::unique_ptr<EmuInterface>
