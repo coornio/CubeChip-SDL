@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <limits>
 #include <string>
 #include <cstdint>
@@ -15,6 +16,8 @@
 #include <string_view>
 
 #include <SDL3/SDL_scancode.h>
+
+using mo = std::memory_order;
 
 using f64 = long double;
 using f32 = float;

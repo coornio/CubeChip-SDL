@@ -76,12 +76,12 @@ public:
 	static void xorSystemState(EmuState state) noexcept { mGlobalState ^=  state; }
 
 	static void setSystemState(EmuState state) noexcept { mGlobalState  =  state; }
-	static auto getSystemState()                     noexcept { return mGlobalState;    }
+	static auto getSystemState()               noexcept { return mGlobalState;    }
 
 	virtual u32 getTotalFrames() const noexcept = 0;
 	virtual u64 getTotalCycles() const noexcept = 0;
-	virtual s32 getCPF()       const noexcept = 0;
-	virtual f32 getFramerate() const noexcept = 0;
+	virtual s32 getCPF()         const noexcept = 0;
+	virtual f32 getFramerate()   const noexcept = 0;
 
 	virtual s32 addCPF(s32 delta) noexcept = 0;
 

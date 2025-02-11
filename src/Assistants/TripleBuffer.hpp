@@ -15,21 +15,12 @@
 
 template <typename U> requires std::is_trivially_copyable_v<U>
 class TripleBuffer {
-	using size_type = std::size_t;
 	Map2D<U> mDataBuffer[3u];
 
 	std::atomic<u32> mReadPos{ 0u };
-	std::atomic<u32> mWorkPos{ 1u };
-	std::atomic<u32> mSwapPos{ 2u };
 
 	mutable std::shared_mutex mReadLock{};
-	mutable std::shared_mutex mWorkLock{};
-
-	void mSwapPosIndices() noexcept {
-		mReadPos.store((mReadPos.load(std::memory_order_relaxed) + 1u) % 3u, std::memory_order_release);
-		mWorkPos.store((mWorkPos.load(std::memory_order_relaxed) + 1u) % 3u, std::memory_order_release);
-		mSwapPos.store((mSwapPos.load(std::memory_order_relaxed) + 1u) % 3u, std::memory_order_release);
-	}
+	        std::shared_mutex mWorkLock{};
 
 	/*==================================================================*/
 
@@ -50,17 +41,17 @@ public:
 	/*==================================================================*/
 
 private:
-	inline const Map2D<U>& getReadBuffer() const noexcept {
-		return mDataBuffer[mReadPos.load(std::memory_order_acquire)];
+	inline const auto& getReadBuffer() const noexcept {
+		return mDataBuffer[mReadPos.load(mo::acquire)];
 	}
 
 public:
-	auto copy() const { return Map2D<U>{ getReadBuffer() }; }
+	Map2D<U> copy() const { return getReadBuffer(); }
 
 	template <typename T>
 		requires (sizeof(T) == sizeof(U) && std::is_trivially_copyable_v<T>)
 	void read(T* output) const {
-		std::shared_lock read(mReadLock);
+		std::unique_lock read(mReadLock);
 
 		std::copy(std::execution::unseq,
 			getReadBuffer().begin(), getReadBuffer().end(), output);
@@ -69,7 +60,7 @@ public:
 	template <IsContiguousContainer T>
 		requires MatchingValueType<T, U>
 	void read(T& output) const noexcept {
-		std::shared_lock read(mReadLock);
+		std::unique_lock read(mReadLock);
 
 		std::copy(std::execution::unseq,
 			getReadBuffer().begin(), getReadBuffer().end(), std::data(output));
@@ -78,8 +69,12 @@ public:
 	/*==================================================================*/
 
 private:
-	inline Map2D<U>& getWorkBuffer() noexcept {
-		return mDataBuffer[mWorkPos.load(std::memory_order_relaxed)];
+	inline auto* getWorkBufferData() const noexcept {
+		return mDataBuffer[(mReadPos.load(mo::relaxed) + 1u) % 3u].data();
+	}
+
+	inline void incrementReaderPos() noexcept {
+		mReadPos.store((mReadPos.load(mo::seq_cst) + 1u) % 3u, mo::release);
 	}
 
 public:
@@ -88,9 +83,9 @@ public:
 		std::unique_lock work(mWorkLock);
 
 		std::transform(std::execution::unseq,
-			data, data + N, getWorkBuffer().data(), function);
+			data, data + N, getWorkBufferData(), function);
 
-		mSwapPosIndices();
+		incrementReaderPos();
 	}
 
 	template <IsContiguousContainer T>
@@ -99,9 +94,9 @@ public:
 		std::unique_lock work(mWorkLock);
 
 		std::copy(std::execution::unseq,
-			std::begin(data), std::end(data), getWorkBuffer().data());
+			std::begin(data), std::end(data), getWorkBufferData());
 
-		mSwapPosIndices();
+		incrementReaderPos();
 	}
 
 	template <IsContiguousContainer T, typename Lambda>
@@ -109,9 +104,9 @@ public:
 		std::unique_lock work(mWorkLock);
 
 		std::transform(std::execution::unseq,
-			std::begin(data), std::end(data), getWorkBuffer().data(), function);
+			std::begin(data), std::end(data), getWorkBufferData(), function);
 
-		mSwapPosIndices();
+		incrementReaderPos();
 	}
 
 	template <IsContiguousContainer T, typename Lambda>
@@ -119,8 +114,8 @@ public:
 		std::unique_lock work(mWorkLock);
 
 		std::transform(std::execution::unseq,
-			std::begin(data1), std::end(data1), std::begin(data2), getWorkBuffer().data(), function);
+			std::begin(data1), std::end(data1), std::begin(data2), getWorkBufferData(), function);
 
-		mSwapPosIndices();
+		incrementReaderPos();
 	}
 };
