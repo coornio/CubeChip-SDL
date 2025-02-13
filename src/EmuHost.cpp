@@ -26,6 +26,9 @@ EmuHost::~EmuHost() noexcept = default;
 EmuHost::EmuHost(const Path& gamePath) noexcept
 	: Limiter{ std::make_unique<FrameLimiter>(60.0f, true, true) }
 {
+	static BasicKeyboard sInput;
+	Input = &sInput;
+
 	EmuInterface::assignComponents(HDM, BVS);
 	HDM->setValidator(GameFileChecker::validate);
 
@@ -69,9 +72,6 @@ const StrV EmuHost::getStats() const {
 /*==================================================================*/
 
 void EmuHost::discardCore() {
-	binput::kb.storeOldState();
-	binput::mb.storeOldState();
-
 	iGuest.reset();
 	BVS->resetMainWindow();
 	GameFileChecker::deleteGameCore();
@@ -81,9 +81,6 @@ void EmuHost::discardCore() {
 }
 
 void EmuHost::replaceCore() {
-	binput::kb.storeOldState();
-	binput::mb.storeOldState();
-
 	iGuest = GameFileChecker::initGameCore();
 
 	if (iGuest) {
@@ -128,6 +125,7 @@ void EmuHost::processFrame() {
 		if (!BVS->isSuccessful())
 			[[unlikely]] { return; }
 
+		Input->updateStates();
 		checkForHotkeys();
 
 		if (iGuest) [[likely]] {
@@ -136,35 +134,32 @@ void EmuHost::processFrame() {
 		} else {
 			BVS->renderPresent(nullptr);
 		}
-
-		binput::kb.storeOldState();
-		binput::mb.storeOldState();
 	}
 }
 
 void EmuHost::checkForHotkeys() {
-	if (binput::kb.isPressed(KEY(RIGHT))) {
+	if (Input->isPressed(KEY(RIGHT))) {
 		BAS->addGlobalGain(+15);
 	}
-	if (binput::kb.isPressed(KEY(LEFT))) {
+	if (Input->isPressed(KEY(LEFT))) {
 		BAS->addGlobalGain(-15);
 	}
 
 	if (iGuest) {
-		if (binput::kb.isPressed(KEY(ESCAPE))) {
+		if (Input->isPressed(KEY(ESCAPE))) {
 			discardCore();
 			return;
 		}
-		if (binput::kb.isPressed(KEY(BACKSPACE))) {
+		if (Input->isPressed(KEY(BACKSPACE))) {
 			replaceCore();
 			return;
 		}
 
-		if (binput::kb.isPressed(KEY(RSHIFT))) {
+		if (Input->isPressed(KEY(RSHIFT))) {
 			mFrameStat = !mFrameStat;
 			if (!mFrameStat) { mUnlimited = false; }
 		}
-		if (binput::kb.isPressed(KEY(F11))) {
+		if (Input->isPressed(KEY(F11))) {
 			if (mFrameStat) { mUnlimited = !mUnlimited; }
 		}
 	}

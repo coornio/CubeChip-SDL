@@ -20,7 +20,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Assistants\BasicAudioSpec.cpp" />
-    <ClCompile Include="src\Assistants\BasicInput.cpp" />
     <ClCompile Include="src\Assistants\BasicLogger.cpp" />
     <ClCompile Include="src\Assistants\BasicVideoSpec.cpp" />
     <ClCompile Include="src\Assistants\FrameLimiter.cpp" />

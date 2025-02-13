@@ -39,11 +39,13 @@ Chip8_CoreInterface::~Chip8_CoreInterface() noexcept {}
 void Chip8_CoreInterface::updateKeyStates() {
 	if (!std::size(mCustomBinds)) { return; }
 
+	Input->updateStates();
+
 	mKeysPrev = mKeysCurr;
 	mKeysCurr = 0;
 
 	for (const auto& mapping : mCustomBinds) {
-		if (binput::kb.areAnyHeld(mapping.key, mapping.alt)) {
+		if (Input->areAnyHeld(mapping.key, mapping.alt)) {
 			mKeysCurr |= 1 << mapping.idx;
 		}
 	}

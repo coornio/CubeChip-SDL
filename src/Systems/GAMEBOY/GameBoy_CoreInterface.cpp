@@ -55,8 +55,10 @@ void GameBoy_CoreInterface::loadPresetBinds() {
 u32  GameBoy_CoreInterface::getKeyStates() const {
 	auto keyStates{ 0u };
 
+	Input->updateStates();
+
 	for (const auto& mapping : mCustomBinds) {
-		if (binput::kb.areAnyHeld(mapping.key, mapping.alt)) {
+		if (Input->areAnyHeld(mapping.key, mapping.alt)) {
 			keyStates |= 1u << mapping.idx;
 		}
 	}

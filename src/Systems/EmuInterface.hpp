@@ -45,6 +45,7 @@ class HomeDirManager;
 class BasicVideoSpec;
 class BasicAudioSpec;
 class AudioSpecBlock;
+class BasicKeyboard;
 class Well512;
 
 /*==================================================================*/
@@ -56,7 +57,7 @@ class EmuInterface {
 protected:
 	static inline HomeDirManager* HDM{};
 	static inline BasicVideoSpec* BVS{};
-
+	static inline BasicKeyboard* Input{};
 	static inline Well512* Wrand{};
 
 public:

@@ -4,6 +4,7 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include "../Assistants/BasicInput.hpp"
 #include "../Assistants/Well512.hpp"
 
 #include "EmuInterface.hpp"
@@ -11,6 +12,8 @@
 /*==================================================================*/
 
 EmuInterface::EmuInterface() noexcept {
+	static BasicKeyboard sInput;
+	Input = &sInput;
 	static Well512 sWrand;
 	Wrand = &sWrand;
 }

@@ -56,9 +56,6 @@
     <ClCompile Include="src\Assistants\BasicAudioSpec.cpp">
       <Filter>Source Files\Assistants</Filter>
     </ClCompile>
-    <ClCompile Include="src\Assistants\BasicInput.cpp">
-      <Filter>Source Files\Assistants</Filter>
-    </ClCompile>
     <ClCompile Include="src\Assistants\BasicLogger.cpp">
       <Filter>Source Files\Assistants</Filter>
     </ClCompile>

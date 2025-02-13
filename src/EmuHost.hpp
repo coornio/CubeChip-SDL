@@ -35,6 +35,8 @@ class EmuHost final {
 	static inline BasicVideoSpec* BVS{};
 	static inline BasicAudioSpec* BAS{};
 
+	static inline BasicKeyboard* Input{};
+
 	std::unique_ptr<EmuInterface> iGuest;
 	std::unique_ptr<FrameLimiter> Limiter;
 

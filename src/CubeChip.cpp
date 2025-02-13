@@ -28,9 +28,7 @@
 
 /*==================================================================*/
 
-BasicLogger&         blog{   *BasicLogger::create() };
-BasicKeyboard& binput::kb{ *BasicKeyboard::create() };
-BasicMouse&    binput::mb{    *BasicMouse::create() };
+BasicLogger& blog{ *BasicLogger::create() };
 
 /*==================================================================*/
 
