@@ -4,6 +4,8 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#pragma once
+
 #include "Typedefs.hpp"
 #include "Concepts.hpp"
 #include "Map2D.hpp"
@@ -30,8 +32,8 @@ public:
 	{}
 
 	void resize(size_type cols, size_type rows) noexcept {
-		std::unique_lock read(mReadLock);
-		std::unique_lock work(mWorkLock);
+		std::unique_lock read{ mReadLock };
+		std::unique_lock work{ mWorkLock };
 
 		mDataBuffer[0u].resizeClean(cols, rows);
 		mDataBuffer[1u].resizeClean(cols, rows);
@@ -51,7 +53,7 @@ public:
 	template <typename T>
 		requires (sizeof(T) == sizeof(U) && std::is_trivially_copyable_v<T>)
 	void read(T* output) const {
-		std::unique_lock read(mReadLock);
+		std::unique_lock read{ mReadLock };
 
 		std::copy(std::execution::unseq,
 			getReadBuffer().begin(), getReadBuffer().end(), output);
@@ -60,7 +62,7 @@ public:
 	template <IsContiguousContainer T>
 		requires MatchingValueType<T, U>
 	void read(T& output) const noexcept {
-		std::unique_lock read(mReadLock);
+		std::unique_lock read{ mReadLock };
 
 		std::copy(std::execution::unseq,
 			getReadBuffer().begin(), getReadBuffer().end(), std::data(output));
@@ -80,7 +82,7 @@ private:
 public:
 	template <typename T, typename Lambda>
 	void write(const T* data, size_type N, Lambda&& function) {
-		std::unique_lock work(mWorkLock);
+		std::unique_lock work{ mWorkLock };
 
 		std::transform(std::execution::unseq,
 			data, data + N, getWorkBufferData(), function);
@@ -91,7 +93,7 @@ public:
 	template <IsContiguousContainer T>
 		requires (sizeof(ValueType<T>) == sizeof(U) && std::is_trivially_copyable_v<ValueType<T>>)
 	void write(const T& data) {
-		std::unique_lock work(mWorkLock);
+		std::unique_lock work{ mWorkLock };
 
 		std::copy(std::execution::unseq,
 			std::begin(data), std::end(data), getWorkBufferData());
@@ -101,7 +103,7 @@ public:
 
 	template <IsContiguousContainer T, typename Lambda>
 	void write(const T& data, Lambda&& function) {
-		std::unique_lock work(mWorkLock);
+		std::unique_lock work{ mWorkLock };
 
 		std::transform(std::execution::unseq,
 			std::begin(data), std::end(data), getWorkBufferData(), function);
@@ -111,7 +113,7 @@ public:
 
 	template <IsContiguousContainer T, typename Lambda>
 	void write(const T& data1, const T& data2, Lambda&& function) {
-		std::unique_lock work(mWorkLock);
+		std::unique_lock work{ mWorkLock };
 
 		std::transform(std::execution::unseq,
 			std::begin(data1), std::end(data1), std::begin(data2), getWorkBufferData(), function);
