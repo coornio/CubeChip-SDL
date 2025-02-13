@@ -6,8 +6,8 @@
 
 #pragma once
 
-#include <span>
 #include <cmath>
+#include <atomic>
 #include <vector>
 #include <cassert>
 #include <utility>
@@ -29,7 +29,7 @@ class BasicAudioSpec final {
 	BasicAudioSpec(const BasicAudioSpec&) = delete;
 	BasicAudioSpec& operator=(const BasicAudioSpec&) = delete;
 
-	static inline f32  mGlobalGain{ 11 * (1.0f / 255.0f * 15) };
+	static inline std::atomic<f32> mGlobalGain{ 0.75f };
 	static inline bool mSuccessful{ true };
 
 public:
@@ -40,8 +40,8 @@ public:
 
 	static bool isSuccessful() noexcept { return mSuccessful; }
 
-	static auto getGlobalGain()     noexcept { return mGlobalGain; }
-	static auto getGlobalGainByte() noexcept { return static_cast<s32>(mGlobalGain * 255.0f); }
+	static auto getGlobalGain()     noexcept { return mGlobalGain.load(mo::acquire); }
+	static auto getGlobalGainByte() noexcept { return static_cast<s32>(getGlobalGain() * 255.0f); }
 
 	static void setGlobalGain(f32 gain) noexcept;
 	static void addGlobalGain(f32 gain) noexcept;

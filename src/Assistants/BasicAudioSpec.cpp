@@ -25,16 +25,16 @@ BasicAudioSpec::~BasicAudioSpec() noexcept {
 }
 
 void BasicAudioSpec::setGlobalGain(f32 gain) noexcept {
-	mGlobalGain = std::clamp(gain, 0.0f, 1.0f);
+	mGlobalGain.store(std::clamp(gain, 0.0f, 1.0f), mo::release);
 }
 
 void BasicAudioSpec::addGlobalGain(f32 gain) noexcept {
-	mGlobalGain = std::clamp(mGlobalGain + gain, 0.0f, 1.0f);
+	mGlobalGain.store(std::clamp(getGlobalGain() + gain, 0.0f, 1.0f), mo::release);
 }
 
 void BasicAudioSpec::addGlobalGain(s32 gain) noexcept {
 	static constexpr f32 minF{ 1.0f / 255.0f };
-	mGlobalGain = std::clamp(mGlobalGain + gain * minF, 0.0f, 1.0f);
+	mGlobalGain.store(std::clamp(getGlobalGain() + gain * minF, 0.0f, 1.0f), mo::release);
 }
 
 	#pragma endregion
