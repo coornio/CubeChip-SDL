@@ -26,9 +26,9 @@ class TripleBuffer {
 	mutable std::shared_mutex mSwapLock{};
 	mutable bool mBufferIsDirty{};
 
-	mutable alignas(64) Buffer* pWorkBuffer{ &mDataBuffer[0] };
-	mutable alignas(64) Buffer* pSwapBuffer{ &mDataBuffer[1] };
-	mutable alignas(64) Buffer* pReadBuffer{ &mDataBuffer[2] };
+	alignas(64) mutable Buffer* pWorkBuffer{ &mDataBuffer[0] };
+	alignas(64) mutable Buffer* pSwapBuffer{ &mDataBuffer[1] };
+	alignas(64) mutable Buffer* pReadBuffer{ &mDataBuffer[2] };
 	
 	/*==================================================================*/
 
