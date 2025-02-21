@@ -36,7 +36,6 @@ add_executable(${PROJECT_NAME}
   src/_imgui/imgui_impl_sdlrenderer3.cpp
 
   src/Assistants/BasicLogger.cpp
-  src/Assistants/BasicInput.cpp
   src/Assistants/HomeDirManager.cpp
   src/Assistants/BasicVideoSpec.cpp
   src/Assistants/BasicAudioSpec.cpp

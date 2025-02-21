@@ -211,7 +211,7 @@ void Chip8_CoreInterface::writeStatistics() {
 		"Time Since:{:9.3f} ms\n"
 		"Frame Work:{:9.3f} ms\n",
 		addCPF(static_cast<s32>(workCycleBias))
-		* getTargetFPS() / 1'000'000.0f,
+			* getTargetFPS() / 1'000'000.0f,
 		Pacer->getElapsedMillisLast(), currentFrameTime
 	)), mo::release);
 }
