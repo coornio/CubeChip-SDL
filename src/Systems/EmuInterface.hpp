@@ -6,17 +6,22 @@
 
 #pragma once
 
+#include <shared_mutex>
 #include <execution>
+#include <iostream>
 #include <utility>
 #include <fstream>
 #include <numeric>
 #include <cstring>
+#include <atomic>
 #include <memory>
 #include <string>
+#include <thread>
 #include <vector>
 #include <format>
 #include <array>
 #include <cmath>
+#include <mutex>
 #include <span>
 #include <bit>
 
@@ -45,20 +50,35 @@ class HomeDirManager;
 class BasicVideoSpec;
 class BasicAudioSpec;
 class AudioSpecBlock;
+
 class BasicKeyboard;
+class FrameLimiter;
 class Well512;
 
 /*==================================================================*/
 
 class EmuInterface {
-	static inline
-		u32 mGlobalState{ EmuState::NORMAL };
+	static inline Atom<u32>
+		mGlobalState{ EmuState::NORMAL };
 
 protected:
 	static inline HomeDirManager* HDM{};
 	static inline BasicVideoSpec* BVS{};
-	static inline BasicKeyboard* Input{};
-	static inline Well512* Wrand{};
+	static inline Well512*        RNG{};
+
+	std::jthread mCoreThread;
+	Atom<std::shared_ptr<Str>> mStatistics;
+
+	void startWorker() noexcept;
+	void stopWorker() noexcept;
+	void threadEntry(std::stop_token token);
+
+	std::unique_ptr<FrameLimiter>  Pacer;
+	std::unique_ptr<BasicKeyboard> Input;
+
+	Atom<u64> mElapsedCycles{};
+	Atom<f32> mTargetFPS{};
+	Atom<s32> mTargetCPF{};
 
 public:
 	EmuInterface() noexcept;
@@ -72,23 +92,30 @@ public:
 		BVS = pBVS;
 	}
 
-	static void addSystemState(EmuState state) noexcept { mGlobalState |=  state; }
-	static void subSystemState(EmuState state) noexcept { mGlobalState &= ~state; }
-	static void xorSystemState(EmuState state) noexcept { mGlobalState ^=  state; }
+	static void addSystemState(EmuState state) noexcept { mGlobalState.fetch_or ( state, mo::acq_rel); }
+	static void subSystemState(EmuState state) noexcept { mGlobalState.fetch_and(~state, mo::acq_rel); }
+	static void xorSystemState(EmuState state) noexcept { mGlobalState.fetch_xor( state, mo::acq_rel); }
 
-	static void setSystemState(EmuState state) noexcept { mGlobalState  =  state; }
-	static auto getSystemState()               noexcept { return mGlobalState;    }
+	static void setSystemState(EmuState state) noexcept { mGlobalState.store(state, mo::release); }
+	static auto getSystemState()               noexcept { return mGlobalState.load(mo::acquire);  }
 
-	virtual u32 getTotalFrames() const noexcept = 0;
-	virtual u64 getTotalCycles() const noexcept = 0;
+	f32 getTargetFPS()     const noexcept { return mTargetFPS.load(mo::acquire); }
+	u64 getElapsedCycles() const noexcept { return mElapsedCycles.load(mo::acquire); }
+
+protected:
+	void setFramePacer(f32 value) noexcept;
+	virtual void processFrame() = 0;
+
 	virtual s32 getCPF()         const noexcept = 0;
-	virtual f32 getFramerate()   const noexcept = 0;
+	virtual s32 addCPF(s32 delta)      noexcept = 0;
 
-	virtual s32 addCPF(s32 delta) noexcept = 0;
-
+public:
 	[[nodiscard]]
 	virtual bool isSystemStopped() const noexcept = 0;
 	virtual bool isCoreStopped()   const noexcept = 0;
 
-	virtual void processFrame() = 0;
+protected:
+	virtual void writeStatistics();
+public:
+	Str fetchStatistics() const noexcept;
 };

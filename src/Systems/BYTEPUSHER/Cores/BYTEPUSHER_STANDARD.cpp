@@ -4,10 +4,8 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include "../../../Assistants/HomeDirManager.hpp"
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/BasicAudioSpec.hpp"
-#include "../../../Assistants/Well512.hpp"
 
 #include "BYTEPUSHER_STANDARD.hpp"
 
@@ -18,11 +16,12 @@ BYTEPUSHER_STANDARD::BYTEPUSHER_STANDARD() {
 		copyGameToMemory(mMemoryBank.data());
 
 		BVS->setFrameColor(cBitsColor[0], cBitsColor[0]);
-		if (!BVS->setViewportDimensions(cScreenSizeX, cScreenSizeY, 1, -2))
-			[[unlikely]] { addCoreState(EmuState::FATAL); }
+		BVS->setViewportSizes(cScreenSizeX, cScreenSizeY, cResSizeMult, -2);
 
-		mActiveCPF = 0x10000;
-		mFramerate = cRefreshRate;
+		setFramePacer(cRefreshRate);
+
+		mTargetCPF.store(0x10000, mo::release);
+		startWorker();
 	}
 }
 
@@ -35,12 +34,13 @@ void BYTEPUSHER_STANDARD::instructionLoop() noexcept {
 	mMemoryBank[0] = static_cast<u8>(inputStates >> 0x8);
 	mMemoryBank[1] = static_cast<u8>(inputStates & 0xFF);
 	
-	for (auto cycleCount{ 0 }; cycleCount < mActiveCPF; ++cycleCount) {
+	auto cycleCount{ 0 };
+	for (; cycleCount < mTargetCPF.load(mo::acquire); ++cycleCount) {
 		mMemoryBank[readData<3>(progPointer + 3)] =
 		mMemoryBank[readData<3>(progPointer + 0)];
 		progPointer = readData<3>(progPointer + 6);
 	}
-	mTotalCycles += mActiveCPF;
+	mElapsedCycles.fetch_add(cycleCount, mo::acq_rel);
 }
 
 void BYTEPUSHER_STANDARD::renderAudioData() {

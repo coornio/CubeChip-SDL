@@ -19,7 +19,6 @@ class BasicVideoSpec;
 class BasicAudioSpec;
 
 class EmuInterface;
-class FrameLimiter;
 
 /*==================================================================*/
 	#pragma region EmuHost Singleton Class
@@ -35,10 +34,7 @@ class EmuHost final {
 	static inline BasicVideoSpec* BVS{};
 	static inline BasicAudioSpec* BAS{};
 
-	static inline BasicKeyboard* Input{};
-
 	std::unique_ptr<EmuInterface> iGuest;
-	std::unique_ptr<FrameLimiter> Limiter;
 
 public:
 	std::shared_mutex Mutex;
@@ -48,7 +44,6 @@ private:
 	bool mUnlimited{};
 
 	void checkForHotkeys();
-	const StrV getStats() const;
 
 	void discardCore();
 	void replaceCore();

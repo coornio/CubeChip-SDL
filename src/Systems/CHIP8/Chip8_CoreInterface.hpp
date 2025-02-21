@@ -47,7 +47,7 @@ protected:
 		mKeysPrev = mKeysCurr = mKeysLock = 0;
 	}
 
-	bool keyPressed(u8* returnKey, u32 tickCount) noexcept;
+	bool keyPressed(u8* returnKey) noexcept;
 	bool keyHeld_P1(u32 keyIndex) const noexcept;
 	bool keyHeld_P2(u32 keyIndex) const noexcept;
 
@@ -111,12 +111,6 @@ protected:
 
 /*==================================================================*/
 
-	u64 mTotalCycles{};
-	u32 mTotalFrames{};
-
-	s32 mActiveCPF{};
-	f32 mFramerate{};
-
 	Interrupt mInterrupt{};
 
 	s32 mDisplayW{},  mDisplayH{};
@@ -143,10 +137,10 @@ protected:
 
 	void startAudio(s32 duration, s32 tone = 0) noexcept;
 	void startAudioAtChannel(u32 index, s32 duration, s32 tone = 0) noexcept;
-	void pushSquareTone(u32 index, f32 framerate = 60.0f) noexcept;
+	void pushSquareTone(u32 index) noexcept;
 
 	u32 mDelayTimer{};
-	u32 mInputTimer{};
+	u32 mKeyPitch{};
 
 	u32 mStackTop{};
 	u8* mInputReg{};
@@ -202,19 +196,15 @@ public:
 	~Chip8_CoreInterface() noexcept override;
 
 	void processFrame() override;
+	void writeStatistics() override;
 
-	u32 getTotalFrames() const noexcept override { return mTotalFrames; }
-	u64 getTotalCycles() const noexcept override { return mTotalCycles; }
-
-	s32 getCPF()       const noexcept override { return mActiveCPF; }
-	f32 getFramerate() const noexcept override { return mFramerate; }
-
+	s32 getCPF()    const noexcept override { return mTargetCPF.load(mo::acquire); }
 	s32 addCPF(s32 delta) noexcept override {
 		if (stateRunning() && !stateWaiting()) {
-			mActiveCPF += mActiveCPF > 0
-				? delta : -delta;
+			return mTargetCPF.fetch_add(delta, mo::acq_rel) + delta;
+		} else {
+			return mTargetCPF.load(mo::acquire);
 		}
-		return mActiveCPF;
 	}
 
 	bool stateRunning() const noexcept { return (

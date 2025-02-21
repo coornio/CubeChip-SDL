@@ -42,6 +42,7 @@ private:
 
 public:
 	CHIP8_MODERN();
+	~CHIP8_MODERN() { stopWorker(); }
 
 	static constexpr bool isGameFileValid(
 		const char* fileData,

@@ -28,19 +28,14 @@ protected:
 		mCustomBinds.assign(std::begin(binds), std::end(binds));
 	}
 
-	u64  mTotalCycles{};
-	u32  mTotalFrames{};
-
 	u32  mCoreState{};
-	f32  mFramerate{};
-	s32  mActiveCPF{};
 
-	void addCoreState(const EmuState state) noexcept { mCoreState |=  state; }
-	void subCoreState(const EmuState state) noexcept { mCoreState &= ~state; }
-	void xorCoreState(const EmuState state) noexcept { mCoreState ^=  state; }
+	void addCoreState(EmuState state) noexcept { mCoreState |=  state; }
+	void subCoreState(EmuState state) noexcept { mCoreState &= ~state; }
+	void xorCoreState(EmuState state) noexcept { mCoreState ^=  state; }
 
-	void setCoreState(const EmuState state) noexcept { mCoreState = state; }
-	auto getCoreState()               const noexcept { return mCoreState;  }
+	void setCoreState(EmuState state) noexcept { mCoreState = state; }
+	auto getCoreState()         const noexcept { return mCoreState;  }
 
 	bool isSystemStopped() const noexcept override { return getCoreState() || getSystemState(); }
 	bool isCoreStopped()   const noexcept override { return getCoreState(); }
@@ -58,11 +53,6 @@ public:
 
 	void processFrame() override;
 
-	u32  getTotalFrames() const noexcept override { return mTotalFrames; }
-	u64  getTotalCycles() const noexcept override { return mTotalCycles; }
-
-	s32  getCPF()       const noexcept override { return mActiveCPF; }
-	f32  getFramerate() const noexcept override { return mFramerate; }
-
-	s32  addCPF(const s32) noexcept override { return mActiveCPF; }
+	s32  getCPF() const noexcept override { return mTargetCPF.load(mo::acquire); }
+	s32  addCPF(s32)    noexcept override { return mTargetCPF.load(mo::acquire); }
 };

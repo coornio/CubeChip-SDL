@@ -46,6 +46,7 @@ class SCHIP_MODERN final : public Chip8_CoreInterface {
 
 public:
 	SCHIP_MODERN();
+	~SCHIP_MODERN() { stopWorker(); }
 
 	static constexpr bool isGameFileValid(
 		const char* fileData,

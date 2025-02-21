@@ -4,7 +4,6 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include "../../../Assistants/HomeDirManager.hpp"
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/BasicAudioSpec.hpp"
 #include "../../../Assistants/Well512.hpp"
@@ -14,26 +13,21 @@
 /*==================================================================*/
 
 CHIP8_MODERN::CHIP8_MODERN() {
-	if (getCoreState() != EmuState::FATAL) {
+	std::fill(std::execution::unseq,
+		mMemoryBank.end() - cSafezoneOOB, mMemoryBank.end(), u8{ 0xFF });
 
-		std::fill(
-			std::execution::unseq,
-			mMemoryBank.end() - cSafezoneOOB,
-			mMemoryBank.end(), u8{ 0xFF }
-		);
+	copyGameToMemory(mMemoryBank.data() + cGameLoadPos);
+	copyFontToMemory(mMemoryBank.data(), 0x50);
 
-		copyGameToMemory(mMemoryBank.data() + cGameLoadPos);
-		copyFontToMemory(mMemoryBank.data(), 0x50);
+	setDisplayResolution(cScreenSizeX, cScreenSizeY);
 
-		setDisplayResolution(cScreenSizeX, cScreenSizeY);
+	BVS->setViewportSizes(cScreenSizeX, cScreenSizeY, cResSizeMult, +2);
 
-		if (!BVS->setViewportDimensions(cScreenSizeX, cScreenSizeY, cResSizeMult, +2))
-			[[unlikely]] { addCoreState(EmuState::FATAL); }
+	setFramePacer(cRefreshRate);
 
-		mCurrentPC = cStartOffset;
-		mFramerate = cRefreshRate;
-		mActiveCPF = Quirk.waitVblank ? cInstSpeedHi : cInstSpeedLo;
-	}
+	mCurrentPC = cStartOffset;
+	mTargetCPF.store(Quirk.waitVblank ? cInstSpeedHi : cInstSpeedLo, mo::release);
+	startWorker();
 }
 
 /*==================================================================*/
@@ -41,7 +35,7 @@ CHIP8_MODERN::CHIP8_MODERN() {
 void CHIP8_MODERN::instructionLoop() noexcept {
 
 	auto cycleCount{ 0 };
-	for (; cycleCount < mActiveCPF; ++cycleCount) {
+	for (; cycleCount < mTargetCPF.load(mo::acquire); ++cycleCount) {
 		const auto HI{ mMemoryBank[mCurrentPC + 0u] };
 		const auto LO{ mMemoryBank[mCurrentPC + 1u] };
 		nextInstruction();
@@ -184,14 +178,14 @@ void CHIP8_MODERN::instructionLoop() noexcept {
 				break;
 		}
 	}
-	mTotalCycles += cycleCount;
+	mElapsedCycles.fetch_add(cycleCount, mo::acq_rel);
 }
 
 void CHIP8_MODERN::renderAudioData() {
-	pushSquareTone(STREAM::CHANN0, cRefreshRate);
-	pushSquareTone(STREAM::CHANN1, cRefreshRate);
-	pushSquareTone(STREAM::CHANN2, cRefreshRate);
-	pushSquareTone(STREAM::BUZZER, cRefreshRate);
+	pushSquareTone(STREAM::CHANN0);
+	pushSquareTone(STREAM::CHANN1);
+	pushSquareTone(STREAM::CHANN2);
+	pushSquareTone(STREAM::BUZZER);
 
 	BVS->setFrameColor(sBitColors[0],
 		std::accumulate(mAudioTimer.begin(), mAudioTimer.end(), 0)
@@ -395,7 +389,7 @@ void CHIP8_MODERN::renderVideoData() {
 	#pragma region C instruction branch
 
 	void CHIP8_MODERN::instruction_CxNN(s32 X, s32 NN) noexcept {
-		mRegisterV[X] = Wrand->get<u8>() & NN;
+		mRegisterV[X] = RNG->get<u8>() & NN;
 	}
 
 	#pragma endregion

@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include <string>
 #include <utility>
 #include <execution>
 
@@ -36,7 +35,15 @@ class BasicVideoSpec final {
 	SDL_FRect mOuterFrame{};
 	SDL_FRect mInnerFrame{};
 
-	RGBA mOuterFrameColor[2]{};
+	Atom<u32> mOuterFrameColor[2]{};
+
+	Atom<s32> mTextureWidth{};
+	Atom<s32> mTextureHeight{};
+	Atom<s32> mTextureScale{};
+	Atom<s32> mFramePadding{};
+
+	Atom<u8>  mTextureAlpha{ 0xFF };
+	Atom<bool> mNewTextureNeeded{};
 
 	bool enableBuzzGlow{};
 	bool enableScanLine{};
@@ -54,7 +61,7 @@ public:
 
 	static void showErrorBox(const char* const title) noexcept;
 
-	static auto getDisplayWidth( u32 displayID) noexcept {
+	static auto getDisplayWidth(u32 displayID) noexcept {
 		const auto displayMode{ SDL_GetCurrentDisplayMode(displayID) };
 		return displayMode ? displayMode->w : 0;
 	}
@@ -63,10 +70,7 @@ public:
 		return displayMode ? displayMode->h : 0;
 	}
 
-	void setFrameColor(u32 color_off, u32 color_on) noexcept {
-		mOuterFrameColor[0] = color_off;
-		mOuterFrameColor[1] = color_on;
-	}
+	void setFrameColor(u32 color_off, u32 color_on) noexcept;
 
 	template <typename T, size_type N>
 	void scaleInterface(T(&appFont)[N]) {
@@ -78,18 +82,15 @@ public:
 
 private:
 	void updateInterfacePixelScaling(const void* fontData, s32 fontSize, f32 newScale);
-	void drawViewportTexture(SDL_Texture* viewportTexture);
+	void createViewport();
+	void renderViewport(SDL_Texture* viewportTexture);
+	void copyBufferToViewport();
 
 public:
-	void setViewportOpacity(u32 alpha);
-	bool setViewportDimensions(
-		s32 texture_W, s32 texture_H
-	);
-	bool setViewportDimensions(
-		s32 texture_W, s32 texture_H,
-		s32 upscale_M, s32 padding_S
-	);
+	void setViewportAlpha(u32 alpha);
+	void setViewportSizes(s32 texture_W, s32 texture_H, s32 upscale_M = 0, s32 padding_S = 0);
 
+public:
 	void resetMainWindow(s32 window_W = 640, s32 window_H = 480);
 	void setMainWindowTitle(const Str& title);
 	auto getMainWindowID() const noexcept {
@@ -104,7 +105,6 @@ public:
 	}
 	void raiseWindow(SDL_Window* window);
 
-	void pushLatestFrameToTexture();
 	void renderPresent(const char* const stats);
 };
 

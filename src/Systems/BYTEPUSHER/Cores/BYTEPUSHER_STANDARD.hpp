@@ -15,6 +15,7 @@ class BYTEPUSHER_STANDARD final : public BytePusher_CoreInterface {
 	static constexpr u32 cSafezoneOOB{         8 };
 	static constexpr f32 cRefreshRate{    60.00f };
 	static constexpr s32 cAudioLength{       256 };
+	static constexpr s32 cResSizeMult{         2 };
 	static constexpr s32 cScreenSizeX{       256 };
 	static constexpr s32 cScreenSizeY{       256 };
 	static constexpr s32 cScreenSizeT{ 256 * 256 };
@@ -43,6 +44,7 @@ private:
 
 public:
 	BYTEPUSHER_STANDARD();
+	~BYTEPUSHER_STANDARD() { stopWorker(); }
 
 	static constexpr bool isGameFileValid(
 		const char* fileData,

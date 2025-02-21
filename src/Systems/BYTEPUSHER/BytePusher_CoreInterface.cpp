@@ -4,6 +4,7 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include "../../Assistants/FrameLimiter.hpp"
 #include "../../Assistants/BasicInput.hpp"
 #include "../../Assistants/HomeDirManager.hpp"
 #include "../../Assistants/BasicAudioSpec.hpp"
@@ -17,8 +18,9 @@ Path* BytePusher_CoreInterface::sSavestatePath{};
 BytePusher_CoreInterface::BytePusher_CoreInterface() noexcept
 	: ASB{ std::make_unique<AudioSpecBlock>(SDL_AUDIO_S16, 1, 15'360, STREAM::COUNT) }
 {
-	sSavestatePath = HDM->addSystemDir("savestate", "BYTEPUSHER");
-	if (!sSavestatePath) { addCoreState(EmuState::FATAL); }
+	if ((sSavestatePath = HDM->addSystemDir("savestate", "BYTEPUSHER"))) {
+		*sSavestatePath /= HDM->getFileSHA1();
+	}
 
 	ASB->resumeStreams();
 	loadPresetBinds();
@@ -29,12 +31,14 @@ BytePusher_CoreInterface::~BytePusher_CoreInterface() noexcept {}
 /*==================================================================*/
 
 void BytePusher_CoreInterface::processFrame() {
-	if (isSystemStopped()) { return; }
-	else [[likely]] { ++mTotalFrames; }
+	if (Pacer->checkTime()) {
+		if (isSystemStopped()) { return; }
 
-	instructionLoop();
-	renderAudioData();
-	renderVideoData();
+		instructionLoop();
+		renderAudioData();
+		renderVideoData();
+		writeStatistics();
+	}
 }
 
 void BytePusher_CoreInterface::loadPresetBinds() {

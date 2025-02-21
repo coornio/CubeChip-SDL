@@ -30,12 +30,7 @@ protected:
 		mCustomBinds.assign(std::begin(binds), std::end(binds));
 	}
 
-	u64  mTotalCycles{};
-	u32  mTotalFrames{};
-
 	u32  mCoreState{};
-	f32  mFramerate{};
-	s32  mActiveCPF{};
 
 	void addCoreState(const EmuState state) noexcept { mCoreState |=  state; }
 	void subCoreState(const EmuState state) noexcept { mCoreState &= ~state; }
@@ -59,13 +54,8 @@ public:
 
 	void processFrame() override;
 
-	u32  getTotalFrames() const noexcept override { return mTotalFrames; }
-	u64  getTotalCycles() const noexcept override { return mTotalCycles; }
-
-	s32  getCPF()       const noexcept override { return mActiveCPF; }
-	f32  getFramerate() const noexcept override { return mFramerate; }
-
-	s32  addCPF(s32) noexcept override { return mActiveCPF; }
+	s32  getCPF() const noexcept override { return mTargetCPF.load(mo::acquire); }
+	s32  addCPF(s32)    noexcept override { return mTargetCPF.load(mo::acquire); }
 
 protected:
 	static constexpr u32 cBitsColor[]{

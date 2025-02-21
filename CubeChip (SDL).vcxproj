@@ -49,6 +49,7 @@
     <ClCompile Include="src\_imgui\imgui_widgets.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Assistants\Aligned.hpp" />
     <ClInclude Include="src\Assistants\BasicAudioSpec.hpp" />
     <ClInclude Include="src\Assistants\BasicInput.hpp" />
     <ClInclude Include="src\Assistants\BasicLogger.hpp" />
@@ -215,12 +216,13 @@
       <DisableSpecificWarnings>4324;4619;4061;4062;4365;4623;4625;4626;4668;4710;4711;4820;5026;5027;5031;5032;5045;4514;4464;5219;4800;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>SDL3.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <Profile>true</Profile>
     </Link>
   </ItemDefinitionGroup>
@@ -250,6 +252,7 @@
       </StringPooling>
       <StructMemberAlignment>Default</StructMemberAlignment>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

@@ -103,6 +103,7 @@ class MEGACHIP final : public Chip8_CoreInterface {
 
 public:
 	MEGACHIP();
+	~MEGACHIP() { stopWorker(); }
 
 	static constexpr bool isGameFileValid(
 		const char* fileData,

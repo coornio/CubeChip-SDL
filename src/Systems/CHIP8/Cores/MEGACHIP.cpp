@@ -15,23 +15,22 @@
 MEGACHIP::MEGACHIP()
 	: mDisplayBuffer{ {cScreenSizeY, cScreenSizeX} }
 {
-	if (getCoreState() != EmuState::FATAL) {
+	copyGameToMemory(mMemoryBank.data() + cGameLoadPos);
+	copyFontToMemory(mMemoryBank.data(), 0xB4);
 
-		copyGameToMemory(mMemoryBank.data() + cGameLoadPos);
-		copyFontToMemory(mMemoryBank.data(), 0xB4);
+	mForegroundBuffer.resizeClean(cScreenMegaX, cScreenMegaY);
+	mBackgroundBuffer.resizeClean(cScreenMegaX, cScreenMegaY);
+	mCollisionMap.resizeClean(cScreenMegaX, cScreenMegaY);
+	mColorPalette.resizeClean(256, 1);
 
-		mForegroundBuffer.resizeClean(cScreenMegaX, cScreenMegaY);
-		mBackgroundBuffer.resizeClean(cScreenMegaX, cScreenMegaY);
-		mCollisionMap.resizeClean(cScreenMegaX, cScreenMegaY);
-		mColorPalette.resizeClean(256, 1);
+	setFramePacer(cRefreshRate);
 
-		mCurrentPC = cStartOffset;
-		mFramerate = cRefreshRate;
+	mCurrentPC = cStartOffset;
 
-		prepDisplayArea(Resolution::LO);
-		setNewBlendAlgorithm(BlendMode::ALPHA_BLEND);
-		initializeFontColors();
-	}
+	prepDisplayArea(Resolution::LO);
+	setNewBlendAlgorithm(BlendMode::ALPHA_BLEND);
+	initializeFontColors();
+	startWorker();
 }
 
 /*==================================================================*/
@@ -39,7 +38,7 @@ MEGACHIP::MEGACHIP()
 void MEGACHIP::instructionLoop() noexcept {
 
 	auto cycleCount{ 0 };
-	for (; cycleCount < mActiveCPF; ++cycleCount) {
+	for (; cycleCount < mTargetCPF.load(mo::acquire); ++cycleCount) {
 		const auto HI{ mMemoryBank[mCurrentPC + 0u] };
 		const auto LO{ mMemoryBank[mCurrentPC + 1u] };
 		nextInstruction();
@@ -294,7 +293,7 @@ void MEGACHIP::instructionLoop() noexcept {
 				break;
 		}
 	}
-	mTotalCycles += cycleCount;
+	mElapsedCycles.fetch_add(cycleCount, mo::acq_rel);
 }
 
 void MEGACHIP::renderAudioData() {
@@ -305,10 +304,10 @@ void MEGACHIP::renderAudioData() {
 		BVS->setFrameColor(sBitColors[0], sBitColors[0]);
 	}
 	else {
-		pushSquareTone(STREAM::CHANN0, cRefreshRate);
-		pushSquareTone(STREAM::CHANN1, cRefreshRate);
-		pushSquareTone(STREAM::CHANN2, cRefreshRate);
-		pushSquareTone(STREAM::BUZZER, cRefreshRate);
+		pushSquareTone(STREAM::CHANN0);
+		pushSquareTone(STREAM::CHANN1);
+		pushSquareTone(STREAM::CHANN2);
+		pushSquareTone(STREAM::BUZZER);
 
 		BVS->setFrameColor(sBitColors[0],
 			std::accumulate(mAudioTimer.begin(), mAudioTimer.end(), 0)
@@ -339,20 +338,18 @@ void MEGACHIP::prepDisplayArea(const Resolution mode) {
 	if (isManualRefresh()) {
 		setDisplayResolution(cScreenMegaX, cScreenMegaY);
 
-		if (!BVS->setViewportDimensions(cScreenMegaX, cScreenMegaY, cResMegaMult, -2))
-			[[unlikely]] { triggerInterrupt(Interrupt::ERROR); }
+		BVS->setViewportSizes(cScreenMegaX, cScreenMegaY, cResMegaMult, -2);
 
 		Quirk.waitVblank = false;
-		mActiveCPF = cInstSpeedMC;
+		mTargetCPF.store(cInstSpeedMC, mo::release);
 	}
 	else {
 		setDisplayResolution(cScreenSizeX, cScreenSizeY);
 
-		if (!BVS->setViewportDimensions(cScreenSizeX, cScreenSizeY, cResSizeMult, +2))
-			[[unlikely]] { triggerInterrupt(Interrupt::ERROR); }
+		BVS->setViewportSizes(cScreenSizeX, cScreenSizeY, cResSizeMult, +2);
 
 		Quirk.waitVblank = !isLargerDisplay();
-		mActiveCPF = isLargerDisplay() ? cInstSpeedLo : cInstSpeedHi;
+		mTargetCPF.store(isLargerDisplay() ? cInstSpeedLo : cInstSpeedHi, mo::release);
 	}
 };
 
@@ -623,7 +620,7 @@ void MEGACHIP::scrollBuffersRT() {
 		mTexture.H = NN ? NN : 256;
 	}
 	void MEGACHIP::instruction_05NN(s32 NN) noexcept {
-		BVS->setViewportOpacity(NN);
+		BVS->setViewportAlpha(NN);
 	}
 	void MEGACHIP::instruction_060N(s32 N) noexcept {
 		startAudioTrack(N == 0);
@@ -792,7 +789,7 @@ void MEGACHIP::scrollBuffersRT() {
 	#pragma region C instruction branch
 
 	void MEGACHIP::instruction_CxNN(s32 X, s32 NN) noexcept {
-		mRegisterV[X] = Wrand->get<u8>() & NN;
+		mRegisterV[X] = RNG->get<u8>() & NN;
 	}
 
 	#pragma endregion

@@ -46,6 +46,7 @@ class SCHIP_LEGACY final : public Chip8_CoreInterface {
 
 public:
 	SCHIP_LEGACY();
+	~SCHIP_LEGACY() { stopWorker(); }
 
 	static constexpr bool isGameFileValid(
 		const char* fileData,

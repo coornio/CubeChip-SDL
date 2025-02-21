@@ -4,7 +4,6 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include "../../../Assistants/HomeDirManager.hpp"
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/BasicAudioSpec.hpp"
 #include "../../../Assistants/Well512.hpp"
@@ -16,18 +15,19 @@
 GAMEBOY_CLASSIC::GAMEBOY_CLASSIC() {
 	if (getSystemState() != EmuState::FATAL) {
 		
-		if (!BVS->setViewportDimensions(cScreenSizeX, cScreenSizeY, cResSizeMult, +2))
-			[[unlikely]] { addCoreState(EmuState::FATAL); }
+		BVS->setViewportSizes(cScreenSizeX, cScreenSizeY, cResSizeMult, +2);
 
-		mActiveCPF = cCylesPerSec;
-		mFramerate = cRefreshRate;
+		setFramePacer(cRefreshRate);
+
+		mTargetCPF.store(cCylesPerSec, mo::release);
+		startWorker();
 	}
 }
 
 /*==================================================================*/
 
 void GAMEBOY_CLASSIC::instructionLoop() noexcept {
-	const auto maxCycles{ static_cast<s32>(mActiveCPF / cRefreshRate) };
+	const auto maxCycles{ static_cast<s32>(mTargetCPF.load(mo::acquire) / cRefreshRate) };
 
 	auto curCycles{ 0 };
 	while (curCycles < maxCycles) {

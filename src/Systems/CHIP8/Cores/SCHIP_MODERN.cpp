@@ -15,26 +15,25 @@
 SCHIP_MODERN::SCHIP_MODERN()
 	: mDisplayBuffer{ {cScreenSizeX, cScreenSizeY} }
 {
-	if (getCoreState() != EmuState::FATAL) {
+	std::fill(
+		std::execution::unseq,
+		mMemoryBank.end() - cSafezoneOOB,
+		mMemoryBank.end(), u8{ 0xFF }
+	);
 
-		std::fill(
-			std::execution::unseq,
-			mMemoryBank.end() - cSafezoneOOB,
-			mMemoryBank.end(), u8{ 0xFF }
-		);
+	copyGameToMemory(mMemoryBank.data() + cGameLoadPos);
+	copyFontToMemory(mMemoryBank.data(), 0xF0);
 
-		copyGameToMemory(mMemoryBank.data() + cGameLoadPos);
-		copyFontToMemory(mMemoryBank.data(), 0xF0);
+	setDisplayResolution(cScreenSizeX, cScreenSizeY);
 
-		setDisplayResolution(cScreenSizeX, cScreenSizeY);
+	BVS->setViewportSizes(cScreenSizeX, cScreenSizeY, cResSizeMult, +2);
 
-		if (!BVS->setViewportDimensions(cScreenSizeX, cScreenSizeY, cResSizeMult, +2))
-			[[unlikely]] { addCoreState(EmuState::FATAL); }
+	setFramePacer(cRefreshRate);
 
-		mCurrentPC = cStartOffset;
-		mFramerate = cRefreshRate;
-		mActiveCPF = cInstSpeedLo;
-	}
+	mCurrentPC = cStartOffset;
+	mTargetCPF.store(cInstSpeedLo, mo::release);
+	startWorker();
+
 }
 
 /*==================================================================*/
@@ -42,7 +41,7 @@ SCHIP_MODERN::SCHIP_MODERN()
 void SCHIP_MODERN::instructionLoop() noexcept {
 
 	auto cycleCount{ 0 };
-	for (; cycleCount < mActiveCPF; ++cycleCount) {
+	for (; cycleCount < mTargetCPF.load(mo::acquire); ++cycleCount) {
 		const auto HI{ mMemoryBank[mCurrentPC + 0u] };
 		const auto LO{ mMemoryBank[mCurrentPC + 1u] };
 		nextInstruction();
@@ -215,14 +214,14 @@ void SCHIP_MODERN::instructionLoop() noexcept {
 				break;
 		}
 	}
-	mTotalCycles += cycleCount;
+	mElapsedCycles.fetch_add(cycleCount, mo::acq_rel);
 }
 
 void SCHIP_MODERN::renderAudioData() {
-	pushSquareTone(STREAM::CHANN0, cRefreshRate);
-	pushSquareTone(STREAM::CHANN1, cRefreshRate);
-	pushSquareTone(STREAM::CHANN2, cRefreshRate);
-	pushSquareTone(STREAM::BUZZER, cRefreshRate);
+	pushSquareTone(STREAM::CHANN0);
+	pushSquareTone(STREAM::CHANN1);
+	pushSquareTone(STREAM::CHANN2);
+	pushSquareTone(STREAM::BUZZER);
 
 	BVS->setFrameColor(sBitColors[0],
 		std::accumulate(mAudioTimer.begin(), mAudioTimer.end(), 0)
@@ -263,11 +262,8 @@ void SCHIP_MODERN::prepDisplayArea(const Resolution mode) {
 
 	setDisplayResolution(W, H);
 
-	if (BVS->setViewportDimensions(W, H)) [[likely]] {
-		mDisplayBuffer[0].resizeClean(W, H);
-	} else {
-		triggerInterrupt(Interrupt::ERROR);
-	}
+	BVS->setViewportSizes(W, H, isLargerDisplay() ? cResSizeMult / 2 : cResSizeMult);
+	mDisplayBuffer[0].resizeClean(W, H);
 };
 
 /*==================================================================*/
@@ -476,7 +472,7 @@ void SCHIP_MODERN::scrollDisplayRT() {
 	#pragma region C instruction branch
 
 	void SCHIP_MODERN::instruction_CxNN(s32 X, s32 NN) noexcept {
-		mRegisterV[X] = Wrand->get<u8>() & NN;
+		mRegisterV[X] = RNG->get<u8>() & NN;
 	}
 
 	#pragma endregion

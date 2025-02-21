@@ -9,115 +9,113 @@
 #include "Typedefs.hpp"
 #include "Concepts.hpp"
 #include "Map2D.hpp"
+#include "Aligned.hpp"
 
 #include <mutex>
 #include <shared_mutex>
 #include <algorithm>
 #include <atomic>
+#include <iostream>
 
 template <typename U> requires std::is_trivially_copyable_v<U>
 class TripleBuffer {
-	Map2D<U> mDataBuffer[3u];
+	using Buffer  = Aligned<U, 64>;
 
-	std::atomic<u32> mReadPos{ 0u };
+	Buffer mDataBuffer[3];
 
-	mutable std::shared_mutex mReadLock{};
-	        std::shared_mutex mWorkLock{};
+	mutable std::shared_mutex mSwapLock{};
+	mutable bool mBufferIsDirty{};
 
+	mutable alignas(64) Buffer* pWorkBuffer{ &mDataBuffer[0] };
+	mutable alignas(64) Buffer* pSwapBuffer{ &mDataBuffer[1] };
+	mutable alignas(64) Buffer* pReadBuffer{ &mDataBuffer[2] };
+	
 	/*==================================================================*/
 
 public:
-	constexpr TripleBuffer(size_type cols = 1u, size_type rows = 1u) noexcept
-		: mDataBuffer{ Map2D<U>(cols, rows), Map2D<U>(cols, rows), Map2D<U>(cols, rows) }
+	constexpr TripleBuffer(size_type size = 0)
+		: mDataBuffer{ Buffer(size), Buffer(size), Buffer(size) }
 	{}
 
-	void resize(size_type cols, size_type rows) noexcept {
-		std::unique_lock read{ mReadLock };
-		std::unique_lock work{ mWorkLock };
+	void resize(size_type size) {
+		std::unique_lock lock{ mSwapLock };
+		if (size == mDataBuffer[0].size()) { return; }
 
-		mDataBuffer[0u].resizeClean(cols, rows);
-		mDataBuffer[1u].resizeClean(cols, rows);
-		mDataBuffer[2u].resizeClean(cols, rows);
+		mDataBuffer[0].reallocate(size);
+		mDataBuffer[1].reallocate(size);
+		mDataBuffer[2].reallocate(size);
 	}
 
 	/*==================================================================*/
 
 private:
-	inline const auto& getReadBuffer() const noexcept {
-		return mDataBuffer[mReadPos.load(mo::acquire)];
+	void acquireReadBuffer() const noexcept {
+		std::unique_lock lock{ mSwapLock };
+		if (mBufferIsDirty) {
+			std::swap(pReadBuffer, pSwapBuffer);
+			mBufferIsDirty = false;
+		}
 	}
 
 public:
-	Map2D<U> copy() const { return getReadBuffer(); }
-
 	template <typename T>
 		requires (sizeof(T) == sizeof(U) && std::is_trivially_copyable_v<T>)
-	void read(T* output) const {
-		std::unique_lock read{ mReadLock };
-
+	void read(T* output) const noexcept {
+		acquireReadBuffer();
+		
 		std::copy(std::execution::unseq,
-			getReadBuffer().begin(), getReadBuffer().end(), output);
+			std::begin(**pReadBuffer), std::end(**pReadBuffer), output);
 	}
 
 	template <IsContiguousContainer T>
 		requires MatchingValueType<T, U>
 	void read(T& output) const noexcept {
-		std::unique_lock read{ mReadLock };
-
+		acquireReadBuffer();
+		
 		std::copy(std::execution::unseq,
-			getReadBuffer().begin(), getReadBuffer().end(), std::data(output));
+			std::begin(**pReadBuffer), std::end(**pReadBuffer), std::data(output));
 	}
 
 	/*==================================================================*/
 
 private:
-	inline auto* getWorkBufferData() const noexcept {
-		return mDataBuffer[(mReadPos.load(mo::relaxed) + 1u) % 3u].data();
-	}
-
-	inline void incrementReaderPos() noexcept {
-		mReadPos.store((mReadPos.load(mo::seq_cst) + 1u) % 3u, mo::release);
+	void commitWorkerChanges() const noexcept {
+		std::unique_lock lock{ mSwapLock };
+		std::swap(pWorkBuffer, pSwapBuffer);
+		mBufferIsDirty = true;
 	}
 
 public:
 	template <typename T, typename Lambda>
 	void write(const T* data, size_type N, Lambda&& function) {
-		std::unique_lock work{ mWorkLock };
-
 		std::transform(std::execution::unseq,
-			data, data + N, getWorkBufferData(), function);
-
-		incrementReaderPos();
+			data, data + N, std::begin(**pWorkBuffer), function);
+		
+		commitWorkerChanges();
 	}
 
 	template <IsContiguousContainer T>
 		requires (sizeof(ValueType<T>) == sizeof(U) && std::is_trivially_copyable_v<ValueType<T>>)
 	void write(const T& data) {
-		std::unique_lock work{ mWorkLock };
-
 		std::copy(std::execution::unseq,
-			std::begin(data), std::end(data), getWorkBufferData());
-
-		incrementReaderPos();
+			std::begin(data), std::end(data), std::begin(**pWorkBuffer));
+		
+		commitWorkerChanges();
 	}
 
 	template <IsContiguousContainer T, typename Lambda>
 	void write(const T& data, Lambda&& function) {
-		std::unique_lock work{ mWorkLock };
-
 		std::transform(std::execution::unseq,
-			std::begin(data), std::end(data), getWorkBufferData(), function);
-
-		incrementReaderPos();
+			std::begin(data), std::end(data), std::data(**pWorkBuffer), function);
+		
+		commitWorkerChanges();
 	}
 
 	template <IsContiguousContainer T, typename Lambda>
 	void write(const T& data1, const T& data2, Lambda&& function) {
-		std::unique_lock work{ mWorkLock };
-
 		std::transform(std::execution::unseq,
-			std::begin(data1), std::end(data1), std::begin(data2), getWorkBufferData(), function);
-
-		incrementReaderPos();
+			std::begin(data1), std::end(data1), std::begin(data2), std::data(**pWorkBuffer), function);
+		
+		commitWorkerChanges();
 	}
 };

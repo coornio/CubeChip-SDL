@@ -42,6 +42,9 @@ using Str  = std::string;
 using StrV = std::string_view;
 using Path = std::filesystem::path;
 
+template <typename T>
+using Atom = std::atomic<T>;
+
 using namespace std::string_literals;
 using namespace std::string_view_literals;
 

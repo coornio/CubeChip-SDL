@@ -4,6 +4,7 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include "../Assistants/FrameLimiter.hpp"
 #include "../Assistants/BasicInput.hpp"
 #include "../Assistants/Well512.hpp"
 
@@ -11,13 +12,51 @@
 
 /*==================================================================*/
 
-EmuInterface::EmuInterface() noexcept {
-	static BasicKeyboard sInput;
-	Input = &sInput;
-	static Well512 sWrand;
-	Wrand = &sWrand;
+void EmuInterface::startWorker() noexcept {
+	mCoreThread = std::jthread([this](std::stop_token token) { threadEntry(token); });
+}
+
+void EmuInterface::stopWorker() noexcept {
+	if (mCoreThread.joinable()) {
+		mCoreThread.request_stop();
+		mCoreThread.join();
+	}
+}
+
+void EmuInterface::threadEntry(std::stop_token token) {
+	while (!token.stop_requested())
+		[[likely]] { processFrame(); }
+}
+
+EmuInterface::EmuInterface() noexcept
+	: Pacer{ std::make_unique<FrameLimiter>() }
+	, Input{ std::make_unique<BasicKeyboard>() }
+{
+	static Well512 sWell512;
+	RNG = &sWell512;
 }
 
 EmuInterface::~EmuInterface() noexcept {
 	subSystemState(EmuState::PAUSED);
+}
+
+void EmuInterface::setFramePacer(f32 value) noexcept {
+	mTargetFPS.store(value, mo::release);
+	Pacer->setLimiter(value);
+}
+
+void EmuInterface::writeStatistics() {
+	if (Pacer->getValidFrameCounter() & 0x1) [[likely]] {
+		mStatistics.store(std::make_shared<Str>(std::format(
+			"Time Since:{:9.3f} ms\n"
+			"Frame Work:{:9.3f} ms\n",
+			Pacer->getElapsedMillisLast(),
+			Pacer->getElapsedMicrosSince() / 1000.0f
+		)), mo::release);
+	}
+}
+
+Str EmuInterface::fetchStatistics() const noexcept {
+	const auto string{ mStatistics.load(mo::acquire) };
+	return string ? *string : std::string{};
 }

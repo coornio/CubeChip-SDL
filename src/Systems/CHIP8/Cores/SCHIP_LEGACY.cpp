@@ -7,7 +7,6 @@
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/BasicAudioSpec.hpp"
 #include "../../../Assistants/Well512.hpp"
-#include "../../../Assistants/BasicLogger.hpp"
 
 #include "SCHIP_LEGACY.hpp"
 
@@ -16,34 +15,25 @@
 SCHIP_LEGACY::SCHIP_LEGACY()
 	: mDisplayBuffer{ {cScreenSizeX, cScreenSizeY} }
 {
-	if (getCoreState() != EmuState::FATAL) {
+	std::generate(std::execution::unseq,
+		mMemoryBank.begin(), mMemoryBank.end() - cSafezoneOOB, []() { return RNG->get<u8>(); });
 
-		std::generate(
-			std::execution::unseq,
-			mMemoryBank.begin(),
-			mMemoryBank.end() - cSafezoneOOB,
-			[]() { return Wrand->get<u8>(); }
-		);
+	std::fill(std::execution::unseq,
+		mMemoryBank.end() - cSafezoneOOB, mMemoryBank.end(), u8{ 0xFF });
 
-		std::fill(
-			std::execution::unseq,
-			mMemoryBank.end() - cSafezoneOOB,
-			mMemoryBank.end(), u8{ 0xFF }
-		);
+	copyGameToMemory(mMemoryBank.data() + cGameLoadPos);
+	copyFontToMemory(mMemoryBank.data(), 0xB4);
 
-		copyGameToMemory(mMemoryBank.data() + cGameLoadPos);
-		copyFontToMemory(mMemoryBank.data(), 0xB4);
+	setDisplayResolution(cScreenSizeX, cScreenSizeY);
 
-		setDisplayResolution(cScreenSizeX, cScreenSizeY);
+	BVS->setViewportSizes(cScreenSizeX, cScreenSizeY, cResSizeMult, +2);
 
-		if (!BVS->setViewportDimensions(cScreenSizeX, cScreenSizeY, cResSizeMult, +2))
-			[[unlikely]] { addCoreState(EmuState::FATAL); }
+	setFramePacer(cRefreshRate);
 
-		mCurrentPC = cStartOffset;
-		mFramerate = cRefreshRate;
+	mCurrentPC = cStartOffset;
 
-		prepDisplayArea(Resolution::LO);
-	}
+	prepDisplayArea(Resolution::LO);
+	startWorker();
 }
 
 /*==================================================================*/
@@ -51,7 +41,7 @@ SCHIP_LEGACY::SCHIP_LEGACY()
 void SCHIP_LEGACY::instructionLoop() noexcept {
 
 	auto cycleCount{ 0 };
-	for (; cycleCount < mActiveCPF; ++cycleCount) {
+	for (; cycleCount < mTargetCPF.load(mo::acquire); ++cycleCount) {
 		const auto HI{ mMemoryBank[mCurrentPC + 0u] };
 		const auto LO{ mMemoryBank[mCurrentPC + 1u] };
 		nextInstruction();
@@ -224,14 +214,14 @@ void SCHIP_LEGACY::instructionLoop() noexcept {
 				break;
 		}
 	}
-	mTotalCycles += cycleCount;
+	mElapsedCycles.fetch_add(cycleCount, mo::acq_rel);
 }
 
 void SCHIP_LEGACY::renderAudioData() {
-	pushSquareTone(STREAM::CHANN0, cRefreshRate);
-	pushSquareTone(STREAM::CHANN1, cRefreshRate);
-	pushSquareTone(STREAM::CHANN2, cRefreshRate);
-	pushSquareTone(STREAM::BUZZER, cRefreshRate);
+	pushSquareTone(STREAM::CHANN0);
+	pushSquareTone(STREAM::CHANN1);
+	pushSquareTone(STREAM::CHANN2);
+	pushSquareTone(STREAM::BUZZER);
 
 	BVS->setFrameColor(sBitColors[0],
 		std::accumulate(mAudioTimer.begin(), mAudioTimer.end(), 0)
@@ -268,7 +258,7 @@ void SCHIP_LEGACY::prepDisplayArea(const Resolution mode) {
 	isLargerDisplay(mode != Resolution::LO);
 
 	Quirk.waitVblank = !isLargerDisplay();
-	mActiveCPF = isLargerDisplay() ? cInstSpeedLo : cInstSpeedHi;
+	mTargetCPF.store(isLargerDisplay() ? cInstSpeedHi : cInstSpeedLo, mo::release);
 };
 
 /*==================================================================*/
@@ -466,7 +456,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 	#pragma region C instruction branch
 
 	void SCHIP_LEGACY::instruction_CxNN(s32 X, s32 NN) noexcept {
-		mRegisterV[X] = Wrand->get<u8>() & NN;
+		mRegisterV[X] = RNG->get<u8>() & NN;
 	}
 
 	#pragma endregion

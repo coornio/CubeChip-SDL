@@ -20,31 +20,30 @@ XOCHIP::XOCHIP()
 		{cScreenSizeX, cScreenSizeY},
 	}
 {
-	if (getCoreState() != EmuState::FATAL) {
-		Quirk.wrapSprite = true;
+	Quirk.wrapSprite = true;
 
-		std::fill(
-			std::execution::unseq,
-			mMemoryBank.end() - cSafezoneOOB,
-			mMemoryBank.end(), u8{ 0xFF }
-		);
+	std::fill(
+		std::execution::unseq,
+		mMemoryBank.end() - cSafezoneOOB,
+		mMemoryBank.end(), u8{ 0xFF }
+	);
 
-		copyGameToMemory(mMemoryBank.data() + cGameLoadPos);
-		copyFontToMemory(mMemoryBank.data(), 0x50);
-		copyColorsToCore(mBitColors.data());
+	copyGameToMemory(mMemoryBank.data() + cGameLoadPos);
+	copyFontToMemory(mMemoryBank.data(), 0x50);
+	copyColorsToCore(mBitColors.data());
 
-		setDisplayResolution(cScreenSizeX, cScreenSizeY);
+	setDisplayResolution(cScreenSizeX, cScreenSizeY);
 
-		if (!BVS->setViewportDimensions(cScreenSizeX, cScreenSizeY, cResSizeMult, +2))
-			[[unlikely]] { addCoreState(EmuState::FATAL); }
+	BVS->setViewportSizes(cScreenSizeX, cScreenSizeY, cResSizeMult, +2);
 
-		mCurrentPC = cStartOffset;
-		mFramerate = cRefreshRate;
-		mActiveCPF = cInstSpeedLo;
+	setFramePacer(cRefreshRate);
 
-		ASB->pauseStream(STREAM::CHANN1);
-		ASB->pauseStream(STREAM::CHANN2);
-	}
+	mCurrentPC = cStartOffset;
+	mTargetCPF.store(cInstSpeedLo, mo::release);
+
+	ASB->pauseStream(STREAM::CHANN1);
+	ASB->pauseStream(STREAM::CHANN2);
+	startWorker();
 }
 
 /*==================================================================*/
@@ -52,7 +51,7 @@ XOCHIP::XOCHIP()
 void XOCHIP::instructionLoop() noexcept {
 
 	auto cycleCount{ 0 };
-	for (; cycleCount < mActiveCPF; ++cycleCount) {
+	for (; cycleCount < mTargetCPF.load(mo::acquire); ++cycleCount) {
 		const auto HI{ mMemoryBank[mCurrentPC + 0u] };
 		const auto LO{ mMemoryBank[mCurrentPC + 1u] };
 		nextInstruction();
@@ -259,7 +258,7 @@ void XOCHIP::instructionLoop() noexcept {
 				break;
 		}
 	}
-	mTotalCycles += cycleCount;
+	mElapsedCycles.fetch_add(cycleCount, mo::acq_rel);
 }
 
 void XOCHIP::renderAudioData() {
@@ -305,14 +304,11 @@ void XOCHIP::prepDisplayArea(const Resolution mode) {
 
 	setDisplayResolution(W, H);
 
-	if (BVS->setViewportDimensions(W, H)) [[likely]] {
-		mDisplayBuffer[0].resizeClean(W, H);
-		mDisplayBuffer[1].resizeClean(W, H);
-		mDisplayBuffer[2].resizeClean(W, H);
-		mDisplayBuffer[3].resizeClean(W, H);
-	} else {
-		triggerInterrupt(Interrupt::ERROR);
-	}
+	BVS->setViewportSizes(W, H, isLargerDisplay() ? cResSizeMult / 2 : cResSizeMult);
+	mDisplayBuffer[0].resizeClean(W, H);
+	mDisplayBuffer[1].resizeClean(W, H);
+	mDisplayBuffer[2].resizeClean(W, H);
+	mDisplayBuffer[3].resizeClean(W, H);
 };
 
 void XOCHIP::setColorBit332(s32 bit, s32 color) noexcept {
@@ -590,7 +586,7 @@ void XOCHIP::scrollDisplayRT() {
 	#pragma region C instruction branch
 
 	void XOCHIP::instruction_CxNN(s32 X, s32 NN) noexcept {
-		mRegisterV[X] = Wrand->get<u8>() & NN;
+		mRegisterV[X] = RNG->get<u8>() & NN;
 	}
 
 	#pragma endregion

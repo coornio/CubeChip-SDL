@@ -4,6 +4,7 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include "../../Assistants/FrameLimiter.hpp"
 #include "../../Assistants/BasicInput.hpp"
 #include "../../Assistants/HomeDirManager.hpp"
 #include "../../Assistants/BasicAudioSpec.hpp"
@@ -15,8 +16,9 @@
 GameBoy_CoreInterface::GameBoy_CoreInterface() noexcept
 	: ASB{ std::make_unique<AudioSpecBlock>(SDL_AUDIO_S8, 1, 48'000, 4) }
 {
-	sSavestatePath = HDM->addSystemDir("savestate", "GAMEBOY");
-	if (!sSavestatePath) { addCoreState(EmuState::FATAL); }
+	if ((sSavestatePath = HDM->addSystemDir("savestate", "GAMEBOY"))) {
+		*sSavestatePath /= HDM->getFileSHA1();
+	}
 
 	ASB->resumeStreams();
 	loadPresetBinds();
@@ -27,13 +29,15 @@ GameBoy_CoreInterface::~GameBoy_CoreInterface() noexcept {}
 /*==================================================================*/
 
 void GameBoy_CoreInterface::processFrame() {
-	if (isSystemStopped()) { return; }
-	else [[likely]] { ++mTotalFrames; }
+	if (Pacer->checkTime()) {
+		if (isSystemStopped()) { return; }
 
-	updateKeyStates();
-	instructionLoop();
-	renderAudioData();
-	renderVideoData();
+		updateKeyStates();
+		instructionLoop();
+		renderAudioData();
+		renderVideoData();
+		writeStatistics();
+	}
 }
 
 void GameBoy_CoreInterface::loadPresetBinds() {

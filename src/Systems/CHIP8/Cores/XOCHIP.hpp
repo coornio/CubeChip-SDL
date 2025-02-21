@@ -63,6 +63,7 @@ private:
 
 public:
 	XOCHIP();
+	~XOCHIP() { stopWorker(); }
 
 	static constexpr bool isGameFileValid(
 		const char* fileData,

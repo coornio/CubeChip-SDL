@@ -4,13 +4,13 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include "../../Assistants/FrameLimiter.hpp"
 #include "../../Assistants/BasicInput.hpp"
 #include "../../Assistants/BasicLogger.hpp"
 #include "../../Assistants/HomeDirManager.hpp"
 #include "../../Assistants/BasicVideoSpec.hpp"
 #include "../../Assistants/BasicAudioSpec.hpp"
 #include "../../Assistants/SimpleFileIO.hpp"
-#include "../../Assistants/Well512.hpp"
 
 #include "Chip8_CoreInterface.hpp"
 
@@ -21,11 +21,9 @@ Chip8_CoreInterface::Chip8_CoreInterface() noexcept
 {
 	if ((sSavestatePath = HDM->addSystemDir("savestate", "CHIP8"))) {
 		*sSavestatePath /= HDM->getFileSHA1();
-		//if (!checkRegularFile(*sSavestatePath)) { sSavestatePath = nullptr; }
 	}
 	if ((sPermaRegsPath = HDM->addSystemDir("permaRegs", "CHIP8"))) {
 		*sPermaRegsPath /= HDM->getFileSHA1();
-		//if (!checkRegularFile(*sPermaRegsPath)) { sPermaRegsPath = nullptr; }
 	}
 
 	ASB->resumeStreams();
@@ -65,12 +63,12 @@ void Chip8_CoreInterface::loadPresetBinds() {
 	loadCustomBinds(std::span(defaultKeyMappings));
 }
 
-bool Chip8_CoreInterface::keyPressed(u8* returnKey, u32 tickCount) noexcept {
+bool Chip8_CoreInterface::keyPressed(u8* returnKey) noexcept {
 	if (!std::size(mCustomBinds)) { return false; }
 
-	if (tickCount >= mTickLast + mTickSpan) {
-		mKeysPrev &= ~mKeysLoop;
-	}
+	const auto mTickCurr{ static_cast<u32>(Pacer->getValidFrameCounter()) };
+	if (mTickCurr >= mTickLast + mTickSpan)
+		[[unlikely]] { mKeysPrev &= ~mKeysLoop; }
 
 		const auto pressKeys{ mKeysCurr & ~mKeysPrev };
 	if (pressKeys) {
@@ -78,10 +76,11 @@ bool Chip8_CoreInterface::keyPressed(u8* returnKey, u32 tickCount) noexcept {
 		const auto validKeys{ pressDiff ? pressDiff : mKeysLoop };
 
 		mKeysLock |= validKeys;
-		mTickLast  = tickCount;
+		mTickLast  = mTickCurr;
 		mTickSpan  = validKeys != mKeysLoop ? 20 : 5;
 		mKeysLoop  = validKeys & ~(validKeys - 1);
 		*returnKey = std::countr_zero(mKeysLoop) & 0xFF;
+		//mKeyPitch = mKeysLoop ? std::min(mKeyPitch + 8, 80u) : 0;
 	}
 	return pressKeys;
 }
@@ -101,7 +100,8 @@ void Chip8_CoreInterface::handlePreFrameInterrupt() noexcept {
 	{
 		case Interrupt::FRAME:
 			mInterrupt = Interrupt::CLEAR;
-			mActiveCPF = std::abs(mActiveCPF);
+			mTargetCPF.fetch_and(~0x80000000, mo::acq_rel);
+			//mTargetCPF = std::abs(mTargetCPF);
 			return;
 
 		case Interrupt::SOUND:
@@ -109,14 +109,16 @@ void Chip8_CoreInterface::handlePreFrameInterrupt() noexcept {
 			if (mAudioTimer[1]) { return; }
 			if (mAudioTimer[2]) { return; }
 			if (mAudioTimer[3]) { return; }
-			mInterrupt = Interrupt::FINAL;
-			mActiveCPF = 0;
+			//mInterrupt = Interrupt::FINAL;
+			mTargetCPF.store(0, mo::release);
+			mTargetCPF = 0;
 			return;
 
 		case Interrupt::DELAY:
 			if (!mDelayTimer) {
 				mInterrupt = Interrupt::CLEAR;
-				mActiveCPF = std::abs(mActiveCPF);
+				mTargetCPF.fetch_and(~0x80000000, mo::acq_rel);
+				//mTargetCPF = std::abs(mTargetCPF);
 			}
 			return;
 	}
@@ -126,21 +128,24 @@ void Chip8_CoreInterface::handleEndFrameInterrupt() noexcept {
 	switch (mInterrupt)
 	{
 		case Interrupt::INPUT:
-			if (keyPressed(mInputReg, mTotalFrames)) {
+			if (keyPressed(mInputReg)) {
 				mInterrupt = Interrupt::CLEAR;
-				mActiveCPF = std::abs(mActiveCPF);
+				mTargetCPF.fetch_and(~0x80000000, mo::acq_rel);
+				//mTargetCPF = std::abs(mTargetCPF);
 				startAudioAtChannel(STREAM::BUZZER, 2);
 			}
 			return;
 
 		case Interrupt::ERROR:
 			addCoreState(EmuState::FATAL);
-			mActiveCPF = 0;
+			mTargetCPF.store(0, mo::release);
+			//mTargetCPF = 0;
 			return;
 
 		case Interrupt::FINAL:
 			setCoreState(EmuState::HALTED);
-			mActiveCPF = 0;
+			mTargetCPF.store(0, mo::release);
+			//mTargetCPF = 0;
 			return;
 	}
 }
@@ -173,18 +178,42 @@ void Chip8_CoreInterface::performProgJump(u32 next) noexcept {
 /*==================================================================*/
 
 void Chip8_CoreInterface::processFrame() {
-	if (isSystemStopped()) { return; }
-	else [[likely]] { ++mTotalFrames; }
+	if (Pacer->checkTime()) {
+		if (isSystemStopped())
+			[[unlikely]] { return; }
 
-	updateKeyStates();
+		updateKeyStates();
 
-	handleTimerTick();
-	handlePreFrameInterrupt();
-	instructionLoop();
-	handleEndFrameInterrupt();
+		handleTimerTick();
+		handlePreFrameInterrupt();
+		instructionLoop();
+		handleEndFrameInterrupt();
 
-	renderAudioData();
-	renderVideoData();
+		renderAudioData();
+		renderVideoData();
+		writeStatistics();
+	}
+}
+
+void Chip8_CoreInterface::writeStatistics() {
+	// XXX need to find a way to toggle flag for benchmarking
+	if (!false) [[unlikely]] {
+		EmuInterface::writeStatistics();
+		return;
+	}
+
+	const auto currentFrameTime{ Pacer->getElapsedMicrosSince() / 1000.0f };
+	const auto frameTimeBias{ currentFrameTime * 1.03f / Pacer->getFramespan() };
+	const auto workCycleBias{ 1e5f * std::sin((1 - frameTimeBias) * 1.5707963f) };
+
+	mStatistics.store(std::make_shared<Str>(std::format(
+		" ::   MIPS:{:8.2f}\n"
+		"Time Since:{:9.3f} ms\n"
+		"Frame Work:{:9.3f} ms\n",
+		addCPF(static_cast<s32>(workCycleBias))
+		* getTargetFPS() / 1'000'000.0f,
+		Pacer->getElapsedMillisLast(), currentFrameTime
+	)), mo::release);
 }
 
 /*==================================================================*/
@@ -207,9 +236,9 @@ void Chip8_CoreInterface::startAudioAtChannel(u32 index, s32 duration, s32 tone)
 	)) / ASB->getFrequency();
 }
 
-void Chip8_CoreInterface::pushSquareTone(u32 index, f32 framerate) noexcept {
+void Chip8_CoreInterface::pushSquareTone(u32 index) noexcept {
 	std::vector<s16> samplesBuffer \
-		(static_cast<ust>(ASB->getSampleRate(framerate)));
+		(static_cast<ust>(ASB->getSampleRate(getTargetFPS())));
 
 	if (mAudioTimer[index]) {
 		for (auto& audioSample : samplesBuffer) {
@@ -228,7 +257,8 @@ void Chip8_CoreInterface::instructionError(u32 HI, u32 LO) {
 
 void Chip8_CoreInterface::triggerInterrupt(Interrupt type) noexcept {
 	mInterrupt = type;
-	mActiveCPF = -std::abs(mActiveCPF);
+	mTargetCPF.fetch_or(0x80000000, mo::acq_rel);
+	//mTargetCPF = -std::abs(mTargetCPF);
 }
 
 /*==================================================================*/
