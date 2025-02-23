@@ -127,7 +127,8 @@ void BasicVideoSpec::resetMainWindow(s32 window_W, s32 window_H) {
 	mOuterFrame.w = static_cast<f32>(window_W);
 	mOuterFrame.h = static_cast<f32>(window_H);
 
-	mViewportTexture.reset();
+	mInnerTexture.reset();
+	mOuterTexture.reset();
 	mTextureSize.store(nullptr, mo::release);
 	mNewTextureNeeded.store(false, mo::release);
 }
@@ -188,25 +189,11 @@ void BasicVideoSpec::updateInterfacePixelScaling(const void* fontData, s32 fontS
 
 /*==================================================================*/
 
-void BasicVideoSpec::createViewport() {
+void BasicVideoSpec::prepareViewport() {
 	const auto texture{ mTextureSize.load(mo::acquire) };
 	if (!texture) { return; }
 
 	if (mNewTextureNeeded.load(mo::acquire)) {
-		mSuccessful = mViewportTexture = SDL_CreateTexture(
-			mMainRenderer,
-			SDL_PIXELFORMAT_RGBA8888,
-			SDL_TEXTUREACCESS_STREAMING,
-			(*texture).W, (*texture).H
-		);
-
-		if (!mSuccessful) {
-			showErrorBox("Failed to create Viewport texture!");
-		} else {
-			SDL_SetTextureScaleMode(mViewportTexture, SDL_SCALEMODE_NEAREST);
-			SDL_SetTextureAlphaMod(mViewportTexture, mTextureAlpha.load(mo::acquire));
-			mNewTextureNeeded.store(false, mo::release);
-		}
 
 		auto padding{ mFramePadding.load(mo::acquire) };
 		auto scaling{ mTextureScale.load(mo::acquire) };
@@ -228,14 +215,50 @@ void BasicVideoSpec::createViewport() {
 
 		mOuterFrame.w = static_cast<f32>(frame.W + 2 * padding);
 		mOuterFrame.h = static_cast<f32>(frame.H + 2 * padding);
+
+		mSuccessful = mOuterTexture = SDL_CreateTexture(
+			mMainRenderer,
+			SDL_PIXELFORMAT_ARGB8888,
+			SDL_TEXTUREACCESS_TARGET,
+			static_cast<s32>(mOuterFrame.w),
+			static_cast<s32>(mOuterFrame.h)
+		);
+
+		if (!mSuccessful) {
+			showErrorBox("Failed to create GUI texture!");
+			return;
+		} else {
+			SDL_SetTextureScaleMode(mOuterTexture, SDL_SCALEMODE_NEAREST);
+			SDL_SetRenderTarget(mMainRenderer, mOuterTexture);
+			SDL_SetRenderDrawColor(mMainRenderer, 10, 10, 10, SDL_ALPHA_OPAQUE);
+			SDL_RenderClear(mMainRenderer);
+			SDL_SetRenderTarget(mMainRenderer, nullptr);
+		}
+
+		mSuccessful = mInnerTexture = SDL_CreateTexture(
+			mMainRenderer,
+			SDL_PIXELFORMAT_RGBA8888,
+			SDL_TEXTUREACCESS_STREAMING,
+			(*texture).W, (*texture).H
+		);
+
+		if (!mSuccessful) {
+			showErrorBox("Failed to create Viewport texture!");
+			return;
+		} else {
+			SDL_SetTextureScaleMode(mInnerTexture, SDL_SCALEMODE_NEAREST);
+			SDL_SetTextureAlphaMod(mInnerTexture, mTextureAlpha.load(mo::acquire));
+		}
+
+		mNewTextureNeeded.store(false, mo::release);
 	}
 
-	if (mViewportTexture) {
+	if (mSuccessful && mInnerTexture) {
 		void* pixels{}; s32 pitch;
 
-		SDL_LockTexture(mViewportTexture, nullptr, &pixels, &pitch);
+		SDL_LockTexture(mInnerTexture, nullptr, &pixels, &pitch);
 		displayBuffer.read(static_cast<u32*>(pixels), *texture);
-		SDL_UnlockTexture(mViewportTexture);
+		SDL_UnlockTexture(mInnerTexture);
 	}
 }
 
@@ -243,7 +266,7 @@ void BasicVideoSpec::renderViewport(SDL_Texture* windowTexture) {
 	SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 	SDL_RenderClear(mMainRenderer);
 
-	if (mViewportTexture) {
+	if (mSuccessful && mInnerTexture) {
 		SDL_SetRenderTarget(mMainRenderer, windowTexture);
 
 		{
@@ -257,7 +280,7 @@ void BasicVideoSpec::renderViewport(SDL_Texture* windowTexture) {
 		SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 		SDL_RenderFillRect(mMainRenderer, &mInnerFrame);
 
-		SDL_RenderTexture(mMainRenderer, mViewportTexture, nullptr, &mInnerFrame);
+		SDL_RenderTexture(mMainRenderer, mInnerTexture, nullptr, &mInnerFrame);
 
 		if (enableScanLine) {
 			SDL_SetRenderDrawBlendMode(mMainRenderer, SDL_BLENDMODE_BLEND);
@@ -341,24 +364,8 @@ namespace ImGui {
 }
 
 void BasicVideoSpec::renderPresent(const char* const stats) {
-	SDL_Unique windowTexture{ SDL_CreateTexture(
-		mMainRenderer,
-		SDL_PIXELFORMAT_ARGB8888,
-		SDL_TEXTUREACCESS_TARGET,
-		static_cast<s32>(mOuterFrame.w),
-		static_cast<s32>(mOuterFrame.h)
-	) };
-
-	mSuccessful = windowTexture;
-	if (!mSuccessful) {
-		showErrorBox("Failed to create GUI texture!");
-		return;
-	} else {
-		SDL_SetTextureScaleMode(windowTexture, SDL_SCALEMODE_NEAREST);
-	}
-
-	createViewport();
-	renderViewport(windowTexture);
+	prepareViewport();
+	renderViewport(mOuterTexture);
 
 	#pragma region IMGUI LOGIC
 		ImGui_ImplSDLRenderer3_NewFrame();
@@ -398,26 +405,28 @@ void BasicVideoSpec::renderPresent(const char* const stats) {
 			}
 			ImGui::EndMainMenuBar();
 		}
-		
-		const auto aspectRatio{ std::min(
-			viewportFrameDimensions.x / mOuterFrame.w,
-			viewportFrameDimensions.y / mOuterFrame.h
-		) };
 
-		const auto viewportDimensions{ ImVec2{
-			mOuterFrame.w * std::max(std::floor(aspectRatio), 1.0f),
-			mOuterFrame.h * std::max(std::floor(aspectRatio), 1.0f)
-		} };
+		if (mSuccessful && mOuterTexture) {
+			const auto aspectRatio{ std::min(
+				viewportFrameDimensions.x / mOuterFrame.w,
+				viewportFrameDimensions.y / mOuterFrame.h
+			) };
 
-		const auto viewportOffsets{ (viewportFrameDimensions - viewportDimensions) / 2.0f };
+			const auto viewportDimensions{ ImVec2{
+				mOuterFrame.w * std::max(std::floor(aspectRatio), 1.0f),
+				mOuterFrame.h * std::max(std::floor(aspectRatio), 1.0f)
+			} };
 
-		if (viewportOffsets.x > 0.0f) { ImGui::SetCursorPosX(std::floor(ImGui::GetCursorPosX() + viewportOffsets.x)); }
-		if (viewportOffsets.y > 0.0f) { ImGui::SetCursorPosY(std::floor(ImGui::GetCursorPosY() + viewportOffsets.y)); }
+			const auto viewportOffsets{ (viewportFrameDimensions - viewportDimensions) / 2.0f };
 
-		ImGui::Image(reinterpret_cast<ImTextureID>(windowTexture.get()), viewportDimensions);
+			if (viewportOffsets.x > 0.0f) { ImGui::SetCursorPosX(std::floor(ImGui::GetCursorPosX() + viewportOffsets.x)); }
+			if (viewportOffsets.y > 0.0f) { ImGui::SetCursorPosY(std::floor(ImGui::GetCursorPosY() + viewportOffsets.y)); }
 
-		if (stats) { ImGui::writeShadowedText(stats, { 0.0f, 1.0f }); }
-		
+			ImGui::Image(reinterpret_cast<ImTextureID>(mOuterTexture.get()), viewportDimensions);
+
+			if (stats) { ImGui::writeShadowedText(stats, { 0.0f, 1.0f }); }
+		}
+
 		ImGui::End();
 
 		//static bool show_demo_window{ true };
