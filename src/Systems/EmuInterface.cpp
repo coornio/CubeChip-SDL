@@ -13,6 +13,7 @@
 /*==================================================================*/
 
 void EmuInterface::startWorker() noexcept {
+	if (mCoreThread.joinable()) { return; }
 	mCoreThread = std::jthread([this](std::stop_token token) { threadEntry(token); });
 }
 
@@ -40,7 +41,7 @@ EmuInterface::~EmuInterface() noexcept {
 	subSystemState(EmuState::PAUSED);
 }
 
-void EmuInterface::setFramePacer(f32 value) noexcept {
+void EmuInterface::setSystemFramerate(f32 value) noexcept {
 	mTargetFPS.store(value, mo::release);
 	Pacer->setLimiter(value);
 }

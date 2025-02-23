@@ -25,15 +25,10 @@ SCHIP_MODERN::SCHIP_MODERN()
 	copyFontToMemory(mMemoryBank.data(), 0xF0);
 
 	setDisplayResolution(cScreenSizeX, cScreenSizeY);
-
-	BVS->setViewportSizes(cScreenSizeX, cScreenSizeY, cResSizeMult, +2);
-
-	setFramePacer(cRefreshRate);
+	setSystemFramerate(cRefreshRate);
 
 	mCurrentPC = cStartOffset;
 	mTargetCPF.store(cInstSpeedLo, mo::release);
-	startWorker();
-
 }
 
 /*==================================================================*/
@@ -230,7 +225,8 @@ void SCHIP_MODERN::renderAudioData() {
 }
 
 void SCHIP_MODERN::renderVideoData() {
-	BVS->display.write(mDisplayBuffer[0], isPixelTrailing()
+	BVS->setViewportSizes(mDisplayW, mDisplayH, isLargerDisplay() ? cResSizeMult / 2 : cResSizeMult, +2);
+	BVS->displayBuffer.write(mDisplayBuffer[0], isPixelTrailing()
 		? [](u32 pixel) noexcept {
 			static constexpr u32 layer[4]{ 0xFF, 0xE7, 0x6F, 0x37 };
 			const auto opacity{ layer[std::countl_zero(pixel) & 0x3] };
@@ -261,8 +257,6 @@ void SCHIP_MODERN::prepDisplayArea(const Resolution mode) {
 	const auto H{ isLargerDisplay() ?  64 : 32 };
 
 	setDisplayResolution(W, H);
-
-	BVS->setViewportSizes(W, H, isLargerDisplay() ? cResSizeMult / 2 : cResSizeMult);
 	mDisplayBuffer[0].resizeClean(W, H);
 };
 

@@ -13,15 +13,11 @@
 /*==================================================================*/
 
 GAMEBOY_CLASSIC::GAMEBOY_CLASSIC() {
-	if (getSystemState() != EmuState::FATAL) {
-		
-		BVS->setViewportSizes(cScreenSizeX, cScreenSizeY, cResSizeMult, +2);
+	BVS->setViewportSizes(cScreenSizeX, cScreenSizeY, cResSizeMult, +2);
 
-		setFramePacer(cRefreshRate);
+	setSystemFramerate(cRefreshRate);
 
-		mTargetCPF.store(cCylesPerSec, mo::release);
-		startWorker();
-	}
+	mTargetCPF.store(cCylesPerSec, mo::release);
 }
 
 /*==================================================================*/

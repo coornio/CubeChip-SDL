@@ -23,6 +23,9 @@ class GAMEBOY_CLASSIC final : public GameBoy_CoreInterface {
 	static constexpr s32 cCylesPerSec{  4194304 };
 	static constexpr s32 cScreenSizeT{    23040 };
 
+	static constexpr u32 cMaxDisplayW{ 160 };
+	static constexpr u32 cMaxDisplayH{ 144 };
+
 private:
 	void instructionLoop() noexcept override;
 	void renderAudioData() override;
@@ -330,4 +333,7 @@ public:
 		if (!fileData || !fileSize) { return false; }
 		return false;
 	}
+
+	s32 getMaxDisplayW() const noexcept override { return cMaxDisplayW; }
+	s32 getMaxDisplayH() const noexcept override { return cMaxDisplayH; }
 };

@@ -25,6 +25,10 @@ EmuHost::EmuHost(const Path& gamePath) noexcept {
 	if (!gamePath.empty()) { loadGameFile(gamePath); }
 }
 
+void EmuHost::StopEmuCoreThread::operator()(EmuInterface* ptr) const noexcept {
+	if (ptr) { ptr->stopWorker(); delete ptr; }
+}
+
 /*==================================================================*/
 
 void EmuHost::discardCore() {
@@ -36,9 +40,11 @@ void EmuHost::discardCore() {
 }
 
 void EmuHost::replaceCore() {
-	iGuest.reset(); // force deconstruction to occur first
-	if (iGuest = GameFileChecker::initGameCore()) {
+	iGuest.reset(GameFileChecker::constructCore());
+	if (iGuest) {
 		BVS->setMainWindowTitle(HDM->getFileStem().c_str());
+		BVS->displayBuffer.resize(iGuest->getDisplaySize());
+		iGuest->startWorker();
 	}
 }
 

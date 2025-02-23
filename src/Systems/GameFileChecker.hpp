@@ -53,8 +53,8 @@ class GameFileChecker final {
 	 GameFileChecker() = delete;
 	~GameFileChecker() = delete;
 
-	static GameCoreType   sEmuCore;
-	static nlohmann::json sEmuConfig;
+	inline static GameCoreType   sEmuCore{};
+	       static nlohmann::json sEmuConfig;
 
 	[[nodiscard]]
 	static bool testGame(
@@ -67,22 +67,14 @@ class GameFileChecker final {
 
 	static bool validate(const char* fileData, ust fileSize, const Str& fileType) noexcept;
 
-	[[nodiscard]]
-	static std::unique_ptr<EmuInterface>
-		constructCore();
-
 public:
 	static bool validate(const char* fileData, ust fileSize, const Str& fileType, const Str& fileSHA1) noexcept;
 
 	[[nodiscard]]
-	static std::unique_ptr<EmuInterface>
-		initGameCore() noexcept;
+	static EmuInterface* constructCore();
 
 	static void deleteGameCore() noexcept;
 
 	[[nodiscard]]
 	static auto getGameCoreType() noexcept;
-
-	[[nodiscard]]
-	static bool isGameCoreValid() noexcept;
 };

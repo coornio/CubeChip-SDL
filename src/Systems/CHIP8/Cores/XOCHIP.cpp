@@ -33,17 +33,13 @@ XOCHIP::XOCHIP()
 	copyColorsToCore(mBitColors.data());
 
 	setDisplayResolution(cScreenSizeX, cScreenSizeY);
-
-	BVS->setViewportSizes(cScreenSizeX, cScreenSizeY, cResSizeMult, +2);
-
-	setFramePacer(cRefreshRate);
+	setSystemFramerate(cRefreshRate);
 
 	mCurrentPC = cStartOffset;
 	mTargetCPF.store(cInstSpeedLo, mo::release);
 
 	ASB->pauseStream(STREAM::CHANN1);
 	ASB->pauseStream(STREAM::CHANN2);
-	startWorker();
 }
 
 /*==================================================================*/
@@ -288,8 +284,9 @@ void XOCHIP::renderVideoData() {
 		}
 	);
 
+	BVS->setViewportSizes(mDisplayW, mDisplayH, isLargerDisplay() ? cResSizeMult / 2 : cResSizeMult, +2);
 	const auto* pBitColors{ mBitColors.data()};
-	BVS->display.write(textureBuffer,
+	BVS->displayBuffer.write(textureBuffer,
 		[pBitColors](u32 pixel) noexcept {
 			return static_cast<u32>(0xFF | pBitColors[pixel]);
 		}
@@ -303,8 +300,6 @@ void XOCHIP::prepDisplayArea(const Resolution mode) {
 	const auto H{ isLargerDisplay() ?  64 : 32 };
 
 	setDisplayResolution(W, H);
-
-	BVS->setViewportSizes(W, H, isLargerDisplay() ? cResSizeMult / 2 : cResSizeMult);
 	mDisplayBuffer[0].resizeClean(W, H);
 	mDisplayBuffer[1].resizeClean(W, H);
 	mDisplayBuffer[2].resizeClean(W, H);

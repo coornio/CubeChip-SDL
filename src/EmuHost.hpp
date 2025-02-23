@@ -34,7 +34,11 @@ class EmuHost final {
 	static inline BasicVideoSpec* BVS{};
 	static inline BasicAudioSpec* BAS{};
 
-	std::unique_ptr<EmuInterface> iGuest;
+	struct StopEmuCoreThread {
+		void operator()(EmuInterface* ptr) const noexcept;
+	};
+
+	std::unique_ptr<EmuInterface, StopEmuCoreThread> iGuest;
 
 public:
 	std::shared_mutex Mutex;

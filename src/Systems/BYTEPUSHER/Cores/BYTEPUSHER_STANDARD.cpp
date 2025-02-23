@@ -12,17 +12,14 @@
 /*==================================================================*/
 
 BYTEPUSHER_STANDARD::BYTEPUSHER_STANDARD() {
-	if (getSystemState() != EmuState::FATAL) {
-		copyGameToMemory(mMemoryBank.data());
+	copyGameToMemory(mMemoryBank.data());
 
-		BVS->setFrameColor(cBitsColor[0], cBitsColor[0]);
-		BVS->setViewportSizes(cScreenSizeX, cScreenSizeY, cResSizeMult, -2);
+	BVS->setFrameColor(cBitsColor[0], cBitsColor[0]);
+	BVS->setViewportSizes(cScreenSizeX, cScreenSizeY, cResSizeMult, -2);
 
-		setFramePacer(cRefreshRate);
+	setSystemFramerate(cRefreshRate);
 
-		mTargetCPF.store(0x10000, mo::release);
-		startWorker();
-	}
+	mTargetCPF.store(0x10000, mo::release);
 }
 
 /*==================================================================*/
@@ -61,6 +58,6 @@ void BYTEPUSHER_STANDARD::renderAudioData() {
 }
 
 void BYTEPUSHER_STANDARD::renderVideoData() {
-	BVS->display.write(mMemoryBank.data() + (readData<1>(5) << 16), cScreenSizeT,
+	BVS->displayBuffer.write(mMemoryBank.data() + (readData<1>(5) << 16), cScreenSizeT,
 		[](u32 pixel) noexcept { return cBitsColor[pixel]; });
 }

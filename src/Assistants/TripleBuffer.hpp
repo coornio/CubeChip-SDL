@@ -23,8 +23,10 @@ class TripleBuffer {
 
 	Buffer mDataBuffer[3];
 
-	mutable std::shared_mutex mSwapLock{};
+	mutable size_type mSize{};
 	mutable bool mBufferIsDirty{};
+	mutable std::shared_mutex mSwapLock{};
+
 
 	alignas(64) mutable Buffer* pWorkBuffer{ &mDataBuffer[0] };
 	alignas(64) mutable Buffer* pSwapBuffer{ &mDataBuffer[1] };
@@ -35,15 +37,19 @@ class TripleBuffer {
 public:
 	constexpr TripleBuffer(size_type size = 0)
 		: mDataBuffer{ Buffer(size), Buffer(size), Buffer(size) }
+		, mSize(size)
 	{}
 
-	void resize(size_type size) {
-		std::unique_lock lock{ mSwapLock };
-		if (size == mDataBuffer[0].size()) { return; }
+	constexpr size_type size() const noexcept { return mSize; }
 
-		mDataBuffer[0].reallocate(size);
-		mDataBuffer[1].reallocate(size);
-		mDataBuffer[2].reallocate(size);
+	// DO NOT CALL IF EITHER A CONSUMER OR PRODUCER IS ACTIVE!!
+	void resize(size_type buffer_size) {
+		if (buffer_size == size()) { return; }
+
+		mSize = buffer_size;
+		mDataBuffer[0].reallocate(buffer_size);
+		mDataBuffer[1].reallocate(buffer_size);
+		mDataBuffer[2].reallocate(buffer_size);
 	}
 
 	/*==================================================================*/
@@ -58,13 +64,33 @@ private:
 	}
 
 public:
+	Buffer copy(size_type amount) const {
+		Buffer temp(amount);
+		acquireReadBuffer();
+
+		std::copy_n(std::execution::unseq,
+			(*pReadBuffer).data(), std::min(size(), amount), temp.data());
+
+		return temp;
+	}
+
+	Buffer copy() const {
+		Buffer temp(size());
+		acquireReadBuffer();
+
+		std::copy(std::execution::unseq,
+			(*pReadBuffer).begin(), (*pReadBuffer).end(), temp.data());
+
+		return temp;
+	}
+
 	template <typename T>
 		requires (sizeof(T) == sizeof(U) && std::is_trivially_copyable_v<T>)
-	void read(T* output) const noexcept {
+	void read(T* output, size_type N = 0) const noexcept {
 		acquireReadBuffer();
 		
-		std::copy(std::execution::unseq,
-			std::begin(**pReadBuffer), std::end(**pReadBuffer), output);
+		std::copy_n(std::execution::unseq,
+			(*pReadBuffer).begin(), std::min(size(), N ? N : size()), output);
 	}
 
 	template <IsContiguousContainer T>
@@ -73,7 +99,7 @@ public:
 		acquireReadBuffer();
 		
 		std::copy(std::execution::unseq,
-			std::begin(**pReadBuffer), std::end(**pReadBuffer), std::data(output));
+			(*pReadBuffer).begin(), (*pReadBuffer).end(), std::data(output));
 	}
 
 	/*==================================================================*/
@@ -89,7 +115,7 @@ public:
 	template <typename T, typename Lambda>
 	void write(const T* data, size_type N, Lambda&& function) {
 		std::transform(std::execution::unseq,
-			data, data + N, std::begin(**pWorkBuffer), function);
+			data, data + N, (*pWorkBuffer).data(), function);
 		
 		commitWorkerChanges();
 	}
@@ -98,7 +124,7 @@ public:
 		requires (sizeof(ValueType<T>) == sizeof(U) && std::is_trivially_copyable_v<ValueType<T>>)
 	void write(const T& data) {
 		std::copy(std::execution::unseq,
-			std::begin(data), std::end(data), std::begin(**pWorkBuffer));
+			std::begin(data), std::end(data), (*pWorkBuffer).data());
 		
 		commitWorkerChanges();
 	}
@@ -106,7 +132,7 @@ public:
 	template <IsContiguousContainer T, typename Lambda>
 	void write(const T& data, Lambda&& function) {
 		std::transform(std::execution::unseq,
-			std::begin(data), std::end(data), std::data(**pWorkBuffer), function);
+			std::begin(data), std::end(data), (*pWorkBuffer).data(), function);
 		
 		commitWorkerChanges();
 	}
@@ -114,7 +140,7 @@ public:
 	template <IsContiguousContainer T, typename Lambda>
 	void write(const T& data1, const T& data2, Lambda&& function) {
 		std::transform(std::execution::unseq,
-			std::begin(data1), std::end(data1), std::begin(data2), std::data(**pWorkBuffer), function);
+			std::begin(data1), std::end(data1), std::begin(data2), (*pWorkBuffer).data(), function);
 		
 		commitWorkerChanges();
 	}

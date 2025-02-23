@@ -80,6 +80,9 @@ public:
 	constexpr T*   data() const noexcept { return pData.get(); }
 	constexpr auto size() const noexcept { return mSize; }
 
+	constexpr auto begin() const noexcept { return data(); }
+	constexpr auto end()   const noexcept { return data() + size(); }
+
 	// cast underlying data to a RangeProxy (span) for a lot of added functionality
 	constexpr auto operator*() const noexcept { return RangeProxy(data(), mSize); }
 

@@ -25,15 +25,11 @@ SCHIP_LEGACY::SCHIP_LEGACY()
 	copyFontToMemory(mMemoryBank.data(), 0xB4);
 
 	setDisplayResolution(cScreenSizeX, cScreenSizeY);
-
-	BVS->setViewportSizes(cScreenSizeX, cScreenSizeY, cResSizeMult, +2);
-
-	setFramePacer(cRefreshRate);
+	setSystemFramerate(cRefreshRate);
 
 	mCurrentPC = cStartOffset;
 
 	prepDisplayArea(Resolution::LO);
-	startWorker();
 }
 
 /*==================================================================*/
@@ -230,7 +226,8 @@ void SCHIP_LEGACY::renderAudioData() {
 }
 
 void SCHIP_LEGACY::renderVideoData() {
-	BVS->display.write(mDisplayBuffer[0], isPixelTrailing()
+	BVS->setViewportSizes(mDisplayW, mDisplayH, isLargerDisplay() ? cResSizeMult / 2 : cResSizeMult, +2);
+	BVS->displayBuffer.write(mDisplayBuffer[0], isPixelTrailing()
 		? [](u32 pixel) noexcept {
 			static constexpr u32 layer[4]{ 0xFF, 0xE7, 0x6F, 0x37 };
 			const auto opacity{ layer[std::countl_zero(pixel) & 0x3] };

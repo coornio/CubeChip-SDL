@@ -20,6 +20,9 @@ class BYTEPUSHER_STANDARD final : public BytePusher_CoreInterface {
 	static constexpr s32 cScreenSizeY{       256 };
 	static constexpr s32 cScreenSizeT{ 256 * 256 };
 
+	static constexpr u32 cMaxDisplayW{ 256 };
+	static constexpr u32 cMaxDisplayH{ 256 };
+
 private:
 	std::array<u8, cTotalMemory + cSafezoneOOB>
 		mMemoryBank{};
@@ -44,7 +47,6 @@ private:
 
 public:
 	BYTEPUSHER_STANDARD();
-	~BYTEPUSHER_STANDARD() { stopWorker(); }
 
 	static constexpr bool isGameFileValid(
 		const char* fileData,
@@ -53,4 +55,7 @@ public:
 		if (!fileData || !fileSize) { return false; }
 		return fileSize <= cTotalMemory;
 	}
+
+	s32 getMaxDisplayW() const noexcept override { return cMaxDisplayW; }
+	s32 getMaxDisplayH() const noexcept override { return cMaxDisplayH; }
 };

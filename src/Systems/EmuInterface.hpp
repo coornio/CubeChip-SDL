@@ -69,8 +69,11 @@ protected:
 	std::jthread mCoreThread;
 	Atom<std::shared_ptr<Str>> mStatistics;
 
+public:
 	void startWorker() noexcept;
 	void stopWorker() noexcept;
+
+protected:
 	void threadEntry(std::stop_token token);
 
 	std::unique_ptr<FrameLimiter>  Pacer;
@@ -99,11 +102,15 @@ public:
 	static void setSystemState(EmuState state) noexcept { mGlobalState.store(state, mo::release); }
 	static auto getSystemState()               noexcept { return mGlobalState.load(mo::acquire);  }
 
+	virtual s32 getMaxDisplayW() const noexcept = 0;
+	virtual s32 getMaxDisplayH() const noexcept = 0;
+	virtual s32 getDisplaySize() const noexcept { return getMaxDisplayW() * getMaxDisplayH(); }
+
 	f32 getTargetFPS()     const noexcept { return mTargetFPS.load(mo::acquire); }
 	u64 getElapsedCycles() const noexcept { return mElapsedCycles.load(mo::acquire); }
 
 protected:
-	void setFramePacer(f32 value) noexcept;
+	void setSystemFramerate(f32 value) noexcept;
 	virtual void processFrame() = 0;
 
 	virtual s32 getCPF()         const noexcept = 0;

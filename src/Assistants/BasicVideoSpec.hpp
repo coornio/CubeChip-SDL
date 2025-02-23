@@ -27,7 +27,7 @@ class BasicVideoSpec final {
 
 	SDL_Unique<SDL_Window>   mMainWindow{};
 	SDL_Unique<SDL_Renderer> mMainRenderer{};
-	SDL_Unique<SDL_Texture>  mMainTexture{};
+	SDL_Unique<SDL_Texture>  mViewportTexture{};
 
 	static inline const char* sAppName{};
 	static inline bool mSuccessful{ true };
@@ -37,8 +37,13 @@ class BasicVideoSpec final {
 
 	Atom<u32> mOuterFrameColor[2]{};
 
-	Atom<s32> mTextureWidth{};
-	Atom<s32> mTextureHeight{};
+	struct Rect {
+		s32 W{}, H{};
+		operator s32() const noexcept { return W * H; }
+	};
+
+	Atom<std::shared_ptr<Rect>> mTextureSize{};
+
 	Atom<s32> mTextureScale{};
 	Atom<s32> mFramePadding{};
 
@@ -49,7 +54,7 @@ class BasicVideoSpec final {
 	bool enableScanLine{};
 
 public:
-	TripleBuffer<u32> display;
+	TripleBuffer<u32> displayBuffer;
 
 	static auto* create(const char* appName) noexcept {
 		sAppName = appName;
@@ -83,8 +88,7 @@ public:
 private:
 	void updateInterfacePixelScaling(const void* fontData, s32 fontSize, f32 newScale);
 	void createViewport();
-	void renderViewport(SDL_Texture* viewportTexture);
-	void copyBufferToViewport();
+	void renderViewport(SDL_Texture* windowTexture);
 
 public:
 	void setViewportAlpha(u32 alpha);
@@ -94,7 +98,7 @@ public:
 	void resetMainWindow(s32 window_W = 640, s32 window_H = 480);
 	void setMainWindowTitle(const Str& title);
 	auto getMainWindowID() const noexcept {
-		return SDL_GetWindowID(mMainWindow.get());
+		return SDL_GetWindowID(mMainWindow);
 	}
 	void raiseMainWindow();
 

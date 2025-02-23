@@ -20,14 +20,10 @@ CHIP8_MODERN::CHIP8_MODERN() {
 	copyFontToMemory(mMemoryBank.data(), 0x50);
 
 	setDisplayResolution(cScreenSizeX, cScreenSizeY);
-
-	BVS->setViewportSizes(cScreenSizeX, cScreenSizeY, cResSizeMult, +2);
-
-	setFramePacer(cRefreshRate);
+	setSystemFramerate(cRefreshRate);
 
 	mCurrentPC = cStartOffset;
 	mTargetCPF.store(Quirk.waitVblank ? cInstSpeedHi : cInstSpeedLo, mo::release);
-	startWorker();
 }
 
 /*==================================================================*/
@@ -194,7 +190,8 @@ void CHIP8_MODERN::renderAudioData() {
 }
 
 void CHIP8_MODERN::renderVideoData() {
-	BVS->display.write(mDisplayBuffer, isPixelTrailing()
+	BVS->setViewportSizes(mDisplayW, mDisplayH, isLargerDisplay() ? cResSizeMult / 2 : cResSizeMult, +2);
+	BVS->displayBuffer.write(mDisplayBuffer, isPixelTrailing()
 		? [](u32 pixel) noexcept {
 			static constexpr u32 layer[4]{ 0xFF, 0xE7, 0x6F, 0x37 };
 			const auto opacity{ layer[std::countl_zero(pixel) & 0x3] };

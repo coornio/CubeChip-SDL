@@ -13,24 +13,22 @@
 /*==================================================================*/
 
 MEGACHIP::MEGACHIP()
-	: mDisplayBuffer{ {cScreenSizeY, cScreenSizeX} }
+	: mDisplayBuffer{ { cScreenSizeY, cScreenSizeX } }
+	, mForegroundBuffer{ cScreenMegaX, cScreenMegaY }
+	, mBackgroundBuffer{ cScreenMegaX, cScreenMegaY }
+	, mCollisionMap{ cScreenMegaX, cScreenMegaY }
+	, mColorPalette{ 256 }
 {
 	copyGameToMemory(mMemoryBank.data() + cGameLoadPos);
 	copyFontToMemory(mMemoryBank.data(), 0xB4);
 
-	mForegroundBuffer.resizeClean(cScreenMegaX, cScreenMegaY);
-	mBackgroundBuffer.resizeClean(cScreenMegaX, cScreenMegaY);
-	mCollisionMap.resizeClean(cScreenMegaX, cScreenMegaY);
-	mColorPalette.resizeClean(256, 1);
-
-	setFramePacer(cRefreshRate);
+	setSystemFramerate(cRefreshRate);
 
 	mCurrentPC = cStartOffset;
 
 	prepDisplayArea(Resolution::LO);
 	setNewBlendAlgorithm(BlendMode::ALPHA_BLEND);
 	initializeFontColors();
-	startWorker();
 }
 
 /*==================================================================*/
@@ -317,9 +315,9 @@ void MEGACHIP::renderAudioData() {
 }
 
 void MEGACHIP::renderVideoData() {
+	BVS->setViewportSizes(mDisplayW, mDisplayH, isLargerDisplay() ? cResSizeMult / 2 : cResSizeMult, +2);
 	if (isManualRefresh()) { return; }
-
-	BVS->display.write(mDisplayBuffer[0], isPixelTrailing()
+	BVS->displayBuffer.write(mDisplayBuffer[0], isPixelTrailing()
 		? [](u32 pixel) noexcept {
 			static constexpr u32 layer[4]{ 0xFF, 0xE7, 0x6F, 0x37 };
 			const auto opacity{ layer[std::countl_zero(pixel) & 0x3] };
@@ -338,15 +336,11 @@ void MEGACHIP::prepDisplayArea(const Resolution mode) {
 	if (isManualRefresh()) {
 		setDisplayResolution(cScreenMegaX, cScreenMegaY);
 
-		BVS->setViewportSizes(cScreenMegaX, cScreenMegaY, cResMegaMult, -2);
-
 		Quirk.waitVblank = false;
 		mTargetCPF.store(cInstSpeedMC, mo::release);
 	}
 	else {
 		setDisplayResolution(cScreenSizeX, cScreenSizeY);
-
-		BVS->setViewportSizes(cScreenSizeX, cScreenSizeY, cResSizeMult, +2);
 
 		Quirk.waitVblank = !isLargerDisplay();
 		mTargetCPF.store(isLargerDisplay() ? cInstSpeedLo : cInstSpeedHi, mo::release);
@@ -447,11 +441,11 @@ void MEGACHIP::flushAllVideoBuffers() {
 	mBackgroundBuffer.initialize();
 	mCollisionMap.initialize();
 
-	BVS->display.write(mForegroundBuffer);
+	BVS->displayBuffer.write(mForegroundBuffer);
 }
 
 void MEGACHIP::blendAndFlushBuffers() const {
-	BVS->display.write(
+	BVS->displayBuffer.write(
 		mForegroundBuffer,
 		mBackgroundBuffer,
 		[this](const RGBA src, const RGBA dst) noexcept {

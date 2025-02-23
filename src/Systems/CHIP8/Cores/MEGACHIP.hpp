@@ -30,13 +30,16 @@ class MEGACHIP final : public Chip8_CoreInterface {
 	static constexpr s32 cScreenMegaY{      192 };
 	static constexpr s32 cInstSpeedMC{     3000 };
 
+	static constexpr u32 cMaxDisplayW{ 256 };
+	static constexpr u32 cMaxDisplayH{ 192 };
+
 /*==================================================================*/
 
-	Map2D<u8>  mDisplayBuffer[1];
+	Map2D<u8>   mDisplayBuffer[1];
 
 	Map2D<RGBA> mForegroundBuffer;
 	Map2D<RGBA> mBackgroundBuffer;
-	Map2D<u8>  mCollisionMap;
+	Map2D<u8>   mCollisionMap;
 	Map2D<RGBA> mColorPalette;
 
 	std::array<RGBA, 10> mFontColor{};
@@ -103,7 +106,6 @@ class MEGACHIP final : public Chip8_CoreInterface {
 
 public:
 	MEGACHIP();
-	~MEGACHIP() { stopWorker(); }
 
 	static constexpr bool isGameFileValid(
 		const char* fileData,
@@ -112,6 +114,9 @@ public:
 		if (!fileData || !fileSize) { return false; }
 		return fileSize + cGameLoadPos <= cTotalMemory;
 	}
+
+	s32 getMaxDisplayW() const noexcept override { return cMaxDisplayW; }
+	s32 getMaxDisplayH() const noexcept override { return cMaxDisplayH; }
 
 private:
 	void instructionLoop() noexcept override;

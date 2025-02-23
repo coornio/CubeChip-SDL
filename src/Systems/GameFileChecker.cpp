@@ -4,9 +4,6 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-//#include <memory>
-//#include <iostream>
-
 #include "../_nlohmann/json.hpp"
 using json = nlohmann::json;
 
@@ -26,7 +23,6 @@ using json = nlohmann::json;
 
 /*==================================================================*/
 
-GameCoreType   GameFileChecker::sEmuCore{};
 nlohmann::json GameFileChecker::sEmuConfig{};
 
 /*==================================================================*/
@@ -38,63 +34,61 @@ void GameFileChecker::deleteGameCore() noexcept {
 
 auto GameFileChecker::getGameCoreType() noexcept { return sEmuCore; }
 
-bool GameFileChecker::isGameCoreValid() noexcept { return sEmuCore != GameCoreType::INVALID; }
-
 /*==================================================================*/
 
-std::unique_ptr<EmuInterface> GameFileChecker::constructCore() {
+EmuInterface* GameFileChecker::constructCore() {
 	try {
 		switch (sEmuCore) {
 			case GameCoreType::XOCHIP:
-				return std::make_unique<XOCHIP>();
+				return new XOCHIP();
 
 			case GameCoreType::CHIP8E:
-				//return std::make_unique<CHIP8E>();
+				//return new CHIP8E();
 
 			case GameCoreType::CHIP8X:
-				//return std::make_unique<CHIP8X>();
+				//return new CHIP8X();
 
 			case GameCoreType::CHIP8_2P:
-				//return std::make_unique<CHIP8_2P>();
+				//return new CHIP8_2P();
 
 			case GameCoreType::CHIP8_4P:
-				//return std::make_unique<CHIP8_4P>();
+				//return new CHIP8_4P();
 
 			case GameCoreType::CHIP8_LEGACY:
-				//return std::make_unique<CHIP8_LEGACY>();
+				//return new CHIP8_LEGACY();
 
 			case GameCoreType::SCHIP_LEGACY:
-				return std::make_unique<SCHIP_LEGACY>();
+				return new SCHIP_LEGACY();
 
 			case GameCoreType::CHIP8_MODERN:
-				return std::make_unique<CHIP8_MODERN>();
+				return new CHIP8_MODERN();
 
 			case GameCoreType::SCHIP_MODERN:
-				return std::make_unique<SCHIP_MODERN>();
+				return new SCHIP_MODERN();
 
 			case GameCoreType::CHIP8X_HIRES:
-				//return std::make_unique<CHIP8X_HIRES>();
+				//return new CHIP8X_HIRES();
 
 			case GameCoreType::CHIP8X_SCHIP:
-				//return std::make_unique<CHIP8X_SCHIP>();
+				//return new CHIP8X_SCHIP();
 
 			case GameCoreType::HWCHIP64:
-				//return std::make_unique<HWCHIP64>();
+				//return new HWCHIP64();
 
 			case GameCoreType::MEGACHIP:
-				return std::make_unique<MEGACHIP>();
+				return new MEGACHIP();
 
 			case GameCoreType::GIGACHIP:
-				//return std::make_unique<GIGACHIP>();
+				//return new GIGACHIP();
 
 			case GameCoreType::BYTEPUSHER_STANDARD:
-				return std::make_unique<BYTEPUSHER_STANDARD>();
+				return new BYTEPUSHER_STANDARD();
 
 			case GameCoreType::GAMEBOY_CLASSIC:
-				return std::make_unique<GAMEBOY_CLASSIC>();
+				return new GAMEBOY_CLASSIC();
 
 			case GameCoreType::GAMEBOY_COLOR:
-				return std::make_unique<GAMEBOY_CLASSIC>();
+				return new GAMEBOY_CLASSIC();
 
 			default:
 			case GameCoreType::INVALID:
@@ -104,17 +98,6 @@ std::unique_ptr<EmuInterface> GameFileChecker::constructCore() {
 		blog.newEntry(BLOG::ERROR, "Failed to construct Game Core!");
 		return nullptr;
 	}
-}
-
-std::unique_ptr<EmuInterface> GameFileChecker::initGameCore() noexcept {
-	auto tempCore{ constructCore() };
-
-	if (tempCore && isGameCoreValid()) {
-		if (!tempCore->isCoreStopped()) { return tempCore; }
-		blog.newEntry(BLOG::ERROR, "Failed to initialize Game Core!");
-		deleteGameCore();
-	}
-	return nullptr;
 }
 
 /*==================================================================*/
@@ -128,7 +111,7 @@ bool GameFileChecker::validate(const char* fileData, ust fileSize, const Str& fi
 	}
 }
 
-bool GameFileChecker::validate(const char* fileData, ust fileSize, const Str&  fileType) noexcept {
+bool GameFileChecker::validate(const char* fileData, ust fileSize, const Str& fileType) noexcept {
 	static const std::unordered_map<StrV, GameFileType> sExtMap{
 		{".c2x", GameFileType::c2x},
 		{".c4x", GameFileType::c4x},
@@ -273,6 +256,7 @@ bool GameFileChecker::validate(const char* fileData, ust fileSize, const Str&  f
 
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
+		default:
+			return false;
 	}
-	return false;
 };

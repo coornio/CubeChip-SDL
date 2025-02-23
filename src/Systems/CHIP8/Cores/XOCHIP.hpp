@@ -25,6 +25,9 @@ class XOCHIP final : public Chip8_CoreInterface {
 	static constexpr s32 cInstSpeedHi{ 50000 };
 	static constexpr s32 cInstSpeedLo{  1000 };
 
+	static constexpr u32 cMaxDisplayW{ 128 };
+	static constexpr u32 cMaxDisplayH{  64 };
+
 private:
 	std::array<RGBA, 16> mBitColors{};
 
@@ -63,7 +66,6 @@ private:
 
 public:
 	XOCHIP();
-	~XOCHIP() { stopWorker(); }
 
 	static constexpr bool isGameFileValid(
 		const char* fileData,
@@ -72,6 +74,9 @@ public:
 		if (!fileData || !fileSize) { return false; }
 		return fileSize + cGameLoadPos <= cTotalMemory;
 	}
+
+	s32 getMaxDisplayW() const noexcept override { return cMaxDisplayW; }
+	s32 getMaxDisplayH() const noexcept override { return cMaxDisplayH; }
 
 private:
 	void instructionLoop() noexcept override;

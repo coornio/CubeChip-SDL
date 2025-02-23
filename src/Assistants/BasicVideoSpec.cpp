@@ -126,7 +126,10 @@ void BasicVideoSpec::resetMainWindow(s32 window_W, s32 window_H) {
 
 	mOuterFrame.w = static_cast<f32>(window_W);
 	mOuterFrame.h = static_cast<f32>(window_H);
-	mMainTexture.reset();
+
+	mViewportTexture.reset();
+	mTextureSize.store(nullptr, mo::release);
+	mNewTextureNeeded.store(false, mo::release);
 }
 
 void BasicVideoSpec::setWindowSize(SDL_Window* window, s32 window_W, s32 window_H) {
@@ -144,13 +147,10 @@ void BasicVideoSpec::setViewportSizes(s32 texture_W, s32 texture_H, s32 upscale_
 	if (padding_S) { mFramePadding.store(padding_S, mo::release); }
 
 	if (texture_W > 0 && texture_H > 0) {
-		const auto old_W{ mTextureWidth.exchange(texture_W, mo::acq_rel) };
-		const auto old_H{ mTextureHeight.exchange(texture_H, mo::acq_rel) };
+		const auto newSize{ std::make_shared<Rect>(texture_W, texture_H) };
+		const auto oldSize{ mTextureSize.exchange(newSize, mo::acq_rel) };
 
-		if (old_W != texture_W || old_H != texture_H) {
-			display.resize(texture_W * texture_H);
-			mNewTextureNeeded.store(true, mo::release);
-		}
+		mNewTextureNeeded.store((oldSize ? *oldSize : 0) != *newSize, mo::release);
 	}
 }
 
@@ -189,84 +189,90 @@ void BasicVideoSpec::updateInterfacePixelScaling(const void* fontData, s32 fontS
 /*==================================================================*/
 
 void BasicVideoSpec::createViewport() {
+	const auto texture{ mTextureSize.load(mo::acquire) };
+	if (!texture) { return; }
+
 	if (mNewTextureNeeded.load(mo::acquire)) {
-		mSuccessful = mMainTexture = SDL_CreateTexture(
+		mSuccessful = mViewportTexture = SDL_CreateTexture(
 			mMainRenderer,
 			SDL_PIXELFORMAT_RGBA8888,
 			SDL_TEXTUREACCESS_STREAMING,
-			mTextureWidth.load(mo::acquire),
-			mTextureHeight.load(mo::acquire)
+			(*texture).W, (*texture).H
 		);
 
 		if (!mSuccessful) {
 			showErrorBox("Failed to create Viewport texture!");
 		} else {
-			SDL_SetTextureScaleMode(mMainTexture, SDL_SCALEMODE_NEAREST);
-			SDL_SetTextureAlphaMod(mMainTexture, mTextureAlpha.load(mo::acquire));
+			SDL_SetTextureScaleMode(mViewportTexture, SDL_SCALEMODE_NEAREST);
+			SDL_SetTextureAlphaMod(mViewportTexture, mTextureAlpha.load(mo::acquire));
 			mNewTextureNeeded.store(false, mo::release);
 		}
 
-		const auto padding_A{ std::abs(mFramePadding.load(mo::acquire)) };
+		auto padding{ mFramePadding.load(mo::acquire) };
+		auto scaling{ mTextureScale.load(mo::acquire) };
 
-		enableScanLine = mFramePadding.load(mo::relaxed) > 0;
+		enableScanLine = padding > 0;
+		padding = std::abs(padding);
 
-		const auto frame_W{ mTextureWidth.load(mo::acquire) * mTextureScale.load(mo::acquire) };
-		const auto frame_H{ mTextureHeight.load(mo::acquire) * mTextureScale.load(mo::acquire) };
-
-		mInnerFrame = {
-			static_cast<f32>(padding_A),
-			static_cast<f32>(padding_A),
-			static_cast<f32>(frame_W),
-			static_cast<f32>(frame_H)
+		const Rect frame{
+			(*texture).W * scaling,
+			(*texture).H * scaling
 		};
 
-		mOuterFrame.w = static_cast<f32>(frame_W + 2 * padding_A);
-		mOuterFrame.h = static_cast<f32>(frame_H + 2 * padding_A);
+		mInnerFrame = {
+			static_cast<f32>(padding),
+			static_cast<f32>(padding),
+			static_cast<f32>(frame.W),
+			static_cast<f32>(frame.H)
+		};
+
+		mOuterFrame.w = static_cast<f32>(frame.W + 2 * padding);
+		mOuterFrame.h = static_cast<f32>(frame.H + 2 * padding);
+	}
+
+	if (mViewportTexture) {
+		void* pixels{}; s32 pitch;
+
+		SDL_LockTexture(mViewportTexture, nullptr, &pixels, &pitch);
+		displayBuffer.read(static_cast<u32*>(pixels), *texture);
+		SDL_UnlockTexture(mViewportTexture);
 	}
 }
 
-void BasicVideoSpec::renderViewport(SDL_Texture* viewportTexture) {
+void BasicVideoSpec::renderViewport(SDL_Texture* windowTexture) {
 	SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 	SDL_RenderClear(mMainRenderer);
 
-	if (!mMainTexture) { return; }
+	if (mViewportTexture) {
+		SDL_SetRenderTarget(mMainRenderer, windowTexture);
 
-	SDL_SetRenderTarget(mMainRenderer, viewportTexture);
-
-	{
-		const RGBA Color{ mOuterFrameColor[enableBuzzGlow].load(mo::acquire) };
-		SDL_SetRenderDrawColor(mMainRenderer,
-			Color.R, Color.G, Color.B, SDL_ALPHA_OPAQUE);
-	}
-	
-	SDL_RenderFillRect(mMainRenderer, &mOuterFrame);
-
-	SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-	SDL_RenderFillRect(mMainRenderer, &mInnerFrame);
-
-	{
-		void* pixels{}; s32 pitch;
-
-		SDL_LockTexture(mMainTexture, nullptr, &pixels, &pitch);
-		display.read(static_cast<u32*>(pixels));
-		SDL_UnlockTexture(mMainTexture);
-	}
-
-	SDL_RenderTexture(mMainRenderer, mMainTexture, nullptr, &mInnerFrame);
-
-	if (enableScanLine) {
-		SDL_SetRenderDrawBlendMode(mMainRenderer, SDL_BLENDMODE_BLEND);
-		SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, 0x20);
-
-		const auto drawLimit{ static_cast<s32>(mOuterFrame.h) };
-		const auto increment{ static_cast<s32>(mInnerFrame.y) };
-		for (auto y{ 0 }; y < drawLimit; y += increment) {
-			SDL_RenderLine(mMainRenderer,
-				mOuterFrame.x, static_cast<f32>(y), mOuterFrame.w, static_cast<f32>(y));
+		{
+			const RGBA Color{ mOuterFrameColor[enableBuzzGlow].load(mo::acquire) };
+			SDL_SetRenderDrawColor(mMainRenderer,
+				Color.R, Color.G, Color.B, SDL_ALPHA_OPAQUE);
 		}
-	}
 
-	SDL_SetRenderTarget(mMainRenderer, nullptr);
+		SDL_RenderFillRect(mMainRenderer, &mOuterFrame);
+
+		SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+		SDL_RenderFillRect(mMainRenderer, &mInnerFrame);
+
+		SDL_RenderTexture(mMainRenderer, mViewportTexture, nullptr, &mInnerFrame);
+
+		if (enableScanLine) {
+			SDL_SetRenderDrawBlendMode(mMainRenderer, SDL_BLENDMODE_BLEND);
+			SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, 0x20);
+
+			const auto drawLimit{ static_cast<s32>(mOuterFrame.h) };
+			const auto increment{ static_cast<s32>(mInnerFrame.y) };
+			for (auto y{ 0 }; y < drawLimit; y += increment) {
+				SDL_RenderLine(mMainRenderer,
+					mOuterFrame.x, static_cast<f32>(y), mOuterFrame.w, static_cast<f32>(y));
+			}
+		}
+
+		SDL_SetRenderTarget(mMainRenderer, nullptr);
+	}
 }
 
 enum class Corner {
@@ -334,16 +340,8 @@ namespace ImGui {
 	}
 }
 
-void BasicVideoSpec::copyBufferToViewport() {
-	void* pixels{}; s32 pitch;
-
-	SDL_LockTexture(mMainTexture, nullptr, &pixels, &pitch);
-	display.read(static_cast<u32*>(pixels));
-	SDL_UnlockTexture(mMainTexture);
-}
-
 void BasicVideoSpec::renderPresent(const char* const stats) {
-	SDL_Unique viewportTexture{ SDL_CreateTexture(
+	SDL_Unique windowTexture{ SDL_CreateTexture(
 		mMainRenderer,
 		SDL_PIXELFORMAT_ARGB8888,
 		SDL_TEXTUREACCESS_TARGET,
@@ -351,16 +349,16 @@ void BasicVideoSpec::renderPresent(const char* const stats) {
 		static_cast<s32>(mOuterFrame.h)
 	) };
 
-	mSuccessful = viewportTexture;
+	mSuccessful = windowTexture;
 	if (!mSuccessful) {
 		showErrorBox("Failed to create GUI texture!");
 		return;
 	} else {
-		SDL_SetTextureScaleMode(viewportTexture, SDL_SCALEMODE_NEAREST);
+		SDL_SetTextureScaleMode(windowTexture, SDL_SCALEMODE_NEAREST);
 	}
 
 	createViewport();
-	renderViewport(viewportTexture);
+	renderViewport(windowTexture);
 
 	#pragma region IMGUI LOGIC
 		ImGui_ImplSDLRenderer3_NewFrame();
@@ -416,7 +414,7 @@ void BasicVideoSpec::renderPresent(const char* const stats) {
 		if (viewportOffsets.x > 0.0f) { ImGui::SetCursorPosX(std::floor(ImGui::GetCursorPosX() + viewportOffsets.x)); }
 		if (viewportOffsets.y > 0.0f) { ImGui::SetCursorPosY(std::floor(ImGui::GetCursorPosY() + viewportOffsets.y)); }
 
-		ImGui::Image(reinterpret_cast<ImTextureID>(viewportTexture.get()), viewportDimensions);
+		ImGui::Image(reinterpret_cast<ImTextureID>(windowTexture.get()), viewportDimensions);
 
 		if (stats) { ImGui::writeShadowedText(stats, { 0.0f, 1.0f }); }
 		

@@ -23,6 +23,9 @@ class CHIP8_MODERN final : public Chip8_CoreInterface {
 	static constexpr s32 cInstSpeedHi{    30 };
 	static constexpr s32 cInstSpeedLo{    11 };
 
+	static constexpr u32 cMaxDisplayW{ 64 };
+	static constexpr u32 cMaxDisplayH{ 32 };
+
 private:
 	std::array<u8, cScreenSizeX * cScreenSizeY>
 		mDisplayBuffer{};
@@ -42,7 +45,6 @@ private:
 
 public:
 	CHIP8_MODERN();
-	~CHIP8_MODERN() { stopWorker(); }
 
 	static constexpr bool isGameFileValid(
 		const char* fileData,
@@ -51,6 +53,9 @@ public:
 		if (!fileData || !fileSize) { return false; }
 		return fileSize + cGameLoadPos <= cTotalMemory;
 	}
+
+	s32 getMaxDisplayW() const noexcept override { return cMaxDisplayW; }
+	s32 getMaxDisplayH() const noexcept override { return cMaxDisplayH; }
 
 private:
 	void instructionLoop() noexcept override;
