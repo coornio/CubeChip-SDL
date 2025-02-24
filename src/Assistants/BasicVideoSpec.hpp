@@ -35,7 +35,7 @@ class BasicVideoSpec final {
 
 	SDL_FRect mOuterFrame{};
 	SDL_FRect mInnerFrame{};
-	SDL_Rect a;
+	SDL_FRect mTextureFrame{};
 
 	struct Rect {
 		s32 W{}, H{};
@@ -52,8 +52,11 @@ class BasicVideoSpec final {
 	Atom<u8>  mTextureAlpha{ 0xFF };
 	Atom<bool> mNewTextureNeeded{};
 
-	bool enableBuzzGlow{};
-	bool enableScanLine{};
+	bool mEnableBuzzGlow{};
+	bool mEnableScanline{};
+
+	s32  mViewportPadding{};
+	s32  mViewportRotation{};
 
 public:
 	TripleBuffer<u32> displayBuffer;

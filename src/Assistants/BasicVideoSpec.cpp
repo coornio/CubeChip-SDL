@@ -31,7 +31,7 @@
 	#pragma region BasicVideoSpec Singleton Class
 
 BasicVideoSpec::BasicVideoSpec() noexcept
-	: enableBuzzGlow{ true }
+	: mEnableBuzzGlow{ true }
 {
 	mSuccessful = SDL_InitSubSystem(SDL_INIT_VIDEO);
 	if (!mSuccessful) {
@@ -195,26 +195,35 @@ void BasicVideoSpec::prepareViewport() {
 
 	if (mNewTextureNeeded.load(mo::acquire)) {
 
-		auto padding{ mFramePadding.load(mo::acquire) };
-		auto scaling{ mTextureScale.load(mo::acquire) };
+		const auto padding{ mFramePadding.load(mo::acquire) };
+		const auto scaling{ mTextureScale.load(mo::acquire) };
 
-		enableScanLine = padding > 0;
-		padding = std::abs(padding);
+		mEnableScanline  = padding > 0;
+		mViewportPadding = std::abs(padding);
 
-		const Rect frame{
+		Rect scaledFrame{
 			(*texture).W * scaling,
 			(*texture).H * scaling
 		};
 
+		mTextureFrame = {
+			0, 0,
+			static_cast<f32>(scaledFrame.W),
+			static_cast<f32>(scaledFrame.H)
+		};
+		
+		if (mViewportRotation & 1)
+			{ std::swap(scaledFrame.W, scaledFrame.H); }
+
 		mInnerFrame = {
-			static_cast<f32>(padding),
-			static_cast<f32>(padding),
-			static_cast<f32>(frame.W),
-			static_cast<f32>(frame.H)
+			static_cast<f32>(mViewportPadding),
+			static_cast<f32>(mViewportPadding),
+			static_cast<f32>(scaledFrame.W),
+			static_cast<f32>(scaledFrame.H)
 		};
 
-		mOuterFrame.w = static_cast<f32>(frame.W + 2 * padding);
-		mOuterFrame.h = static_cast<f32>(frame.H + 2 * padding);
+		mOuterFrame.w = static_cast<f32>(scaledFrame.W + 2 * mViewportPadding);
+		mOuterFrame.h = static_cast<f32>(scaledFrame.H + 2 * mViewportPadding);
 
 		mSuccessful = mOuterTexture = SDL_CreateTexture(
 			mMainRenderer,
@@ -263,14 +272,11 @@ void BasicVideoSpec::prepareViewport() {
 }
 
 void BasicVideoSpec::renderViewport(SDL_Texture* windowTexture) {
-	SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-	SDL_RenderClear(mMainRenderer);
-
 	if (mSuccessful && mInnerTexture) {
 		SDL_SetRenderTarget(mMainRenderer, windowTexture);
 
 		{
-			const RGBA Color{ mOuterFrameColor[enableBuzzGlow].load(mo::acquire) };
+			const RGBA Color{ mOuterFrameColor[mEnableBuzzGlow].load(mo::acquire) };
 			SDL_SetRenderDrawColor(mMainRenderer,
 				Color.R, Color.G, Color.B, SDL_ALPHA_OPAQUE);
 		}
@@ -280,15 +286,19 @@ void BasicVideoSpec::renderViewport(SDL_Texture* windowTexture) {
 		SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 		SDL_RenderFillRect(mMainRenderer, &mInnerFrame);
 
-		SDL_RenderTexture(mMainRenderer, mInnerTexture, nullptr, &mInnerFrame);
+		//SDL_RenderTexture(mMainRenderer, mInnerTexture, nullptr, &mInnerFrame);
+		mTextureFrame.x = (mInnerFrame.w / 2) - (mTextureFrame.w / 2) + mViewportPadding;
+		mTextureFrame.y = (mInnerFrame.h / 2) - (mTextureFrame.h / 2) + mViewportPadding;
 
-		if (enableScanLine) {
+		SDL_RenderTextureRotated(mMainRenderer, mInnerTexture, nullptr, &mTextureFrame,
+			(mViewportRotation & 3) * 90, nullptr, SDL_FLIP_NONE);
+
+		if (mEnableScanline) {
 			SDL_SetRenderDrawBlendMode(mMainRenderer, SDL_BLENDMODE_BLEND);
 			SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, 0x20);
 
 			const auto drawLimit{ static_cast<s32>(mOuterFrame.h) };
-			const auto increment{ static_cast<s32>(mInnerFrame.y) };
-			for (auto y{ 0 }; y < drawLimit; y += increment) {
+			for (auto y{ 0 }; y < drawLimit; y += mViewportPadding) {
 				SDL_RenderLine(mMainRenderer,
 					mOuterFrame.x, static_cast<f32>(y), mOuterFrame.w, static_cast<f32>(y));
 			}
@@ -364,6 +374,9 @@ namespace ImGui {
 }
 
 void BasicVideoSpec::renderPresent(const char* const stats) {
+	SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+	SDL_RenderClear(mMainRenderer);
+
 	prepareViewport();
 	renderViewport(mOuterTexture);
 
