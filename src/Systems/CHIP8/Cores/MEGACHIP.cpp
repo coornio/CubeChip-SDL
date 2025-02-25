@@ -13,7 +13,7 @@
 /*==================================================================*/
 
 MEGACHIP::MEGACHIP()
-	: mDisplayBuffer{ { cScreenSizeY, cScreenSizeX } }
+	: mDisplayBuffer{ { cScreenSizeX, cScreenSizeY } }
 	, mForegroundBuffer{ cScreenMegaX, cScreenMegaY }
 	, mBackgroundBuffer{ cScreenMegaX, cScreenMegaY }
 	, mCollisionMap{ cScreenMegaX, cScreenMegaY }
