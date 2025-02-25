@@ -25,6 +25,53 @@ class BasicVideoSpec final {
 	BasicVideoSpec(const BasicVideoSpec&) = delete;
 	BasicVideoSpec& operator=(const BasicVideoSpec&) = delete;
 
+	struct Rect {
+		s32 W{}, H{};
+
+		constexpr auto frect() const noexcept {
+			return SDL_FRect{
+				static_cast<f32>(0),
+				static_cast<f32>(0),
+				static_cast<f32>(W),
+				static_cast<f32>(H)
+			};
+		}
+
+		constexpr operator s32() const noexcept { return W * H; }
+	};
+
+	struct Viewport {
+		Rect rect{};
+		s32 scale{}, pad{};
+
+		Viewport(s32 W = 0, s32 H = 0, s32 scale = 0, s32 pad = 0)
+			: rect{ W, H }, scale{ std::max(1, scale) }, pad{ std::abs(pad) }
+		{}
+		Viewport(Rect rect, s32 scale = 1, s32 pad = 0)
+			: rect{ rect }, scale{ std::max(1, scale) }, pad{ std::abs(pad) }
+		{}
+
+		constexpr Viewport rotate_if(bool cond) const noexcept {
+			return cond ? Viewport{ rect.H, rect.W, scale, pad } : Viewport{ rect.W, rect.H, scale, pad };
+		}
+
+		constexpr auto scaled() const noexcept {
+			return Rect{ rect.W * scale, rect.H * scale };
+		}
+		constexpr auto padded() const noexcept {
+			return Rect{ rect.W * scale + pad * 2, rect.H * scale + pad * 2 };
+		}
+
+		constexpr auto frect() const noexcept {
+			return SDL_FRect{
+				static_cast<f32>(pad),
+				static_cast<f32>(pad),
+				static_cast<f32>(rect.W * scale),
+				static_cast<f32>(rect.H * scale)
+			};
+		}
+	};
+
 	SDL_Unique<SDL_Window>   mMainWindow{};
 	SDL_Unique<SDL_Renderer> mMainRenderer{};
 	SDL_Unique<SDL_Texture>  mOuterTexture{};
@@ -33,29 +80,18 @@ class BasicVideoSpec final {
 	static inline const char* sAppName{};
 	static inline bool mSuccessful{ true };
 
-	SDL_FRect mOuterFrame{};
-	SDL_FRect mInnerFrame{};
-	SDL_FRect mTextureFrame{};
-
-	struct Rect {
-		s32 W{}, H{};
-		constexpr operator s32() const noexcept { return W * H; }
-	};
+	Viewport mViewportFrame{};
 
 	Atom<std::shared_ptr<Rect>> mTextureSize{};
-
 	Atom<u32> mOuterFrameColor[2]{};
-
 	Atom<s32> mTextureScale{};
 	Atom<s32> mFramePadding{};
-
 	Atom<u8>  mTextureAlpha{ 0xFF };
 	Atom<bool> mNewTextureNeeded{};
 
 	bool mEnableBuzzGlow{};
 	bool mEnableScanline{};
 
-	s32  mViewportPadding{};
 	s32  mViewportRotation{};
 
 public:
@@ -90,10 +126,17 @@ public:
 
 	void processInterfaceEvent(SDL_Event* event) const noexcept;
 
+	void rotateViewport(s32 delta) noexcept {
+		mViewportRotation += delta;
+		mViewportRotation &= 3;
+	}
+	void setViewportRotation(s32 value) noexcept {
+		mViewportRotation = value & 3;
+	}
+
 private:
 	void updateInterfacePixelScaling(const void* fontData, s32 fontSize, f32 newScale);
-	void prepareViewport();
-	void renderViewport(SDL_Texture* windowTexture);
+	void renderViewport();
 
 public:
 	void setViewportAlpha(u32 alpha);

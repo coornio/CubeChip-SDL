@@ -102,6 +102,12 @@ void EmuHost::checkForHotkeys() {
 	if (Input.isPressed(KEY(LEFT))) {
 		BAS->addGlobalGain(-15);
 	}
+	if (Input.isPressed(KEY(UP))) {
+		BVS->rotateViewport(+1);
+	}
+	if (Input.isPressed(KEY(DOWN))) {
+		BVS->rotateViewport(-1);
+	}
 
 	if (iGuest) {
 		if (Input.isPressed(KEY(ESCAPE))) {

@@ -124,8 +124,8 @@ void BasicVideoSpec::resetMainWindow(s32 window_W, s32 window_H) {
 	setWindowSize(mMainWindow, window_W, window_H);
 	setMainWindowTitle("Waiting for file..."s);
 
-	mOuterFrame.w = static_cast<f32>(window_W);
-	mOuterFrame.h = static_cast<f32>(window_H);
+	mViewportFrame = { window_W, window_H };
+	mViewportRotation = 0;
 
 	mInnerTexture.reset();
 	mOuterTexture.reset();
@@ -189,48 +189,23 @@ void BasicVideoSpec::updateInterfacePixelScaling(const void* fontData, s32 fontS
 
 /*==================================================================*/
 
-void BasicVideoSpec::prepareViewport() {
+void BasicVideoSpec::renderViewport() {
 	const auto texture{ mTextureSize.load(mo::acquire) };
 	if (!texture) { return; }
 
 	if (mNewTextureNeeded.load(mo::acquire)) {
-
 		const auto padding{ mFramePadding.load(mo::acquire) };
 		const auto scaling{ mTextureScale.load(mo::acquire) };
 
-		mEnableScanline  = padding > 0;
-		mViewportPadding = std::abs(padding);
+		mEnableScanline = padding > 0;
+		mViewportFrame = { *texture, scaling, padding };
 
-		Rect scaledFrame{
-			(*texture).W * scaling,
-			(*texture).H * scaling
-		};
-
-		mTextureFrame = {
-			0, 0,
-			static_cast<f32>(scaledFrame.W),
-			static_cast<f32>(scaledFrame.H)
-		};
-		
-		if (mViewportRotation & 1)
-			{ std::swap(scaledFrame.W, scaledFrame.H); }
-
-		mInnerFrame = {
-			static_cast<f32>(mViewportPadding),
-			static_cast<f32>(mViewportPadding),
-			static_cast<f32>(scaledFrame.W),
-			static_cast<f32>(scaledFrame.H)
-		};
-
-		mOuterFrame.w = static_cast<f32>(scaledFrame.W + 2 * mViewportPadding);
-		mOuterFrame.h = static_cast<f32>(scaledFrame.H + 2 * mViewportPadding);
-
+		const auto outerRect{ mViewportFrame.padded() };
 		mSuccessful = mOuterTexture = SDL_CreateTexture(
 			mMainRenderer,
 			SDL_PIXELFORMAT_ARGB8888,
 			SDL_TEXTUREACCESS_TARGET,
-			static_cast<s32>(mOuterFrame.w),
-			static_cast<s32>(mOuterFrame.h)
+			outerRect.W, outerRect.H
 		);
 
 		if (!mSuccessful) {
@@ -239,16 +214,16 @@ void BasicVideoSpec::prepareViewport() {
 		} else {
 			SDL_SetTextureScaleMode(mOuterTexture, SDL_SCALEMODE_NEAREST);
 			SDL_SetRenderTarget(mMainRenderer, mOuterTexture);
-			SDL_SetRenderDrawColor(mMainRenderer, 10, 10, 10, SDL_ALPHA_OPAQUE);
+			SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 			SDL_RenderClear(mMainRenderer);
-			SDL_SetRenderTarget(mMainRenderer, nullptr);
 		}
 
+		const auto textureRect{ mViewportFrame.rect };
 		mSuccessful = mInnerTexture = SDL_CreateTexture(
 			mMainRenderer,
 			SDL_PIXELFORMAT_RGBA8888,
 			SDL_TEXTUREACCESS_STREAMING,
-			(*texture).W, (*texture).H
+			textureRect.W, textureRect.H
 		);
 
 		if (!mSuccessful) {
@@ -262,50 +237,43 @@ void BasicVideoSpec::prepareViewport() {
 		mNewTextureNeeded.store(false, mo::release);
 	}
 
-	if (mSuccessful && mInnerTexture) {
+	{
 		void* pixels{}; s32 pitch;
 
 		SDL_LockTexture(mInnerTexture, nullptr, &pixels, &pitch);
 		displayBuffer.read(static_cast<u32*>(pixels), *texture);
 		SDL_UnlockTexture(mInnerTexture);
 	}
-}
 
-void BasicVideoSpec::renderViewport(SDL_Texture* windowTexture) {
-	if (mSuccessful && mInnerTexture) {
-		SDL_SetRenderTarget(mMainRenderer, windowTexture);
+	SDL_SetRenderTarget(mMainRenderer, mOuterTexture);
 
-		{
-			const RGBA Color{ mOuterFrameColor[mEnableBuzzGlow].load(mo::acquire) };
-			SDL_SetRenderDrawColor(mMainRenderer,
-				Color.R, Color.G, Color.B, SDL_ALPHA_OPAQUE);
+	const RGBA Color{ mOuterFrameColor[mEnableBuzzGlow].load(mo::acquire) };
+	SDL_SetRenderDrawColor(mMainRenderer, Color.R, Color.G, Color.B, SDL_ALPHA_OPAQUE);
+	const SDL_FRect outerFRect{ mViewportFrame.padded().frect() };
+	SDL_RenderFillRect(mMainRenderer, &outerFRect);
+
+	SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+	const SDL_FRect innerFRect{ mViewportFrame.frect() };
+	SDL_RenderFillRect(mMainRenderer, &innerFRect);
+
+	SDL_RenderTexture(mMainRenderer, mInnerTexture, nullptr, &innerFRect);
+
+	if (mEnableScanline) {
+		SDL_SetRenderDrawBlendMode(mMainRenderer, SDL_BLENDMODE_BLEND);
+		SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, 0x20);
+
+		const auto drawLimit{ static_cast<s32>(outerFRect.h) };
+		for (auto y{ 0 }; y < drawLimit; y += mViewportFrame.pad) {
+			SDL_RenderLine(mMainRenderer,
+				outerFRect.x,
+				static_cast<f32>(y),
+				outerFRect.w,
+				static_cast<f32>(y)
+			);
 		}
-
-		SDL_RenderFillRect(mMainRenderer, &mOuterFrame);
-
-		SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-		SDL_RenderFillRect(mMainRenderer, &mInnerFrame);
-
-		//SDL_RenderTexture(mMainRenderer, mInnerTexture, nullptr, &mInnerFrame);
-		mTextureFrame.x = (mInnerFrame.w / 2) - (mTextureFrame.w / 2) + mViewportPadding;
-		mTextureFrame.y = (mInnerFrame.h / 2) - (mTextureFrame.h / 2) + mViewportPadding;
-
-		SDL_RenderTextureRotated(mMainRenderer, mInnerTexture, nullptr, &mTextureFrame,
-			(mViewportRotation & 3) * 90, nullptr, SDL_FLIP_NONE);
-
-		if (mEnableScanline) {
-			SDL_SetRenderDrawBlendMode(mMainRenderer, SDL_BLENDMODE_BLEND);
-			SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, 0x20);
-
-			const auto drawLimit{ static_cast<s32>(mOuterFrame.h) };
-			for (auto y{ 0 }; y < drawLimit; y += mViewportPadding) {
-				SDL_RenderLine(mMainRenderer,
-					mOuterFrame.x, static_cast<f32>(y), mOuterFrame.w, static_cast<f32>(y));
-			}
-		}
-
-		SDL_SetRenderTarget(mMainRenderer, nullptr);
 	}
+
+	SDL_SetRenderTarget(mMainRenderer, nullptr);
 }
 
 enum class Corner {
@@ -371,25 +339,59 @@ namespace ImGui {
 		TextUnformatted(textString.c_str());
 		PopStyleColor();
 	}
+
+	static void DrawRotatedImage(void* texture, const ImVec2& dimensions, int rotation) {
+		static constexpr ImVec2 TL{ 0, 0 };
+		static constexpr ImVec2 TR{ 1, 0 };
+		static constexpr ImVec2 BL{ 0, 1 };
+		static constexpr ImVec2 BR{ 1, 1 };
+
+		const auto pos{ ImGui::GetCursorScreenPos() };
+
+		const ImVec2 A{ pos.x,                pos.y };
+		const ImVec2 B{ pos.x + dimensions.x, pos.y };
+		const ImVec2 C{ pos.x + dimensions.x, pos.y + dimensions.y };
+		const ImVec2 D{ pos.x,                pos.y + dimensions.y };
+
+		switch (rotation & 3) {
+			case 0:
+				ImGui::GetWindowDrawList()->AddImageQuad(
+					reinterpret_cast<ImTextureID>(texture), A, B, C, D, TL, TR, BR, BL);
+				break;
+
+			case 1:
+				ImGui::GetWindowDrawList()->AddImageQuad(
+					reinterpret_cast<ImTextureID>(texture), A, B, C, D, BL, TL, TR, BR);
+				break;
+
+			case 2:
+				ImGui::GetWindowDrawList()->AddImageQuad(
+					reinterpret_cast<ImTextureID>(texture), A, B, C, D, BR, BL, TL, TR);
+				break;
+
+			case 3:
+				ImGui::GetWindowDrawList()->AddImageQuad(
+					reinterpret_cast<ImTextureID>(texture), A, B, C, D, TR, BR, BL, TL);
+				break;
+		}
+		ImGui::Dummy(dimensions);
+	}
 }
 
 void BasicVideoSpec::renderPresent(const char* const stats) {
-	SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-	SDL_RenderClear(mMainRenderer);
+	//if (!mSuccessful) [[unlikely]] { return; }
 
-	prepareViewport();
-	renderViewport(mOuterTexture);
+	renderViewport();
 
 	#pragma region IMGUI LOGIC
 		ImGui_ImplSDLRenderer3_NewFrame();
 		ImGui_ImplSDL3_NewFrame();
 		ImGui::NewFrame();
 
-		SDL_SetWindowMinimumSize(
-			mMainWindow,
-			static_cast<s32>(mOuterFrame.w),
-			static_cast<s32>(mOuterFrame.h + ImGui::GetFrameHeight())
-		);
+		const auto outerRect{ mViewportFrame.rotate_if(mViewportRotation & 1).padded() };
+		const auto frameHeight{ static_cast<s32>(ImGui::GetFrameHeight()) };
+
+		SDL_SetWindowMinimumSize(mMainWindow, outerRect.W, outerRect.H + frameHeight);
 
 		const auto viewportFrameDimensions{ ImVec2{
 			ImGui::GetIO().DisplaySize.x,
@@ -398,6 +400,7 @@ void BasicVideoSpec::renderPresent(const char* const stats) {
 
 		ImGui::SetNextWindowSize(viewportFrameDimensions);
 		ImGui::SetNextWindowPos({ 0.0f, ImGui::GetFrameHeight() });
+
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
 		ImGui::Begin("ViewportFrame", nullptr,
 			ImGuiWindowFlags_NoTitleBar |
@@ -421,13 +424,13 @@ void BasicVideoSpec::renderPresent(const char* const stats) {
 
 		if (mSuccessful && mOuterTexture) {
 			const auto aspectRatio{ std::min(
-				viewportFrameDimensions.x / mOuterFrame.w,
-				viewportFrameDimensions.y / mOuterFrame.h
+				viewportFrameDimensions.x / outerRect.W,
+				viewportFrameDimensions.y / outerRect.H
 			) };
 
 			const auto viewportDimensions{ ImVec2{
-				mOuterFrame.w * std::max(std::floor(aspectRatio), 1.0f),
-				mOuterFrame.h * std::max(std::floor(aspectRatio), 1.0f)
+				outerRect.W * std::max(std::floor(aspectRatio), 1.0f),
+				outerRect.H * std::max(std::floor(aspectRatio), 1.0f)
 			} };
 
 			const auto viewportOffsets{ (viewportFrameDimensions - viewportDimensions) / 2.0f };
@@ -435,7 +438,7 @@ void BasicVideoSpec::renderPresent(const char* const stats) {
 			if (viewportOffsets.x > 0.0f) { ImGui::SetCursorPosX(std::floor(ImGui::GetCursorPosX() + viewportOffsets.x)); }
 			if (viewportOffsets.y > 0.0f) { ImGui::SetCursorPosY(std::floor(ImGui::GetCursorPosY() + viewportOffsets.y)); }
 
-			ImGui::Image(reinterpret_cast<ImTextureID>(mOuterTexture.get()), viewportDimensions);
+			ImGui::DrawRotatedImage(mOuterTexture, viewportDimensions, mViewportRotation);
 
 			if (stats) { ImGui::writeShadowedText(stats, { 0.0f, 1.0f }); }
 		}
