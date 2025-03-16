@@ -13,20 +13,6 @@
 
 #include "Assistants/Typedefs.hpp"
 
-class spin_mutex {
-	std::atomic_flag m_f{};
-
-public:
-	void lock() {
-		while (m_f.test_and_set())
-			{ m_f.wait(true); }
-	}
-	void unlock() {
-		m_f.clear();
-		m_f.notify_one();
-	}
-};
-
 /*==================================================================*/
 
 class HomeDirManager;

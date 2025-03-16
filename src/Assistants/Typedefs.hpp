@@ -54,7 +54,7 @@ struct Epsilon {
 	constexpr static ::f64 f64{ std::numeric_limits<::f64>::epsilon() };
 };
 
-#if defined(__APPLE__) && defined(__clang__) && (__clang_major__ << 10)
+#if defined(__APPLE__)
 	#define EXEC_POLICY(policy)
 #else
 	#define EXEC_POLICY(policy) std::execution::policy,

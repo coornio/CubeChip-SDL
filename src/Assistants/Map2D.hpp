@@ -23,8 +23,9 @@
 #endif
 
 #pragma region Map2D Class
-template <typename T> requires std::is_default_constructible_v<T>
+template <typename T> requires (std::is_default_constructible_v<T>)
 class Map2D final {
+	using self = Map2D;
 
 public:
 	using element_type    = T;
@@ -83,8 +84,8 @@ public:
 	#pragma endregion
 	
 	#pragma region Copy/Move Ctor
-	constexpr Map2D(Map2D&&) = default; // move constructor
-	constexpr Map2D(const Map2D& other) // copy constructor
+	constexpr Map2D(self&&) = default; // move constructor
+	constexpr Map2D(const self& other) // copy constructor
 		: Map2D{ other.mCols, other.mRows }
 	{
 		std::copy(EXEC_POLICY(unseq)
@@ -93,8 +94,8 @@ public:
 	#pragma endregion
 
 	#pragma region Move/Copy Assignment
-	constexpr Map2D& operator=(Map2D&&) = default;   // move assignment
-	constexpr Map2D& operator=(const Map2D& other) { // copy assignment
+	constexpr self& operator=(self&&) = default;   // move assignment
+	constexpr self& operator=(const self& other) { // copy assignment
 		if (this != &other && size() == other.size()) {
 			std::copy(EXEC_POLICY(unseq)
 				other.begin(), other.end(), begin());
@@ -116,7 +117,7 @@ public:
 	 * @param[in] other :: Contiguous container to copy from.
 	 */
 	template <IsContiguousContainer Object>
-	constexpr Map2D& linearCopy(const Object& other) {
+	constexpr self& linearCopy(const Object& other) {
 		std::copy_n(EXEC_POLICY(unseq)
 			std::begin(other), std::min(size(), std::size(other)), begin());
 		return *this;
@@ -135,7 +136,7 @@ public:
 	 * @warning Cannot check if target array has sufficient data.
 	 */
 	template <size_type N>
-	constexpr Map2D& linearCopy(T(&other)[N], size_type len = N) {
+	constexpr self& linearCopy(T(&other)[N], size_type len = N) {
 		std::copy_n(EXEC_POLICY(unseq)
 			other, std::min(len, size()), begin());
 		return *this;
@@ -144,17 +145,15 @@ public:
 	
 	#pragma region resize()
 	/**
-	 * @brief Resizes the matrix to new dimensions. Can either copy
-	 *        existing data or wipe it.
+	 * @brief Resizes the matrix to new dimensions. Defaults to resizeDirty()
 	 * @return Self reference for method chaining.
 	 * 
-	 * @param[in] choice :: FALSE to clear data, TRUE to copy it instead.
 	 * @param[in] rows   :: Total rows of the new matrix.    (min: 1)
 	 * @param[in] cols   :: Total columns of the new matrix. (min: 1)
 	 * 
 	 * @warning A 'rows'/'cols' of 0 will default to current size.
 	 */
-	constexpr Map2D& resize(size_type rows, size_type cols) {
+	constexpr self& resize(size_type rows, size_type cols) {
 		if (cols == lenX() && rows == lenY()) {
 			return *this;
 		} else {
@@ -164,7 +163,7 @@ public:
 	#pragma endregion
 
 	#pragma region resizeDirty()
-	constexpr Map2D& resizeDirty(size_type cols, size_type rows) {
+	constexpr self& resizeDirty(size_type cols, size_type rows) {
 		const auto minCols{ std::min(cols, lenX()) };
 		const auto minRows{ std::min(rows, lenY()) };
 
@@ -186,7 +185,7 @@ public:
 	#pragma endregion
 	
 	#pragma region resizeClean()
-	constexpr Map2D& resizeClean(size_type cols, size_type rows) {
+	constexpr self& resizeClean(size_type cols, size_type rows) {
 		mCols = static_cast<axis_size>(cols);
 		mRows = static_cast<axis_size>(rows);
 
@@ -201,7 +200,7 @@ public:
 	 * @brief Initialize all of the matrix's data.
 	 * @return Self reference for method chaining.
 	 */
-	constexpr Map2D& initialize(T value = T{}) {
+	constexpr self& initialize(T value = T{}) {
 		std::fill(EXEC_POLICY(unseq)
 			begin(), end(), value);
 		return *this;
@@ -220,7 +219,7 @@ public:
 	 * @warning The sign of the params control the application direction.
 	 * @warning If the params exceed row/column length, all row data is initialized.
 	 */
-	constexpr Map2D& initialize(difference_type cols, difference_type rows, T value = T{}) {
+	constexpr self& initialize(difference_type cols, difference_type rows, T value = T{}) {
 		if (const auto shift{ 0ull + std::abs(cols) }; shift) {
 			if (cols < 0) {
 				if (shift >= lenX()) { return initialize(value); }
@@ -263,7 +262,7 @@ public:
 	 *
 	 * @warning The sign of the params control the application direction.
 	 */
-	constexpr Map2D& rotate(difference_type cols, difference_type rows) {
+	constexpr self& rotate(difference_type cols, difference_type rows) {
 		if (const auto shift{ 0ull + std::abs(cols) % lenX() }; shift) {
 			if (cols < 0) {
 				for (size_type row{ 0u }; row < lenY(); ++row) {
@@ -304,7 +303,7 @@ public:
 	 * @warning The sign of the params control the application direction.
 	 * @warning If the params exceed row/column length, all row data is wiped.
 	 */
-	constexpr Map2D& shift(difference_type cols, difference_type rows, T value = T{}) {
+	constexpr self& shift(difference_type cols, difference_type rows, T value = T{}) {
 		return rotate(cols, rows).initialize(cols, rows, value);
 	}
 	#pragma endregion
@@ -314,7 +313,7 @@ public:
 	 * @brief Reverses the matrix's data.
 	 * @return Self reference for method chaining.
 	 */
-	constexpr Map2D& reverse() {
+	constexpr self& reverse() {
 		std::reverse(EXEC_POLICY(unseq)
 			begin(), end());
 		return *this;
@@ -326,7 +325,7 @@ public:
 	 * @brief Reverses the matrix's data in row order.
 	 * @return Self reference for method chaining.
 	 */
-	constexpr Map2D& flipY() {
+	constexpr self& flipY() {
 		const auto iterations{ lenY() >> 1 };
 		for (size_type row{ 0u }; row < iterations; ++row) {
 			const auto offset{ lenX() * row };
@@ -345,7 +344,7 @@ public:
 	 * @brief Reverses the matrix's data in column order.
 	 * @return Self reference for method chaining.
 	 */
-	constexpr Map2D& flipX() {
+	constexpr self& flipX() {
 		for (size_type row{ 0u }; row < lenY(); ++row) {
 			const auto offset{ begin() + lenX() * row };
 			std::reverse(EXEC_POLICY(unseq)
@@ -360,7 +359,7 @@ public:
 	 * @brief Transposes the matrix's data. Works with rectangular dimensions.
 	 * @return Self reference for method chaining.
 	 */
-	constexpr Map2D& transpose() {
+	constexpr self& transpose() {
 		if (lenX() > 1 || lenY() > 1) {
 			for (size_type a{ 1u }, b{ 1u }; a < size() - 1u; b = ++a) {
 				do { b = (b % lenY()) * lenX() + (b / lenY()); }

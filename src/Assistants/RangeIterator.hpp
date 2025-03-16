@@ -49,7 +49,7 @@ public:
 	{}
 
 	template <IsContiguousContainer Object>
-		requires !std::is_rvalue_reference_v<Object>
+		requires (!std::is_rvalue_reference_v<Object>)
 	constexpr RangeProxy(const Object& array) noexcept
 		: mData{ const_cast<pointer>(std::data(array)) }, mSize{ std::size(array) }
 	{}
@@ -61,7 +61,7 @@ public:
 
 	template <typename U = T> requires (!std::is_const_v<U>)
 	constexpr void reseat(      U* data)  noexcept { mData = data; }
-	template <typename U = T> requires   std::is_const_v<U>
+	template <typename U = T> requires ( std::is_const_v<U>)
 	constexpr void reseat(const U* data)  noexcept { mData = data; }
 	constexpr void resize(size_type size) noexcept { mSize = size; }
 
@@ -138,7 +138,7 @@ public:
 	{}
 
 	template <IsContiguousContainer Object>
-		requires !std::is_rvalue_reference_v<Object>
+		requires (!std::is_rvalue_reference_v<Object>)
 	explicit constexpr RangeIterator(const Object& array) noexcept
 		: mRange{ std::data(array), std::size(array) }
 	{}

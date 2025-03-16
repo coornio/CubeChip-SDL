@@ -28,7 +28,6 @@ Chip8_CoreInterface::Chip8_CoreInterface() noexcept
 
 	ASB->resumeStreams();
 	loadPresetBinds();
-	//isPixelTrailing(true);
 }
 
 Chip8_CoreInterface::~Chip8_CoreInterface() noexcept {}
