@@ -59,4 +59,3 @@ struct Epsilon {
 #else
 	#define EXEC_POLICY(policy) std::execution::policy,
 #endif
-

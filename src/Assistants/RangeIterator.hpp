@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "Typedefs.hpp"
 #include "Concepts.hpp"
 
 #include <span>
