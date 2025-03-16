@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <new>
 #include <atomic>
 #include <limits>
 #include <string>
@@ -53,6 +54,9 @@ struct Epsilon {
 	constexpr static ::f32 f32{ std::numeric_limits<::f32>::epsilon() };
 	constexpr static ::f64 f64{ std::numeric_limits<::f64>::epsilon() };
 };
+
+constexpr static auto HDIS{ std::hardware_destructive_interference_size };
+constexpr static auto HCIS{ std::hardware_constructive_interference_size };
 
 #if defined(__APPLE__)
 	#define EXEC_POLICY(policy)

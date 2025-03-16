@@ -8,10 +8,11 @@
 
 #include "Typedefs.hpp"
 #include "Concepts.hpp"
-#include "Map2D.hpp"
 #include "Aligned.hpp"
 
-//#define USE_MUTEX
+#if false
+	#define USE_MUTEX
+#endif
 
 #if defined(USE_MUTEX)
 	#include <mutex>
@@ -21,9 +22,10 @@
 #endif
 	#include <algorithm>
 
-template <typename U> requires std::is_trivially_copyable_v<U>
+template <typename U>
+	requires (std::is_trivially_copyable_v<U>)
 class TripleBuffer {
-	using Buffer  = Aligned<U, 64>;
+	using Buffer  = Aligned<U>;
 
 	Buffer mDataBuffer[3];
 
@@ -33,14 +35,14 @@ class TripleBuffer {
 	mutable bool mBufferIsDirty{};
 	mutable std::shared_mutex mSwapLock{};
 
-	alignas(64) mutable Buffer* pSwapBuffer { &mDataBuffer[1] };
+	alignas(HDIS) mutable Buffer* pSwapBuffer { &mDataBuffer[1] };
 #else
-	alignas(64) mutable Atom<std::uintptr_t> pSwapBuffer
+	alignas(HDIS) mutable Atom<std::uintptr_t> pSwapBuffer
 		{ reinterpret_cast<std::uintptr_t>(&mDataBuffer[1]) };
 #endif
 
-	alignas(64) mutable Buffer* pWorkBuffer{ &mDataBuffer[0] };
-	alignas(64) mutable Buffer* pReadBuffer{ &mDataBuffer[2] };
+	alignas(HDIS) mutable Buffer* pWorkBuffer{ &mDataBuffer[0] };
+	alignas(HDIS) mutable Buffer* pReadBuffer{ &mDataBuffer[2] };
 	
 	/*==================================================================*/
 

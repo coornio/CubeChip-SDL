@@ -7,22 +7,17 @@
 #pragma once
 
 #include <span>
-#include <mutex>
-#include <shared_mutex>
 #include <execution>
 #include <exception>
 #include <cstdlib>
 #include <cassert>
 #include <memory>
 
-#include "Typedefs.hpp"
 #include "RangeIterator.hpp"
 
-template <typename T, size_type Alignment = alignof(T)>
-	requires std::is_default_constructible_v<T>
+template <typename T>
+	requires (std::is_default_constructible_v<T>)
 class Aligned {
-	static_assert(Alignment >= alignof(T), "Alignment must be at least alignof(T)");
-	static_assert((Alignment & (Alignment - 1)) == 0, "Alignment must be a power of 2");
 
 public:
 	using element_type    = T;
@@ -46,7 +41,7 @@ public:
 private:
 	struct Deleter {
 		void operator()(T* ptr) const noexcept {
-			::operator delete[](ptr, std::align_val_t(Alignment));
+			::operator delete[](ptr, std::align_val_t(HDIS));
 		}
 	};
 
@@ -58,10 +53,10 @@ public:
 		: mSize{ size }
 	{
 		if (!size) { return; }
-		size = (size + (Alignment - 1)) & ~(Alignment - 1);
+		size = (size + (HDIS - 1)) & ~(HDIS - 1);
 		
 		auto ptr{ static_cast<pointer>(::operator new[](
-			size * sizeof(T), std::align_val_t(Alignment), std::nothrow)) };
+			size * sizeof(T), std::align_val_t(HDIS), std::nothrow)) };
 		assert(ptr); pData.reset(ptr);
 
 		if (!ptr) { mSize = 0; } else {

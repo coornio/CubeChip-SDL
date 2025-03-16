@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "../../../Assistants/Map2D.hpp"
+
 #include "../Chip8_CoreInterface.hpp"
 
 /*==================================================================*/

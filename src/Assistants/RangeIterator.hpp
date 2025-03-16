@@ -12,7 +12,6 @@
 #include <span>
 #include <array>
 #include <vector>
-#include <cstddef>
 #include <stdexcept>
 
 #pragma region RangeProxy Class

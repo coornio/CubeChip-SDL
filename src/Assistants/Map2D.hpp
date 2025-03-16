@@ -11,10 +11,8 @@
 #include <span>
 #include <cmath>
 #include <cassert>
-#include <cstdint>
 #include <memory>
 #include <algorithm>
-#include <execution>
 #include <utility>
 
 #ifdef WIN32
