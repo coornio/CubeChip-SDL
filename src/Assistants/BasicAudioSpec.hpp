@@ -108,7 +108,7 @@ public:
 
 		const auto globalGain{ BasicAudioSpec::getGlobalGain() };
 
-		std::transform(std::execution::unseq,
+		std::transform(EXEC_POLICY(unseq)
 			sampleData, sampleData + bufferSize, sampleData,
 			[globalGain](const T sample) noexcept {
 				return static_cast<T>(sample * globalGain);

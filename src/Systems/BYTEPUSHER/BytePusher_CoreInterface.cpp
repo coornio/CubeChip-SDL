@@ -68,8 +68,7 @@ u32  BytePusher_CoreInterface::getKeyStates() const {
 }
 
 void BytePusher_CoreInterface::copyGameToMemory(u8* dest) noexcept {
-	std::copy_n(
-		std::execution::unseq,
+	std::copy_n(EXEC_POLICY(unseq)
 		HDM->getFileData(),
 		HDM->getFileSize(),
 		dest

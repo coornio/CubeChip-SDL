@@ -16,6 +16,7 @@ using json = nlohmann::json;
 #include "CHIP8/Cores/SCHIP_LEGACY.hpp"
 #include "CHIP8/Cores/MEGACHIP.hpp"
 #include "CHIP8/Cores/XOCHIP.hpp"
+#include "CHIP8/Cores/CHIP8X.hpp"
 
 #include "BYTEPUSHER/Cores/BYTEPUSHER_STANDARD.hpp"
 
@@ -46,7 +47,7 @@ EmuInterface* GameFileChecker::constructCore() {
 				//return new CHIP8E();
 
 			case GameCoreType::CHIP8X:
-				//return new CHIP8X();
+				return new CHIP8X();
 
 			case GameCoreType::CHIP8_2P:
 				//return new CHIP8_2P();
@@ -152,8 +153,7 @@ bool GameFileChecker::validate(const char* fileData, ust fileSize, const Str& fi
 
 		case (GameFileType::c8x):
 			return testGame(
-				true,
-				//CHIP8X::isGameFileValid(fileData, fileSize),
+				CHIP8X::isGameFileValid(fileData, fileSize),
 				GameCoreType::CHIP8X
 			);
 

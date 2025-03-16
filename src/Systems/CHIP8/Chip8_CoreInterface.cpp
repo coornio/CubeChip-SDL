@@ -28,6 +28,7 @@ Chip8_CoreInterface::Chip8_CoreInterface() noexcept
 
 	ASB->resumeStreams();
 	loadPresetBinds();
+	//isPixelTrailing(true);
 }
 
 Chip8_CoreInterface::~Chip8_CoreInterface() noexcept {}
@@ -336,15 +337,3 @@ void Chip8_CoreInterface::copyColorsToCore(void* dest) noexcept {
 }
 
 /*==================================================================*/
-
-//f32 Chip8_CoreInterface::calcBuzzerTone() const noexcept {
-//	return (160.0f + 8.0f * (
-//		(mCurrentPC >> 1) + mStackTop + 1 & 0x3E
-//	)) / ASB->getFrequency();
-//}
-
-//f32 Chip8_CoreInterface::calcBuzz8xTone(const u32 pitch) const noexcept {
-//	return (160.0f + (
-//		(0xFF - (pitch ? pitch : 0x80)) >> 3 << 4)
-//	) / ASB->getFrequency();
-//}

@@ -26,13 +26,12 @@
 #endif
 
 #include "BasicVideoSpec.hpp"
+#include "RGBA.hpp"
 
 /*==================================================================*/
 	#pragma region BasicVideoSpec Singleton Class
 
-BasicVideoSpec::BasicVideoSpec() noexcept
-	: mEnableBuzzGlow{ true }
-{
+BasicVideoSpec::BasicVideoSpec() noexcept {
 	mSuccessful = SDL_InitSubSystem(SDL_INIT_VIDEO);
 	if (!mSuccessful) {
 		showErrorBox("Failed to init SDL video!");
@@ -155,9 +154,8 @@ void BasicVideoSpec::setViewportSizes(s32 texture_W, s32 texture_H, s32 upscale_
 	}
 }
 
-void BasicVideoSpec::setFrameColor(u32 color_off, u32 color_on) noexcept {
-	mOuterFrameColor[0].store(color_off, mo::release);
-	mOuterFrameColor[1].store(color_on, mo::release);
+void BasicVideoSpec::setOutlineColor(u32 color) noexcept {
+	mOutlineColor.store(color, mo::release);
 }
 
 void BasicVideoSpec::processInterfaceEvent(SDL_Event* event) const noexcept {
@@ -247,7 +245,7 @@ void BasicVideoSpec::renderViewport() {
 
 	SDL_SetRenderTarget(mMainRenderer, mOuterTexture);
 
-	const RGBA Color{ mOuterFrameColor[mEnableBuzzGlow].load(mo::acquire) };
+	const RGBA Color{ mOutlineColor.load(mo::acquire) };
 	SDL_SetRenderDrawColor(mMainRenderer, Color.R, Color.G, Color.B, SDL_ALPHA_OPAQUE);
 	const SDL_FRect outerFRect{ mViewportFrame.padded().frect() };
 	SDL_RenderFillRect(mMainRenderer, &outerFRect);

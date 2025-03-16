@@ -87,7 +87,7 @@ public:
 	constexpr Map2D(const Map2D& other) // copy constructor
 		: Map2D{ other.mCols, other.mRows }
 	{
-		std::copy(std::execution::unseq,
+		std::copy(EXEC_POLICY(unseq)
 			other.begin(), other.end(), begin());
 	}
 	#pragma endregion
@@ -96,7 +96,7 @@ public:
 	constexpr Map2D& operator=(Map2D&&) = default;   // move assignment
 	constexpr Map2D& operator=(const Map2D& other) { // copy assignment
 		if (this != &other && size() == other.size()) {
-			std::copy(std::execution::unseq,
+			std::copy(EXEC_POLICY(unseq)
 				other.begin(), other.end(), begin());
 			
 			mCols = other.mCols;
@@ -117,7 +117,7 @@ public:
 	 */
 	template <IsContiguousContainer Object>
 	constexpr Map2D& linearCopy(const Object& other) {
-		std::copy_n(std::execution::unseq,
+		std::copy_n(EXEC_POLICY(unseq)
 			std::begin(other), std::min(size(), std::size(other)), begin());
 		return *this;
 	}
@@ -136,7 +136,7 @@ public:
 	 */
 	template <size_type N>
 	constexpr Map2D& linearCopy(T(&other)[N], size_type len = N) {
-		std::copy_n(std::execution::unseq,
+		std::copy_n(EXEC_POLICY(unseq)
 			other, std::min(len, size()), begin());
 		return *this;
 	}
@@ -173,7 +173,7 @@ public:
 		for (size_type row{ 0u }; row < minRows; ++row) {
 			const auto srcIdx{ pData.get() + row * lenX() };
 			const auto dstIdx{ pCopy.get() + row * cols };
-			std::move_if_noexcept(std::execution::unseq,
+			std::move_if_noexcept(EXEC_POLICY(unseq)
 				srcIdx, srcIdx + minCols, dstIdx);
 		}
 
@@ -202,7 +202,7 @@ public:
 	 * @return Self reference for method chaining.
 	 */
 	constexpr Map2D& initialize(T value = T{}) {
-		std::fill(std::execution::unseq,
+		std::fill(EXEC_POLICY(unseq)
 			begin(), end(), value);
 		return *this;
 	}
@@ -226,14 +226,14 @@ public:
 				if (shift >= lenX()) { return initialize(value); }
 				for (size_type row{ 0u }; row < lenY(); ++row) {
 					const auto offset{ end() - row * lenX() };
-					std::fill(std::execution::unseq,
+					std::fill(EXEC_POLICY(unseq)
 						offset - shift, offset, value);
 				}
 			} else {
 				if (shift >= lenX()) { return initialize(value); }
 				for (size_type row{ 0u }; row < lenY(); ++row) {
 					const auto offset{ begin() + row * lenX() };
-					std::fill(std::execution::unseq,
+					std::fill(EXEC_POLICY(unseq)
 						offset, offset + shift, value);
 				}
 			}
@@ -241,11 +241,11 @@ public:
 		if (const auto shift{ 0ull + std::abs(rows) }; shift) {
 			if (rows < 0) {
 				if (shift >= lenY()) { return initialize(value); }
-				std::fill(std::execution::unseq,
+				std::fill(EXEC_POLICY(unseq)
 					end() - shift * lenX(), end(), value);
 			} else {
 				if (shift >= lenY()) { return initialize(value); }
-				std::fill(std::execution::unseq,
+				std::fill(EXEC_POLICY(unseq)
 					begin(), begin() + shift * lenX(), value);
 			}
 		}
@@ -268,23 +268,23 @@ public:
 			if (cols < 0) {
 				for (size_type row{ 0u }; row < lenY(); ++row) {
 					const auto offset{ begin() + row * lenX() };
-					std::rotate(std::execution::unseq,
+					std::rotate(EXEC_POLICY(unseq)
 						offset, offset + shift, offset + lenX());
 				}
 			} else {
 				for (size_type row{ 0u }; row < lenY(); ++row) {
 					const auto offset{ begin() + row * lenX() };
-					std::rotate(std::execution::unseq,
+					std::rotate(EXEC_POLICY(unseq)
 						offset, offset + lenX() - shift, offset + lenX());
 				}
 			}
 		}
 		if (const auto shift{ 0ull + std::abs(rows) % lenY() * lenX() }; shift) {
 			if (rows < 0) {
-				std::rotate(std::execution::unseq,
+				std::rotate(EXEC_POLICY(unseq)
 					begin(), begin() + shift, end());
 			} else {
-				std::rotate(std::execution::unseq,
+				std::rotate(EXEC_POLICY(unseq)
 					begin(), end() - shift, end());
 			}
 		}
@@ -315,7 +315,8 @@ public:
 	 * @return Self reference for method chaining.
 	 */
 	constexpr Map2D& reverse() {
-		std::reverse(std::execution::unseq, begin(), end());
+		std::reverse(EXEC_POLICY(unseq)
+			begin(), end());
 		return *this;
 	}
 	#pragma endregion
@@ -329,7 +330,7 @@ public:
 		const auto iterations{ lenY() >> 1 };
 		for (size_type row{ 0u }; row < iterations; ++row) {
 			const auto offset{ lenX() * row };
-			std::swap_ranges(std::execution::unseq,
+			std::swap_ranges(EXEC_POLICY(unseq)
 				begin() + offset,
 				begin() + offset + lenX(),
 				end()   - offset - lenX()
@@ -347,7 +348,8 @@ public:
 	constexpr Map2D& flipX() {
 		for (size_type row{ 0u }; row < lenY(); ++row) {
 			const auto offset{ begin() + lenX() * row };
-			std::reverse(std::execution::unseq, offset, offset + lenX());
+			std::reverse(EXEC_POLICY(unseq)
+				offset, offset + lenX());
 		}
 		return *this;
 	}

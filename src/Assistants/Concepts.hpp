@@ -7,6 +7,7 @@
 #pragma once
 
 #include <type_traits>
+#include <iterator>
 #include <concepts>
 
 template <typename T>

@@ -22,8 +22,7 @@ XOCHIP::XOCHIP()
 {
 	Quirk.wrapSprite = true;
 
-	std::fill(
-		std::execution::unseq,
+	std::fill(EXEC_POLICY(unseq)
 		mMemoryBank.end() - cSafezoneOOB,
 		mMemoryBank.end(), u8{ 0xFF }
 	);
@@ -261,17 +260,13 @@ void XOCHIP::renderAudioData() {
 	pushPatternTone(STREAM::UNIQUE);
 	pushSquareTone(STREAM::BUZZER);
 
-	BVS->setFrameColor(mBitColors[0],
-		mAudioTimer[STREAM::BUZZER]
-		? mBitColors[1] : mBitColors[0]
-	);
+	BVS->setOutlineColor(mBitColors[!!mAudioTimer[STREAM::BUZZER]]);
 }
 
 void XOCHIP::renderVideoData() {
 	std::vector<u8> textureBuffer(mDisplayW * mDisplayH);
 
-	std::for_each(
-		std::execution::unseq,
+	std::for_each(EXEC_POLICY(unseq)
 		textureBuffer.begin(),
 		textureBuffer.end(),
 		[&](u8& pixel) noexcept {

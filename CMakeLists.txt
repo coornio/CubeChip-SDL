@@ -57,6 +57,7 @@ add_executable(${PROJECT_NAME}
   src/Systems/CHIP8/Cores/SCHIP_LEGACY.cpp
   src/Systems/CHIP8/Cores/XOCHIP.cpp
   src/Systems/CHIP8/Cores/MEGACHIP.cpp
+  src/Systems/CHIP8/Cores/CHIP8X.cpp
 
   src/EmuHost.cpp
   src/CubeChip.cpp

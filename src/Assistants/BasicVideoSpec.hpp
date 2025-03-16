@@ -83,13 +83,12 @@ class BasicVideoSpec final {
 	Viewport mViewportFrame{};
 
 	Atom<std::shared_ptr<Rect>> mTextureSize{};
-	Atom<u32> mOuterFrameColor[2]{};
+	Atom<u32> mOutlineColor{};
 	Atom<s32> mTextureScale{};
 	Atom<s32> mFramePadding{};
 	Atom<u8>  mTextureAlpha{ 0xFF };
 	Atom<bool> mNewTextureNeeded{};
 
-	bool mEnableBuzzGlow{};
 	bool mEnableScanline{};
 
 	s32  mViewportRotation{};
@@ -116,7 +115,7 @@ public:
 		return displayMode ? displayMode->h : 0;
 	}
 
-	void setFrameColor(u32 color_off, u32 color_on) noexcept;
+	void setOutlineColor(u32 color) noexcept;
 
 	template <typename T, size_type N>
 	void scaleInterface(T(&appFont)[N]) {

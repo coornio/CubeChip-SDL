@@ -6,31 +6,34 @@
 
 #pragma once
 
-#include "../../../Assistants/Map2D.hpp"
-
 #include "../Chip8_CoreInterface.hpp"
 
 /*==================================================================*/
 
-class SCHIP_LEGACY final : public Chip8_CoreInterface {
+class CHIP8X final : public Chip8_CoreInterface {
 	static constexpr u32 cTotalMemory{ ::CalcBytes(4, KiB) };
 	static constexpr u32 cSafezoneOOB{    32 };
-	static constexpr u32 cGameLoadPos{   512 };
-	static constexpr u32 cStartOffset{   512 };
-	static constexpr f32 cRefreshRate{ 64.0f };
+	static constexpr u32 cGameLoadPos{   768 };
+	static constexpr u32 cStartOffset{   768 };
+	static constexpr f32 cRefreshRate{ 61.0f };
 
-	static constexpr s32 cResSizeMult{     4 };
-	static constexpr s32 cScreenSizeX{   128 };
-	static constexpr s32 cScreenSizeY{    64 };
-	static constexpr s32 cInstSpeedHi{    45 };
-	static constexpr s32 cInstSpeedLo{    32 };
+	static constexpr s32 cResSizeMult{     8 };
+	static constexpr s32 cScreenSizeX{    64 };
+	static constexpr s32 cScreenSizeY{    32 };
+	static constexpr s32 cInstSpeedHi{    30 };
+	static constexpr s32 cInstSpeedLo{    15 };
 
-	static constexpr u32 cMaxDisplayW{ 128 };
-	static constexpr u32 cMaxDisplayH{  64 };
+	static constexpr u32 cMaxDisplayW{ 64 };
+	static constexpr u32 cMaxDisplayH{ 32 };
 
-/*==================================================================*/
+private:
+	Map2D<u32> mColoredBuffer{ cScreenSizeX >> 3, cScreenSizeY };
 
-	Map2D<u8> mDisplayBuffer[1];
+	u32 mBackgroundColor{ 0x00 };
+	u32 mColorResolution{ 0xFC };
+
+	std::array<u8, cScreenSizeX * cScreenSizeY>
+		mDisplayBuffer{};
 
 	std::array<u8, cTotalMemory + cSafezoneOOB>
 		mMemoryBank{};
@@ -45,10 +48,15 @@ class SCHIP_LEGACY final : public Chip8_CoreInterface {
 		return mMemoryBank[mRegisterI + pos];
 	}
 
-/*==================================================================*/
+	
+
+	void setBuzzerPitch(s32 pitch) noexcept;
+
+	void drawLoresColor(s32 X, s32 Y, s32 idx)        noexcept;
+	void drawHiresColor(s32 X, s32 Y, s32 idx, s32 N) noexcept;
 
 public:
-	SCHIP_LEGACY();
+	CHIP8X();
 
 	static constexpr bool isGameFileValid(
 		const char* fileData,
@@ -67,31 +75,17 @@ private:
 	void renderAudioData() override;
 	void renderVideoData() override;
 
-	void prepDisplayArea(const Resolution mode) override;
-
-	void scrollDisplayDN(s32 N);
-	void scrollDisplayLT();
-	void scrollDisplayRT();
+	void prepDisplayArea(const Resolution) override {}
 
 /*==================================================================*/
 	#pragma region 0 instruction branch
 
-	// 00DN - scroll plane N lines down
-	void instruction_00CN(s32 N) noexcept;
 	// 00E0 - erase whole display
 	void instruction_00E0() noexcept;
 	// 00EE - return from subroutine
 	void instruction_00EE() noexcept;
-	// 00FB - scroll plane 4 pixels right
-	void instruction_00FB() noexcept;
-	// 00FC - scroll plane 4 pixels left
-	void instruction_00FC() noexcept;
-	// 00FD - stop signal
-	void instruction_00FD() noexcept;
-	// 00FE - display res == 64x32
-	void instruction_00FE() noexcept;
-	// 00FF - display res == 128x64
-	void instruction_00FF() noexcept;
+	// 02A0 - cycle background color
+	void instruction_02A0() noexcept;
 
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
@@ -137,6 +131,8 @@ private:
 
 	// 5XY0 - skip next instruction if VX == VY
 	void instruction_5xy0(s32 X, s32 Y) noexcept;
+	// 5XY0 - set VX to added lo/hi nibbles of VX and VY
+	void instruction_5xy1(s32 X, s32 Y) noexcept;
 
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
@@ -176,10 +172,10 @@ private:
 	void instruction_8xy5(s32 X, s32 Y) noexcept;
 	// 8XY7 - set VX = VY - VX, VF = !borrow
 	void instruction_8xy7(s32 X, s32 Y) noexcept;
-	// 8XY6 - set VX = VX >> 1, VF = carry
-	void instruction_8xy6(s32 X, s32  ) noexcept;
-	// 8XYE - set VX = VX << 1, VF = carry
-	void instruction_8xyE(s32 X, s32  ) noexcept;
+	// 8XY6 - set VX = VY >> 1, VF = carry
+	void instruction_8xy6(s32 X, s32 Y) noexcept;
+	// 8XYE - set VX = VY << 1, VF = carry
+	void instruction_8xyE(s32 X, s32 Y) noexcept;
 
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
@@ -205,8 +201,8 @@ private:
 /*==================================================================*/
 	#pragma region B instruction branch
 
-	// BXNN - jump to NNN + VX
-	void instruction_BXNN(s32 X, s32 NNN) noexcept;
+	// BxyN - set foreground color
+	void instruction_BxyN(s32 X, s32 Y, s32 N) noexcept;
 
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
@@ -223,8 +219,7 @@ private:
 /*==================================================================*/
 	#pragma region D instruction branch
 
-	bool drawSingleBytes(s32 X, s32 Y, s32 WIDTH, s32 DATA) noexcept;
-	bool drawDoubleBytes(s32 X, s32 Y, s32 WIDTH, s32 DATA) noexcept;
+	void drawByte(s32 X, s32 Y, u32 DATA) noexcept;
 
 	// DXYN - draw N sprite rows at VX and VY
 	void instruction_DxyN(s32 X, s32 Y, s32 N) noexcept;
@@ -239,6 +234,10 @@ private:
 	void instruction_Ex9E(s32 X) noexcept;
 	// EXA1 - skip next instruction if key VX up (p1)
 	void instruction_ExA1(s32 X) noexcept;
+	// EXF2 - skip next instruction if key VX down (p2)
+	void instruction_ExF2(s32 X) noexcept;
+	// EXF2 - skip next instruction if key VX up (p2)
+	void instruction_ExF5(s32 X) noexcept;
 
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
@@ -258,18 +257,16 @@ private:
 	void instruction_Fx1E(s32 X) noexcept;
 	// FX29 - set I to 5-byte hex sprite from VX
 	void instruction_Fx29(s32 X) noexcept;
-	// FX30 - set I to 10-byte hex sprite from VX
-	void instruction_Fx30(s32 X) noexcept;
 	// FX33 - store BCD of VX to RAM at I..I+2
 	void instruction_Fx33(s32 X) noexcept;
 	// FN55 - store V0..VN to RAM at I..I+N
 	void instruction_FN55(s32 N) noexcept;
 	// FN65 - load V0..VN from RAM at I..I+N
 	void instruction_FN65(s32 N) noexcept;
-	// FN75 - store V0..VN to the permanent regs
-	void instruction_FN75(s32 N) noexcept;
-	// FN85 - load V0..VN from the permanent regs
-	void instruction_FN85(s32 N) noexcept;
+	// FXF8 - output VX to port (sound freq)
+	void instruction_FxF8(s32 X) noexcept;
+	// FXFB - wait for port input, load to VX
+	void instruction_FxFB(s32 X) noexcept;
 
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/

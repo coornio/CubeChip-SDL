@@ -11,7 +11,8 @@
 #include <string>
 #include <cstdint>
 #include <cstddef>
-#include <expected>
+#include <execution>
+
 #include <filesystem>
 #include <string_view>
 
@@ -53,52 +54,9 @@ struct Epsilon {
 	constexpr static ::f64 f64{ std::numeric_limits<::f64>::epsilon() };
 };
 
-inline constexpr u32 KiB{ 1024 };
-inline constexpr u32 MiB{ 1024 * KiB };
-inline constexpr u32 GiB{ 1024 * MiB };
+#if defined(__APPLE__) && defined(__clang__) && (__clang_major__ << 10)
+	#define EXEC_POLICY(policy)
+#else
+	#define EXEC_POLICY(policy) std::execution::policy,
+#endif
 
-inline constexpr u32 CalcBytes(const u32 value, const u32 unit) noexcept {
-	return value * unit;
-}
-
-struct alignas(4) RGBA {
-	u8 R{}, G{}, B{}, A{};
-
-	constexpr RGBA() noexcept {}
-	constexpr RGBA(const u32 color) noexcept
-		: R{ static_cast<u8>(color >> 24) }
-		, G{ static_cast<u8>(color >> 16) }
-		, B{ static_cast<u8>(color >>  8) }
-		, A{ static_cast<u8>(color >>  0) }
-	{}
-	constexpr RGBA(const u8 R, const u8 G, const u8 B, const u8 A = 0xFF) noexcept
-		: R{ R }, G{ G }, B{ B }, A{ A }
-	{}
-
-	constexpr u32 RGB_()     const noexcept { return R << 24 | G << 16 | B << 8 | 0; }
-	constexpr u32 RBG_()     const noexcept { return R << 24 | B << 16 | G << 8 | 0; }
-	constexpr u32 GRB_()     const noexcept { return G << 24 | R << 16 | B << 8 | 0; }
-	constexpr u32 GBR_()     const noexcept { return G << 24 | B << 16 | R << 8 | 0; }
-	constexpr u32 BRG_()     const noexcept { return B << 24 | R << 16 | G << 8 | 0; }
-	constexpr u32 BGR_()     const noexcept { return B << 24 | G << 16 | R << 8 | 0; }
-
-	constexpr u32 RBGA()     const noexcept { return R << 24 | B << 16 | G << 8 | A; }
-	constexpr u32 GRBA()     const noexcept { return G << 24 | R << 16 | B << 8 | A; }
-	constexpr u32 GBRA()     const noexcept { return G << 24 | B << 16 | R << 8 | A; }
-	constexpr u32 BRGA()     const noexcept { return B << 24 | R << 16 | G << 8 | A; }
-	constexpr u32 BGRA()     const noexcept { return B << 24 | G << 16 | R << 8 | A; }
-	constexpr operator u32() const noexcept { return R << 24 | G << 16 | B << 8 | A; }
-};
-
-inline constexpr auto intByteMult(const u32 color1, const u32 color2) noexcept {
-	return static_cast<u8>(((color1 * (color2 | color2 << 8)) + 0x8080) >> 16);
-}
-
-template <typename T, typename E>
-using Expected = std::expected<T, E>;
-
-// factory for Expected<T, E> type, <E> should be able to override as a boolean.
-template<typename T, typename E>
-Expected<T, E> makeExpected(T&& value, E&& error) {
-	if (error) { return std::unexpected(error); } else { return (value); }
-}

@@ -19,6 +19,8 @@ protected:
 
 	std::unique_ptr<AudioSpecBlock> ASB;
 
+	void* __{};
+
 	std::vector<SimpleKeyMapping> mCustomBinds;
 
 	enum STREAM {
@@ -165,7 +167,6 @@ private:
 	bool checkRegularFile(const Path& filePath) const noexcept;
 	bool newPermaRegsFile(const Path& filePath) const noexcept;
 
-
 	void setFilePermaRegs(u32 X) noexcept;
 	void getFilePermaRegs(u32 X) noexcept;
 
@@ -275,7 +276,7 @@ protected:
 		0x00000000, 0xEE111100, 0x1111EE00, 0xEE11EE00,
 		0x11EE1100, 0xEEEE1100, 0x11EEEE00, 0xEEEEEE00,
 	} };
-	static constexpr std::array<RGBA, 4> cBackColor{ { // CHIP-8X background colors
+	static constexpr std::array<RGBA,  4> cBackColor{ { // CHIP-8X background colors
 		0x11113300, 0x11111100, 0x11331100, 0x33111100,
 	} };
 };

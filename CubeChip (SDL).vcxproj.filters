@@ -131,6 +131,9 @@
     <ClCompile Include="src\_imgui\imgui_widgets.cpp">
       <Filter>Header Files\_imgui</Filter>
     </ClCompile>
+    <ClCompile Include="src\Systems\CHIP8\Cores\CHIP8X.cpp">
+      <Filter>Source Files\Systems\CHIP8\Cores</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\_nlohmann\json_fwd.hpp">
@@ -260,6 +263,15 @@
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
     <ClInclude Include="src\Assistants\Aligned.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\CHIP8\Cores\CHIP8X.hpp">
+      <Filter>Source Files\Systems\CHIP8\Cores</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\Misc.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\RGBA.hpp">
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
   </ItemGroup>

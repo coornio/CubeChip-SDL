@@ -6,9 +6,11 @@
 
 #pragma once
 
+#include <span>
 #include <mutex>
 #include <shared_mutex>
 #include <execution>
+#include <exception>
 #include <cstdlib>
 #include <cassert>
 #include <memory>
@@ -22,8 +24,26 @@ class Aligned {
 	static_assert(Alignment >= alignof(T), "Alignment must be at least alignof(T)");
 	static_assert((Alignment & (Alignment - 1)) == 0, "Alignment must be a power of 2");
 
-	using value_type = std::remove_cv_t<T>;
+public:
+	using element_type    = T;
+	using axis_size       = std::uint32_t;
+	using size_type       = std::size_t;
+	using difference_type = std::ptrdiff_t;
+	using value_type      = std::remove_cv_t<T>;
 
+	using pointer       = T*;
+	using const_pointer = const T*;
+
+	using reference       = T&;
+	using const_reference = const T&;
+
+	using iterator       = T*;
+	using const_iterator = const T*;
+
+	using reverse_iterator       = std::reverse_iterator<iterator>;
+	using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+
+private:
 	struct Deleter {
 		void operator()(T* ptr) const noexcept {
 			::operator delete[](ptr, std::align_val_t(Alignment));
@@ -34,33 +54,41 @@ class Aligned {
 	size_type mSize{};
 
 public:
-	Aligned(size_type size = 0) : mSize{ size } {
+	Aligned(size_type size = 0) noexcept
+		: mSize{ size }
+	{
 		if (!size) { return; }
 		size = (size + (Alignment - 1)) & ~(Alignment - 1);
 		
-		T* ptr{ static_cast<T*>(::operator new[](
+		auto ptr{ static_cast<pointer>(::operator new[](
 			size * sizeof(T), std::align_val_t(Alignment), std::nothrow)) };
 		assert(ptr); pData.reset(ptr);
 
-		if (ptr) {
+		if (!ptr) { mSize = 0; } else {
 			if constexpr (std::is_trivially_default_constructible_v<T>) {
-				std::uninitialized_value_construct_n(std::execution::unseq, ptr, size);
+				std::uninitialized_value_construct_n(EXEC_POLICY(unseq) ptr, size);
 			} else {
-				std::uninitialized_default_construct_n(std::execution::unseq, ptr, size);
+				std::uninitialized_default_construct_n(EXEC_POLICY(unseq) ptr, size);
 			}
 		}
 	}
 
-	void resize(size_type size) {
+	void initialize(const value_type& value = value_type()) noexcept {
+		std::fill(EXEC_POLICY(unseq)
+			begin(), end(), value);
+	}
+
+	void resize(size_type size) noexcept {
 		if (size == mSize) { return; }
 
 		Aligned newAligned(size);
+		if (newAligned.size() != size) { return; }
 
 		if constexpr (std::is_trivially_copyable_v<T>) {
-			std::copy(std::execution::unseq,
+			std::copy(EXEC_POLICY(unseq)
 				data(), data() + std::min(mSize, size), newAligned.data());
 		} else {
-			std::move(std::execution::unseq,
+			std::move(EXEC_POLICY(unseq)
 				data(), data() + std::min(mSize, size), newAligned.data());
 		}
 
@@ -77,14 +105,44 @@ public:
 	Aligned(Aligned&&)            noexcept = default;
 	Aligned& operator=(Aligned&&) noexcept = default;
 
-	constexpr T*   data() const noexcept { return pData.get(); }
-	constexpr auto size() const noexcept { return mSize; }
+public:
+	constexpr pointer   data()  const { return pData.get(); }
+	constexpr reference front() const { return data()[0]; }
+	constexpr reference back()  const { return data()[size() - 1]; }
 
-	constexpr auto begin() const noexcept { return data(); }
-	constexpr auto end()   const noexcept { return data() + size(); }
+	constexpr size_type size()       const noexcept { return mSize; }
+	constexpr size_type size_bytes() const noexcept { return size() * sizeof(value_type); }
+	constexpr bool      empty()      const noexcept { return size() == 0; }
+	constexpr auto      span()       const noexcept { return std::span(data(), size()); }
+
+	constexpr auto first(size_type count) const { return RangeProxy(data(), count); }
+	constexpr auto last(size_type count)  const { return RangeProxy(data(), size() - count); }
 
 	// cast underlying data to a RangeProxy (span) for a lot of added functionality
 	constexpr auto operator*() const noexcept { return RangeProxy(data(), mSize); }
 
 	explicit constexpr operator bool() const noexcept { return static_cast<bool>(pData); }
+
+public:
+	constexpr reference at(size_type idx) const {
+		if (idx >= size()) { throw std::out_of_range("Aligned.at() index out of range"); }
+		return data()[idx];
+	}
+	constexpr reference operator[](size_type idx) const {
+		assert(idx < size() && "Aligned.operator[] index out of bounds");
+		return data()[idx];
+	}
+
+public:
+	constexpr iterator begin() const noexcept { return data(); }
+	constexpr iterator end()   const noexcept { return data() + size(); }
+
+	constexpr reverse_iterator rbegin() const noexcept { return std::make_reverse_iterator(end()); }
+	constexpr reverse_iterator rend()   const noexcept { return std::make_reverse_iterator(begin()); }
+
+	constexpr const_iterator cbegin() const noexcept { return begin(); }
+	constexpr const_iterator cend()   const noexcept { return end(); }
+
+	constexpr const_reverse_iterator crbegin() const noexcept { return std::make_reverse_iterator(cend()); }
+	constexpr const_reverse_iterator crend()   const noexcept { return std::make_reverse_iterator(cbegin()); }
 };

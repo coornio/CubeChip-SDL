@@ -4,37 +4,37 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include "../../../Assistants/RangeIterator.hpp"
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/BasicAudioSpec.hpp"
 #include "../../../Assistants/Well512.hpp"
 
-#include "SCHIP_LEGACY.hpp"
+#include "CHIP8X.hpp"
 
 /*==================================================================*/
 
-SCHIP_LEGACY::SCHIP_LEGACY()
-	: mDisplayBuffer{ {cScreenSizeX, cScreenSizeY} }
-{
-	std::generate(EXEC_POLICY(unseq)
-		mMemoryBank.begin(), mMemoryBank.end() - cSafezoneOOB, []() { return RNG->get<u8>(); });
-
+CHIP8X::CHIP8X() {
 	std::fill(EXEC_POLICY(unseq)
 		mMemoryBank.end() - cSafezoneOOB, mMemoryBank.end(), u8{ 0xFF });
 
 	copyGameToMemory(mMemoryBank.data() + cGameLoadPos);
-	copyFontToMemory(mMemoryBank.data(), 0xB4);
+	copyFontToMemory(mMemoryBank.data(), 0x50);
 
 	setDisplayResolution(cScreenSizeX, cScreenSizeY);
 	setSystemFramerate(cRefreshRate);
 
 	mCurrentPC = cStartOffset;
+	mTargetCPF.store(cInstSpeedHi, mo::release);
 
-	prepDisplayArea(Resolution::LO);
+	mColoredBuffer(0, 0) = cForeColor[2];
+
+	ASB->pauseStream(STREAM::CHANN1);
+	ASB->pauseStream(STREAM::CHANN2);
 }
 
 /*==================================================================*/
 
-void SCHIP_LEGACY::instructionLoop() noexcept {
+void CHIP8X::instructionLoop() noexcept {
 
 	auto cycleCount{ 0 };
 	for (; cycleCount < mTargetCPF.load(mo::acquire); ++cycleCount) {
@@ -45,34 +45,16 @@ void SCHIP_LEGACY::instructionLoop() noexcept {
 		switch (HI >> 4) {
 			case 0x0:
 				switch (HI << 8 | LO) {
-					             case 0x00C1: case 0x00C2: case 0x00C3:
-					case 0x00C4: case 0x00C5: case 0x00C6: case 0x00C7:
-					case 0x00C8: case 0x00C9: case 0x00CA: case 0x00CB:
-					case 0x00CC: case 0x00CD: case 0x00CE: case 0x00CF:
-						instruction_00CN(LO & 0xF);
-						break;
 					case 0x00E0:
 						instruction_00E0();
 						break;
 					case 0x00EE:
 						instruction_00EE();
 						break;
-					case 0x00FB:
-						instruction_00FB();
+					case 0x2A0:
+						instruction_02A0();
 						break;
-					case 0x00FC:
-						instruction_00FC();
-						break;
-					case 0x00FD:
-						instruction_00FD();
-						break;
-					case 0x00FE:
-						instruction_00FE();
-						break;
-					case 0x00FF:
-						instruction_00FF();
-						break;
-					[[unlikely]]
+						[[unlikely]]
 					default: instructionError(HI, LO);
 				}
 				break;
@@ -89,10 +71,15 @@ void SCHIP_LEGACY::instructionLoop() noexcept {
 				instruction_4xNN(HI & 0xF, LO);
 				break;
 			case 0x5:
-				if (LO & 0xF) [[unlikely]] {
-					instructionError(HI, LO);
-				} else {
-					instruction_5xy0(HI & 0xF, LO >> 4);
+				switch (LO & 0xF) {
+					case 0:
+						instruction_5xy0(HI & 0xF, LO >> 4);
+						break;
+					case 1:
+						instruction_5xy1(HI & 0xF, LO >> 4);
+						break;
+						[[unlikely]]
+					default: instructionError(HI, LO);
 				}
 				break;
 			case 0x6:
@@ -130,7 +117,7 @@ void SCHIP_LEGACY::instructionLoop() noexcept {
 					case 0xE:
 						instruction_8xyE(HI & 0xF, LO >> 4);
 						break;
-					[[unlikely]]
+						[[unlikely]]
 					default: instructionError(HI, LO);
 				}
 				break;
@@ -145,12 +132,16 @@ void SCHIP_LEGACY::instructionLoop() noexcept {
 				instruction_ANNN(HI << 8 | LO);
 				break;
 			case 0xB:
-				instruction_BXNN(HI & 0xF, HI << 8 | LO);
+				if (HI == 0xBF) [[unlikely]] {
+					instructionError(HI, LO);
+				} else {
+					instruction_BxyN(HI & 0xF, LO >> 4, LO & 0xF);
+				}
 				break;
 			case 0xC:
 				instruction_CxNN(HI & 0xF, LO);
 				break;
-			[[likely]]
+				[[likely]]
 			case 0xD:
 				instruction_DxyN(HI & 0xF, LO >> 4, LO & 0xF);
 				break;
@@ -162,7 +153,13 @@ void SCHIP_LEGACY::instructionLoop() noexcept {
 					case 0xA1:
 						instruction_ExA1(HI & 0xF);
 						break;
-					[[unlikely]]
+					case 0xF2:
+						instruction_ExF2(HI & 0xF);
+						break;
+					case 0xF5:
+						instruction_ExF5(HI & 0xF);
+						break;
+						[[unlikely]]
 					default: instructionError(HI, LO);
 				}
 				break;
@@ -186,9 +183,6 @@ void SCHIP_LEGACY::instructionLoop() noexcept {
 					case 0x29:
 						instruction_Fx29(HI & 0xF);
 						break;
-					case 0x30:
-						instruction_Fx30(HI & 0xF);
-						break;
 					case 0x33:
 						instruction_Fx33(HI & 0xF);
 						break;
@@ -198,11 +192,11 @@ void SCHIP_LEGACY::instructionLoop() noexcept {
 					case 0x65:
 						instruction_FN65(HI & 0xF);
 						break;
-					case 0x75:
-						instruction_FN75(HI & 0xF);
+					case 0xF8:
+						instruction_FxF8(HI & 0xF);
 						break;
-					case 0x85:
-						instruction_FN85(HI & 0xF);
+					case 0xFB:
+						instruction_FxFB(HI & 0xF);
 						break;
 						[[unlikely]]
 					default: instructionError(HI, LO);
@@ -213,88 +207,85 @@ void SCHIP_LEGACY::instructionLoop() noexcept {
 	mElapsedCycles.fetch_add(cycleCount, mo::acq_rel);
 }
 
-void SCHIP_LEGACY::renderAudioData() {
-	pushSquareTone(STREAM::CHANN0);
-	pushSquareTone(STREAM::CHANN1);
-	pushSquareTone(STREAM::CHANN2);
+void CHIP8X::renderAudioData() {
+	pushSquareTone(STREAM::UNIQUE);
 	pushSquareTone(STREAM::BUZZER);
 
-	BVS->setOutlineColor(sBitColors[!!std::accumulate(mAudioTimer.begin(), mAudioTimer.end(), 0)]);
+	static constexpr u32 idx[]{ 2, 7, 4, 1 };
+	BVS->setOutlineColor(
+		std::accumulate(mAudioTimer.begin(), mAudioTimer.end(), 0)
+		? cForeColor[idx[mBackgroundColor]] : cBackColor[mBackgroundColor]);
 }
 
-void SCHIP_LEGACY::renderVideoData() {
-	BVS->setViewportSizes(mDisplayW, mDisplayH, isLargerDisplay() ? cResSizeMult / 2 : cResSizeMult, +2);
-	BVS->displayBuffer.write(mDisplayBuffer[0], isPixelTrailing()
-		? [](u32 pixel) noexcept {
+void CHIP8X::renderVideoData() {
+	BVS->setViewportSizes(mDisplayW, mDisplayH, cResSizeMult, +2);
+	if (isPixelTrailing()) {
+		BVS->displayBuffer.write(mDisplayBuffer, [this](const u8& pixel) noexcept {
 			static constexpr u32 layer[4]{ 0xFF, 0xE7, 0x6F, 0x37 };
 			const auto opacity{ layer[std::countl_zero(pixel) & 0x3] };
-			return opacity | sBitColors[pixel != 0];
-		}
-		: [](u32 pixel) noexcept {
-			return 0xFF | sBitColors[pixel >> 3];
-		}
-	);
+			const auto idx{ &pixel - mDisplayBuffer.data() };
+			const auto Y = (idx / mDisplayW) & mColorResolution;
+			const auto X = (idx % mDisplayW) >> 3;
+			return (pixel != 0)
+				? opacity | mColoredBuffer(X, Y)
+				: 0xFF | cBackColor[mBackgroundColor];
+		});
+	} else {
+		BVS->displayBuffer.write(mDisplayBuffer, [this](const u8& pixel) noexcept {
+			const auto idx{ &pixel - mDisplayBuffer.data() };
+			const auto Y = (idx / mDisplayW) & mColorResolution;
+			const auto X = (idx % mDisplayW) >> 3;
+			return (pixel >> 3)
+				? 0xFF | mColoredBuffer(X, Y)
+				: 0xFF | cBackColor[mBackgroundColor];
+		});
+	}
 
 	std::transform(EXEC_POLICY(unseq)
-		mDisplayBuffer[0].begin(),
-		mDisplayBuffer[0].end(),
-		mDisplayBuffer[0].begin(),
+		mDisplayBuffer.begin(),
+		mDisplayBuffer.end(),
+		mDisplayBuffer.begin(),
 		[](u32 pixel) noexcept {
-			return static_cast<u8>(
-				(pixel & 0x8) | (pixel >> 1)
-			);
+			return static_cast<u8>
+				((pixel & 0x8) | (pixel >> 1));
 		}
 	);
 }
 
-void SCHIP_LEGACY::prepDisplayArea(const Resolution mode) {
-	isLargerDisplay(mode != Resolution::LO);
-
-	Quirk.waitVblank = !isLargerDisplay();
-	mTargetCPF.store(isLargerDisplay() ? cInstSpeedLo : cInstSpeedHi, mo::release);
-};
-
-/*==================================================================*/
-
-void SCHIP_LEGACY::scrollDisplayDN(s32 N) {
-	mDisplayBuffer[0].shift(0, +N);
+void CHIP8X::setBuzzerPitch(s32 pitch) noexcept {
+	mPhaseStep[STREAM::UNIQUE] = (sTonalOffset + (
+		(0xFF - (pitch ? pitch : 0x80)) >> 3 << 4)
+	) / ASB->getFrequency();
 }
-void SCHIP_LEGACY::scrollDisplayLT() {
-	mDisplayBuffer[0].shift(-4, 0);
+
+void CHIP8X::drawLoresColor(s32 X, s32 Y, s32 idx) noexcept {
+	for (auto pY{ 0 }, maxH{ Y >> 4 }; pY <= maxH; ++pY) {
+		for (auto pX{ 0 }, maxW{ X >> 4 }; pX <= maxW; ++pX) {
+			mColoredBuffer((X + pX) & 0x7, ((Y + pY) << 2) & 0x1F) = cForeColor[idx & 0x7];
+		}
+	}
+	mColorResolution = 0xFC;
 }
-void SCHIP_LEGACY::scrollDisplayRT() {
-	mDisplayBuffer[0].shift(+4, 0);
+
+void CHIP8X::drawHiresColor(s32 X, s32 Y, s32 idx, s32 N) noexcept {
+	for (auto pY{ Y }, pX{ X >> 3 }; pY < Y + N; ++pY) {
+		mColoredBuffer(pX & 0x7, pY & 0x1F) = cForeColor[idx & 0x7];
+	}
+	mColorResolution = 0xFF;
 }
 
 /*==================================================================*/
 	#pragma region 0 instruction branch
 
-	void SCHIP_LEGACY::instruction_00CN(s32 N) noexcept {
-		scrollDisplayDN(N);
-	}
-	void SCHIP_LEGACY::instruction_00E0() noexcept {
+	void CHIP8X::instruction_00E0() noexcept {
 		triggerInterrupt(Interrupt::FRAME);
-		mDisplayBuffer[0].initialize();
+		initialize(mDisplayBuffer);
 	}
-	void SCHIP_LEGACY::instruction_00EE() noexcept {
+	void CHIP8X::instruction_00EE() noexcept {
 		mCurrentPC = mStackBank[--mStackTop & 0xF];
 	}
-	void SCHIP_LEGACY::instruction_00FB() noexcept {
-		scrollDisplayRT();
-	}
-	void SCHIP_LEGACY::instruction_00FC() noexcept {
-		scrollDisplayLT();
-	}
-	void SCHIP_LEGACY::instruction_00FD() noexcept {
-		triggerInterrupt(Interrupt::SOUND);
-	}
-	void SCHIP_LEGACY::instruction_00FE() noexcept {
-		triggerInterrupt(Interrupt::FRAME);
-		prepDisplayArea(Resolution::LO);
-	}
-	void SCHIP_LEGACY::instruction_00FF() noexcept {
-		triggerInterrupt(Interrupt::FRAME);
-		prepDisplayArea(Resolution::HI);
+	void CHIP8X::instruction_02A0() noexcept {
+		BVS->setOutlineColor(cBackColor[++mBackgroundColor &= 0x3]);
 	}
 
 	#pragma endregion
@@ -303,7 +294,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 1 instruction branch
 
-	void SCHIP_LEGACY::instruction_1NNN(s32 NNN) noexcept {
+	void CHIP8X::instruction_1NNN(s32 NNN) noexcept {
 		performProgJump(NNN);
 	}
 
@@ -313,7 +304,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 2 instruction branch
 
-	void SCHIP_LEGACY::instruction_2NNN(s32 NNN) noexcept {
+	void CHIP8X::instruction_2NNN(s32 NNN) noexcept {
 		mStackBank[mStackTop++ & 0xF] = mCurrentPC;
 		performProgJump(NNN);
 	}
@@ -324,7 +315,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 3 instruction branch
 
-	void SCHIP_LEGACY::instruction_3xNN(s32 X, s32 NN) noexcept {
+	void CHIP8X::instruction_3xNN(s32 X, s32 NN) noexcept {
 		if (mRegisterV[X] == NN) { skipInstruction(); }
 	}
 
@@ -334,7 +325,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 4 instruction branch
 
-	void SCHIP_LEGACY::instruction_4xNN(s32 X, s32 NN) noexcept {
+	void CHIP8X::instruction_4xNN(s32 X, s32 NN) noexcept {
 		if (mRegisterV[X] != NN) { skipInstruction(); }
 	}
 
@@ -344,8 +335,13 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 5 instruction branch
 
-	void SCHIP_LEGACY::instruction_5xy0(s32 X, s32 Y) noexcept {
+	void CHIP8X::instruction_5xy0(s32 X, s32 Y) noexcept {
 		if (mRegisterV[X] == mRegisterV[Y]) { skipInstruction(); }
+	}
+	void CHIP8X::instruction_5xy1(s32 X, s32 Y) noexcept {
+		const auto lenX{ (mRegisterV[X] & 0x70) + (mRegisterV[Y] & 0x70) };
+		const auto lenY{ (mRegisterV[X] + mRegisterV[Y]) & 0x7 };
+		mRegisterV[X] = static_cast<u8>(lenX | lenY);
 	}
 
 	#pragma endregion
@@ -354,7 +350,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 6 instruction branch
 
-	void SCHIP_LEGACY::instruction_6xNN(s32 X, s32 NN) noexcept {
+	void CHIP8X::instruction_6xNN(s32 X, s32 NN) noexcept {
 		mRegisterV[X] = static_cast<u8>(NN);
 	}
 
@@ -364,7 +360,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 7 instruction branch
 
-	void SCHIP_LEGACY::instruction_7xNN(s32 X, s32 NN) noexcept {
+	void CHIP8X::instruction_7xNN(s32 X, s32 NN) noexcept {
 		mRegisterV[X] += static_cast<u8>(NN);
 	}
 
@@ -374,39 +370,41 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 8 instruction branch
 
-	void SCHIP_LEGACY::instruction_8xy0(s32 X, s32 Y) noexcept {
+	void CHIP8X::instruction_8xy0(s32 X, s32 Y) noexcept {
 		mRegisterV[X] = mRegisterV[Y];
 	}
-	void SCHIP_LEGACY::instruction_8xy1(s32 X, s32 Y) noexcept {
+	void CHIP8X::instruction_8xy1(s32 X, s32 Y) noexcept {
 		mRegisterV[X] |= mRegisterV[Y];
 	}
-	void SCHIP_LEGACY::instruction_8xy2(s32 X, s32 Y) noexcept {
+	void CHIP8X::instruction_8xy2(s32 X, s32 Y) noexcept {
 		mRegisterV[X] &= mRegisterV[Y];
 	}
-	void SCHIP_LEGACY::instruction_8xy3(s32 X, s32 Y) noexcept {
+	void CHIP8X::instruction_8xy3(s32 X, s32 Y) noexcept {
 		mRegisterV[X] ^= mRegisterV[Y];
 	}
-	void SCHIP_LEGACY::instruction_8xy4(s32 X, s32 Y) noexcept {
+	void CHIP8X::instruction_8xy4(s32 X, s32 Y) noexcept {
 		const auto sum{ mRegisterV[X] + mRegisterV[Y] };
 		mRegisterV[X]   = static_cast<u8>(sum);
 		mRegisterV[0xF] = static_cast<u8>(sum >> 8);
 	}
-	void SCHIP_LEGACY::instruction_8xy5(s32 X, s32 Y) noexcept {
+	void CHIP8X::instruction_8xy5(s32 X, s32 Y) noexcept {
 		const bool nborrow{ mRegisterV[X] >= mRegisterV[Y] };
 		mRegisterV[X]   = static_cast<u8>(mRegisterV[X] - mRegisterV[Y]);
 		mRegisterV[0xF] = static_cast<u8>(nborrow);
 	}
-	void SCHIP_LEGACY::instruction_8xy7(s32 X, s32 Y) noexcept {
+	void CHIP8X::instruction_8xy7(s32 X, s32 Y) noexcept {
 		const bool nborrow{ mRegisterV[Y] >= mRegisterV[X] };
 		mRegisterV[X]   = static_cast<u8>(mRegisterV[Y] - mRegisterV[X]);
 		mRegisterV[0xF] = static_cast<u8>(nborrow);
 	}
-	void SCHIP_LEGACY::instruction_8xy6(s32 X, s32  ) noexcept {
+	void CHIP8X::instruction_8xy6(s32 X, s32 Y) noexcept {
+		if (!Quirk.shiftVX) { mRegisterV[X] = mRegisterV[Y]; }
 		const bool lsb{ (mRegisterV[X] & 1) == 1 };
 		mRegisterV[X]   = static_cast<u8>(mRegisterV[X] >> 1);
 		mRegisterV[0xF] = static_cast<u8>(lsb);
 	}
-	void SCHIP_LEGACY::instruction_8xyE(s32 X, s32  ) noexcept {
+	void CHIP8X::instruction_8xyE(s32 X, s32 Y) noexcept {
+		if (!Quirk.shiftVX) { mRegisterV[X] = mRegisterV[Y]; }
 		const bool msb{ (mRegisterV[X] >> 7) == 1 };
 		mRegisterV[X]   = static_cast<u8>(mRegisterV[X] << 1);
 		mRegisterV[0xF] = static_cast<u8>(msb);
@@ -418,7 +416,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 9 instruction branch
 
-	void SCHIP_LEGACY::instruction_9xy0(s32 X, s32 Y) noexcept {
+	void CHIP8X::instruction_9xy0(s32 X, s32 Y) noexcept {
 		if (mRegisterV[X] != mRegisterV[Y]) { skipInstruction(); }
 	}
 
@@ -428,7 +426,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region A instruction branch
 
-	void SCHIP_LEGACY::instruction_ANNN(s32 NNN) noexcept {
+	void CHIP8X::instruction_ANNN(s32 NNN) noexcept {
 		mRegisterI = NNN & 0xFFF;
 	}
 
@@ -438,8 +436,12 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region B instruction branch
 
-	void SCHIP_LEGACY::instruction_BXNN(s32 X, s32 NNN) noexcept {
-		performProgJump(NNN + mRegisterV[X]);
+	void CHIP8X::instruction_BxyN(s32 X, s32 Y, s32 N) noexcept {
+		if (N) {
+			drawHiresColor(mRegisterV[X], mRegisterV[X + 1], mRegisterV[Y] & 0x7, N);
+		} else {
+			drawLoresColor(mRegisterV[X], mRegisterV[X + 1], mRegisterV[Y] & 0x7);
+		}
 	}
 
 	#pragma endregion
@@ -448,7 +450,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region C instruction branch
 
-	void SCHIP_LEGACY::instruction_CxNN(s32 X, s32 NN) noexcept {
+	void CHIP8X::instruction_CxNN(s32 X, s32 NN) noexcept {
 		mRegisterV[X] = RNG->get<u8>() & NN;
 	}
 
@@ -458,111 +460,70 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region D instruction branch
 
-	static u32 bitBloat(u32 byte) noexcept {
-		if (!byte) { return 0u; }
-		byte = (byte << 4u | byte) & 0x0F0Fu;
-		byte = (byte << 2u | byte) & 0x3333u;
-		byte = (byte << 1u | byte) & 0x5555u;
-		return  byte << 1u | byte;
-	}
+	void CHIP8X::drawByte(s32 X, s32 Y, u32 DATA) noexcept {
+		switch (DATA) {
+			[[unlikely]]
+			case 0b00000000:
+				return;
 
-	bool SCHIP_LEGACY::drawSingleBytes(
-		s32 originX, s32 originY,
-		s32 WIDTH,   s32 DATA
-	) noexcept {
-		if (!DATA) { return false; }
-		bool collided{ false };
-
-		for (auto B{ 0 }; B < WIDTH; ++B) {
-			const auto offsetX{ originX + B };
-
-			if (DATA >> (WIDTH - 1 - B) & 0x1) {
-				auto& pixel{ mDisplayBuffer[0](offsetX, originY) };
-				if (!((pixel ^= 0x8) & 0x8)) { collided = true; }
-			}
-			if (offsetX == 0x7F) { return collided; }
-		}
-		return collided;
-	}
-
-	bool SCHIP_LEGACY::drawDoubleBytes(
-		s32 originX, s32 originY,
-		s32 WIDTH,   s32 DATA
-	) noexcept {
-		if (!DATA) { return false; }
-		bool collided{ false };
-
-		for (auto B{ 0 }; B < WIDTH; ++B) {
-			const auto offsetX{ originX + B };
-
-			auto& pixelHI{ mDisplayBuffer[0](offsetX, originY + 0) };
-			auto& pixelLO{ mDisplayBuffer[0](offsetX, originY + 1) };
-
-			if (DATA >> (WIDTH - 1 - B) & 0x1) {
-				if (pixelHI & 0x8) { collided = true; }
-				pixelLO = pixelHI ^= 0x8;
-			} else {
-				pixelLO = pixelHI;
-			}
-			if (offsetX == 0x7F) { return collided; }
-		}
-		return collided;
-	}
-
-	void SCHIP_LEGACY::instruction_DxyN(s32 X, s32 Y, s32 N) noexcept {
-		if (Quirk.waitVblank) [[unlikely]]
-			{ triggerInterrupt(Interrupt::FRAME); }
-
-		if (isLargerDisplay()) {
-			const auto offsetX{ 8 - (mRegisterV[X] & 7) };
-			const auto originX{ mRegisterV[X] & 0x78 };
-			const auto originY{ mRegisterV[Y] & 0x3F };
-
-			auto collisions{ 0 };
-
-			if (N == 0) {
-				for (auto rowN{ 0 }; rowN < 16; ++rowN) {
-					const auto offsetY{ originY + rowN };
-
-					collisions += drawSingleBytes(
-						originX, offsetY, offsetX ? 24 : 16,
-						(readMemoryI(2 * rowN + 0) << 8 | \
-						 readMemoryI(2 * rowN + 1)) << offsetX
-					);
-					if (offsetY == 0x3F) { break; }
+			[[likely]]
+			case 0b10000000:
+				if (Quirk.wrapSprite) { X &= mDisplayWb; }
+				if (X < mDisplayW) {
+					if (!((mDisplayBuffer[Y * mDisplayW + X] ^= 0x8) & 0x8))
+						{ mRegisterV[0xF] = 1; }
 				}
-			} else {
-				for (auto rowN{ 0 }; rowN < N; ++rowN) {
-					const auto offsetY{ originY + rowN };
+				return;
 
-					collisions += drawSingleBytes(
-						originX, offsetY, offsetX ? 16 : 8,
-						readMemoryI(rowN) << offsetX
-					);
-					if (offsetY == 0x3F) { break; }
+			[[unlikely]]
+			default:
+				if (Quirk.wrapSprite) { X &= mDisplayWb; }
+				else if (X >= mDisplayW) { return; }
+
+				for (auto B{ 0 }; B < 8; ++B, ++X &= mDisplayWb) {
+					if (DATA & 0x80 >> B) {
+						if (!((mDisplayBuffer[Y * mDisplayW + X] ^= 0x8) & 0x8))
+							{ mRegisterV[0xF] = 1; }
+					}
+					if (!Quirk.wrapSprite && X == mDisplayWb) { return; }
 				}
-			}
-			mRegisterV[0xF] = static_cast<u8>(collisions);
+				return;
 		}
-		else {
-			const auto offsetX{ 16 - 2 * (mRegisterV[X] & 0x07) };
-			const auto originX{ mRegisterV[X] * 2 & 0x70 };
-			const auto originY{ mRegisterV[Y] * 2 & 0x3F };
-			const auto lengthN{ N == 0 ? 16 : N };
+	}
 
-			auto collisions{ 0 };
+	void CHIP8X::instruction_DxyN(s32 X, s32 Y, s32 N) noexcept {
+		triggerInterrupt(Interrupt::FRAME);
 
-			for (auto rowN{ 0 }; rowN < lengthN; ++rowN) {
-				const auto offsetY{ originY + rowN * 2 };
+		auto pX{ mRegisterV[X] & mDisplayWb };
+		auto pY{ mRegisterV[Y] & mDisplayHb };
 
-				collisions += drawDoubleBytes(
-					originX, offsetY, 0x20,
-					bitBloat(readMemoryI(rowN)) << offsetX
-				);
+		mRegisterV[0xF] = 0;
 
-				if (offsetY == 0x3E) { break; }
-			}
-			mRegisterV[0xF] = static_cast<u8>(collisions != 0);
+		switch (N) {
+			[[likely]]
+			case 1:
+				drawByte(pX, pY, readMemoryI(0));
+				break;
+
+			[[unlikely]]
+			case 0:
+				for (auto H{ 0 }, I{ 0 }; H < 16; ++H, I += 2, ++pY &= mDisplayHb)
+				{
+					drawByte(pX + 0, pY, readMemoryI(I + 0));
+					drawByte(pX + 8, pY, readMemoryI(I + 1));
+					
+					if (!Quirk.wrapSprite && pY == mDisplayHb) { break; }
+				}
+				break;
+
+			[[unlikely]]
+			default:
+				for (auto H{ 0 }; H < N; ++H, ++pY &= mDisplayHb)
+				{
+					drawByte(pX, pY, readMemoryI(H));
+					if (!Quirk.wrapSprite && pY == mDisplayHb) { break; }
+				}
+				break;
 		}
 	}
 
@@ -572,11 +533,17 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region E instruction branch
 
-	void SCHIP_LEGACY::instruction_Ex9E(s32 X) noexcept {
+	void CHIP8X::instruction_Ex9E(s32 X) noexcept {
 		if (keyHeld_P1(mRegisterV[X])) { skipInstruction(); }
 	}
-	void SCHIP_LEGACY::instruction_ExA1(s32 X) noexcept {
+	void CHIP8X::instruction_ExA1(s32 X) noexcept {
 		if (!keyHeld_P1(mRegisterV[X])) { skipInstruction(); }
+	}
+	void CHIP8X::instruction_ExF2(s32 X) noexcept {
+		if (keyHeld_P2(mRegisterV[X])) { skipInstruction(); }
+	}
+	void CHIP8X::instruction_ExF5(s32 X) noexcept {
+		if (!keyHeld_P2(mRegisterV[X])) { skipInstruction(); }
 	}
 
 	#pragma endregion
@@ -585,50 +552,47 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region F instruction branch
 
-	void SCHIP_LEGACY::instruction_Fx07(s32 X) noexcept {
+	void CHIP8X::instruction_Fx07(s32 X) noexcept {
 		mRegisterV[X] = static_cast<u8>(mDelayTimer);
 	}
-	void SCHIP_LEGACY::instruction_Fx0A(s32 X) noexcept {
+	void CHIP8X::instruction_Fx0A(s32 X) noexcept {
 		triggerInterrupt(Interrupt::INPUT);
 		mInputReg = &mRegisterV[X];
 	}
-	void SCHIP_LEGACY::instruction_Fx15(s32 X) noexcept {
+	void CHIP8X::instruction_Fx15(s32 X) noexcept {
 		mDelayTimer = mRegisterV[X];
 	}
-	void SCHIP_LEGACY::instruction_Fx18(s32 X) noexcept {
-		startAudio(mRegisterV[X] + (mRegisterV[X] == 1));
+	void CHIP8X::instruction_Fx18(s32 X) noexcept {
+		mAudioTimer[STREAM::UNIQUE] = static_cast<u8>(mRegisterV[X] + (mRegisterV[X] == 1));
 	}
-	void SCHIP_LEGACY::instruction_Fx1E(s32 X) noexcept {
+	void CHIP8X::instruction_Fx1E(s32 X) noexcept {
 		mRegisterI = mRegisterI + mRegisterV[X] & 0xFFF;
 	}
-	void SCHIP_LEGACY::instruction_Fx29(s32 X) noexcept {
+	void CHIP8X::instruction_Fx29(s32 X) noexcept {
 		mRegisterI = (mRegisterV[X] & 0xF) * 5;
 	}
-	void SCHIP_LEGACY::instruction_Fx30(s32 X) noexcept {
-		mRegisterI = (mRegisterV[X] & 0xF) * 10 + 80;
-	}
-	void SCHIP_LEGACY::instruction_Fx33(s32 X) noexcept {
+	void CHIP8X::instruction_Fx33(s32 X) noexcept {
 		writeMemoryI(mRegisterV[X] / 100,     0);
 		writeMemoryI(mRegisterV[X] / 10 % 10, 1);
 		writeMemoryI(mRegisterV[X]      % 10, 2);
 	}
-	void SCHIP_LEGACY::instruction_FN55(s32 N) noexcept {
+	void CHIP8X::instruction_FN55(s32 N) noexcept {
 		for (auto idx{ 0 }; idx <= N; ++idx)
 			{ writeMemoryI(mRegisterV[idx], idx); }
-		if (Quirk.idxRegMinus) [[unlikely]]
-			{ mRegisterI = mRegisterI + N & 0xFFF; }
+		if (!Quirk.idxRegNoInc) [[likely]]
+			{ mRegisterI = mRegisterI + N + 1 & 0xFFF; }
 	}
-	void SCHIP_LEGACY::instruction_FN65(s32 N) noexcept {
+	void CHIP8X::instruction_FN65(s32 N) noexcept {
 		for (auto idx{ 0 }; idx <= N; ++idx)
 			{ mRegisterV[idx] = readMemoryI(idx); }
-		if (Quirk.idxRegMinus) [[unlikely]]
-			{ mRegisterI = mRegisterI + N & 0xFFF; }
+		if (!Quirk.idxRegNoInc) [[likely]]
+			{ mRegisterI = mRegisterI + N + 1 & 0xFFF; }
 	}
-	void SCHIP_LEGACY::instruction_FN75(s32 N) noexcept {
-		setPermaRegs(std::min(N, 7) + 1);
+	void CHIP8X::instruction_FxF8(s32 X) noexcept {
+		setBuzzerPitch(mRegisterV[X]);
 	}
-	void SCHIP_LEGACY::instruction_FN85(s32 N) noexcept {
-		getPermaRegs(std::min(N, 7) + 1);
+	void CHIP8X::instruction_FxFB(s32) noexcept {
+		triggerInterrupt(Interrupt::FRAME);
 	}
 
 	#pragma endregion

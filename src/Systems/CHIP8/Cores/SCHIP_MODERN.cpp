@@ -15,8 +15,7 @@
 SCHIP_MODERN::SCHIP_MODERN()
 	: mDisplayBuffer{ {cScreenSizeX, cScreenSizeY} }
 {
-	std::fill(
-		std::execution::unseq,
+	std::fill(EXEC_POLICY(unseq)
 		mMemoryBank.end() - cSafezoneOOB,
 		mMemoryBank.end(), u8{ 0xFF }
 	);
@@ -218,10 +217,7 @@ void SCHIP_MODERN::renderAudioData() {
 	pushSquareTone(STREAM::CHANN2);
 	pushSquareTone(STREAM::BUZZER);
 
-	BVS->setFrameColor(sBitColors[0],
-		std::accumulate(mAudioTimer.begin(), mAudioTimer.end(), 0)
-		? sBitColors[1] : sBitColors[0]
-	);
+	BVS->setOutlineColor(sBitColors[!!std::accumulate(mAudioTimer.begin(), mAudioTimer.end(), 0)]);
 }
 
 void SCHIP_MODERN::renderVideoData() {
@@ -237,8 +233,7 @@ void SCHIP_MODERN::renderVideoData() {
 		}
 	);
 
-	std::transform(
-		std::execution::unseq,
+	std::transform(EXEC_POLICY(unseq)
 		mDisplayBuffer[0].begin(),
 		mDisplayBuffer[0].end(),
 		mDisplayBuffer[0].begin(),

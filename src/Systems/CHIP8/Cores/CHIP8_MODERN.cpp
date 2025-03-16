@@ -13,7 +13,7 @@
 /*==================================================================*/
 
 CHIP8_MODERN::CHIP8_MODERN() {
-	std::fill(std::execution::unseq,
+	std::fill(EXEC_POLICY(unseq)
 		mMemoryBank.end() - cSafezoneOOB, mMemoryBank.end(), u8{ 0xFF });
 
 	copyGameToMemory(mMemoryBank.data() + cGameLoadPos);
@@ -183,14 +183,11 @@ void CHIP8_MODERN::renderAudioData() {
 	pushSquareTone(STREAM::CHANN2);
 	pushSquareTone(STREAM::BUZZER);
 
-	BVS->setFrameColor(sBitColors[0],
-		std::accumulate(mAudioTimer.begin(), mAudioTimer.end(), 0)
-		? sBitColors[1] : sBitColors[0]
-	);
+	BVS->setOutlineColor(sBitColors[!!std::accumulate(mAudioTimer.begin(), mAudioTimer.end(), 0)]);
 }
 
 void CHIP8_MODERN::renderVideoData() {
-	BVS->setViewportSizes(mDisplayW, mDisplayH, isLargerDisplay() ? cResSizeMult / 2 : cResSizeMult, +2);
+	BVS->setViewportSizes(mDisplayW, mDisplayH, cResSizeMult, +2);
 	BVS->displayBuffer.write(mDisplayBuffer, isPixelTrailing()
 		? [](u32 pixel) noexcept {
 			static constexpr u32 layer[4]{ 0xFF, 0xE7, 0x6F, 0x37 };
@@ -202,8 +199,7 @@ void CHIP8_MODERN::renderVideoData() {
 		}
 	);
 
-	std::transform(
-		std::execution::unseq,
+	std::transform(EXEC_POLICY(unseq)
 		mDisplayBuffer.begin(),
 		mDisplayBuffer.end(),
 		mDisplayBuffer.begin(),
@@ -221,12 +217,7 @@ void CHIP8_MODERN::renderVideoData() {
 	void CHIP8_MODERN::instruction_00E0() noexcept {
 		if (Quirk.waitVblank) [[unlikely]]
 			{ triggerInterrupt(Interrupt::FRAME); }
-		std::fill(
-			std::execution::unseq,
-			mDisplayBuffer.begin(),
-			mDisplayBuffer.end(),
-			u8()
-		);
+		initialize(mDisplayBuffer);
 	}
 	void CHIP8_MODERN::instruction_00EE() noexcept {
 		mCurrentPC = mStackBank[--mStackTop & 0xF];

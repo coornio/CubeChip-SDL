@@ -8,11 +8,13 @@
 
 #include <SDL3/SDL_keyboard.h>
 #include <SDL3/SDL_scancode.h>
+#include <SDL3/SDL_gamepad.h>
 #include <SDL3/SDL_mouse.h>
 
-#include <concepts>
+#include "Typedefs.hpp"
+#include "Concepts.hpp"
+
 #include <algorithm>
-#include <execution>
 
 /*==================================================================*/
 
@@ -38,10 +40,10 @@ class BasicKeyboard final {
 
 public:
 	void updateStates() noexcept {
-		std::copy_n(std::execution::unseq,
+		std::copy_n(EXEC_POLICY(unseq)
 			mCurState, TOTALKEYS, mOldState);
 
-		std::copy_n(std::execution::unseq,
+		std::copy_n(EXEC_POLICY(unseq)
 			SDL_GetKeyboardState(nullptr), TOTALKEYS, mCurState);
 	}
 

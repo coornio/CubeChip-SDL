@@ -8,6 +8,9 @@
 
 #include "Concepts.hpp"
 
+#include <span>
+#include <array>
+#include <vector>
 #include <cstddef>
 #include <stdexcept>
 
@@ -46,8 +49,9 @@ public:
 	{}
 
 	template <IsContiguousContainer Object>
-	constexpr RangeProxy(Object& array) noexcept
-		: mData{ std::data(array) }, mSize{ std::size(array) }
+		requires !std::is_rvalue_reference_v<Object>
+	constexpr RangeProxy(const Object& array) noexcept
+		: mData{ const_cast<pointer>(std::data(array)) }, mSize{ std::size(array) }
 	{}
 
 	constexpr pointer   data()       const noexcept { return mData; }
@@ -55,18 +59,29 @@ public:
 	constexpr size_type size_bytes() const noexcept { return size() * sizeof(element_type); }
 	constexpr bool      empty()      const noexcept { return size() == 0; }
 
-	constexpr void reseat(pointer data)   noexcept { mData = data; }
+	template <typename U = T> requires (!std::is_const_v<U>)
+	constexpr void reseat(      U* data)  noexcept { mData = data; }
+	template <typename U = T> requires   std::is_const_v<U>
+	constexpr void reseat(const U* data)  noexcept { mData = data; }
 	constexpr void resize(size_type size) noexcept { mSize = size; }
 
-	constexpr reference front() const noexcept { return data()[0]; }
-	constexpr reference back()  const noexcept { return data()[size() - 1]; }
+	constexpr       reference front()       noexcept { return data()[0]; }
+	constexpr const_reference front() const noexcept { return data()[0]; }
+	constexpr       reference back()        noexcept { return data()[size() - 1]; }
+	constexpr const_reference back()  const noexcept { return data()[size() - 1]; }
 
-	constexpr RangeProxy first(size_type count) const { return RangeProxy(data(), count); }
-	constexpr RangeProxy last(size_type count)  const { return RangeProxy(data(), size() - count); }
+	constexpr auto first(size_type count) const { return RangeProxy(data(), count); }
+	constexpr auto last(size_type count)  const { return RangeProxy(data(), size() - count); }
 
-	constexpr reference operator[](size_type idx) const { return data()[idx]; }
-	constexpr reference at(size_type idx) const {
-		if (idx < size()) { return data()[idx]; }
+	constexpr       reference operator[](size_type idx)       { return data()[idx]; }
+	constexpr const_reference operator[](size_type idx) const { return data()[idx]; }
+
+	constexpr       reference at(size_type idx)       {
+		if constexpr (idx < size()) { return data()[idx]; }
+		else { throw std::out_of_range("RangeProxy.at() :: Index out of range."); }
+	}
+	constexpr const_reference at(size_type idx) const {
+		if constexpr (idx < size()) { return data()[idx]; }
 		else { throw std::out_of_range("RangeProxy.at() :: Index out of range."); }
 	}
 
@@ -82,6 +97,15 @@ public:
 	constexpr const_reverse_iterator crbegin() const noexcept { return std::make_reverse_iterator(cend()); }
 	constexpr const_reverse_iterator crend()   const noexcept { return std::make_reverse_iterator(cbegin()); }
 };
+
+template <typename T, std::size_t N>
+RangeProxy(std::array<T, N>) -> RangeProxy<T>;
+
+template <typename T, std::size_t N = std::dynamic_extent>
+RangeProxy(std::span<T, N>) -> RangeProxy<T>;
+
+template <typename T>
+RangeProxy(std::vector<T>) -> RangeProxy<T>;
 #pragma endregion
 
 #pragma region RangeIterator Class
@@ -114,7 +138,8 @@ public:
 	{}
 
 	template <IsContiguousContainer Object>
-	explicit constexpr RangeIterator(Object& array) noexcept
+		requires !std::is_rvalue_reference_v<Object>
+	explicit constexpr RangeIterator(const Object& array) noexcept
 		: mRange{ std::data(array), std::size(array) }
 	{}
 
@@ -148,6 +173,15 @@ public:
 
 	constexpr auto operator[](difference_type rhs) const noexcept { return RangeProxy<T>(mRange.data() + rhs * mRange.size(), mRange.size()); }
 };
+
+template <typename T, std::size_t N>
+RangeIterator(std::array<T, N>) -> RangeIterator<T>;
+
+template <typename T, std::size_t N = std::dynamic_extent>
+RangeIterator(std::span<T, N>) -> RangeIterator<T>;
+
+template <typename T>
+RangeIterator(std::vector<T>) -> RangeIterator<T>;
 #pragma endregion
 
 #pragma region RangeProxy2D Class
@@ -193,7 +227,7 @@ public:
 
 	constexpr value_type operator[](size_type idx) const { return value_type(data() + idx * lenX(), lenX()); }
 	constexpr value_type at(size_type idx) const {
-		if (idx < lenY()) { return value_type(data() + idx * lenX(), lenX()); }
+		if constexpr (idx < lenY()) { return value_type(data() + idx * lenX(), lenX()); }
 		else { throw std::out_of_range("RangeProxy2D.at() :: Index out of range."); }
 	}
 

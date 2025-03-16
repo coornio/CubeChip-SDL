@@ -27,6 +27,8 @@
 
 #include "../Assistants/Typedefs.hpp"
 #include "../Assistants/Concepts.hpp"
+#include "../Assistants/Misc.hpp"
+#include "../Assistants/RGBA.hpp"
 
 #include "GameFileChecker.hpp"
 

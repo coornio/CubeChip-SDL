@@ -14,7 +14,7 @@
 BYTEPUSHER_STANDARD::BYTEPUSHER_STANDARD() {
 	copyGameToMemory(mMemoryBank.data());
 
-	BVS->setFrameColor(cBitsColor[0], cBitsColor[0]);
+	BVS->setOutlineColor(cBitsColor[0]);
 	BVS->setViewportSizes(cScreenSizeX, cScreenSizeY, cResSizeMult, -2);
 
 	setSystemFramerate(cRefreshRate);
@@ -44,8 +44,7 @@ void BYTEPUSHER_STANDARD::renderAudioData() {
 	const auto samplesOffset{ mMemoryBank.data() + (readData<2>(6) << 8) };
 	std::vector<s16> samplesBuffer(cAudioLength);
 
-	std::transform(
-		std::execution::unseq,
+	std::transform(EXEC_POLICY(unseq)
 		samplesOffset,
 		samplesOffset + cAudioLength,
 		samplesBuffer.data(),
