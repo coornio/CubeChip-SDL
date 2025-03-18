@@ -10,7 +10,6 @@
 #pragma once
 
 #include <string>
-#include <cstdint>
 #include <sstream>
 #include <filesystem>
 
@@ -26,27 +25,29 @@ class SHA1 {
 	void buffer_to_block(u32* block);
 
 public:
-	SHA1();
+	SHA1() noexcept { reset(); }
 
 	void reset();
 
 	void update(const Str& s);
 	void update(std::istream& is);
 
-	void update(const char* data, const ust size);
+	void update(const char* data, ust size);
 
-	template <IsContiguousContainer T> requires MatchingValueType<char, T>
+	template <IsContiguousContainer T>
+		requires (MatchingValueType<char, T>)
 	void update(const T& data) noexcept {
 		update(std::data(data), std::size(data));
 	}
 
-	std::string final();
+	Str final();
 
-	static std::string from_file(const Path& filePath);
-	static std::string from_data(const char* data, const ust size);
+	static Str from_file(const Path& filePath);
+	static Str from_data(const char* data, ust size);
 
-	template <IsContiguousContainer T> requires MatchingValueType<char, T>
-	static std::string from_data(const T& data) {
+	template <IsContiguousContainer T>
+		requires (MatchingValueType<char, T>)
+	static Str from_data(const T& data) {
 		return from_data(std::data(data), std::size(data));
 	}
 };
