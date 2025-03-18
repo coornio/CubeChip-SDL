@@ -12,31 +12,30 @@
 
 template <typename T>
 class AtomSharedProxy {
-	using self = AtomSharedProxy;
-	using value_type = std::shared_ptr<T>;
+	using shared_ptr = std::shared_ptr<T>;
 
 	mutable std::shared_mutex mLock;
-	value_type mSharedPtr;
+	shared_ptr mSharedPtr;
 
 public:
 	AtomSharedProxy()
 		: mSharedPtr{ std::make_shared<T>() }
 	{}
 
-	explicit AtomSharedProxy(const value_type& new_ptr)
+	explicit AtomSharedProxy(const shared_ptr& new_ptr)
 		: mSharedPtr{ new_ptr }
 	{}
 
-	explicit AtomSharedProxy(value_type&& new_ptr)
+	explicit AtomSharedProxy(shared_ptr&& new_ptr)
 		: mSharedPtr{ std::move(new_ptr) }
 	{}
 
-	inline void store(const value_type& new_ptr, std::memory_order = std::memory_order::memory_order_seq_cst) {
+	inline void store(const shared_ptr& new_ptr, std::memory_order = std::memory_order::memory_order_seq_cst) {
 		std::unique_lock lock(mLock);
 		mSharedPtr = new_ptr;
 	}
 
-	inline void store(value_type&& new_ptr, std::memory_order = std::memory_order::memory_order_seq_cst) {
+	inline void store(shared_ptr&& new_ptr, std::memory_order = std::memory_order::memory_order_seq_cst) {
 		std::unique_lock lock(mLock);
 		mSharedPtr = std::move(new_ptr);
 	}
@@ -46,16 +45,16 @@ public:
 		return mSharedPtr;
 	}
 
-	auto exchange(const value_type& new_ptr, std::memory_order) {
+	auto exchange(const shared_ptr& new_ptr, std::memory_order) {
 		std::unique_lock lock(mLock);
-		value_type old = mSharedPtr;
+		auto old = mSharedPtr;
 		mSharedPtr = new_ptr;
 		return old;
 	}
 
-	auto exchange(value_type&& new_ptr, std::memory_order = std::memory_order::memory_order_seq_cst) {
+	auto exchange(shared_ptr&& new_ptr, std::memory_order = std::memory_order::memory_order_seq_cst) {
 		std::unique_lock lock(mLock);
-		value_type old = std::move(mSharedPtr);
+		auto old = std::move(mSharedPtr);
 		mSharedPtr = std::move(new_ptr);
 		return old;
 	}
