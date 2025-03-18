@@ -60,6 +60,13 @@ constexpr static auto HCIS{ std::hardware_constructive_interference_size };
 
 #if defined(__APPLE__)
 	#define EXEC_POLICY(policy)
+	#include "AtomicSharedProxy.hpp"
+
+	template <typename T>
+	using AtomSharedPtr = AtomSharedProxy<T>;
 #else
 	#define EXEC_POLICY(policy) std::execution::policy,
+
+	template <typename T>
+	using AtomSharedPtr = Atom<std::shared_ptr<T>>;
 #endif

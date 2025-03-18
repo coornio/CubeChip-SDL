@@ -274,6 +274,9 @@
     <ClInclude Include="src\Assistants\RGBA.hpp">
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
+    <ClInclude Include="src\Assistants\AtomicSharedProxy.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="external\imgui\misc\debuggers\imgui.natvis" />

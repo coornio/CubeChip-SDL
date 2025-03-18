@@ -32,8 +32,8 @@ class FrameLimiter final {
 	chrono timePastFrame{}; // holds timestamp of the last frame's check
 	uint64 validFrameCnt{}; // counter of successful frame checks performed
 
-	bool isValidFrame() noexcept;
-	auto getElapsedTime() const noexcept {
+	inline bool isValidFrame() noexcept;
+	inline auto getElapsedTime() const noexcept {
 		return std::chrono::steady_clock::now() - timePastFrame;
 	}
 
@@ -62,8 +62,7 @@ public:
 
 /*==================================================================*/
 
-	enum : bool { SPINLOCK, SLEEP };
-	bool checkTime(bool mode = SLEEP);
+	bool checkTime();
 
 	auto getElapsedMillisSince() const noexcept {
 		using tmillis = std::chrono::milliseconds;

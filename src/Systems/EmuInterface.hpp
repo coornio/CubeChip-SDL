@@ -69,7 +69,7 @@ protected:
 	static inline Well512*        RNG{};
 
 	std::jthread mCoreThread;
-	Atom<std::shared_ptr<Str>> mStatistics;
+	AtomSharedPtr<Str> mStatistics;
 
 public:
 	void startWorker() noexcept;

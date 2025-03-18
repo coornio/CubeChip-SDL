@@ -82,7 +82,7 @@ class BasicVideoSpec final {
 
 	Viewport mViewportFrame{};
 
-	Atom<std::shared_ptr<Rect>> mTextureSize{};
+	AtomSharedPtr<Rect> mTextureSize{};
 	Atom<u32> mOutlineColor{};
 	Atom<s32> mTextureScale{};
 	Atom<s32> mFramePadding{};

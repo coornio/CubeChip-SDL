@@ -51,6 +51,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Assistants\Aligned.hpp" />
+    <ClInclude Include="src\Assistants\AtomicSharedProxy.hpp" />
     <ClInclude Include="src\Assistants\BasicAudioSpec.hpp" />
     <ClInclude Include="src\Assistants\BasicInput.hpp" />
     <ClInclude Include="src\Assistants\BasicLogger.hpp" />

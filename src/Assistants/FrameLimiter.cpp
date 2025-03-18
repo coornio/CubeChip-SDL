@@ -21,18 +21,20 @@ void FrameLimiter::setLimiter(
 
 /*==================================================================*/
 
-bool FrameLimiter::checkTime(const bool mode) {
+bool FrameLimiter::checkTime() {
 	if (isValidFrame()) { return true; }
 
-	if (mode == SLEEP && getRemainder() >= 2.0f) {
+	if (getRemainder() >= 2.0f) {
 		std::this_thread::sleep_for(millis(1));
+	} else {
+		std::this_thread::yield();
 	}
 	return false;
 }
 
 /*==================================================================*/
 
-bool FrameLimiter::isValidFrame() noexcept {
+inline bool FrameLimiter::isValidFrame() noexcept {
 	using namespace std::chrono;
 	const auto timeAtCurrent{ steady_clock::now() };
 
