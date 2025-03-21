@@ -5,15 +5,8 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
     <Filter Include="Source Files\Assistants">
       <UniqueIdentifier>{89a55c14-1a9b-486e-9b28-16af4d258b1c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\_nlohmann">
-      <UniqueIdentifier>{55d4d668-6f28-4b99-9a19-8f349a95197e}</UniqueIdentifier>
     </Filter>
     <Filter Include="to_be_removed">
       <UniqueIdentifier>{5efef33a-fd49-4994-9c98-d0080b4b7d89}</UniqueIdentifier>
@@ -42,8 +35,17 @@
     <Filter Include="Source Files\Systems\GAMEBOY\Cores">
       <UniqueIdentifier>{5b33560e-ded9-4795-ba66-939d71046c56}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\_imgui">
-      <UniqueIdentifier>{cc2e90dd-9204-4996-b0cf-cc4c7909c0c3}</UniqueIdentifier>
+    <Filter Include="Source Files\Libraries">
+      <UniqueIdentifier>{ba9c82b3-4138-4002-bf89-bee6dce42725}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Libraries\imgui">
+      <UniqueIdentifier>{bc3d3585-b3eb-4e49-92cf-2b87106000b5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Libraries\atomic_queue">
+      <UniqueIdentifier>{6826200b-1cb7-4cbd-87ec-1184edda6c27}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Libraries\nlohmann">
+      <UniqueIdentifier>{7306d220-21ca-4515-83a6-f47988b1312a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -107,41 +109,35 @@
     <ClCompile Include="src\Systems\GAMEBOY\Cores\GAMEBOY_CLASSIC.cpp">
       <Filter>Source Files\Systems\GAMEBOY\Cores</Filter>
     </ClCompile>
-    <ClCompile Include="src\_imgui\imgui.cpp">
-      <Filter>Header Files\_imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="src\_imgui\imgui_demo.cpp">
-      <Filter>Header Files\_imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="src\_imgui\imgui_draw.cpp">
-      <Filter>Header Files\_imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="src\_imgui\imgui_impl_sdl3.cpp">
-      <Filter>Header Files\_imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="src\_imgui\imgui_impl_sdlrenderer3.cpp">
-      <Filter>Header Files\_imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="src\_imgui\imgui_stdlib.cpp">
-      <Filter>Header Files\_imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="src\_imgui\imgui_tables.cpp">
-      <Filter>Header Files\_imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="src\_imgui\imgui_widgets.cpp">
-      <Filter>Header Files\_imgui</Filter>
-    </ClCompile>
     <ClCompile Include="src\Systems\CHIP8\Cores\CHIP8X.cpp">
       <Filter>Source Files\Systems\CHIP8\Cores</Filter>
     </ClCompile>
+    <ClCompile Include="src\Libraries\imgui\imgui.cpp">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Libraries\imgui\imgui_demo.cpp">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Libraries\imgui\imgui_draw.cpp">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Libraries\imgui\imgui_impl_sdl3.cpp">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Libraries\imgui\imgui_impl_sdlrenderer3.cpp">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Libraries\imgui\imgui_stdlib.cpp">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Libraries\imgui\imgui_tables.cpp">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Libraries\imgui\imgui_widgets.cpp">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\_nlohmann\json_fwd.hpp">
-      <Filter>Header Files\_nlohmann</Filter>
-    </ClInclude>
-    <ClInclude Include="src\_nlohmann\json.hpp">
-      <Filter>Header Files\_nlohmann</Filter>
-    </ClInclude>
     <ClInclude Include="src\Assistants\BasicAudioSpec.hpp">
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
@@ -226,33 +222,6 @@
     <ClInclude Include="src\Assistants\SimpleFileIO.hpp">
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
-    <ClInclude Include="src\_imgui\imconfig.h">
-      <Filter>Header Files\_imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="src\_imgui\imgui.h">
-      <Filter>Header Files\_imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="src\_imgui\imgui_impl_sdl3.h">
-      <Filter>Header Files\_imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="src\_imgui\imgui_impl_sdlrenderer3.h">
-      <Filter>Header Files\_imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="src\_imgui\imgui_internal.h">
-      <Filter>Header Files\_imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="src\_imgui\imgui_stdlib.h">
-      <Filter>Header Files\_imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="src\_imgui\imstb_rectpack.h">
-      <Filter>Header Files\_imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="src\_imgui\imstb_textedit.h">
-      <Filter>Header Files\_imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="src\_imgui\imstb_truetype.h">
-      <Filter>Header Files\_imgui</Filter>
-    </ClInclude>
     <ClInclude Include="src\Assistants\LifetimeWrapperSDL.hpp">
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
@@ -276,6 +245,54 @@
     </ClInclude>
     <ClInclude Include="src\Assistants\AtomicSharedProxy.hpp">
       <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\imgui\imconfig.h">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\imgui\imgui.h">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\imgui\imgui_impl_sdl3.h">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\imgui\imgui_impl_sdlrenderer3.h">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\imgui\imgui_internal.h">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\imgui\imgui_stdlib.h">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\imgui\imstb_rectpack.h">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\imgui\imstb_textedit.h">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\imgui\imstb_truetype.h">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\atomic_queue\atomic_queue.h">
+      <Filter>Source Files\Libraries\atomic_queue</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\atomic_queue\atomic_queue_mutex.h">
+      <Filter>Source Files\Libraries\atomic_queue</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\atomic_queue\barrier.h">
+      <Filter>Source Files\Libraries\atomic_queue</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\atomic_queue\defs.h">
+      <Filter>Source Files\Libraries\atomic_queue</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\atomic_queue\spinlock.h">
+      <Filter>Source Files\Libraries\atomic_queue</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\nlohmann\json.hpp">
+      <Filter>Source Files\Libraries\nlohmann</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\nlohmann\json_fwd.hpp">
+      <Filter>Source Files\Libraries\nlohmann</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

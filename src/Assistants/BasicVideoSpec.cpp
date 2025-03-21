@@ -10,9 +10,9 @@
 #include <algorithm>
 
 #define IMGUI_DEFINE_MATH_OPERATORS
-#include "../_imgui/imgui.h"
-#include "../_imgui/imgui_impl_sdl3.h"
-#include "../_imgui/imgui_impl_sdlrenderer3.h"
+#include "../Libraries/imgui/imgui.h"
+#include "../Libraries/imgui/imgui_impl_sdl3.h"
+#include "../Libraries/imgui/imgui_impl_sdlrenderer3.h"
 
 #include <SDL3/SDL_platform_defines.h>
 

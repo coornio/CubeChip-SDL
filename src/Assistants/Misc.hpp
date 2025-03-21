@@ -44,5 +44,5 @@ using Expected = std::expected<T, E>;
 // factory for Expected<T, E> type, <E> should be able to override as a boolean.
 template<typename T, typename E>
 Expected<T, E> makeExpected(T&& value, E&& error) {
-	if (error) { return std::unexpected(error); } else { return (value); }
+	if (error) { return std::unexpected(error); } else { return std::forward<T&&>(value); }
 }

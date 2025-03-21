@@ -41,9 +41,9 @@ class FrameLimiter final {
 
 public:
 	FrameLimiter(
-		float  framerate = 60.0f, // 0.5 ... 1000 range
-		bool   firstpass = true,  // skipFirstPass flag
-		bool   lostframe = true   // skipLostFrame flag
+		float framerate = 60.0f, // 0.5 ... 1000 range
+		bool  firstpass = true,  // skipFirstPass flag
+		bool  lostframe = true   // skipLostFrame flag
 	) noexcept {
 		setLimiter(framerate, firstpass, lostframe);
 	}

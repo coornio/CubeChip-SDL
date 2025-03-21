@@ -25,16 +25,9 @@ if(NOT SDL3_FOUND)
   set_property(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/_deps/sdl-src" PROPERTY EXCLUDE_FROM_ALL TRUE)
 endif()
 
-add_executable(${PROJECT_NAME}
-  src/_imgui/imgui.cpp
-  src/_imgui/imgui_demo.cpp
-  src/_imgui/imgui_draw.cpp
-  src/_imgui/imgui_stdlib.cpp
-  src/_imgui/imgui_tables.cpp
-  src/_imgui/imgui_widgets.cpp
-  src/_imgui/imgui_impl_sdl3.cpp
-  src/_imgui/imgui_impl_sdlrenderer3.cpp
+add_subdirectory(src/Libraries)
 
+add_executable(${PROJECT_NAME}
   src/Assistants/BasicLogger.cpp
   src/Assistants/HomeDirManager.cpp
   src/Assistants/BasicVideoSpec.cpp
@@ -62,8 +55,15 @@ add_executable(${PROJECT_NAME}
   src/EmuHost.cpp
   src/CubeChip.cpp
 )
+
+target_link_libraries(${PROJECT_NAME} PRIVATE 
+    imgui
+    atomic_queue
+    SDL3::SDL3-shared
+)
+
 target_include_directories(${PROJECT_NAME} PRIVATE src)
-target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3-shared)
+
 
 if(WIN32)
     if (CMAKE_SYSTEM_VERSION VERSION_LESS "10.0.22000.0")

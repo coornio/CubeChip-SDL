@@ -27,6 +27,14 @@
     <ClCompile Include="src\Assistants\SHA1.cpp" />
     <ClCompile Include="src\CubeChip.cpp" />
     <ClCompile Include="src\EmuHost.cpp" />
+    <ClCompile Include="src\Libraries\imgui\imgui.cpp" />
+    <ClCompile Include="src\Libraries\imgui\imgui_demo.cpp" />
+    <ClCompile Include="src\Libraries\imgui\imgui_draw.cpp" />
+    <ClCompile Include="src\Libraries\imgui\imgui_impl_sdl3.cpp" />
+    <ClCompile Include="src\Libraries\imgui\imgui_impl_sdlrenderer3.cpp" />
+    <ClCompile Include="src\Libraries\imgui\imgui_stdlib.cpp" />
+    <ClCompile Include="src\Libraries\imgui\imgui_tables.cpp" />
+    <ClCompile Include="src\Libraries\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\Systems\BYTEPUSHER\BytePusher_CoreInterface.cpp" />
     <ClCompile Include="src\Systems\BYTEPUSHER\Cores\BYTEPUSHER_STANDARD.cpp" />
     <ClCompile Include="src\Systems\CHIP8\Chip8_CoreInterface.cpp" />
@@ -40,14 +48,6 @@
     <ClCompile Include="src\Systems\GAMEBOY\Cores\GAMEBOY_CLASSIC.cpp" />
     <ClCompile Include="src\Systems\GAMEBOY\GameBoy_CoreInterface.cpp" />
     <ClCompile Include="src\Systems\GameFileChecker.cpp" />
-    <ClCompile Include="src\_imgui\imgui.cpp" />
-    <ClCompile Include="src\_imgui\imgui_demo.cpp" />
-    <ClCompile Include="src\_imgui\imgui_draw.cpp" />
-    <ClCompile Include="src\_imgui\imgui_impl_sdl3.cpp" />
-    <ClCompile Include="src\_imgui\imgui_impl_sdlrenderer3.cpp" />
-    <ClCompile Include="src\_imgui\imgui_stdlib.cpp" />
-    <ClCompile Include="src\_imgui\imgui_tables.cpp" />
-    <ClCompile Include="src\_imgui\imgui_widgets.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Assistants\Aligned.hpp" />
@@ -73,6 +73,22 @@
     <ClInclude Include="src\Assistants\Well512.hpp" />
     <ClInclude Include="src\Cubechip.hpp" />
     <ClInclude Include="src\EmuHost.hpp" />
+    <ClInclude Include="src\Libraries\atomic_queue\atomic_queue.h" />
+    <ClInclude Include="src\Libraries\atomic_queue\atomic_queue_mutex.h" />
+    <ClInclude Include="src\Libraries\atomic_queue\barrier.h" />
+    <ClInclude Include="src\Libraries\atomic_queue\defs.h" />
+    <ClInclude Include="src\Libraries\atomic_queue\spinlock.h" />
+    <ClInclude Include="src\Libraries\imgui\imconfig.h" />
+    <ClInclude Include="src\Libraries\imgui\imgui.h" />
+    <ClInclude Include="src\Libraries\imgui\imgui_impl_sdl3.h" />
+    <ClInclude Include="src\Libraries\imgui\imgui_impl_sdlrenderer3.h" />
+    <ClInclude Include="src\Libraries\imgui\imgui_internal.h" />
+    <ClInclude Include="src\Libraries\imgui\imgui_stdlib.h" />
+    <ClInclude Include="src\Libraries\imgui\imstb_rectpack.h" />
+    <ClInclude Include="src\Libraries\imgui\imstb_textedit.h" />
+    <ClInclude Include="src\Libraries\imgui\imstb_truetype.h" />
+    <ClInclude Include="src\Libraries\nlohmann\json.hpp" />
+    <ClInclude Include="src\Libraries\nlohmann\json_fwd.hpp" />
     <ClInclude Include="src\Systems\BYTEPUSHER\BytePusher_CoreInterface.hpp" />
     <ClInclude Include="src\Systems\BYTEPUSHER\Cores\BYTEPUSHER_STANDARD.hpp" />
     <ClInclude Include="src\Systems\CHIP8\Chip8_CoreInterface.hpp" />
@@ -86,17 +102,6 @@
     <ClInclude Include="src\Systems\GAMEBOY\Cores\GAMEBOY_CLASSIC.hpp" />
     <ClInclude Include="src\Systems\GAMEBOY\GameBoy_CoreInterface.hpp" />
     <ClInclude Include="src\Systems\GameFileChecker.hpp" />
-    <ClInclude Include="src\_imgui\imconfig.h" />
-    <ClInclude Include="src\_imgui\imgui.h" />
-    <ClInclude Include="src\_imgui\imgui_impl_sdl3.h" />
-    <ClInclude Include="src\_imgui\imgui_impl_sdlrenderer3.h" />
-    <ClInclude Include="src\_imgui\imgui_internal.h" />
-    <ClInclude Include="src\_imgui\imgui_stdlib.h" />
-    <ClInclude Include="src\_imgui\imstb_rectpack.h" />
-    <ClInclude Include="src\_imgui\imstb_textedit.h" />
-    <ClInclude Include="src\_imgui\imstb_truetype.h" />
-    <ClInclude Include="src\_nlohmann\json.hpp" />
-    <ClInclude Include="src\_nlohmann\json_fwd.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="external\imgui\misc\debuggers\imgui.natvis" />

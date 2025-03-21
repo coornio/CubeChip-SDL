@@ -27,7 +27,7 @@ class SHA1 {
 public:
 	SHA1() noexcept { reset(); }
 
-	void reset();
+	void reset() noexcept;
 
 	void update(const Str& s);
 	void update(std::istream& is);
