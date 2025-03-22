@@ -56,14 +56,13 @@ add_executable(${PROJECT_NAME}
   src/CubeChip.cpp
 )
 
-target_link_libraries(${PROJECT_NAME} PRIVATE 
-    imgui
-    atomic_queue
-    SDL3::SDL3-shared
-)
-
 target_include_directories(${PROJECT_NAME} PRIVATE src)
 
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    SDL3::SDL3-shared
+    imgui
+    atomic_queue
+)
 
 if(WIN32)
     if (CMAKE_SYSTEM_VERSION VERSION_LESS "10.0.22000.0")

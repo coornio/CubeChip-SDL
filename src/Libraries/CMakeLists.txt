@@ -33,4 +33,5 @@ target_include_directories(
     imgui
     PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${SDL3_INCLUDE_DIRS}
 )
