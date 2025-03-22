@@ -29,6 +29,12 @@ add_library(
     ${CMAKE_CURRENT_SOURCE_DIR}/imgui/imgui_impl_sdlrenderer3.cpp
 )
 
+target_link_libraries(
+    imgui
+    PRIVATE
+    SDL3::SDL3-shared
+)
+
 target_include_directories(
     imgui
     PUBLIC
