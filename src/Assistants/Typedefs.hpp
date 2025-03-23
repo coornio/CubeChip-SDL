@@ -57,7 +57,7 @@ struct Epsilon {
 
 #ifdef __clang__
 	#pragma clang diagnostic push
-	#pragma clang diagnostic ignored "-Winterference-size"
+	#pragma clang diagnostic ignored "-Wnointerference-size"
 #endif
 
 #ifdef __cpp_lib_hardware_interference_size
