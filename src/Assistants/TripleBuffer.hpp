@@ -10,8 +10,10 @@
 #include "Concepts.hpp"
 #include "Aligned.hpp"
 
-#pragma warning(push)
-#pragma warning(disable: 4324)
+#ifdef _MSC_VER
+	#pragma warning(push)
+	#pragma warning(disable: 4324)
+#endif
 
 #if false
 	#define USE_MUTEX
@@ -179,4 +181,6 @@ public:
 	}
 };
 
-#pragma warning(pop)
+#ifdef _MSC_VER
+	#pragma warning(pop)
+#endif

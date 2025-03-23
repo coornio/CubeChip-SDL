@@ -55,6 +55,11 @@ struct Epsilon {
 	constexpr static ::f64 f64{ std::numeric_limits<::f64>::epsilon() };
 };
 
+#ifdef __clang__
+	#pragma clang diagnostic push
+	#pragma clang diagnostic ignored "-Winterference-size"
+#endif
+
 #ifdef __cpp_lib_hardware_interference_size
 	constexpr static auto HDIS{ std::hardware_destructive_interference_size };
 	constexpr static auto HCIS{ std::hardware_constructive_interference_size };
@@ -63,7 +68,11 @@ struct Epsilon {
 	constexpr static auto HCIS{ size_type(64) };
 #endif
 
-#if defined(__APPLE__)
+#ifdef __clang__
+	#pragma clang diagnostic pop
+#endif
+
+#ifdef __APPLE__
 	#define EXEC_POLICY(policy)
 	#include "AtomicSharedProxy.hpp"
 
