@@ -55,9 +55,9 @@ struct Epsilon {
 	constexpr static ::f64 f64{ std::numeric_limits<::f64>::epsilon() };
 };
 
-#ifdef __clang__
-	#pragma clang diagnostic push
-	#pragma clang diagnostic ignored "-Wnointerference-size"
+#ifdef __GNUC__
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Winterference-size"
 #endif
 
 #ifdef __cpp_lib_hardware_interference_size
@@ -68,8 +68,8 @@ struct Epsilon {
 	constexpr static auto HCIS{ size_type(64) };
 #endif
 
-#ifdef __clang__
-	#pragma clang diagnostic pop
+#ifdef __GNUC__
+	#pragma GCC diagnostic pop
 #endif
 
 #ifdef __APPLE__

@@ -262,7 +262,7 @@
       </StringPooling>
       <StructMemberAlignment>Default</StructMemberAlignment>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
-      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
