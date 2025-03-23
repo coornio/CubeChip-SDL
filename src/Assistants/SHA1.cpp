@@ -20,10 +20,10 @@ static constexpr ust BLOCK_BYTES { BLOCK_INTS * 4 };
 
 inline static u32 blk(u32* block, ust i) {
 	return std::rotl(
-		block[i + 13 & 0xF] ^
-		block[i +  8 & 0xF] ^
-		block[i +  2 & 0xF] ^
-		block[i +  0 & 0xF], 1);
+		block[(i + 0xD) & 0xF] ^
+		block[(i + 0x8) & 0xF] ^
+		block[(i + 0x2) & 0xF] ^
+		block[(i + 0x0) & 0xF], 1);
 }
 
 /*------------------------------------------------------------------*/

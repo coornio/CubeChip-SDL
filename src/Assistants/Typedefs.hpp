@@ -55,8 +55,13 @@ struct Epsilon {
 	constexpr static ::f64 f64{ std::numeric_limits<::f64>::epsilon() };
 };
 
-constexpr static auto HDIS{ std::hardware_destructive_interference_size };
-constexpr static auto HCIS{ std::hardware_constructive_interference_size };
+#ifdef __cpp_lib_hardware_interference_size
+	constexpr static auto HDIS{ std::hardware_destructive_interference_size };
+	constexpr static auto HCIS{ std::hardware_constructive_interference_size };
+#else
+	constexpr static auto HDIS{ size_type(64) };
+	constexpr static auto HCIS{ size_type(64) };
+#endif
 
 #if defined(__APPLE__)
 	#define EXEC_POLICY(policy)

@@ -599,7 +599,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 		startAudio(mRegisterV[X] + (mRegisterV[X] == 1));
 	}
 	void SCHIP_LEGACY::instruction_Fx1E(s32 X) noexcept {
-		mRegisterI = mRegisterI + mRegisterV[X] & 0xFFF;
+		mRegisterI = (mRegisterI + mRegisterV[X]) & 0xFFF;
 	}
 	void SCHIP_LEGACY::instruction_Fx29(s32 X) noexcept {
 		mRegisterI = (mRegisterV[X] & 0xF) * 5;
@@ -616,13 +616,13 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 		for (auto idx{ 0 }; idx <= N; ++idx)
 			{ writeMemoryI(mRegisterV[idx], idx); }
 		if (Quirk.idxRegMinus) [[unlikely]]
-			{ mRegisterI = mRegisterI + N & 0xFFF; }
+			{ mRegisterI = (mRegisterI + N) & 0xFFF; }
 	}
 	void SCHIP_LEGACY::instruction_FN65(s32 N) noexcept {
 		for (auto idx{ 0 }; idx <= N; ++idx)
 			{ mRegisterV[idx] = readMemoryI(idx); }
 		if (Quirk.idxRegMinus) [[unlikely]]
-			{ mRegisterI = mRegisterI + N & 0xFFF; }
+			{ mRegisterI = (mRegisterI + N) & 0xFFF; }
 	}
 	void SCHIP_LEGACY::instruction_FN75(s32 N) noexcept {
 		setPermaRegs(std::min(N, 7) + 1);

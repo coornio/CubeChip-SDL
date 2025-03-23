@@ -487,7 +487,7 @@ void CHIP8_MODERN::renderVideoData() {
 		startAudio(mRegisterV[X] + (mRegisterV[X] == 1));
 	}
 	void CHIP8_MODERN::instruction_Fx1E(s32 X) noexcept {
-		mRegisterI = mRegisterI + mRegisterV[X] & 0xFFF;
+		mRegisterI = (mRegisterI + mRegisterV[X]) & 0xFFF;
 	}
 	void CHIP8_MODERN::instruction_Fx29(s32 X) noexcept {
 		mRegisterI = (mRegisterV[X] & 0xF) * 5;
@@ -501,13 +501,13 @@ void CHIP8_MODERN::renderVideoData() {
 		for (auto idx{ 0 }; idx <= N; ++idx)
 			{ writeMemoryI(mRegisterV[idx], idx); }
 		if (!Quirk.idxRegNoInc) [[likely]]
-			{ mRegisterI = mRegisterI + N + 1 & 0xFFF; }
+			{ mRegisterI = (mRegisterI + N + 1) & 0xFFF; }
 	}
 	void CHIP8_MODERN::instruction_FN65(s32 N) noexcept {
 		for (auto idx{ 0 }; idx <= N; ++idx)
 			{ mRegisterV[idx] = readMemoryI(idx); }
 		if (!Quirk.idxRegNoInc) [[likely]]
-			{ mRegisterI = mRegisterI + N + 1 & 0xFFF; }
+			{ mRegisterI = (mRegisterI + N + 1) & 0xFFF; }
 	}
 
 	#pragma endregion

@@ -121,6 +121,9 @@ void Chip8_CoreInterface::handlePreFrameInterrupt() noexcept {
 				//mTargetCPF = std::abs(mTargetCPF);
 			}
 			return;
+
+		default:
+			break;
 	}
 }
 
@@ -147,6 +150,9 @@ void Chip8_CoreInterface::handleEndFrameInterrupt() noexcept {
 			mTargetCPF.store(0, mo::release);
 			//mTargetCPF = 0;
 			return;
+
+		default:
+			break;
 	}
 }
 
@@ -232,13 +238,13 @@ void Chip8_CoreInterface::startAudioAtChannel(u32 index, s32 duration, s32 tone)
 
 	mAudioTimer[index] = static_cast<u8>(duration);
 	mPhaseStep[index] = (sTonalOffset + (tone ? tone
-		: 8 * ((mCurrentPC >> 1) + mStackTop + 1 & 0x3E)
+		: 8 * (((mCurrentPC >> 1) + mStackTop + 1) & 0x3E)
 	)) / ASB->getFrequency();
 }
 
 void Chip8_CoreInterface::pushSquareTone(u32 index) noexcept {
 	std::vector<s16> samplesBuffer \
-		(static_cast<ust>(ASB->getSampleRate(getTargetFPS())));
+		(static_cast<ust>(ASB->getSampleRate(mTargetFPS)));
 
 	if (mAudioTimer[index]) {
 		for (auto& audioSample : samplesBuffer) {

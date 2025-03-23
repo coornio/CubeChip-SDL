@@ -10,6 +10,9 @@
 #include "Concepts.hpp"
 #include "Aligned.hpp"
 
+#pragma warning(push)
+#pragma warning(disable: 4324)
+
 #if false
 	#define USE_MUTEX
 #endif
@@ -175,3 +178,5 @@ public:
 		commitWorkerChanges();
 	}
 };
+
+#pragma warning(pop)

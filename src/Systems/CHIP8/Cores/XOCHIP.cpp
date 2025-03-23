@@ -702,7 +702,7 @@ void XOCHIP::scrollDisplayRT() {
 		startAudioAtChannel(STREAM::UNIQUE, mRegisterV[X] + (mRegisterV[X] == 1));
 	}
 	void XOCHIP::instruction_Fx1E(s32 X) noexcept {
-		mRegisterI = mRegisterI + mRegisterV[X] & 0xFFFF;
+		mRegisterI = (mRegisterI + mRegisterV[X]) & 0xFFFF;
 	}
 	void XOCHIP::instruction_Fx29(s32 X) noexcept {
 		mRegisterI = (mRegisterV[X] & 0xF) * 5;
@@ -722,13 +722,13 @@ void XOCHIP::scrollDisplayRT() {
 		for (auto idx{ 0 }; idx <= N; ++idx)
 			{ writeMemoryI(mRegisterV[idx], idx); }
 		if (!Quirk.idxRegNoInc) [[likely]]
-			{ mRegisterI = mRegisterI + N + 1 & 0xFFFF; }
+			{ mRegisterI = (mRegisterI + N + 1) & 0xFFFF; }
 	}
 	void XOCHIP::instruction_FN65(s32 N) noexcept {
 		for (auto idx{ 0 }; idx <= N; ++idx)
 			{ mRegisterV[idx] = readMemoryI(idx); }
 		if (!Quirk.idxRegNoInc) [[likely]]
-			{ mRegisterI = mRegisterI + N + 1 & 0xFFFF; }
+			{ mRegisterI = (mRegisterI + N + 1) & 0xFFFF; }
 	}
 	void XOCHIP::instruction_FN75(s32 N) noexcept {
 		setPermaRegs(N + 1);

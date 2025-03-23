@@ -35,21 +35,22 @@ public:
 		}
 	}
 
-	operator result_type() { return get<result_type>(); }
+	constexpr operator result_type() noexcept
+		{ return get<result_type>(); }
 
-	template<typename T>
+	template <typename T>
 		requires (std::is_arithmetic_v<T>)
-	T get() noexcept {
+	constexpr T get() noexcept {
 		result_type a, b, c, d;
 
 		a = mState[mIndex];
-		c = mState[mIndex + 13 & 0xF];
+		c = mState[(mIndex + 13) & 0xF];
 		b = a ^ c ^ (a << 16) ^ (c << 15);
-		c = mState[mIndex + 9 & 0xF];
+		c = mState[(mIndex + 9) & 0xF];
 		c = c ^ (c >> 11);
 		a = mState[mIndex] = b ^ c;
 		d = a ^ (a << 5 & 0xDA442D24);
-		mIndex = mIndex + 15 & 0xF;
+		mIndex = (mIndex + 15) & 0xF;
 		a = mState[mIndex];
 		mState[mIndex] = a ^ b ^ d ^ a << 2 ^ b << 18 ^ c << 28;
 		return static_cast<T>(mState[mIndex]);
