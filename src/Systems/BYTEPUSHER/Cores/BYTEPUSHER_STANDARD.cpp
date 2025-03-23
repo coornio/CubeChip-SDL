@@ -19,7 +19,7 @@ BYTEPUSHER_STANDARD::BYTEPUSHER_STANDARD() {
 
 	setSystemFramerate(cRefreshRate);
 
-	mTargetCPF.store(0x10000, mo::release);
+	mTargetCPF = 0x10000;
 }
 
 /*==================================================================*/
@@ -32,12 +32,12 @@ void BYTEPUSHER_STANDARD::instructionLoop() noexcept {
 	mMemoryBank[1] = static_cast<u8>(inputStates & 0xFF);
 	
 	auto cycleCount{ 0 };
-	for (; cycleCount < mTargetCPF.load(mo::acquire); ++cycleCount) {
+	for (; cycleCount < mTargetCPF; ++cycleCount) {
 		mMemoryBank[readData<3>(progPointer + 3)] =
 		mMemoryBank[readData<3>(progPointer + 0)];
 		progPointer = readData<3>(progPointer + 6);
 	}
-	mElapsedCycles.fetch_add(cycleCount, mo::acq_rel);
+	mElapsedCycles += cycleCount;
 }
 
 void BYTEPUSHER_STANDARD::renderAudioData() {

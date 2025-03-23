@@ -17,13 +17,13 @@ GAMEBOY_CLASSIC::GAMEBOY_CLASSIC() {
 
 	setSystemFramerate(cRefreshRate);
 
-	mTargetCPF.store(cCylesPerSec, mo::release);
+	mTargetCPF = cCylesPerSec;
 }
 
 /*==================================================================*/
 
 void GAMEBOY_CLASSIC::instructionLoop() noexcept {
-	const auto maxCycles{ static_cast<s32>(mTargetCPF.load(mo::acquire) / cRefreshRate) };
+	const auto maxCycles{ static_cast<s32>(mTargetCPF / cRefreshRate) };
 
 	auto curCycles{ 0 };
 	while (curCycles < maxCycles) {

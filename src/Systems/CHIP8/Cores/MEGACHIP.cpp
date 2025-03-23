@@ -36,7 +36,7 @@ MEGACHIP::MEGACHIP()
 void MEGACHIP::instructionLoop() noexcept {
 
 	auto cycleCount{ 0 };
-	for (; cycleCount < mTargetCPF.load(mo::acquire); ++cycleCount) {
+	for (; cycleCount < mTargetCPF; ++cycleCount) {
 		const auto HI{ mMemoryBank[mCurrentPC + 0u] };
 		const auto LO{ mMemoryBank[mCurrentPC + 1u] };
 		nextInstruction();
@@ -291,7 +291,7 @@ void MEGACHIP::instructionLoop() noexcept {
 				break;
 		}
 	}
-	mElapsedCycles.fetch_add(cycleCount, mo::acq_rel);
+	mElapsedCycles = cycleCount;
 }
 
 void MEGACHIP::renderAudioData() {
@@ -334,13 +334,13 @@ void MEGACHIP::prepDisplayArea(const Resolution mode) {
 		setDisplayResolution(cScreenMegaX, cScreenMegaY);
 
 		Quirk.waitVblank = false;
-		mTargetCPF.store(cInstSpeedMC, mo::release);
+		mTargetCPF = cInstSpeedMC;
 	}
 	else {
 		setDisplayResolution(cScreenSizeX, cScreenSizeY);
 
 		Quirk.waitVblank = !isLargerDisplay();
-		mTargetCPF.store(isLargerDisplay() ? cInstSpeedLo : cInstSpeedHi, mo::release);
+		mTargetCPF = isLargerDisplay() ? cInstSpeedLo : cInstSpeedHi;
 	}
 };
 

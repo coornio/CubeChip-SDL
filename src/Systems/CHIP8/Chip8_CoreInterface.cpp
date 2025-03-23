@@ -100,8 +100,7 @@ void Chip8_CoreInterface::handlePreFrameInterrupt() noexcept {
 	{
 		case Interrupt::FRAME:
 			mInterrupt = Interrupt::CLEAR;
-			mTargetCPF.fetch_and(~0x80000000, mo::acq_rel);
-			//mTargetCPF = std::abs(mTargetCPF);
+			mTargetCPF = std::abs(mTargetCPF);
 			return;
 
 		case Interrupt::SOUND:
@@ -109,16 +108,14 @@ void Chip8_CoreInterface::handlePreFrameInterrupt() noexcept {
 			if (mAudioTimer[1]) { return; }
 			if (mAudioTimer[2]) { return; }
 			if (mAudioTimer[3]) { return; }
-			//mInterrupt = Interrupt::FINAL;
-			mTargetCPF.store(0, mo::release);
+			mInterrupt = Interrupt::FINAL;
 			mTargetCPF = 0;
 			return;
 
 		case Interrupt::DELAY:
 			if (!mDelayTimer) {
 				mInterrupt = Interrupt::CLEAR;
-				mTargetCPF.fetch_and(~0x80000000, mo::acq_rel);
-				//mTargetCPF = std::abs(mTargetCPF);
+				mTargetCPF = std::abs(mTargetCPF);
 			}
 			return;
 
@@ -133,22 +130,19 @@ void Chip8_CoreInterface::handleEndFrameInterrupt() noexcept {
 		case Interrupt::INPUT:
 			if (keyPressed(mInputReg)) {
 				mInterrupt = Interrupt::CLEAR;
-				mTargetCPF.fetch_and(~0x80000000, mo::acq_rel);
-				//mTargetCPF = std::abs(mTargetCPF);
+				mTargetCPF = std::abs(mTargetCPF);
 				startAudioAtChannel(STREAM::BUZZER, 2);
 			}
 			return;
 
 		case Interrupt::ERROR:
 			addCoreState(EmuState::FATAL);
-			mTargetCPF.store(0, mo::release);
-			//mTargetCPF = 0;
+			mTargetCPF = 0;
 			return;
 
 		case Interrupt::FINAL:
 			setCoreState(EmuState::HALTED);
-			mTargetCPF.store(0, mo::release);
-			//mTargetCPF = 0;
+			mTargetCPF = 0;
 			return;
 
 		default:
@@ -217,7 +211,7 @@ void Chip8_CoreInterface::writeStatistics() {
 		"Time Since:{:9.3f} ms\n"
 		"Frame Work:{:9.3f} ms\n",
 		addCPF(static_cast<s32>(workCycleBias))
-			* getTargetFPS() / 1'000'000.0f,
+			* mTargetFPS / 1'000'000.0f,
 		Pacer->getElapsedMillisLast(), currentFrameTime
 	)), mo::release);
 }
@@ -263,8 +257,7 @@ void Chip8_CoreInterface::instructionError(u32 HI, u32 LO) {
 
 void Chip8_CoreInterface::triggerInterrupt(Interrupt type) noexcept {
 	mInterrupt = type;
-	mTargetCPF.fetch_or(0x80000000, mo::acq_rel);
-	//mTargetCPF = -std::abs(mTargetCPF);
+	mTargetCPF = -std::abs(mTargetCPF);
 }
 
 /*==================================================================*/

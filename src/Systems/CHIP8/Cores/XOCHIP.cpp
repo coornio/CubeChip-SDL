@@ -35,7 +35,7 @@ XOCHIP::XOCHIP()
 	setSystemFramerate(cRefreshRate);
 
 	mCurrentPC = cStartOffset;
-	mTargetCPF.store(cInstSpeedLo, mo::release);
+	mTargetCPF = cInstSpeedLo;
 
 	ASB->pauseStream(STREAM::CHANN1);
 	ASB->pauseStream(STREAM::CHANN2);
@@ -46,7 +46,7 @@ XOCHIP::XOCHIP()
 void XOCHIP::instructionLoop() noexcept {
 
 	auto cycleCount{ 0 };
-	for (; cycleCount < mTargetCPF.load(mo::acquire); ++cycleCount) {
+	for (; cycleCount < mTargetCPF; ++cycleCount) {
 		const auto HI{ mMemoryBank[mCurrentPC + 0u] };
 		const auto LO{ mMemoryBank[mCurrentPC + 1u] };
 		nextInstruction();
@@ -253,7 +253,7 @@ void XOCHIP::instructionLoop() noexcept {
 				break;
 		}
 	}
-	mElapsedCycles.fetch_add(cycleCount, mo::acq_rel);
+	mElapsedCycles += cycleCount;
 }
 
 void XOCHIP::renderAudioData() {

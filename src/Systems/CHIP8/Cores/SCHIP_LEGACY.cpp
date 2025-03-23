@@ -37,7 +37,7 @@ SCHIP_LEGACY::SCHIP_LEGACY()
 void SCHIP_LEGACY::instructionLoop() noexcept {
 
 	auto cycleCount{ 0 };
-	for (; cycleCount < mTargetCPF.load(mo::acquire); ++cycleCount) {
+	for (; cycleCount < mTargetCPF; ++cycleCount) {
 		const auto HI{ mMemoryBank[mCurrentPC + 0u] };
 		const auto LO{ mMemoryBank[mCurrentPC + 1u] };
 		nextInstruction();
@@ -210,7 +210,7 @@ void SCHIP_LEGACY::instructionLoop() noexcept {
 				break;
 		}
 	}
-	mElapsedCycles.fetch_add(cycleCount, mo::acq_rel);
+	mElapsedCycles += cycleCount;
 }
 
 void SCHIP_LEGACY::renderAudioData() {
@@ -251,7 +251,7 @@ void SCHIP_LEGACY::prepDisplayArea(const Resolution mode) {
 	isLargerDisplay(mode != Resolution::LO);
 
 	Quirk.waitVblank = !isLargerDisplay();
-	mTargetCPF.store(isLargerDisplay() ? cInstSpeedLo : cInstSpeedHi, mo::release);
+	mTargetCPF = isLargerDisplay() ? cInstSpeedLo : cInstSpeedHi;
 };
 
 /*==================================================================*/

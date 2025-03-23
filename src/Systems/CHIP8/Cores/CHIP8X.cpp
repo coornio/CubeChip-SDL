@@ -24,7 +24,7 @@ CHIP8X::CHIP8X() {
 	setSystemFramerate(cRefreshRate);
 
 	mCurrentPC = cStartOffset;
-	mTargetCPF.store(cInstSpeedHi, mo::release);
+	mTargetCPF = cInstSpeedHi;
 
 	mColoredBuffer(0, 0) = cForeColor[2];
 
@@ -37,7 +37,7 @@ CHIP8X::CHIP8X() {
 void CHIP8X::instructionLoop() noexcept {
 
 	auto cycleCount{ 0 };
-	for (; cycleCount < mTargetCPF.load(mo::acquire); ++cycleCount) {
+	for (; cycleCount < mTargetCPF; ++cycleCount) {
 		const auto HI{ mMemoryBank[mCurrentPC + 0u] };
 		const auto LO{ mMemoryBank[mCurrentPC + 1u] };
 		nextInstruction();
@@ -204,7 +204,7 @@ void CHIP8X::instructionLoop() noexcept {
 				break;
 		}
 	}
-	mElapsedCycles.fetch_add(cycleCount, mo::acq_rel);
+	mElapsedCycles += cycleCount;
 }
 
 void CHIP8X::renderAudioData() {

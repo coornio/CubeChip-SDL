@@ -81,9 +81,9 @@ protected:
 	std::unique_ptr<FrameLimiter>  Pacer;
 	std::unique_ptr<BasicKeyboard> Input;
 
-	Atom<u64> mElapsedCycles{};
-	Atom<f32> mTargetFPS{};
-	Atom<s32> mTargetCPF{};
+	u64 mElapsedCycles{};
+	f32 mTargetFPS{};
+	s32 mTargetCPF{};
 
 public:
 	EmuInterface() noexcept;
@@ -107,9 +107,6 @@ public:
 	virtual s32 getMaxDisplayW() const noexcept = 0;
 	virtual s32 getMaxDisplayH() const noexcept = 0;
 	virtual s32 getDisplaySize() const noexcept { return getMaxDisplayW() * getMaxDisplayH(); }
-
-	f32 getTargetFPS()     const noexcept { return mTargetFPS.load(mo::acquire); }
-	u64 getElapsedCycles() const noexcept { return mElapsedCycles.load(mo::acquire); }
 
 protected:
 	void setSystemFramerate(f32 value) noexcept;

@@ -54,8 +54,9 @@ public:
 
 	void processFrame() override;
 
-	s32  getCPF() const noexcept override { return mTargetCPF.load(mo::acquire); }
-	s32  addCPF(s32)    noexcept override { return mTargetCPF.load(mo::acquire); }
+protected:
+	s32  getCPF() const noexcept override { return mTargetCPF; }
+	s32  addCPF(s32)    noexcept override { return mTargetCPF; }
 
 protected:
 	static constexpr u32 cBitsColor[]{

@@ -199,15 +199,17 @@ public:
 	void processFrame() override;
 	void writeStatistics() override;
 
-	s32 getCPF()    const noexcept override { return mTargetCPF.load(mo::acquire); }
+private:
+	s32 getCPF()    const noexcept override { return mTargetCPF; }
 	s32 addCPF(s32 delta) noexcept override {
 		if (stateRunning() && !stateWaiting()) {
-			return mTargetCPF.fetch_add(delta, mo::acq_rel) + delta;
+			return mTargetCPF += delta;
 		} else {
-			return mTargetCPF.load(mo::acquire);
+			return mTargetCPF;
 		}
 	}
-
+	
+public:
 	bool stateRunning() const noexcept { return (
 		mInterrupt != Interrupt::FINAL &&
 		mInterrupt != Interrupt::ERROR

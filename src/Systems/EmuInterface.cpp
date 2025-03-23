@@ -42,7 +42,7 @@ EmuInterface::~EmuInterface() noexcept {
 }
 
 void EmuInterface::setSystemFramerate(f32 value) noexcept {
-	mTargetFPS.store(value, mo::release);
+	mTargetFPS = value;
 	Pacer->setLimiter(value);
 }
 
