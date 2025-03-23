@@ -7,11 +7,11 @@
 #pragma once
 
 #include <chrono>
-#include <cstdint>
+#include <cstddef>
 #include <concepts>
 
 class Well512 {
-	using result_type = std::uint32_t;
+	using result_type = unsigned int;
 	result_type mIndex{};
 	result_type mState[16];
 
@@ -27,10 +27,19 @@ public:
 		}
 	}
 
+	template <typename T, std::size_t N>
+		requires (std::is_arithmetic_v<T> && N >= 16)
+	constexpr Well512(T(&seeds)[N]) noexcept {
+		for (auto i{ 0 }; i < 16; ++i) {
+			mState[i] = static_cast<result_type>(seeds[i]);
+		}
+	}
+
 	operator result_type() { return get<result_type>(); }
 
 	template<typename T>
-	T get() requires std::is_arithmetic_v<T> {
+		requires (std::is_arithmetic_v<T>)
+	T get() noexcept {
 		result_type a, b, c, d;
 
 		a = mState[mIndex];
