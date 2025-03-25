@@ -54,9 +54,9 @@ class CoreRegistry {
 	};
 
 	using CoreRegList = std::vector<CoreDetails>;
-	static inline std::unordered_map<Str, CoreRegList> mRegistry;
-	static inline CoreRegList mEligible;
-	static inline CoreDetails mCurrentCore;
+	static inline std::unordered_map<Str, CoreRegList> mRegistry{};
+	static inline CoreRegList mEligible{};
+	static inline CoreDetails mCurrentCore{};
 
 	CoreRegistry()                               = delete;
 	CoreRegistry(const CoreRegistry&)            = delete;
