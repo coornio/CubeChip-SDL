@@ -36,7 +36,7 @@ enum class GameFileType {
 
 class EmuInterface;
 
-class CoreRegistry {
+namespace {
 	using CoreConstructor = EmuInterface* (*)();
 	using ProgramTester   = bool (*)(const char*, ust);
 	using FileExtList     = std::vector<Str>;
@@ -54,9 +54,13 @@ class CoreRegistry {
 	};
 
 	using CoreRegList = std::vector<CoreDetails>;
-	static inline std::unordered_map<Str, CoreRegList> mRegistry{};
-	static inline CoreRegList mEligible{};
-	static inline CoreDetails mCurrentCore{};
+}
+
+class CoreRegistry {
+	using Registrations = std::unordered_map<Str, CoreRegList>;
+	static inline Registrations mRegistry{};
+	static inline CoreRegList   mEligible{};
+	static inline CoreDetails   mCurrentCore{};
 
 	CoreRegistry()                               = delete;
 	CoreRegistry(const CoreRegistry&)            = delete;
@@ -84,13 +88,13 @@ public:
 		}
 	}
 
-	static const CoreRegList* findCore(const Str& ext) {
+	static const CoreRegList* findEligibleCores(const Str& ext) {
 		auto it = mRegistry.find(ext);
 		return it != mRegistry.end() ? &it->second : nullptr;
 	}
 
 	[[nodiscard]]
-	static EmuInterface* constructCore() noexcept;
+	static EmuInterface* constructCore(size_type idx = 0) noexcept;
 
 	static void clearEligibleCores() noexcept {
 		mEligible.clear();
