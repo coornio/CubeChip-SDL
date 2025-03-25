@@ -53,8 +53,8 @@ struct CoreDetails {
 	}
 };
 
-using CoreRegList  = std::vector<CoreDetails>;
-using JsonDatabase = nlohmann::json;
+using CoreRegList = std::vector<CoreDetails>;
+using Json        = nlohmann::json;
 
 /*==================================================================*/
 
@@ -63,8 +63,9 @@ class CoreRegistry {
 	static inline Registrations sRegistry{};
 	static inline CoreRegList   sEligible{};
 	static inline CoreDetails   sCurrentCore{};
-	static        JsonDatabase  sProgramDB;
-	static        JsonDatabase  sCoreConfig;
+
+	static Json sProgramDB;
+	static Json sCoreConfig;
 
 	CoreRegistry()                               = delete;
 	CoreRegistry(const CoreRegistry&)            = delete;
@@ -76,10 +77,14 @@ class CoreRegistry {
 public:
 	static bool validateProgram(const char* fileData, ust fileSize, const Str& fileType, const Str& fileSHA1) noexcept;
 
+public:
 	static void loadProgramDB(const Path& dbPath = {}) noexcept;
+private:
+	static bool loadJsonFromFile(const Path& path, Json& output) noexcept;
 
 	/*==================================================================*/
 
+public:
 	static void registerCore(CoreConstructor&& ctor, ProgramTester&& tester, FileExtList exts) noexcept;
 
 	static const CoreRegList* findEligibleCores(const Str& ext) noexcept;

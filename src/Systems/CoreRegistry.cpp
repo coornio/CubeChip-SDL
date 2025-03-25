@@ -12,9 +12,8 @@
 
 /*==================================================================*/
 
-JsonDatabase CoreRegistry::sProgramDB{
-	getBasePath()
-};
+Json CoreRegistry::sProgramDB{};
+Json CoreRegistry::sCoreConfig{};
 
 /*==================================================================*/
 
@@ -30,7 +29,8 @@ bool CoreRegistry::validateProgramByType(const char* fileData, ust fileSize, con
 	const auto matchingCores{ findEligibleCores(fileType) };
 
 	if (!matchingCores || matchingCores->empty()) {
-		blog.newEntry(BLOG::WARN, "Unable to match Program to an existing System variant!");
+		blog.newEntry(BLOG::WARN,
+			"Unable to match Program to an existing System variant!");
 		return false;
 	} else {
 		sEligible.clear();
@@ -41,7 +41,8 @@ bool CoreRegistry::validateProgramByType(const char* fileData, ust fileSize, con
 		}
 
 		if (sEligible.empty()) {
-			blog.newEntry(BLOG::WARN, "Program rejected by eligible System variants!");
+			blog.newEntry(BLOG::WARN,
+				"Program rejected by all eligible System variants!");
 			return false;
 		} else {
 			return true;
@@ -63,7 +64,8 @@ void CoreRegistry::registerCore(CoreConstructor&& ctor, ProgramTester&& tester, 
 	for (const auto& ext : reg.fileExtensions) {
 		try { sRegistry[ext].push_back(reg); }
 		catch (const std::exception& e) {
-			blog.newEntry(BLOG::ERROR, "Exception triggered trying to register Emulator Core! \n{}", e.what());
+			blog.newEntry(BLOG::ERROR,
+				"Exception triggered trying to register Emulator Core! [{}]", e.what());
 		}
 	}
 }
@@ -80,7 +82,8 @@ EmuInterface* CoreRegistry::constructCore(size_type idx) noexcept {
 		sCurrentCore = sEligible[idx];
 		return sCurrentCore.constructCore();
 	} catch (const std::exception& e) {
-		blog.newEntry(BLOG::ERROR, "Exception triggered trying to construct Emulator Core! \n{}", e.what());
+		blog.newEntry(BLOG::ERROR,
+			"Exception triggered trying to construct Emulator Core! [{}]", e.what());
 		return nullptr;
 	}
 }
@@ -88,21 +91,27 @@ EmuInterface* CoreRegistry::constructCore(size_type idx) noexcept {
 void CoreRegistry::loadProgramDB(const Path& dbPath) noexcept {
 	static const auto defaultPath{ Path(getBasePath()) / "programDB.json" };
 
-	if (auto dbData = ::readFileData(dbPath)) {
-		try {
-			sProgramDB = JsonDatabase::parse(dbData->begin(), dbData->end());
-		} catch (const JsonDatabase::parse_error& e) {
-			blog.newEntry(BLOG::ERROR, "Exception triggered trying to parse default JSON DB! \n{}", e.what());
+	if (!loadJsonFromFile(dbPath, sProgramDB)) {
+		if (!loadJsonFromFile(defaultPath, sProgramDB)) {
+			sProgramDB.clear();
+			blog.newEntry(BLOG::WARN,
+				"Failed to load Program Database!");
 		}
-		return;
 	}
+}
 
-	if (auto dbData = ::readFileData(defaultPath)) {
+bool CoreRegistry::loadJsonFromFile(const Path& path, Json& output) noexcept {
+	if (auto jsonData = ::readFileData(path)) {
 		try {
-			sProgramDB = JsonDatabase::parse(dbData->begin(), dbData->end());
-		} catch (const JsonDatabase::parse_error& e) {
-			blog.newEntry(BLOG::ERROR, "Exception triggered trying to parse custom JSON DB! \n{}", e.what());
+			output = Json::parse(jsonData->begin(), jsonData->end());
+			return true;
+		} catch (const Json::parse_error& e) {
+			blog.newEntry(BLOG::ERROR,
+				"Exception triggered trying to parse JSON file: \"{}\" [{}]", path.string(), e.what());
 		}
-		return;
+	} else {
+		blog.newEntry(BLOG::WARN,
+			"Unable to locate or read from JSON file: \"{}\"", path.string());
 	}
+	return false;
 }
