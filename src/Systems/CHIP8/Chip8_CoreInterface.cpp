@@ -70,7 +70,7 @@ bool Chip8_CoreInterface::keyPressed(u8* returnKey) noexcept {
 	if (mTickCurr >= mTickLast + mTickSpan)
 		[[unlikely]] { mKeysPrev &= ~mKeysLoop; }
 
-		const auto pressKeys{ mKeysCurr & ~mKeysPrev };
+	/**/const auto pressKeys{mKeysCurr & ~mKeysPrev};
 	if (pressKeys) {
 		const auto pressDiff{ pressKeys & ~mKeysLoop };
 		const auto validKeys{ pressDiff ? pressDiff : mKeysLoop };

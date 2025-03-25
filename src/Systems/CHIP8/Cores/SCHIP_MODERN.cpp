@@ -7,8 +7,14 @@
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/BasicAudioSpec.hpp"
 #include "../../../Assistants/Well512.hpp"
+#include "../../CoreRegistry.hpp"
 
 #include "SCHIP_MODERN.hpp"
+
+static CoreRegistry::Register<SCHIP_MODERN> self(
+	SCHIP_MODERN::validateProgram,
+	{ ".sc8" }
+);
 
 /*==================================================================*/
 

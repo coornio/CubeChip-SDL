@@ -47,7 +47,7 @@
     <ClCompile Include="src\Systems\EmuInterface.cpp" />
     <ClCompile Include="src\Systems\GAMEBOY\Cores\GAMEBOY_CLASSIC.cpp" />
     <ClCompile Include="src\Systems\GAMEBOY\GameBoy_CoreInterface.cpp" />
-    <ClCompile Include="src\Systems\GameFileChecker.cpp" />
+    <ClCompile Include="src\Systems\CoreRegistry.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Assistants\Aligned.hpp" />
@@ -101,7 +101,7 @@
     <ClInclude Include="src\Systems\EmuInterface.hpp" />
     <ClInclude Include="src\Systems\GAMEBOY\Cores\GAMEBOY_CLASSIC.hpp" />
     <ClInclude Include="src\Systems\GAMEBOY\GameBoy_CoreInterface.hpp" />
-    <ClInclude Include="src\Systems\GameFileChecker.hpp" />
+    <ClInclude Include="src\Systems\CoreRegistry.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="external\imgui\misc\debuggers\imgui.natvis" />

@@ -76,7 +76,7 @@
     <ClCompile Include="src\Systems\EmuInterface.cpp">
       <Filter>Source Files\Systems</Filter>
     </ClCompile>
-    <ClCompile Include="src\Systems\GameFileChecker.cpp">
+    <ClCompile Include="src\Systems\CoreRegistry.cpp">
       <Filter>Source Files\Systems</Filter>
     </ClCompile>
     <ClCompile Include="src\Systems\CHIP8\Chip8_CoreInterface.cpp">
@@ -183,7 +183,7 @@
     <ClInclude Include="src\Systems\EmuInterface.hpp">
       <Filter>Source Files\Systems</Filter>
     </ClInclude>
-    <ClInclude Include="src\Systems\GameFileChecker.hpp">
+    <ClInclude Include="src\Systems\CoreRegistry.hpp">
       <Filter>Source Files\Systems</Filter>
     </ClInclude>
     <ClInclude Include="src\Systems\CHIP8\Chip8_CoreInterface.hpp">

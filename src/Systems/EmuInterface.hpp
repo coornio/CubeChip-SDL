@@ -30,7 +30,7 @@
 #include "../Assistants/Misc.hpp"
 #include "../Assistants/RGBA.hpp"
 
-#include "GameFileChecker.hpp"
+#include "CoreRegistry.hpp"
 
 /*==================================================================*/
 

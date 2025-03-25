@@ -7,8 +7,14 @@
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/BasicAudioSpec.hpp"
 #include "../../../Assistants/Well512.hpp"
+#include "../../CoreRegistry.hpp"
 
 #include "CHIP8_MODERN.hpp"
+
+static CoreRegistry::Register<CHIP8_MODERN> self(
+	CHIP8_MODERN::validateProgram,
+	{ ".ch8" }
+);
 
 /*==================================================================*/
 

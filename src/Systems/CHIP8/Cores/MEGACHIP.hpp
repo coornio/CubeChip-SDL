@@ -102,12 +102,12 @@ class MEGACHIP final : public Chip8_CoreInterface {
 
 /*==================================================================*/
 
-	auto  NNNN() const noexcept { return mMemoryBank[mCurrentPC] << 8 | mMemoryBank[mCurrentPC + 1]; }
+	auto NNNN() const noexcept { return mMemoryBank[mCurrentPC] << 8 | mMemoryBank[mCurrentPC + 1]; }
 
 public:
 	MEGACHIP();
 
-	static constexpr bool isGameFileValid(
+	static constexpr bool validateProgram(
 		const char* fileData,
 		const ust   fileSize
 	) noexcept {

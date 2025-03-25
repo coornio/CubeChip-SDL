@@ -326,7 +326,7 @@ private:
 public:
 	GAMEBOY_CLASSIC();
 
-	static constexpr bool isGameFileValid(
+	static constexpr bool validateProgram(
 		const char* fileData,
 		const ust   fileSize
 	) noexcept {

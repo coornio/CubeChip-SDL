@@ -7,8 +7,14 @@
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/BasicAudioSpec.hpp"
 #include "../../../Assistants/Well512.hpp"
+#include "../../CoreRegistry.hpp"
 
 #include "MEGACHIP.hpp"
+
+static CoreRegistry::Register<MEGACHIP> self(
+	MEGACHIP::validateProgram,
+	{ ".mc8" }
+);
 
 /*==================================================================*/
 

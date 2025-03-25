@@ -7,8 +7,14 @@
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/BasicAudioSpec.hpp"
 #include "../../../Assistants/Well512.hpp"
+#include "../../CoreRegistry.hpp"
 
 #include "GAMEBOY_CLASSIC.hpp"
+
+static CoreRegistry::Register<GAMEBOY_CLASSIC> self(
+	GAMEBOY_CLASSIC::validateProgram,
+	{ ".gb" }
+);
 
 /*==================================================================*/
 

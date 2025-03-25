@@ -48,7 +48,7 @@ private:
 public:
 	BYTEPUSHER_STANDARD();
 
-	static constexpr bool isGameFileValid(
+	static constexpr bool validateProgram(
 		const char* fileData,
 		const ust   fileSize
 	) noexcept {

@@ -12,7 +12,7 @@
 
 #include "EmuHost.hpp"
 #include "Systems/EmuInterface.hpp"
-#include "Systems/GameFileChecker.hpp"
+#include "Systems/CoreRegistry.hpp"
 
 /*==================================================================*/
 	#pragma region VM_Host Singleton Class
@@ -20,7 +20,7 @@
 EmuHost::~EmuHost() noexcept = default;
 EmuHost::EmuHost(const Path& gamePath) noexcept {
 	EmuInterface::assignComponents(HDM, BVS);
-	HDM->setValidator(GameFileChecker::validate);
+	HDM->setValidator(CoreRegistry::validateProgram);
 
 	if (!gamePath.empty()) { loadGameFile(gamePath); }
 }
@@ -34,13 +34,13 @@ void EmuHost::StopEmuCoreThread::operator()(EmuInterface* ptr) const noexcept {
 void EmuHost::discardCore() {
 	iGuest.reset();
 	BVS->resetMainWindow();
-	GameFileChecker::deleteGameCore();
+	CoreRegistry::clearEligibleCores();
 
 	HDM->clearCachedFileData();
 }
 
 void EmuHost::replaceCore() {
-	iGuest.reset(GameFileChecker::constructCore());
+	iGuest.reset(CoreRegistry::constructCore());
 	if (iGuest) {
 		BVS->setMainWindowTitle(HDM->getFileStem().c_str());
 		BVS->displayBuffer.resize(iGuest->getDisplaySize());

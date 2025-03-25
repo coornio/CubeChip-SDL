@@ -7,8 +7,14 @@
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/BasicAudioSpec.hpp"
 #include "../../../Assistants/Well512.hpp"
+#include "../../CoreRegistry.hpp"
 
 #include "XOCHIP.hpp"
+
+static CoreRegistry::Register<XOCHIP> self(
+	XOCHIP::validateProgram,
+	{ ".xo8" }
+);
 
 /*==================================================================*/
 

@@ -50,7 +50,7 @@ class SCHIP_LEGACY final : public Chip8_CoreInterface {
 public:
 	SCHIP_LEGACY();
 
-	static constexpr bool isGameFileValid(
+	static constexpr bool validateProgram(
 		const char* fileData,
 		const ust   fileSize
 	) noexcept {

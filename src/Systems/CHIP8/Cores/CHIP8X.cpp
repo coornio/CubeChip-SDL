@@ -4,12 +4,17 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include "../../../Assistants/RangeIterator.hpp"
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/BasicAudioSpec.hpp"
 #include "../../../Assistants/Well512.hpp"
+#include "../../CoreRegistry.hpp"
 
 #include "CHIP8X.hpp"
+
+static CoreRegistry::Register<CHIP8X> self(
+	CHIP8X::validateProgram,
+	{ ".c8x" }
+);
 
 /*==================================================================*/
 

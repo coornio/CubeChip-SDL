@@ -6,8 +6,14 @@
 
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/BasicAudioSpec.hpp"
+#include "../../CoreRegistry.hpp"
 
 #include "BYTEPUSHER_STANDARD.hpp"
+
+static CoreRegistry::Register<BYTEPUSHER_STANDARD> self(
+	BYTEPUSHER_STANDARD::validateProgram,
+	{ ".BytePusher" }
+);
 
 /*==================================================================*/
 
