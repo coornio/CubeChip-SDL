@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <vector>
 #include <unordered_map>
 
 #include "../Assistants/Typedefs.hpp"
@@ -36,78 +37,72 @@ enum class GameFileType {
 
 class EmuInterface;
 
-namespace {
-	using CoreConstructor = EmuInterface* (*)();
-	using ProgramTester   = bool (*)(const char*, ust);
-	using FileExtList     = std::vector<Str>;
-	
-	struct CoreDetails {
-		CoreConstructor constructCore{};
-		ProgramTester   testProgram{};
-		FileExtList     fileExtensions{};
+using CoreConstructor = EmuInterface* (*)();
+using ProgramTester   = bool (*)(const char*, ust);
+using FileExtList     = std::vector<Str>;
 
-		void clear() noexcept {
-			constructCore = nullptr;
-			testProgram   = nullptr;
-			fileExtensions.clear();
-		}
-	};
+struct CoreDetails {
+	CoreConstructor constructCore{};
+	ProgramTester   testProgram{};
+	FileExtList     fileExtensions{};
 
-	using CoreRegList = std::vector<CoreDetails>;
-}
+	void clear() noexcept {
+		constructCore = nullptr;
+		testProgram   = nullptr;
+		fileExtensions.clear();
+	}
+};
+
+using CoreRegList  = std::vector<CoreDetails>;
+using JsonDatabase = nlohmann::json;
+
+/*==================================================================*/
 
 class CoreRegistry {
 	using Registrations = std::unordered_map<Str, CoreRegList>;
-	static inline Registrations mRegistry{};
-	static inline CoreRegList   mEligible{};
-	static inline CoreDetails   mCurrentCore{};
+	static inline Registrations sRegistry{};
+	static inline CoreRegList   sEligible{};
+	static inline CoreDetails   sCurrentCore{};
+	static        JsonDatabase  sProgramDB;
+	static        JsonDatabase  sCoreConfig;
 
 	CoreRegistry()                               = delete;
 	CoreRegistry(const CoreRegistry&)            = delete;
 	CoreRegistry& operator=(const CoreRegistry&) = delete;
 
-public:
-	static bool validateProgram(const char* fileData, ust fileSize, const Str& fileType, const Str& fileSHA1) noexcept {
-		if (fileSHA1.empty()) {
-			/* fall back to extension-based core pick */
-			return validateProgram(fileData, fileSize, fileType);
-		} else {
-			/* decide based on database entry instead */
-			return validateProgram(fileData, fileSize, fileType); // placeholder
-		}
-	}
-
-private:
-	static bool validateProgram(const char* fileData, ust fileSize, const Str& fileType) noexcept;
+	static bool validateProgramByHash(const char* fileData, ust fileSize, const Str& fileSHA1) noexcept;
+	static bool validateProgramByType(const char* fileData, ust fileSize, const Str& fileType) noexcept;
 
 public:
-	static void registerCore(CoreConstructor&& ctor, ProgramTester&& tester, FileExtList exts) {
-		CoreDetails reg{ ctor, tester, std::move(exts), };
-		for (const auto& ext : reg.fileExtensions) {
-			mRegistry[ext].push_back(reg);
-		}
-	}
+	static bool validateProgram(const char* fileData, ust fileSize, const Str& fileType, const Str& fileSHA1) noexcept;
 
-	static const CoreRegList* findEligibleCores(const Str& ext) {
-		auto it = mRegistry.find(ext);
-		return it != mRegistry.end() ? &it->second : nullptr;
-	}
+	static void loadProgramDB(const Path& dbPath = {}) noexcept;
+
+	/*==================================================================*/
+
+	static void registerCore(CoreConstructor&& ctor, ProgramTester&& tester, FileExtList exts) noexcept;
+
+	static const CoreRegList* findEligibleCores(const Str& ext) noexcept;
 
 	[[nodiscard]]
 	static EmuInterface* constructCore(size_type idx = 0) noexcept;
 
+	/*==================================================================*/
+
 	static void clearEligibleCores() noexcept {
-		mEligible.clear();
-		mCurrentCore.clear();
+		sEligible.clear();
+		sCurrentCore.clear();
 	}
 	static void clearCurrentCore() noexcept {
-		mCurrentCore.clear();
+		sCurrentCore.clear();
 	}
 
 	[[nodiscard]]
-	static const auto& getEligibleCores() noexcept { return mEligible; }
+	static const auto& getEligibleCores() noexcept { return sEligible; }
 	[[nodiscard]]
-	static const auto& getCurrentCore() noexcept { return mCurrentCore; }
+	static const auto& getCurrentCore() noexcept { return sCurrentCore; }
+
+	/*==================================================================*/
 
 	template <typename Core>
 		requires (std::convertible_to<Core*, EmuInterface*>)

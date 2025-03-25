@@ -21,6 +21,7 @@ EmuHost::~EmuHost() noexcept = default;
 EmuHost::EmuHost(const Path& gamePath) noexcept {
 	EmuInterface::assignComponents(HDM, BVS);
 	HDM->setValidator(CoreRegistry::validateProgram);
+	CoreRegistry::loadProgramDB();
 
 	if (!gamePath.empty()) { loadGameFile(gamePath); }
 }
@@ -107,6 +108,10 @@ void EmuHost::checkForHotkeys() {
 	}
 	if (Input.isPressed(KEY(DOWN))) {
 		BVS->rotateViewport(-1);
+	}
+	if (Input.isPressed(KEY(F1))) {
+		CoreRegistry::loadProgramDB();
+		blog.newEntry(BLOG::INFO, "Reloading ProgramDB!");
 	}
 
 	if (iGuest) {
