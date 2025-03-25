@@ -109,7 +109,7 @@ public:
 		requires (std::convertible_to<Core*, EmuInterface*>)
 	struct Register {
 		Register(ProgramTester&& tester, FileExtList exts) {
-			registerCore([]-> EmuInterface* { return new Core(); },
+			registerCore([]() -> EmuInterface* { return new Core(); },
 				std::move(tester), std::move(exts));
 		}
 	};
