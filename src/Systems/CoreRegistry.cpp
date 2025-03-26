@@ -91,12 +91,11 @@ EmuInterface* CoreRegistry::constructCore(size_type idx) noexcept {
 void CoreRegistry::loadProgramDB(const Path& dbPath) noexcept {
 	static const auto defaultPath{ Path(getBasePath()) / "programDB.json" };
 
-	if (!loadJsonFromFile(dbPath, sProgramDB)) {
-		if (!loadJsonFromFile(defaultPath, sProgramDB)) {
-			sProgramDB.clear();
-			blog.newEntry(BLOG::WARN,
-				"Failed to load Program Database!");
-		}
+	const auto& checkPath{ dbPath.empty() ? defaultPath : dbPath };
+	if (!loadJsonFromFile(checkPath, sProgramDB)) {
+		sProgramDB.clear();
+		blog.newEntry(BLOG::WARN,
+			"Failed to load Program Database: \"{}\"", checkPath.string());
 	}
 }
 
@@ -109,9 +108,6 @@ bool CoreRegistry::loadJsonFromFile(const Path& path, Json& output) noexcept {
 			blog.newEntry(BLOG::ERROR,
 				"Exception triggered trying to parse JSON file: \"{}\" [{}]", path.string(), e.what());
 		}
-	} else {
-		blog.newEntry(BLOG::WARN,
-			"Unable to locate or read from JSON file: \"{}\"", path.string());
 	}
 	return false;
 }
