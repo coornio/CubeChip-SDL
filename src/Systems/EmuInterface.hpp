@@ -60,8 +60,6 @@ class Well512;
 /*==================================================================*/
 
 class EmuInterface {
-	static inline Atom<u32>
-		mGlobalState{ EmuState::NORMAL };
 
 protected:
 	static inline HomeDirManager* HDM{};
@@ -85,6 +83,9 @@ protected:
 	f32 mTargetFPS{};
 	s32 mTargetCPF{};
 
+private:
+	Atom<u32> mGlobalState{ EmuState::NORMAL };
+
 public:
 	EmuInterface() noexcept;
 	virtual ~EmuInterface() noexcept;
@@ -97,12 +98,12 @@ public:
 		BVS = pBVS;
 	}
 
-	static void addSystemState(EmuState state) noexcept { mGlobalState.fetch_or ( state, mo::acq_rel); }
-	static void subSystemState(EmuState state) noexcept { mGlobalState.fetch_and(~state, mo::acq_rel); }
-	static void xorSystemState(EmuState state) noexcept { mGlobalState.fetch_xor( state, mo::acq_rel); }
+	void addSystemState(EmuState state) noexcept { mGlobalState.fetch_or ( state, mo::acq_rel); }
+	void subSystemState(EmuState state) noexcept { mGlobalState.fetch_and(~state, mo::acq_rel); }
+	void xorSystemState(EmuState state) noexcept { mGlobalState.fetch_xor( state, mo::acq_rel); }
 
-	static void setSystemState(EmuState state) noexcept { mGlobalState.store(state, mo::release); }
-	static auto getSystemState()               noexcept { return mGlobalState.load(mo::acquire);  }
+	void setSystemState(EmuState state) noexcept { mGlobalState.store(state, mo::release); }
+	auto getSystemState()               noexcept { return mGlobalState.load(mo::acquire);  }
 
 	virtual s32 getMaxDisplayW() const noexcept = 0;
 	virtual s32 getMaxDisplayH() const noexcept = 0;
@@ -115,12 +116,6 @@ protected:
 	virtual s32 getCPF()         const noexcept = 0;
 	virtual s32 addCPF(s32 delta)      noexcept = 0;
 
-public:
-	[[nodiscard]]
-	virtual bool isSystemStopped() const noexcept = 0;
-	virtual bool isCoreStopped()   const noexcept = 0;
-
-protected:
 	virtual void writeStatistics();
 public:
 	Str fetchStatistics() const noexcept;

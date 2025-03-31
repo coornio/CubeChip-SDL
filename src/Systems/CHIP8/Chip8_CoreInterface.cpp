@@ -136,12 +136,12 @@ void Chip8_CoreInterface::handleEndFrameInterrupt() noexcept {
 			return;
 
 		case Interrupt::ERROR:
-			addCoreState(EmuState::FATAL);
+			addSystemState(EmuState::FATAL);
 			mTargetCPF = 0;
 			return;
 
 		case Interrupt::FINAL:
-			setCoreState(EmuState::HALTED);
+			setSystemState(EmuState::HALTED);
 			mTargetCPF = 0;
 			return;
 
@@ -179,7 +179,7 @@ void Chip8_CoreInterface::performProgJump(u32 next) noexcept {
 
 void Chip8_CoreInterface::processFrame() {
 	if (Pacer->checkTime()) {
-		if (isSystemStopped())
+		if (getSystemState())
 			[[unlikely]] { return; }
 
 		updateKeyStates();

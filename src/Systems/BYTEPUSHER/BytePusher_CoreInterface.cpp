@@ -32,7 +32,8 @@ BytePusher_CoreInterface::~BytePusher_CoreInterface() noexcept {}
 
 void BytePusher_CoreInterface::processFrame() {
 	if (Pacer->checkTime()) {
-		if (isSystemStopped()) { return; }
+		if (getSystemState())
+			[[unlikely]] { return; }
 
 		instructionLoop();
 		renderAudioData();

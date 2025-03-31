@@ -896,7 +896,7 @@ void MEGACHIP::scrollBuffersRT() {
 
 				for (auto colN{ 0 }, offsetX{ originX }; colN < mTexture.W; ++colN, ++I)
 				{
-					if (const auto sourceColorIdx{ readMemory(I) }; sourceColorIdx)
+					if (const auto sourceColorIdx{ readMemory(I) })
 					{
 						auto& collideCoord{ mCollisionMap(offsetX, offsetY) };
 						auto& backbufCoord{ mBackgroundBuffer(offsetX, offsetY) };

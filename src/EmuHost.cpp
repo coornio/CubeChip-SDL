@@ -53,7 +53,7 @@ void EmuHost::replaceCore() {
 
 void EmuHost::loadGameFile(const Path& gameFile) {
 	BVS->raiseMainWindow();
-	blog.newEntry(BLOG::INFO, "Attempting to access: \"{}\"", gameFile.string());
+	blog.newEntry(BLOG::INFO, "Attempting to load: \"{}\"", gameFile.string());
 	if (HDM->validateGameFile(gameFile)) {
 		replaceCore();
 		blog.newEntry(BLOG::INFO, "File has been accepted!");
@@ -63,10 +63,12 @@ void EmuHost::loadGameFile(const Path& gameFile) {
 }
 
 void EmuHost::pauseSystem(bool state) const noexcept {
+	if (!iGuest) { return; }
+
 	if (state) {
-		EmuInterface::addSystemState(EmuState::HIDDEN);
+		iGuest->addSystemState(EmuState::HIDDEN);
 	} else {
-		EmuInterface::subSystemState(EmuState::HIDDEN);
+		iGuest->subSystemState(EmuState::HIDDEN);
 	}
 }
 

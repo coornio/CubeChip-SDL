@@ -30,7 +30,8 @@ GameBoy_CoreInterface::~GameBoy_CoreInterface() noexcept {}
 
 void GameBoy_CoreInterface::processFrame() {
 	if (Pacer->checkTime()) {
-		if (isSystemStopped()) { return; }
+		if (getSystemState())
+			[[unlikely]] { return; }
 
 		updateKeyStates();
 		instructionLoop();

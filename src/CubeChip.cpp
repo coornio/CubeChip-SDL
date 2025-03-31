@@ -97,7 +97,6 @@ SDL_AppResult SDL_AppEvent(void *pHost, SDL_Event *Event) {
 	Host.processInterfaceEvent(Event);
 
 	if (Host.isMainWindow(Event->window.windowID)) {
-		static bool mainWindowPaused{};
 
 		switch (Event->type) {
 			case SDL_EVENT_QUIT:
@@ -109,15 +108,11 @@ SDL_AppResult SDL_AppEvent(void *pHost, SDL_Event *Event) {
 				break;
 
 			case SDL_EVENT_WINDOW_MINIMIZED:
-				if (!mainWindowPaused) {
-					Host.pauseSystem(mainWindowPaused = true);
-				}
+				Host.pauseSystem(true);
 				break;
 
 			case SDL_EVENT_WINDOW_RESTORED:
-				if (mainWindowPaused) {
-					Host.pauseSystem(mainWindowPaused = false);
-				}
+				Host.pauseSystem(false);
 				break;
 
 			case SDL_EVENT_WINDOW_DISPLAY_CHANGED:

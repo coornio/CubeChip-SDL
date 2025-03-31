@@ -28,25 +28,24 @@ HomeDirManager* HomeDirManager::create(const char* const org, const char* const 
 Path* HomeDirManager::addSystemDir(const Path& sub, const Path& sys) noexcept {
 	if (sub.empty()) { return nullptr; }
 	
-	const Path newDirPath{ getHomePath() / sys / sub };
+	const auto newDirPath{ ::getHomePath() / sys / sub };
 
-	const auto it{ std::find_if(
-		std::begin(mDirectories), std::end(mDirectories),
+	const auto it{ std::find_if(EXEC_POLICY(unseq)
+		mDirectories.begin(), mDirectories.end(),
 		[&newDirPath](const Path& dirEntry) {
 			return dirEntry == newDirPath;
 		}
 	) };
 
-	if (it != std::end(mDirectories)) { return &(*it); }
+	if (it != mDirectories.end()) { return &(*it); }
 
-	const auto dirCreated{ fs::create_directories(newDirPath) };
-	if (!dirCreated) {
+	if (const auto dirCreated{ fs::create_directories(newDirPath) }) {
+		mDirectories.push_back(newDirPath);
+		return &mDirectories.back();
+	} else {
 		blog.newEntry(BLOG::ERROR, "Unable to create directory: \"{}\" [{}]",
 			newDirPath.string(), dirCreated.error().message());
 		return nullptr;
-	} else {
-		mDirectories.push_back(newDirPath);
-		return &mDirectories.back();
 	}
 }
 

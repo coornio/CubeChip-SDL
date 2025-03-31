@@ -67,7 +67,6 @@ protected:
 	} Quirk;
 
 	struct PlatformTraits final {
-		u32  mCoreState{ EmuState::NORMAL };
 		bool mLargerDisplay{};
 		bool mManualRefresh{};
 		bool mPixelTrailing{};
@@ -93,16 +92,6 @@ protected:
 	};
 
 /*==================================================================*/
-
-	void addCoreState(EmuState state) noexcept { Trait.mCoreState |=  state; }
-	void subCoreState(EmuState state) noexcept { Trait.mCoreState &= ~state; }
-	void xorCoreState(EmuState state) noexcept { Trait.mCoreState ^=  state; }
-
-	void setCoreState(EmuState state) noexcept { Trait.mCoreState = state; }
-	auto getCoreState()         const noexcept { return Trait.mCoreState;  }
-
-	bool isSystemStopped() const noexcept override { return getCoreState() || getSystemState(); }
-	bool isCoreStopped()   const noexcept override { return getCoreState(); }
 
 	bool isLargerDisplay() const noexcept { return Trait.mLargerDisplay; }
 	bool isManualRefresh() const noexcept { return Trait.mManualRefresh; }

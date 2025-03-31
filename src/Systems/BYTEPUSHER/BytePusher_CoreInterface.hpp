@@ -30,18 +30,6 @@ protected:
 		mCustomBinds.assign(std::begin(binds), std::end(binds));
 	}
 
-	u32  mCoreState{};
-
-	void addCoreState(const EmuState state) noexcept { mCoreState |=  state; }
-	void subCoreState(const EmuState state) noexcept { mCoreState &= ~state; }
-	void xorCoreState(const EmuState state) noexcept { mCoreState ^=  state; }
-
-	void setCoreState(const EmuState state) noexcept { mCoreState = state; }
-	auto getCoreState()               const noexcept { return mCoreState;  }
-
-	bool isSystemStopped() const noexcept override { return getCoreState() || getSystemState(); }
-	bool isCoreStopped()   const noexcept override { return getCoreState(); }
-
 	void copyGameToMemory(u8* dest) noexcept;
 
 	virtual void instructionLoop() noexcept = 0;
