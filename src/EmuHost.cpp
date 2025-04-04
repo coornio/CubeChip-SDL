@@ -26,7 +26,7 @@ EmuHost::EmuHost(const Path& gamePath) noexcept {
 	if (!gamePath.empty()) { loadGameFile(gamePath); }
 }
 
-void EmuHost::StopEmuCoreThread::operator()(EmuInterface* ptr) const noexcept {
+void EmuHost::StopEmuCoreThread::operator()(EmuInterface* ptr) noexcept {
 	if (ptr) { ptr->stopWorker(); delete ptr; }
 }
 
@@ -62,7 +62,7 @@ void EmuHost::loadGameFile(const Path& gameFile) {
 	}
 }
 
-void EmuHost::pauseSystem(bool state) const noexcept {
+void EmuHost::hideMainWindow(bool state) noexcept {
 	if (!iGuest) { return; }
 
 	if (state) {
@@ -72,8 +72,18 @@ void EmuHost::pauseSystem(bool state) const noexcept {
 	}
 }
 
+void EmuHost::pauseSystem(bool state) noexcept {
+	if (!iGuest) { return; }
+
+	if (state) {
+		iGuest->addSystemState(EmuState::PAUSED);
+	} else {
+		iGuest->subSystemState(EmuState::PAUSED);
+	}
+}
+
 void EmuHost::quitApplication() noexcept {
-	if (iGuest) { discardCore(); }
+	iGuest.reset();
 }
 
 bool EmuHost::isMainWindow(u32 windowID) const noexcept {

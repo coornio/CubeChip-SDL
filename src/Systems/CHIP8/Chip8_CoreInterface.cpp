@@ -30,8 +30,6 @@ Chip8_CoreInterface::Chip8_CoreInterface() noexcept
 	loadPresetBinds();
 }
 
-Chip8_CoreInterface::~Chip8_CoreInterface() noexcept {}
-
 /*==================================================================*/
 
 void Chip8_CoreInterface::updateKeyStates() {
@@ -177,7 +175,7 @@ void Chip8_CoreInterface::performProgJump(u32 next) noexcept {
 
 /*==================================================================*/
 
-void Chip8_CoreInterface::processFrame() {
+void Chip8_CoreInterface::mainSystemLoop() {
 	if (Pacer->checkTime()) {
 		if (getSystemState())
 			[[unlikely]] { return; }
@@ -197,7 +195,7 @@ void Chip8_CoreInterface::processFrame() {
 
 void Chip8_CoreInterface::writeStatistics() {
 	// XXX need to find a way to toggle flag for benchmarking
-	if (!false) [[unlikely]] {
+	if (!true) [[unlikely]] {
 		EmuInterface::writeStatistics();
 		return;
 	}

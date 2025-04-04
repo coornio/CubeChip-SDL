@@ -43,6 +43,18 @@ void BasicAudioSpec::addGlobalGain(s32 gain) noexcept {
 /*==================================================================*/
 	#pragma region BasicAudioSpec Singleton Class
 
+AudioSpecBlock::AudioSpecBlock(
+	SDL_AudioFormat format, s32 channels, s32 frequency, s32 streams,
+	SDL_AudioDeviceID device
+) noexcept
+	: mAudioStreams(std::max(streams, 1))
+{
+	mAudioSpec = { format, std::max(channels, 1), std::max(frequency, 1) };
+	for (auto& audioStream : mAudioStreams) {
+		audioStream = SDL_OpenAudioDeviceStream(device, &mAudioSpec, nullptr, nullptr);
+	}
+}
+
 bool AudioSpecBlock::isStreamPaused(u32 index) const noexcept {
 	assert(index < mAudioStreams.size() && "isStreamPaused() index out-of-bounds");
 	const auto deviceID{ SDL_GetAudioStreamDevice(mAudioStreams[index]) };

@@ -183,9 +183,8 @@ protected:
 
 public:
 	Chip8_CoreInterface() noexcept;
-	~Chip8_CoreInterface() noexcept override;
 
-	void processFrame() override;
+	void mainSystemLoop() override;
 	void writeStatistics() override;
 
 private:

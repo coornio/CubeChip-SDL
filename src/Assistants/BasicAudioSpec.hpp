@@ -9,10 +9,10 @@
 #include <cmath>
 #include <atomic>
 #include <vector>
+#include <memory>
 #include <cassert>
 #include <utility>
 #include <algorithm>
-#include <execution>
 
 #include <SDL3/SDL.h>
 
@@ -52,8 +52,6 @@ public:
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 class AudioSpecBlock {
-	using size_type = std::size_t;
-
 	SDL_AudioSpec mAudioSpec;
 	std::vector<SDL_Unique<SDL_AudioStream>>
 		mAudioStreams;
@@ -62,14 +60,7 @@ public:
 	AudioSpecBlock(
 		SDL_AudioFormat format, s32 channels, s32 frequency, s32 streams,
 		SDL_AudioDeviceID device = SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK
-	) noexcept
-		: mAudioStreams(std::max(streams, 1))
-	{
-		mAudioSpec = { format, std::max(channels, 1), std::max(frequency, 1) };
-		for (auto& audioStream : mAudioStreams) {
-			audioStream = SDL_OpenAudioDeviceStream(device, &mAudioSpec, nullptr, nullptr);
-		}
-	}
+	) noexcept;
 
 	AudioSpecBlock(const AudioSpecBlock&) = delete;
 	AudioSpecBlock& operator=(const AudioSpecBlock&) = delete;
@@ -102,7 +93,7 @@ public:
 	 * @param[in] sampleData :: pointer to audio samples buffer.
 	 * @param[in] bufferSize :: size of buffer in bytes.
 	 */
-	template <typename T> requires std::is_arithmetic_v<T>
+	template <typename T> requires (std::is_arithmetic_v<T>)
 	void pushAudioData(u32 index, T* sampleData, ust bufferSize) const {
 		if (isStreamPaused(index) || !bufferSize) { return; }
 
@@ -126,7 +117,7 @@ public:
 	 * @param[in] index :: the device/stream to push audio to.
 	 * @param[in] samplesBuffer :: audio samples buffer (C style).
 	 */
-	template <typename T, size_type N> requires std::is_arithmetic_v<T>
+	template <typename T, size_type N> requires (std::is_arithmetic_v<T>)
 	void pushAudioData(u32 index, T(&samplesBuffer)[N]) const {
 		pushAudioData(index, samplesBuffer, N);
 	}

@@ -36,7 +36,7 @@ class EmuHost final {
 	static inline BasicAudioSpec* BAS{};
 
 	struct StopEmuCoreThread {
-		void operator()(EmuInterface* ptr) const noexcept;
+		void operator()(EmuInterface* ptr) noexcept;
 	};
 
 	std::unique_ptr<EmuInterface, StopEmuCoreThread> iGuest;
@@ -82,7 +82,8 @@ public:
 		BVS->processInterfaceEvent(std::forward<T>(event));
 	}
 
-	void pauseSystem(bool state) const noexcept;
+	void hideMainWindow(bool state) noexcept;
+	void pauseSystem(bool state) noexcept;
 	void quitApplication() noexcept;
 	void loadGameFile(const Path&);
 

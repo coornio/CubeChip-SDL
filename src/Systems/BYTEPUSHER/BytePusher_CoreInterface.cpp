@@ -13,8 +13,6 @@
 
 /*==================================================================*/
 
-Path* BytePusher_CoreInterface::sSavestatePath{};
-
 BytePusher_CoreInterface::BytePusher_CoreInterface() noexcept
 	: ASB{ std::make_unique<AudioSpecBlock>(SDL_AUDIO_S16, 1, 15'360, STREAM::COUNT) }
 {
@@ -26,11 +24,9 @@ BytePusher_CoreInterface::BytePusher_CoreInterface() noexcept
 	loadPresetBinds();
 }
 
-BytePusher_CoreInterface::~BytePusher_CoreInterface() noexcept {}
-
 /*==================================================================*/
 
-void BytePusher_CoreInterface::processFrame() {
+void BytePusher_CoreInterface::mainSystemLoop() {
 	if (Pacer->checkTime()) {
 		if (getSystemState())
 			[[unlikely]] { return; }

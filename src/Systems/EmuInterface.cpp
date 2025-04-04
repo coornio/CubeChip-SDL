@@ -26,7 +26,7 @@ void EmuInterface::stopWorker() noexcept {
 
 void EmuInterface::threadEntry(std::stop_token token) {
 	while (!token.stop_requested())
-		[[likely]] { processFrame(); }
+		[[likely]] { mainSystemLoop(); }
 }
 
 EmuInterface::EmuInterface() noexcept
@@ -37,9 +37,9 @@ EmuInterface::EmuInterface() noexcept
 	RNG = &sWell512;
 }
 
-EmuInterface::~EmuInterface() noexcept {
-	subSystemState(EmuState::PAUSED);
-}
+EmuInterface::~EmuInterface() noexcept {}
+
+/*==================================================================*/
 
 void EmuInterface::setSystemFramerate(f32 value) noexcept {
 	mTargetFPS = value;

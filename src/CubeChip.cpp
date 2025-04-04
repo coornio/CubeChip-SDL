@@ -108,11 +108,11 @@ SDL_AppResult SDL_AppEvent(void *pHost, SDL_Event *Event) {
 				break;
 
 			case SDL_EVENT_WINDOW_MINIMIZED:
-				Host.pauseSystem(true);
+				Host.hideMainWindow(true);
 				break;
 
 			case SDL_EVENT_WINDOW_RESTORED:
-				Host.pauseSystem(false);
+				Host.hideMainWindow(false);
 				break;
 
 			case SDL_EVENT_WINDOW_DISPLAY_CHANGED:

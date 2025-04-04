@@ -13,7 +13,7 @@
 class BytePusher_CoreInterface : public EmuInterface {
 
 protected:
-	static Path* sSavestatePath;
+	static inline Path* sSavestatePath{};
 
 	std::unique_ptr<AudioSpecBlock> ASB;
 
@@ -38,9 +38,8 @@ protected:
 
 public:
 	BytePusher_CoreInterface() noexcept;
-	~BytePusher_CoreInterface() noexcept override;
 
-	void processFrame() override;
+	void mainSystemLoop() override;
 
 protected:
 	s32  getCPF() const noexcept override { return mTargetCPF; }

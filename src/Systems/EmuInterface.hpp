@@ -111,7 +111,7 @@ public:
 
 protected:
 	void setSystemFramerate(f32 value) noexcept;
-	virtual void processFrame() = 0;
+	virtual void mainSystemLoop() = 0;
 
 	virtual s32 getCPF()         const noexcept = 0;
 	virtual s32 addCPF(s32 delta)      noexcept = 0;
