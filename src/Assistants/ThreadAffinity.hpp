@@ -32,7 +32,7 @@ namespace thread_affinity {
 		GetSystemInfo(&sysinfo);
 		return sysinfo.dwNumberOfProcessors;
 	#elif defined(__linux__) || defined(__APPLE__)
-		return std::max(1, std::thread::hardware_concurrency()); // fallback
+		return std::max(1u, std::thread::hardware_concurrency()); // fallback
 	#else
 		return 1; // Web or unknown
 	#endif
