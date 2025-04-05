@@ -294,6 +294,9 @@
     <ClInclude Include="src\Libraries\nlohmann\json_fwd.hpp">
       <Filter>Source Files\Libraries\nlohmann</Filter>
     </ClInclude>
+    <ClInclude Include="src\Assistants\ThreadAffinity.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="external\imgui\misc\debuggers\imgui.natvis" />

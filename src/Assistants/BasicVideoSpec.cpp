@@ -16,7 +16,7 @@
 
 #include <SDL3/SDL_platform_defines.h>
 
-#ifdef SDL_PLATFORM_WIN32
+#ifdef _WIN32
 	#define NOMINMAX
 	#pragma warning(push)
 	#pragma warning(disable : 5039)

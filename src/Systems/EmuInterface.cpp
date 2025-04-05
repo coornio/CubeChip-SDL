@@ -4,6 +4,7 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include "../Assistants/ThreadAffinity.hpp"
 #include "../Assistants/FrameLimiter.hpp"
 #include "../Assistants/BasicInput.hpp"
 #include "../Assistants/Well512.hpp"
@@ -25,6 +26,8 @@ void EmuInterface::stopWorker() noexcept {
 }
 
 void EmuInterface::threadEntry(std::stop_token token) {
+	thread_affinity::set_affinity(2);
+	
 	while (!token.stop_requested())
 		[[likely]] { mainSystemLoop(); }
 }

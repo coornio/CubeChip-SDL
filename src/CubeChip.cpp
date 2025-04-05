@@ -14,11 +14,13 @@
 #include "Assistants/HomeDirManager.hpp"
 #include "Assistants/BasicVideoSpec.hpp"
 #include "Assistants/BasicAudioSpec.hpp"
+#include "Assistants/ThreadAffinity.hpp"
 
 #include "Cubechip.hpp"
 #include "EmuHost.hpp"
 
-#if _WIN32
+#ifdef _WIN32
+	#define NOMINMAX
 	#pragma warning(push)
 	#pragma warning(disable : 5039)
 		#include <mbctype.h>
@@ -74,6 +76,7 @@ SDL_AppResult SDL_AppInit(void **Host, int argc, char *argv[]) {
 	)) { return SDL_APP_FAILURE; }
 
 	*Host = EmuHost::create(argc <= 1 ? "" : argv[1]);
+	thread_affinity::set_affinity(0);
 	return SDL_APP_CONTINUE;
 }
 
