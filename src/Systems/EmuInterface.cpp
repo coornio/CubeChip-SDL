@@ -26,7 +26,7 @@ void EmuInterface::stopWorker() noexcept {
 }
 
 void EmuInterface::threadEntry(std::stop_token token) {
-	thread_affinity::set_affinity(2);
+	thread_affinity::set_affinity(~0b11ull);
 	
 	while (!token.stop_requested())
 		[[likely]] { mainSystemLoop(); }

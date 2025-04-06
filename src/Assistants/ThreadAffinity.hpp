@@ -52,45 +52,56 @@ namespace thread_affinity {
 	#endif
 	}
 
+#if defined(_WIN32)
 	/**
-	 * @brief Sets thread affinity to desired logical core. On MacOS, a tag is used instead to recommend
-	 * affinity grouping to the scheduler, with 0 meaning no influence. Other platforms are no-ops.
-	 * @param[in] id_or_tag :: Physical core ID (0-based), or affinity tag.
-	 * @param[in] thread :: The jthread-type pointer to query (optional). If missing, assume self-thread.
+	 * @brief Sets thread affinity to desired logical cores. Will ignore invalid affinity masks safely.
+	 * @param[in] affinity_mask :: Bitwise mask to control which logical cores are eligible.
+	 * @param[in] thread_handle :: Thread handle pointer to (optionally) target a different thread, otherwise pick own thread.
 	 * @return Boolean if successful.
 	 */
-	inline bool set_affinity(unsigned id_or_tag, std::jthread* thread = nullptr) {
-	#if defined(_WIN32)
-		if (id_or_tag >= get_logical_core_count())
-			[[unlikely]] { return false; }
+	inline bool set_affinity(unsigned long long affinity_mask, void* thread_handle = nullptr) noexcept {
+		void* chosen_thread{ thread_handle ? thread_handle : GetCurrentThread() };
+		return SetThreadAffinityMask(static_cast<HANDLE>(chosen_thread), affinity_mask & ((1ull << get_logical_core_count()) - 1));
+	}
+#elif defined(__linux__)
+	/**
+	 * @brief Sets thread affinity to desired logical cores. Will ignore invalid affinity masks safely.
+	 * @param[in] affinity_mask :: Bitwise mask to control which logical cores are eligible.
+	 * @param[in] thread_handle :: Thread handle pointer to (optionally) target a different thread, otherwise pick own thread.
+	 * @return Boolean if successful.
+	 */
+	inline bool set_affinity(unsigned long long affinity_mask, void* thread_handle = nullptr) noexcept {
+		if ((affinity_mask & ((1ull << get_logical_core_count()) - 1)) == 0x0) { return false; }
 
-		return SetThreadAffinityMask(
-			thread ? thread->native_handle() : GetCurrentThread(),
-			1ull << id_or_tag);
+		cpu_set_t cpu_aff; CPU_ZERO(&cpu_aff);
 
-	#elif defined(__linux__)
-		if (id_or_tag >= get_logical_core_count())
-			[[unlikely]] { return false; }
+		for (auto i{ 0 }; i < 64; ++i) {
+			if (affinity_mask & (1ull << i))
+				{ CPU_SET(i, &cpu_aff); }
+		}
 
-		cpu_set_t cpuset; CPU_ZERO(&cpuset);
-		CPU_SET(id_or_tag, &cpuset);
-
-		return pthread_setaffinity_np(
-			thread ? static_cast<pthread_t>(thread->native_handle()) : pthread_self(),
-			sizeof(cpu_set_t), &cpuset) == 0;
-
-	#elif defined(__APPLE__)
-		auto affinity_tag{ static_cast<integer_t>(id_or_tag) };
+		auto chosen_thread{ thread_handle ? *static_cast<pthread_t*>(thread_handle) : pthread_self() };
+		return pthread_setaffinity_np(chosen_thread, sizeof(cpu_set_t), &cpu_aff) == 0;
+	}
+#elif defined(__APPLE__)
+	/**
+	 * @brief Sets thread affinity to desired tag. Tag "0" will clear an existing tag.
+	 * @param[in] affinity_tag :: Tag value which controls the grouping of threads, if eligible.
+	 * @param[in] thread_handle :: Thread handle pointer to (optionally) target a different thread, otherwise pick own thread.
+	 * @return Boolean if successful.
+	 */
+	inline bool set_affinity(unsigned long long affinity_tag, void* thread_handle = nullptr) noexcept {
+		auto chosen_tag{ static_cast<integer_t>(affinity_tag) };
+		auto chosen_thread{ thread_handle ? *static_cast<pthread_t*>(thread_handle) : pthread_self() };
 
 		return thread_policy_set(
-			pthread_mach_thread_np(thread ? thread->native_handle() : pthread_self()),
-			THREAD_AFFINITY_POLICY, &affinity_tag, THREAD_AFFINITY_POLICY_COUNT) == KERN_SUCCESS;
-
-	#else
-		(void)id_or_tag;
-		(void)thread;
-
-		return false;
-	#endif
+			pthread_mach_thread_np(chosen_thread), THREAD_AFFINITY_POLICY,
+			&chosen_tag, THREAD_AFFINITY_POLICY_COUNT) == KERN_SUCCESS;
 	}
+#else
+	/**
+	 * @brief Unsupported in the current platform. Effectively a no-op.
+	 */
+	inline bool set_affinity(unsigned long long, void* = nullptr) noexcept { return false; }
+#endif
 }

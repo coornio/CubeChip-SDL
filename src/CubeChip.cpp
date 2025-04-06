@@ -76,7 +76,7 @@ SDL_AppResult SDL_AppInit(void **Host, int argc, char *argv[]) {
 	)) { return SDL_APP_FAILURE; }
 
 	*Host = EmuHost::create(argc <= 1 ? "" : argv[1]);
-	thread_affinity::set_affinity(0);
+	thread_affinity::set_affinity(0b11ull);
 	return SDL_APP_CONTINUE;
 }
 
