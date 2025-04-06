@@ -122,8 +122,14 @@ void EmuHost::checkForHotkeys() {
 		BVS->rotateViewport(-1);
 	}
 	if (Input.isPressed(KEY(F1))) {
+		blog.newEntry(BLOG::INFO, "Attempting to load ProgramDB!");
 		CoreRegistry::loadProgramDB();
-		blog.newEntry(BLOG::INFO, "Reloading ProgramDB!");
+	}
+	if (Input.isPressed(KEY(F2))) {
+		BVS->toggleIntegerScaling();
+	}
+	if (Input.isPressed(KEY(F3))) {
+		BVS->cycleViewportScaleMode();
 	}
 
 	if (iGuest) {

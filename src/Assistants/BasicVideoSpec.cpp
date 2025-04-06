@@ -210,7 +210,7 @@ void BasicVideoSpec::renderViewport() {
 			showErrorBox("Failed to create GUI texture!");
 			return;
 		} else {
-			SDL_SetTextureScaleMode(mOuterTexture, SDL_SCALEMODE_NEAREST);
+			SDL_SetTextureScaleMode(mOuterTexture, mViewportScaleMode);
 			SDL_SetRenderTarget(mMainRenderer, mOuterTexture);
 			SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 			SDL_RenderClear(mMainRenderer);
@@ -421,14 +421,20 @@ void BasicVideoSpec::renderPresent(const char* const stats) {
 		}
 
 		if (mSuccessful && mOuterTexture) {
-			const auto aspectRatio{ std::min(
-				viewportFrameDimensions.x / outerRect.W,
-				viewportFrameDimensions.y / outerRect.H
-			) };
+			const auto aspectRatio{ mIntegerScaling
+				? std::floor(std::min(
+					viewportFrameDimensions.x / outerRect.W,
+					viewportFrameDimensions.y / outerRect.H
+				))
+				: std::min(
+					viewportFrameDimensions.x / outerRect.W,
+					viewportFrameDimensions.y / outerRect.H
+				)
+			};
 
 			const auto viewportDimensions{ ImVec2{
-				outerRect.W * std::max(std::floor(aspectRatio), 1.0f),
-				outerRect.H * std::max(std::floor(aspectRatio), 1.0f)
+				outerRect.W * std::max(aspectRatio, 1.0f),
+				outerRect.H * std::max(aspectRatio, 1.0f)
 			} };
 
 			const auto viewportOffsets{ (viewportFrameDimensions - viewportDimensions) / 2.0f };

@@ -55,7 +55,7 @@ SDL_AppResult SDL_AppInit(void **Host, int argc, char *argv[]) {
 	}
 #endif
 
-#if _WIN32
+#ifdef _WIN32
 	_setmbcp(CP_UTF8);
 	setlocale(LC_CTYPE, ".UTF-8");
 	SetConsoleOutputCP(CP_UTF8);

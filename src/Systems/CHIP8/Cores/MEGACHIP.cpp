@@ -318,8 +318,13 @@ void MEGACHIP::renderAudioData() {
 }
 
 void MEGACHIP::renderVideoData() {
+	if (isManualRefresh()) {
+		BVS->setViewportSizes(mDisplayW, mDisplayH, cResSizeMult / 2, -2);
+		return;
+	}
+
 	BVS->setViewportSizes(mDisplayW, mDisplayH, isLargerDisplay() ? cResSizeMult / 2 : cResSizeMult, +2);
-	if (isManualRefresh()) { return; }
+
 	BVS->displayBuffer.write(mDisplayBuffer[0], isPixelTrailing()
 		? [](u32 pixel) noexcept {
 			static constexpr u32 layer[4]{ 0xFF, 0xE7, 0x6F, 0x37 };

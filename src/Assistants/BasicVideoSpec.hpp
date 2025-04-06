@@ -90,8 +90,11 @@ class BasicVideoSpec final {
 	Atom<bool> mNewTextureNeeded{};
 
 	bool mEnableScanline{};
+	bool mIntegerScaling{};
 
 	s32  mViewportRotation{};
+	SDL_ScaleMode mViewportScaleMode
+		{ SDL_SCALEMODE_NEAREST };
 
 public:
 	TripleBuffer<u32> displayBuffer;
@@ -106,14 +109,34 @@ public:
 
 	static void showErrorBox(const char* const title) noexcept;
 
-	static auto getDisplayWidth(u32 displayID) noexcept {
+	static auto getCurrentDisplaySize(u32 displayID) noexcept {
 		const auto displayMode{ SDL_GetCurrentDisplayMode(displayID) };
-		return displayMode ? displayMode->w : 0;
+		return Rect{ displayMode->w, displayMode->h };
 	}
-	static auto getDisplayHeight(u32 displayID) noexcept {
-		const auto displayMode{ SDL_GetCurrentDisplayMode(displayID) };
-		return displayMode ? displayMode->h : 0;
+
+	bool isIntegerScaling()     const noexcept { return mIntegerScaling; }
+	void isIntegerScaling(bool state) noexcept { mIntegerScaling = state; }
+	void toggleIntegerScaling()       noexcept { mIntegerScaling = !mIntegerScaling; }
+
+	auto getViewportScaleMode() const noexcept { return mViewportScaleMode; }
+	void setViewportScaleMode(SDL_ScaleMode mode) noexcept {
+		if (mode != SDL_SCALEMODE_INVALID) [[likely]]
+			{ SDL_SetTextureScaleMode(mOuterTexture, mViewportScaleMode = mode); }
 	}
+	void cycleViewportScaleMode() noexcept {
+		switch (mViewportScaleMode) {
+			case SDL_SCALEMODE_NEAREST:
+				setViewportScaleMode(SDL_SCALEMODE_LINEAR);
+				break;
+			case SDL_SCALEMODE_LINEAR:
+				setViewportScaleMode(SDL_SCALEMODE_PIXELART);
+				break;
+			default:
+				setViewportScaleMode(SDL_SCALEMODE_NEAREST);
+				break;
+		}
+	}
+
 
 	void setOutlineColor(u32 color) noexcept;
 

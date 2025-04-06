@@ -35,8 +35,8 @@ enum BIC_Button {
 class BasicKeyboard final {
 	static constexpr auto TOTALKEYS{ 0u + SDL_SCANCODE_COUNT };
 
-	Uint8 mOldState[TOTALKEYS]{};
-	Uint8 mCurState[TOTALKEYS]{};
+	u8 mOldState[TOTALKEYS]{};
+	u8 mCurState[TOTALKEYS]{};
 
 public:
 	void updateStates() noexcept {
@@ -72,9 +72,9 @@ public:
 	#pragma region BasicMouse Class
 
 class BasicMouse final {
-	Uint32 mCurState{}, mOldState{};
-	float mPosX{}, mPosY{};
-	float mRelX{}, mRelY{};
+	u32 mCurState{}, mOldState{};
+	f32 mPosX{}, mPosY{};
+	f32 mRelX{}, mRelY{};
 
 public:
 	void updateStates() noexcept {
@@ -85,10 +85,10 @@ public:
 		mRelX = mPosX - oldX; mRelY = mPosY - oldY;
 	}
 
-	float getRelX() const noexcept { return mRelX; }
-	float getRelY() const noexcept { return mRelY; }
-	float getPosX() const noexcept { return mPosX; }
-	float getPosY() const noexcept { return mPosY; }
+	f32  getRelX() const noexcept { return mRelX; }
+	f32  getRelY() const noexcept { return mRelY; }
+	f32  getPosX() const noexcept { return mPosX; }
+	f32  getPosY() const noexcept { return mPosY; }
 
 	bool isHeldPrev(BIC_Button key) const noexcept { return mOldState & key; }
 	bool isHeld    (BIC_Button key) const noexcept { return mCurState & key; }
