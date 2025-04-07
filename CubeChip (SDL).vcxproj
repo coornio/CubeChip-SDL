@@ -67,6 +67,7 @@
     <ClInclude Include="src\Assistants\RangeIterator.hpp" />
     <ClInclude Include="src\Assistants\RGBA.hpp" />
     <ClInclude Include="src\Assistants\SHA1.hpp" />
+    <ClInclude Include="src\Assistants\ShutdownSignal.hpp" />
     <ClInclude Include="src\Assistants\SimpleFileIO.hpp" />
     <ClInclude Include="src\Assistants\ThreadAffinity.hpp" />
     <ClInclude Include="src\Assistants\TripleBuffer.hpp" />
