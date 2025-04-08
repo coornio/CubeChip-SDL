@@ -116,10 +116,8 @@ protected:
 
 	virtual void mainSystemLoop() = 0;
 
-	virtual s32 getCPF()         const noexcept = 0;
-	virtual s32 addCPF(s32 delta)      noexcept = 0;
-
 	virtual void writeStatistics();
+
 public:
 	Str fetchStatistics() const noexcept;
 };

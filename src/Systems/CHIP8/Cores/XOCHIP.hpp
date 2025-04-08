@@ -43,6 +43,8 @@ private:
 
 /*==================================================================*/
 
+	u32 mPlanarMask{ 0x1 };
+
 	Map2D<u8> mDisplayBuffer[4];
 
 	std::array<u8, cTotalMemory + cSafezoneOOB>

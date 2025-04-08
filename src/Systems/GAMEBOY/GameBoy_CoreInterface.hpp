@@ -39,8 +39,4 @@ public:
 	GameBoy_CoreInterface() noexcept;
 
 	void mainSystemLoop() override;
-
-protected:
-	s32  getCPF() const noexcept override { return mTargetCPF; }
-	s32  addCPF(s32)    noexcept override { return mTargetCPF; }
 };

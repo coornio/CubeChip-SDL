@@ -41,7 +41,7 @@ protected:
 	void loadPresetBinds();
 
 	template <IsContiguousContainer T> requires
-		SameValueTypes<T, decltype(mCustomBinds)>
+		(SameValueTypes<T, decltype(mCustomBinds)>)
 	void loadCustomBinds(const T& binds) {
 		mCustomBinds.assign(std::begin(binds), std::end(binds));
 		mKeysPrev = mKeysCurr = mKeysLock = 0;
@@ -109,8 +109,6 @@ protected:
 		mDisplayW = W; mDisplayWb = W - 1;
 		mDisplayH = H; mDisplayHb = H - 1;
 	}
-
-	u32 mPlanarMask{ 0x1 };
 
 	u32 mCurrentPC{};
 	u32 mRegisterI{};
@@ -184,34 +182,6 @@ public:
 
 	void mainSystemLoop() override;
 	void writeStatistics() override;
-
-private:
-	s32 getCPF()    const noexcept override { return mTargetCPF; }
-	s32 addCPF(s32 delta) noexcept override {
-		if (stateRunning() && !stateWaiting()) {
-			return mTargetCPF += delta;
-		} else {
-			return mTargetCPF;
-		}
-	}
-	
-public:
-	bool stateRunning() const noexcept { return (
-		mInterrupt != Interrupt::FINAL &&
-		mInterrupt != Interrupt::ERROR
-	); }
-	bool stateStopped() const noexcept { return (
-		mInterrupt == Interrupt::FINAL ||
-		mInterrupt == Interrupt::ERROR
-	); }
-	bool stateWaitKey() const noexcept { return (
-		mInterrupt == Interrupt::INPUT
-	); }
-	bool stateWaiting() const noexcept { return (
-		mInterrupt == Interrupt::SOUND ||
-		mInterrupt == Interrupt::DELAY ||
-		mInterrupt == Interrupt::INPUT
-	); }
 
 protected:
 	static constexpr std::array<u8, 240> cFontsData{ {

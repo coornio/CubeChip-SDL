@@ -12,13 +12,12 @@
 
 class BYTEPUSHER_STANDARD final : public BytePusher_CoreInterface {
 	static constexpr u32 cTotalMemory{ ::CalcBytes(16, MiB) };
-	static constexpr u32 cSafezoneOOB{         8 };
-	static constexpr f32 cRefreshRate{    60.00f };
-	static constexpr s32 cAudioLength{       256 };
-	static constexpr s32 cResSizeMult{         2 };
-	static constexpr s32 cScreenSizeX{       256 };
-	static constexpr s32 cScreenSizeY{       256 };
-	static constexpr s32 cScreenSizeT{ 256 * 256 };
+	static constexpr u32 cSafezoneOOB{      8 };
+	static constexpr f32 cRefreshRate{ 60.00f };
+	static constexpr s32 cAudioLength{    256 };
+	static constexpr s32 cResSizeMult{      2 };
+	static constexpr s32 cScreenSizeX{    256 };
+	static constexpr s32 cScreenSizeY{    256 };
 
 	static constexpr u32 cMaxDisplayW{ 256 };
 	static constexpr u32 cMaxDisplayH{ 256 };
@@ -56,6 +55,6 @@ public:
 		return fileSize <= cTotalMemory;
 	}
 
-	s32 getMaxDisplayW() const noexcept override { return cMaxDisplayW; }
-	s32 getMaxDisplayH() const noexcept override { return cMaxDisplayH; }
+	s32 getMaxDisplayW() const noexcept override { return cScreenSizeX; }
+	s32 getMaxDisplayH() const noexcept override { return cScreenSizeY; }
 };

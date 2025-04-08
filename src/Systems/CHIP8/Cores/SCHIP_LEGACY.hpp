@@ -56,7 +56,7 @@ public:
 	}
 
 	s32 getMaxDisplayW() const noexcept override { return cDisplayResW; }
-	s32 getMaxDisplayH() const noexcept override { return cDisplayResh; }
+	s32 getMaxDisplayH() const noexcept override { return cDisplayResH; }
 
 private:
 	void instructionLoop() noexcept override;

@@ -68,7 +68,7 @@ bool Chip8_CoreInterface::keyPressed(u8* returnKey) noexcept {
 	if (mTickCurr >= mTickLast + mTickSpan)
 		[[unlikely]] { mKeysPrev &= ~mKeysLoop; }
 
-	/**/const auto pressKeys{mKeysCurr & ~mKeysPrev};
+	/**/const auto pressKeys{ mKeysCurr & ~mKeysPrev };
 	if (pressKeys) {
 		const auto pressDiff{ pressKeys & ~mKeysLoop };
 		const auto validKeys{ pressDiff ? pressDiff : mKeysLoop };
@@ -204,12 +204,14 @@ void Chip8_CoreInterface::writeStatistics() {
 	const auto frameTimeBias{ currentFrameTime * 1.03f / Pacer->getFramespan() };
 	const auto workCycleBias{ 1e5f * std::sin((1 - frameTimeBias) * 1.5707963f) };
 
+	if (mInterrupt == Interrupt::CLEAR) [[likely]]
+		{ mTargetCPF += static_cast<s32>(workCycleBias); }
+
 	mStatistics.store(std::make_shared<Str>(std::format(
 		" ::   MIPS:{:8.2f}\n"
 		"Time Since:{:9.3f} ms\n"
 		"Frame Work:{:9.3f} ms\n",
-		addCPF(static_cast<s32>(workCycleBias))
-			* mTargetFPS / 1'000'000.0f,
+		mTargetCPF * mTargetFPS / 1'000'000.0f,
 		Pacer->getElapsedMillisLast(), currentFrameTime
 	)), mo::release);
 }

@@ -24,8 +24,6 @@ BYTEPUSHER_STANDARD::BYTEPUSHER_STANDARD() {
 
 	setViewportSizes(cScreenSizeX, cScreenSizeY, cResSizeMult, -2);
 	setSystemFramerate(cRefreshRate);
-
-	mTargetCPF = 0x10000;
 }
 
 /*==================================================================*/
@@ -38,7 +36,7 @@ void BYTEPUSHER_STANDARD::instructionLoop() noexcept {
 	mMemoryBank[1] = static_cast<u8>(inputStates & 0xFF);
 	
 	auto cycleCount{ 0 };
-	for (; cycleCount < mTargetCPF; ++cycleCount) {
+	for (; cycleCount < 0x10000; ++cycleCount) {
 		mMemoryBank[readData<3>(progPointer + 3)] =
 		mMemoryBank[readData<3>(progPointer + 0)];
 		progPointer = readData<3>(progPointer + 6);
@@ -63,6 +61,6 @@ void BYTEPUSHER_STANDARD::renderAudioData() {
 }
 
 void BYTEPUSHER_STANDARD::renderVideoData() {
-	BVS->displayBuffer.write(mMemoryBank.data() + (readData<1>(5) << 16), cScreenSizeT,
+	BVS->displayBuffer.write(mMemoryBank.data() + (readData<1>(5) << 16), cScreenSizeX * cScreenSizeY,
 		[](u32 pixel) noexcept { return cBitsColor[pixel]; });
 }

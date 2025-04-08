@@ -22,14 +22,12 @@ GAMEBOY_CLASSIC::GAMEBOY_CLASSIC() {
 
 	setSystemFramerate(cRefreshRate);
 	setViewportSizes(cScreenSizeX, cScreenSizeY, cResSizeMult, +2);
-
-	mTargetCPF = cCylesPerSec;
 }
 
 /*==================================================================*/
 
 void GAMEBOY_CLASSIC::instructionLoop() noexcept {
-	const auto maxCycles{ static_cast<s32>(mTargetCPF / cRefreshRate) };
+	const auto maxCycles{ static_cast<s32>(cCylesPerSec / cRefreshRate) };
 
 	auto curCycles{ 0 };
 	while (curCycles < maxCycles) {
