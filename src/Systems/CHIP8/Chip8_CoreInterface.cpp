@@ -217,15 +217,12 @@ void Chip8_CoreInterface::writeStatistics() {
 /*==================================================================*/
 
 void Chip8_CoreInterface::startAudio(s32 duration, s32 tone) noexcept {
-	if constexpr (STREAM::COUNT == 0) { return; }
-	
 	static auto index{ 0 };
 	startAudioAtChannel(index, duration, tone);
-	++index %= STREAM::COUNT - 1;
+	if (duration) { ++index %= STREAM::COUNT; }
 }
 
 void Chip8_CoreInterface::startAudioAtChannel(u32 index, s32 duration, s32 tone) noexcept {
-	if constexpr (STREAM::COUNT == 0) { return; }
 	if (index >= STREAM::COUNT) { return; }
 
 	mAudioTimer[index] = static_cast<u8>(duration);
