@@ -41,6 +41,7 @@ void EmuHost::discardCore() {
 }
 
 void EmuHost::replaceCore() {
+	iGuest.reset();
 	iGuest.reset(CoreRegistry::constructCore());
 	if (iGuest) {
 		BVS->setMainWindowTitle(HDM->getFileStem().c_str());
