@@ -19,9 +19,9 @@ static CoreRegistry::Register<GAMEBOY_CLASSIC> self(
 /*==================================================================*/
 
 GAMEBOY_CLASSIC::GAMEBOY_CLASSIC() {
-	BVS->setViewportSizes(cScreenSizeX, cScreenSizeY, cResSizeMult, +2);
 
 	setSystemFramerate(cRefreshRate);
+	setViewportSizes(cScreenSizeX, cScreenSizeY, cResSizeMult, +2);
 
 	mTargetCPF = cCylesPerSec;
 }

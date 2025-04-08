@@ -38,7 +38,7 @@ public:
 	constexpr operator result_type() noexcept
 		{ return get<result_type>(); }
 
-	template <typename T>
+	template <typename T = result_type>
 		requires (std::is_arithmetic_v<T>)
 	constexpr T get() noexcept {
 		result_type a, b, c, d;

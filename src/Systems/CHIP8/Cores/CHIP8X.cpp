@@ -26,6 +26,7 @@ CHIP8X::CHIP8X() {
 	copyFontToMemory(mMemoryBank.data(), 0x50);
 
 	setDisplayResolution(cScreenSizeX, cScreenSizeY);
+	setViewportSizes(cScreenSizeX, cScreenSizeY, cResSizeMult, +2);
 	setSystemFramerate(cRefreshRate);
 
 	mCurrentPC = cStartOffset;
@@ -223,7 +224,6 @@ void CHIP8X::renderAudioData() {
 }
 
 void CHIP8X::renderVideoData() {
-	BVS->setViewportSizes(mDisplayW, mDisplayH, cResSizeMult, +2);
 	if (isPixelTrailing()) {
 		BVS->displayBuffer.write(mDisplayBuffer, [this](const u8& pixel) noexcept {
 			static constexpr u32 layer[4]{ 0xFF, 0xE7, 0x6F, 0x37 };

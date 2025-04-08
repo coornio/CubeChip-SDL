@@ -162,6 +162,17 @@ private:
 
 public:
 	void setViewportAlpha(u32 alpha);
+
+	/**
+	 * @brief Sets various parameters to shape, scale, and pad the system's Viewport. Thread-safe.
+	 * @param[in] texture_W :: The width of the output texture in pixels.
+	 * @param[in] texture_H :: The height of the output texture in pixels.
+	 * @param[in] upscale_M :: Integer multiplier of the texture size to adjust minimum size. Capped at 16.
+	 * @param[in] padding_S :: The thickness of the padding (colorable, see 'setOutlineColor')
+	 * surrounding the Viewport in pixels. When negative, doubles as a flag that controls whether
+	 * to draw scanlines over the Viewport. Capped at -16..16.
+	 * @return Boolean if successful.
+	 */
 	void setViewportSizes(s32 texture_W, s32 texture_H, s32 upscale_M = 0, s32 padding_S = 0);
 
 public:

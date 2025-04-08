@@ -21,8 +21,8 @@ BYTEPUSHER_STANDARD::BYTEPUSHER_STANDARD() {
 	copyGameToMemory(mMemoryBank.data());
 
 	BVS->setOutlineColor(cBitsColor[0]);
-	BVS->setViewportSizes(cScreenSizeX, cScreenSizeY, cResSizeMult, -2);
 
+	setViewportSizes(cScreenSizeX, cScreenSizeY, cResSizeMult, -2);
 	setSystemFramerate(cRefreshRate);
 
 	mTargetCPF = 0x10000;

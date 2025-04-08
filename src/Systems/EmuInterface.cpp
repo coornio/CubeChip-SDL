@@ -5,6 +5,7 @@
 */
 
 #include "../Assistants/ThreadAffinity.hpp"
+#include "../Assistants/BasicVideoSpec.hpp"
 #include "../Assistants/FrameLimiter.hpp"
 #include "../Assistants/BasicInput.hpp"
 #include "../Assistants/Well512.hpp"
@@ -43,6 +44,10 @@ EmuInterface::EmuInterface() noexcept
 EmuInterface::~EmuInterface() noexcept {}
 
 /*==================================================================*/
+
+void EmuInterface::setViewportSizes(s32 texture_W, s32 texture_H, s32 upscale_M, s32 padding_S) noexcept {
+	BVS->setViewportSizes(texture_W, texture_H, upscale_M, padding_S);
+}
 
 void EmuInterface::setSystemFramerate(f32 value) noexcept {
 	mTargetFPS = value;

@@ -30,6 +30,7 @@ SCHIP_MODERN::SCHIP_MODERN()
 	copyFontToMemory(mMemoryBank.data(), 0xF0);
 
 	setDisplayResolution(cScreenSizeX, cScreenSizeY);
+	setViewportSizes(cScreenSizeX, cScreenSizeY, cResSizeMult, +2);
 	setSystemFramerate(cRefreshRate);
 
 	mCurrentPC = cStartOffset;
@@ -227,7 +228,6 @@ void SCHIP_MODERN::renderAudioData() {
 }
 
 void SCHIP_MODERN::renderVideoData() {
-	BVS->setViewportSizes(mDisplayW, mDisplayH, isLargerDisplay() ? cResSizeMult / 2 : cResSizeMult, +2);
 	BVS->displayBuffer.write(mDisplayBuffer[0], isPixelTrailing()
 		? [](u32 pixel) noexcept {
 			static constexpr u32 layer[4]{ 0xFF, 0xE7, 0x6F, 0x37 };
@@ -254,10 +254,11 @@ void SCHIP_MODERN::renderVideoData() {
 void SCHIP_MODERN::prepDisplayArea(const Resolution mode) {
 	isLargerDisplay(mode != Resolution::LO);
 
-	const auto W{ isLargerDisplay() ? 128 : 64 };
-	const auto H{ isLargerDisplay() ?  64 : 32 };
+	const auto W{ isLargerDisplay() ? cScreenSizeX * 2 : cScreenSizeX };
+	const auto H{ isLargerDisplay() ? cScreenSizeY * 2 : cScreenSizeY };
 
 	setDisplayResolution(W, H);
+	setViewportSizes(W, H, isLargerDisplay() ? cResSizeMult / 2 : cResSizeMult, +2);
 	mDisplayBuffer[0].resizeClean(W, H);
 };
 

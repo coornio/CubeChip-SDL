@@ -147,10 +147,12 @@ void BasicVideoSpec::setViewportSizes(s32 texture_W, s32 texture_H, s32 upscale_
 	if (padding_S) { mFramePadding.store(padding_S, mo::release); }
 
 	if (texture_W > 0 && texture_H > 0) {
-		const auto newSize{ std::make_shared<Rect>(texture_W, texture_H) };
-		const auto oldSize{ mTextureSize.exchange(newSize, mo::acq_rel) };
+		if (!mNewTextureNeeded.load(mo::acquire)) {
+			const auto newSize{ std::make_shared<Rect>(texture_W, texture_H) };
+			const auto oldSize{ mTextureSize.exchange(newSize, mo::acq_rel) };
 
-		mNewTextureNeeded.store((oldSize ? *oldSize : 0) != *newSize, mo::release);
+			mNewTextureNeeded.store((oldSize ? *oldSize : 0) != *newSize, mo::release);
+		}
 	}
 }
 

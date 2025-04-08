@@ -318,12 +318,7 @@ void MEGACHIP::renderAudioData() {
 }
 
 void MEGACHIP::renderVideoData() {
-	if (isManualRefresh()) {
-		BVS->setViewportSizes(mDisplayW, mDisplayH, cResSizeMult / 2, -2);
-		return;
-	}
-
-	BVS->setViewportSizes(mDisplayW, mDisplayH, isLargerDisplay() ? cResSizeMult / 2 : cResSizeMult, +2);
+	if (isManualRefresh()) { return; }
 
 	BVS->displayBuffer.write(mDisplayBuffer[0], isPixelTrailing()
 		? [](u32 pixel) noexcept {
@@ -343,12 +338,14 @@ void MEGACHIP::prepDisplayArea(const Resolution mode) {
 
 	if (isManualRefresh()) {
 		setDisplayResolution(cScreenMegaX, cScreenMegaY);
+		setViewportSizes(cScreenMegaX, cScreenMegaY, cResSizeMult / 2, +2);
 
 		Quirk.waitVblank = false;
 		mTargetCPF = cInstSpeedMC;
 	}
 	else {
 		setDisplayResolution(cScreenSizeX, cScreenSizeY);
+		setViewportSizes(cScreenSizeX, cScreenSizeY, cResSizeMult, +2);
 
 		Quirk.waitVblank = !isLargerDisplay();
 		mTargetCPF = isLargerDisplay() ? cInstSpeedLo : cInstSpeedHi;

@@ -20,13 +20,10 @@ class SCHIP_LEGACY final : public Chip8_CoreInterface {
 	static constexpr f32 cRefreshRate{ 64.0f };
 
 	static constexpr s32 cResSizeMult{     4 };
-	static constexpr s32 cScreenSizeX{   128 };
-	static constexpr s32 cScreenSizeY{    64 };
+	static constexpr s32 cDisplayResW{   128 };
+	static constexpr s32 cDisplayResH{    64 };
 	static constexpr s32 cInstSpeedHi{    45 };
 	static constexpr s32 cInstSpeedLo{    32 };
-
-	static constexpr u32 cMaxDisplayW{ 128 };
-	static constexpr u32 cMaxDisplayH{  64 };
 
 /*==================================================================*/
 
@@ -58,8 +55,8 @@ public:
 		return fileSize + cGameLoadPos <= cTotalMemory;
 	}
 
-	s32 getMaxDisplayW() const noexcept override { return cMaxDisplayW; }
-	s32 getMaxDisplayH() const noexcept override { return cMaxDisplayH; }
+	s32 getMaxDisplayW() const noexcept override { return cDisplayResW; }
+	s32 getMaxDisplayH() const noexcept override { return cDisplayResh; }
 
 private:
 	void instructionLoop() noexcept override;

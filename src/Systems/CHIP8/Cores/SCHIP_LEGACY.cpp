@@ -19,7 +19,7 @@ static CoreRegistry::Register<SCHIP_LEGACY> self(
 /*==================================================================*/
 
 SCHIP_LEGACY::SCHIP_LEGACY()
-	: mDisplayBuffer{ {cScreenSizeX, cScreenSizeY} }
+	: mDisplayBuffer{ {cDisplayResW, cDisplayResH} }
 {
 	std::generate(EXEC_POLICY(unseq)
 		mMemoryBank.begin(), mMemoryBank.end() - cSafezoneOOB, []() { return RNG->get<u8>(); });
@@ -30,7 +30,8 @@ SCHIP_LEGACY::SCHIP_LEGACY()
 	copyGameToMemory(mMemoryBank.data() + cGameLoadPos);
 	copyFontToMemory(mMemoryBank.data(), 0xB4);
 
-	setDisplayResolution(cScreenSizeX, cScreenSizeY);
+	setDisplayResolution(cDisplayResW, cDisplayResH);
+	setViewportSizes(cDisplayResW, cDisplayResH, cResSizeMult, +2);
 	setSystemFramerate(cRefreshRate);
 
 	mCurrentPC = cStartOffset;
@@ -229,7 +230,6 @@ void SCHIP_LEGACY::renderAudioData() {
 }
 
 void SCHIP_LEGACY::renderVideoData() {
-	BVS->setViewportSizes(mDisplayW, mDisplayH, isLargerDisplay() ? cResSizeMult / 2 : cResSizeMult, +2);
 	BVS->displayBuffer.write(mDisplayBuffer[0], isPixelTrailing()
 		? [](u32 pixel) noexcept {
 			static constexpr u32 layer[4]{ 0xFF, 0xE7, 0x6F, 0x37 };
@@ -486,7 +486,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 				auto& pixel{ mDisplayBuffer[0](offsetX, originY) };
 				if (!((pixel ^= 0x8) & 0x8)) { collided = true; }
 			}
-			if (offsetX == 0x7F) { return collided; }
+			if (offsetX == cDisplayResW - 1) { return collided; }
 		}
 		return collided;
 	}
@@ -510,7 +510,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 			} else {
 				pixelLO = pixelHI;
 			}
-			if (offsetX == 0x7F) { return collided; }
+			if (offsetX == cDisplayResW - 1) { return collided; }
 		}
 		return collided;
 	}
@@ -532,10 +532,10 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 
 					collisions += drawSingleBytes(
 						originX, offsetY, offsetX ? 24 : 16,
-						(readMemoryI(2 * rowN + 0) << 8 | \
+						(readMemoryI(2 * rowN + 0)  << 8 | \
 						 readMemoryI(2 * rowN + 1)) << offsetX
 					);
-					if (offsetY == 0x3F) { break; }
+					if (offsetY == cDisplayResH - 1) { break; }
 				}
 			} else {
 				for (auto rowN{ 0 }; rowN < N; ++rowN) {
@@ -545,7 +545,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 						originX, offsetY, offsetX ? 16 : 8,
 						readMemoryI(rowN) << offsetX
 					);
-					if (offsetY == 0x3F) { break; }
+					if (offsetY == cDisplayResH - 1) { break; }
 				}
 			}
 			mRegisterV[0xF] = static_cast<u8>(collisions);
@@ -566,7 +566,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 					bitBloat(readMemoryI(rowN)) << offsetX
 				);
 
-				if (offsetY == 0x3E) { break; }
+				if (offsetY == cDisplayResH - 2) { break; }
 			}
 			mRegisterV[0xF] = static_cast<u8>(collisions != 0);
 		}

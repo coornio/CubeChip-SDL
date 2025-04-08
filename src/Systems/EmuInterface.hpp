@@ -111,6 +111,9 @@ public:
 
 protected:
 	void setSystemFramerate(f32 value) noexcept;
+
+	void setViewportSizes(s32 texture_W, s32 texture_H, s32 upscale_M = 0, s32 padding_S = 0) noexcept;
+
 	virtual void mainSystemLoop() = 0;
 
 	virtual s32 getCPF()         const noexcept = 0;

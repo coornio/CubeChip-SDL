@@ -26,6 +26,7 @@ CHIP8_MODERN::CHIP8_MODERN() {
 	copyFontToMemory(mMemoryBank.data(), 0x50);
 
 	setDisplayResolution(cScreenSizeX, cScreenSizeY);
+	setViewportSizes(cScreenSizeX, cScreenSizeY, cResSizeMult, +2);
 	setSystemFramerate(cRefreshRate);
 
 	mCurrentPC = cStartOffset;
@@ -193,7 +194,6 @@ void CHIP8_MODERN::renderAudioData() {
 }
 
 void CHIP8_MODERN::renderVideoData() {
-	BVS->setViewportSizes(mDisplayW, mDisplayH, cResSizeMult, +2);
 	BVS->displayBuffer.write(mDisplayBuffer, isPixelTrailing()
 		? [](u32 pixel) noexcept {
 			static constexpr u32 layer[4]{ 0xFF, 0xE7, 0x6F, 0x37 };
@@ -400,24 +400,24 @@ void CHIP8_MODERN::renderVideoData() {
 
 			[[likely]]
 			case 0b10000000:
-				if (Quirk.wrapSprite) { X &= mDisplayWb; }
-				if (X < mDisplayW) {
-					if (!((mDisplayBuffer[Y * mDisplayW + X] ^= 0x8) & 0x8))
+				if (Quirk.wrapSprite) { X %= cScreenSizeX; }
+				if (X < cScreenSizeX) {
+					if (!((mDisplayBuffer[Y * cScreenSizeX + X] ^= 0x8) & 0x8))
 						{ mRegisterV[0xF] = 1; }
 				}
 				return;
 
 			[[unlikely]]
 			default:
-				if (Quirk.wrapSprite) { X &= mDisplayWb; }
-				else if (X >= mDisplayW) { return; }
+				if (Quirk.wrapSprite) { X %= cScreenSizeX; }
+				else if (X >= cScreenSizeX) { return; }
 
-				for (auto B{ 0 }; B < 8; ++B, ++X &= mDisplayWb) {
+				for (auto B{ 0 }; B < 8; ++B, ++X %= cScreenSizeX) {
 					if (DATA & 0x80 >> B) {
-						if (!((mDisplayBuffer[Y * mDisplayW + X] ^= 0x8) & 0x8))
+						if (!((mDisplayBuffer[Y * cScreenSizeX + X] ^= 0x8) & 0x8))
 							{ mRegisterV[0xF] = 1; }
 					}
-					if (!Quirk.wrapSprite && X == mDisplayWb) { return; }
+					if (!Quirk.wrapSprite && X == cScreenSizeX - 1) { return; }
 				}
 				return;
 		}
@@ -427,8 +427,8 @@ void CHIP8_MODERN::renderVideoData() {
 		if (Quirk.waitVblank) [[unlikely]]
 			{ triggerInterrupt(Interrupt::FRAME); }
 
-		auto pX{ mRegisterV[X] & mDisplayWb };
-		auto pY{ mRegisterV[Y] & mDisplayHb };
+		auto pX{ mRegisterV[X] % cScreenSizeX };
+		auto pY{ mRegisterV[Y] % cScreenSizeY };
 
 		mRegisterV[0xF] = 0;
 
@@ -440,21 +440,21 @@ void CHIP8_MODERN::renderVideoData() {
 
 			[[unlikely]]
 			case 0:
-				for (auto H{ 0 }, I{ 0 }; H < 16; ++H, I += 2, ++pY &= mDisplayHb)
+				for (auto H{ 0 }, I{ 0 }; H < 16; ++H, I += 2, ++pY %= cScreenSizeY)
 				{
 					drawByte(pX + 0, pY, readMemoryI(I + 0));
 					drawByte(pX + 8, pY, readMemoryI(I + 1));
 					
-					if (!Quirk.wrapSprite && pY == mDisplayHb) { break; }
+					if (!Quirk.wrapSprite && pY == cScreenSizeY - 1) { break; }
 				}
 				break;
 
 			[[unlikely]]
 			default:
-				for (auto H{ 0 }; H < N; ++H, ++pY &= mDisplayHb)
+				for (auto H{ 0 }; H < N; ++H, ++pY %= cScreenSizeY)
 				{
 					drawByte(pX, pY, readMemoryI(H));
-					if (!Quirk.wrapSprite && pY == mDisplayHb) { break; }
+					if (!Quirk.wrapSprite && pY == cScreenSizeY) { break; }
 				}
 				break;
 		}

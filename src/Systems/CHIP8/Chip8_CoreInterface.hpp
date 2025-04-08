@@ -19,8 +19,6 @@ protected:
 
 	std::unique_ptr<AudioSpecBlock> ASB;
 
-	void* __{};
-
 	std::vector<SimpleKeyMapping> mCustomBinds;
 
 	enum STREAM {
