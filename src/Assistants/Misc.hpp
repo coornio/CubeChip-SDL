@@ -39,7 +39,6 @@ inline constexpr auto intByteMult(u32 color1, u32 color2) noexcept {
 #if defined(__has_include) && __has_include(<expected>) \
 	&& defined(__cpp_lib_expected) && (__cpp_lib_expected >= 202202L)
 	#include <expected>
-	namespace expected_ns = std;
 
 	template <typename T, typename E>
 	using Expected = std::expected<T, E>;
@@ -55,7 +54,6 @@ inline constexpr auto intByteMult(u32 color1, u32 color2) noexcept {
 	using Unexpected = std::unexpected<T>;
 #else
 	#include "../Libraries/tartanllama/expected.hpp"
-	namespace expected_ns = tl;
 
 	template <typename T, typename E>
 	using Expected = tl::expected<T, E>;

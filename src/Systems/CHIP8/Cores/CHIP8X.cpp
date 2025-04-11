@@ -11,10 +11,7 @@
 
 #include "CHIP8X.hpp"
 
-static CoreRegistry::Register<CHIP8X> self_(
-	CHIP8X::validateProgram,
-	{ ".c8x" }
-);
+REGISTER_CORE(CHIP8X, ".c8x")
 
 /*==================================================================*/
 

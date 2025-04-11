@@ -58,6 +58,15 @@ using Json        = nlohmann::json;
 
 /*==================================================================*/
 
+#define REGISTER_CORE(CoreType, ...) \
+	static auto CONCAT_TOKENS(sCoreRegID_, __COUNTER__) = \
+		CoreRegistry::registerCore( \
+			[]() -> EmuInterface* { return new CoreType(); }, \
+			CoreType::validateProgram, { __VA_ARGS__ } \
+		);
+
+/*==================================================================*/
+
 class CoreRegistry {
 	using Registrations = std::unordered_map<Str, CoreRegList>;
 	static inline Registrations sRegistry{};
@@ -85,7 +94,7 @@ private:
 	/*==================================================================*/
 
 public:
-	static void registerCore(CoreConstructor&& ctor, ProgramTester&& tester, FileExtList exts) noexcept;
+	static bool registerCore(CoreConstructor&& ctor, ProgramTester&& tester, FileExtList exts) noexcept;
 
 	static const CoreRegList* findEligibleCores(const Str& ext) noexcept;
 
@@ -106,15 +115,4 @@ public:
 	static const auto& getEligibleCores() noexcept { return sEligible; }
 	[[nodiscard]]
 	static const auto& getCurrentCore() noexcept { return sCurrentCore; }
-
-	/*==================================================================*/
-
-	template <typename Core>
-		requires (std::convertible_to<Core*, EmuInterface*>)
-	struct Register {
-		Register(ProgramTester&& tester, FileExtList exts) {
-			registerCore([]() -> EmuInterface* { return new Core(); },
-				std::move(tester), std::move(exts));
-		}
-	};
 };

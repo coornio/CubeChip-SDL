@@ -11,10 +11,7 @@
 
 #include "MEGACHIP.hpp"
 
-static CoreRegistry::Register<MEGACHIP> self_(
-	MEGACHIP::validateProgram,
-	{ ".mc8" }
-);
+REGISTER_CORE(MEGACHIP, ".mc8")
 
 /*==================================================================*/
 

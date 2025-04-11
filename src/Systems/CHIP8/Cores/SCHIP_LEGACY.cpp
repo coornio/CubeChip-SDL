@@ -11,10 +11,7 @@
 
 #include "SCHIP_LEGACY.hpp"
 
-static CoreRegistry::Register<SCHIP_LEGACY> self_(
-	SCHIP_LEGACY::validateProgram,
-	{ ".sc8" }
-);
+REGISTER_CORE(SCHIP_LEGACY, ".sc8")
 
 /*==================================================================*/
 

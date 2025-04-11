@@ -59,15 +59,17 @@ bool CoreRegistry::validateProgram(const char* fileData, ust fileSize, const Str
 	}
 }
 
-void CoreRegistry::registerCore(CoreConstructor&& ctor, ProgramTester&& tester, FileExtList exts) noexcept {
+bool CoreRegistry::registerCore(CoreConstructor&& ctor, ProgramTester&& tester, FileExtList exts) noexcept {
 	CoreDetails reg{ ctor, tester, std::move(exts), };
 	for (const auto& ext : reg.fileExtensions) {
 		try { sRegistry[ext].push_back(reg); }
 		catch (const std::exception& e) {
 			blog.newEntry(BLOG::ERROR,
 				"Exception triggered trying to register Emulator Core! [{}]", e.what());
+			return false;
 		}
 	}
+	return true;
 }
 
 const CoreRegList* CoreRegistry::findEligibleCores(const Str& ext) noexcept {

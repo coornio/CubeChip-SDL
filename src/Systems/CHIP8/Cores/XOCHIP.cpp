@@ -11,10 +11,7 @@
 
 #include "XOCHIP.hpp"
 
-static CoreRegistry::Register<XOCHIP> self_(
-	XOCHIP::validateProgram,
-	{ ".xo8" }
-);
+REGISTER_CORE(XOCHIP, ".xo8")
 
 /*==================================================================*/
 

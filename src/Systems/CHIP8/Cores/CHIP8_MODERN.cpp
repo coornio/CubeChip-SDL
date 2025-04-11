@@ -11,10 +11,7 @@
 
 #include "CHIP8_MODERN.hpp"
 
-static CoreRegistry::Register<CHIP8_MODERN> self_(
-	CHIP8_MODERN::validateProgram,
-	{ ".ch8" }
-);
+REGISTER_CORE(CHIP8_MODERN, ".ch8")
 
 /*==================================================================*/
 

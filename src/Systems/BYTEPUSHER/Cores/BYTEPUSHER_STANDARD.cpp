@@ -10,10 +10,7 @@
 
 #include "BYTEPUSHER_STANDARD.hpp"
 
-static CoreRegistry::Register<BYTEPUSHER_STANDARD> self_(
-	BYTEPUSHER_STANDARD::validateProgram,
-	{ ".BytePusher" }
-);
+REGISTER_CORE(BYTEPUSHER_STANDARD, ".BytePusher")
 
 /*==================================================================*/
 

@@ -55,6 +55,9 @@ struct Epsilon {
 	constexpr static ::f64 f64{ std::numeric_limits<::f64>::epsilon() };
 };
 
+#define CONCAT_TOKENS_INTERNAL(x, y) x##y
+#define CONCAT_TOKENS(x, y) CONCAT_TOKENS_INTERNAL(x, y)
+
 #ifdef __GNUC__
 	#pragma GCC diagnostic push
 	#pragma GCC diagnostic ignored "-Winterference-size"
