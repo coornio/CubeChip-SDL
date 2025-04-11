@@ -33,6 +33,14 @@ namespace fs {
 
 	/*==================================================================*/
 
+	/* Renames (and possibly replaces) file or folder at the designated paths, if any. */
+	[[maybe_unused]]
+	inline auto rename(const Path& filePath1, const Path& filePath2) noexcept {
+		std::error_code error;
+		std::filesystem::rename(filePath1, filePath2, error);
+		return makeExpected(true, std::move(error));
+	}
+
 	/* Removes file or empty folder at the designated path, if any. */
 	[[maybe_unused]]
 	inline auto remove(const Path& filePath) noexcept {
@@ -109,13 +117,13 @@ inline auto readFileData(
 ) noexcept -> Expected<std::vector<char>, std::error_code> {
 	try {
 		auto fileModStampBegin{ fs::last_write_time(filePath) };
-		if (!fileModStampBegin) { return std::unexpected(std::move(fileModStampBegin.error())); }
+		if (!fileModStampBegin) { return Unexpected(std::move(fileModStampBegin.error())); }
 
-		std::ifstream inFile(filePath, std::ios::binary);
-		if (!inFile) { return std::unexpected(std::make_error_code(std::errc::permission_denied)); }
+		std::ifstream inFile(filePath, std::ios::binary | std::ios::in);
+		if (!inFile) { return Unexpected(std::make_error_code(std::errc::permission_denied)); }
 
 		inFile.seekg(static_cast<std::streampos>(dataReadOffset));
-		if (!inFile) { return std::unexpected(std::make_error_code(std::errc::invalid_argument)); }
+		if (!inFile) { return Unexpected(std::make_error_code(std::errc::invalid_argument)); }
 		
 		std::vector<char> fileData{};
 
@@ -125,21 +133,21 @@ inline auto readFileData(
 		} else {
 			try {
 				fileData.assign(std::istreambuf_iterator(inFile), {});
-				if (!inFile.good()) { throw std::exception{}; }
+				if (!inFile.good()) { throw std::exception(); }
 			} catch (const std::exception&) {
-				return std::unexpected(std::make_error_code(std::errc::not_enough_memory));
+				return Unexpected(std::make_error_code(std::errc::not_enough_memory));
 			}
 		}
 
 		auto fileModStampEnd{ fs::last_write_time(filePath) };
-		if (!fileModStampEnd) { return std::unexpected(std::move(fileModStampEnd.error())); }
+		if (!fileModStampEnd) { return Unexpected(std::move(fileModStampEnd.error())); }
 
 		if (fileModStampBegin.value() != fileModStampEnd.value()) {
-			return std::unexpected(std::make_error_code(std::errc::interrupted));
+			return Unexpected(std::make_error_code(std::errc::interrupted));
 		} else { return fileData; }
 	}
 	catch (const std::exception&) {
-		return std::unexpected(std::make_error_code(std::errc::io_error));
+		return Unexpected(std::make_error_code(std::errc::io_error));
 	}
 }
 
@@ -153,16 +161,16 @@ inline auto writeFileData(
 ) noexcept -> Expected<bool, std::error_code> {
 	try {
 		std::ofstream outFile(filePath, std::ios::binary | std::ios::out);
-		if (!outFile) { return std::unexpected(std::make_error_code(std::errc::permission_denied)); }
+		if (!outFile) { return Unexpected(std::make_error_code(std::errc::permission_denied)); }
 
 		outFile.seekp(static_cast<std::streampos>(dataWriteOffset));
-		if (!outFile) { return std::unexpected(std::make_error_code(std::errc::invalid_argument)); }
+		if (!outFile) { return Unexpected(std::make_error_code(std::errc::invalid_argument)); }
 
 		outFile.write(reinterpret_cast<const char*>(fileData), dataWriteSize * sizeof(T));
-		if (!outFile.good()) { throw std::exception{}; } else { return true; }
+		if (!outFile.good()) { throw std::exception(); } else { return true; }
 	}
 	catch (const std::exception&) {
-		return std::unexpected(std::make_error_code(std::errc::io_error));
+		return Unexpected(std::make_error_code(std::errc::io_error));
 	}
 }
 

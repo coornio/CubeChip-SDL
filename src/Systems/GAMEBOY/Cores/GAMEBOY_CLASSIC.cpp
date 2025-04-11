@@ -11,7 +11,7 @@
 
 #include "GAMEBOY_CLASSIC.hpp"
 
-static CoreRegistry::Register<GAMEBOY_CLASSIC> self(
+static CoreRegistry::Register<GAMEBOY_CLASSIC> self_(
 	GAMEBOY_CLASSIC::validateProgram,
 	{ ".gb" }
 );

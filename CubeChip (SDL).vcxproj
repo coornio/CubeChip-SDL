@@ -69,6 +69,7 @@
     <ClInclude Include="src\Assistants\SHA1.hpp" />
     <ClInclude Include="src\Assistants\ShutdownSignal.hpp" />
     <ClInclude Include="src\Assistants\SimpleFileIO.hpp" />
+    <ClInclude Include="src\Assistants\SimpleTomlFileIO.hpp" />
     <ClInclude Include="src\Assistants\ThreadAffinity.hpp" />
     <ClInclude Include="src\Assistants\TripleBuffer.hpp" />
     <ClInclude Include="src\Assistants\Typedefs.hpp" />
@@ -80,6 +81,20 @@
     <ClInclude Include="src\Libraries\atomic_queue\barrier.h" />
     <ClInclude Include="src\Libraries\atomic_queue\defs.h" />
     <ClInclude Include="src\Libraries\atomic_queue\spinlock.h" />
+    <ClInclude Include="src\Libraries\fmt\args.h" />
+    <ClInclude Include="src\Libraries\fmt\base.h" />
+    <ClInclude Include="src\Libraries\fmt\chrono.h" />
+    <ClInclude Include="src\Libraries\fmt\color.h" />
+    <ClInclude Include="src\Libraries\fmt\compile.h" />
+    <ClInclude Include="src\Libraries\fmt\core.h" />
+    <ClInclude Include="src\Libraries\fmt\format-inl.h" />
+    <ClInclude Include="src\Libraries\fmt\format.h" />
+    <ClInclude Include="src\Libraries\fmt\os.h" />
+    <ClInclude Include="src\Libraries\fmt\ostream.h" />
+    <ClInclude Include="src\Libraries\fmt\printf.h" />
+    <ClInclude Include="src\Libraries\fmt\ranges.h" />
+    <ClInclude Include="src\Libraries\fmt\std.h" />
+    <ClInclude Include="src\Libraries\fmt\xchar.h" />
     <ClInclude Include="src\Libraries\imgui\imconfig.h" />
     <ClInclude Include="src\Libraries\imgui\imgui.h" />
     <ClInclude Include="src\Libraries\imgui\imgui_impl_sdl3.h" />
@@ -91,6 +106,8 @@
     <ClInclude Include="src\Libraries\imgui\imstb_truetype.h" />
     <ClInclude Include="src\Libraries\nlohmann\json.hpp" />
     <ClInclude Include="src\Libraries\nlohmann\json_fwd.hpp" />
+    <ClInclude Include="src\Libraries\tartanllama\expected.hpp" />
+    <ClInclude Include="src\Libraries\toml++\toml.hpp" />
     <ClInclude Include="src\Systems\BYTEPUSHER\BytePusher_CoreInterface.hpp" />
     <ClInclude Include="src\Systems\BYTEPUSHER\Cores\BYTEPUSHER_STANDARD.hpp" />
     <ClInclude Include="src\Systems\CHIP8\Chip8_CoreInterface.hpp" />

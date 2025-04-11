@@ -4,9 +4,7 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include <iostream>
-#include <sstream>
-#include <fstream>
+#include <utility>
 
 #include "BasicLogger.hpp"
 #include "SimpleFileIO.hpp"
@@ -63,20 +61,18 @@ StrV BasicLogger::getSeverity(BLOG type) const noexcept {
 	}
 }
 
-void BasicLogger::writeEntry(BLOG type, const Str& message) noexcept {
-	std::ostringstream output;
-	output << getSeverity(type) << " :: " << message;
+void BasicLogger::writeEntry(BLOG type, const Str& message) {
+	auto output{ fmt::format("{} :: {}", getSeverity(type), message) };
 
-	if (!mLogPath.empty()) {
+	if (mLogPath.empty()) { fmt::println("{}", std::move(output)); }
+	else {
 		std::ofstream logFile(mLogPath, std::ios::app);
-		if (logFile) {
-			logFile << output.str() << std::endl;
-		} else {
+		if (logFile) { logFile << std::move(output) << std::endl; }
+		else {
 			newEntry(BLOG::ERROR, "Unable to write to Log file: \"{}\"",
 				std::move(mLogPath).string());
+			fmt::println("{}", std::move(output));
 		}
-	} else {
-		std::cout << output.str() << std::endl;
 	}
 }
 

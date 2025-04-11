@@ -36,13 +36,37 @@ inline constexpr auto intByteMult(u32 color1, u32 color2) noexcept {
 
 /*==================================================================*/
 
-#include <expected>
+#if defined(__has_include) && __has_include(<expected>) \
+	&& defined(__cpp_lib_expected) && (__cpp_lib_expected >= 202202L)
+	#include <expected>
+	namespace expected_ns = std;
 
-template <typename T, typename E>
-using Expected = std::expected<T, E>;
+	template <typename T, typename E>
+	using Expected = std::expected<T, E>;
 
-// factory for Expected<T, E> type, <E> should be able to override as a boolean.
-template<typename T, typename E>
-Expected<T, E> makeExpected(T&& value, E&& error) {
-	if (error) { return std::unexpected(error); } else { return std::forward<T&&>(value); }
-}
+	// factory for Expected<T, E> type, <E> should be able to override as a boolean.
+	template <typename T, typename E>
+	Expected<T, E> makeExpected(T&& value, E&& error) {
+		if (error) { return std::unexpected(error); }
+		else { return std::forward<T&&>(value); }
+	}
+
+	template <typename T>
+	using Unexpected = std::unexpected<T>;
+#else
+	#include "../Libraries/tartanllama/expected.hpp"
+	namespace expected_ns = tl;
+
+	template <typename T, typename E>
+	using Expected = tl::expected<T, E>;
+
+	// factory for Expected<T, E> type, <E> should be able to override as a boolean.
+	template <typename T, typename E>
+	Expected<T, E> makeExpected(T&& value, E&& error) {
+		if (error) { return tl::unexpected(error); }
+		else { return std::forward<T&&>(value); }
+	}
+
+	template <typename T>
+	using Unexpected = tl::unexpected<T>;
+#endif

@@ -6,12 +6,10 @@
 
 #pragma once
 
-#include <string>
-#include <format>
-#include <utility>
-#include <filesystem>
-
 #include "Typedefs.hpp"
+
+#define FMT_HEADER_ONLY
+#include "../Libraries/fmt/format.h"
 
 /*==================================================================*/
 
@@ -38,15 +36,15 @@ public:
 	bool initLogFile(const Str& filename, const Path& directory) noexcept;
 
 private:
-	void writeEntry(BLOG type, const Str& message) noexcept;
+	void writeEntry(BLOG type, const Str& message);
 
 public:
 	template <typename... Args>
-	void newEntry(BLOG type, const Str& message, Args&&... args) noexcept {
+	void newEntry(BLOG type, const Str& message, Args&&... args) {
 		if constexpr (sizeof...(Args) == 0) {
 			writeEntry(type, message);
 		} else {
-			writeEntry(type, std::vformat(message, std::make_format_args(args...)));
+			writeEntry(type, fmt::vformat(message, fmt::make_format_args(args...)));
 		}
 	}
 };

@@ -11,7 +11,7 @@
 
 #include "SCHIP_MODERN.hpp"
 
-static CoreRegistry::Register<SCHIP_MODERN> self(
+static CoreRegistry::Register<SCHIP_MODERN> self_(
 	SCHIP_MODERN::validateProgram,
 	{ ".sc8" }
 );
