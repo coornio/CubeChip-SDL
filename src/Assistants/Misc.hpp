@@ -64,5 +64,5 @@ inline constexpr auto intByteMult(u32 color1, u32 color2) noexcept {
 	template <typename T, typename E>
 	Expected<T, E> makeExpected(T&& value, E&& error) {
 		if (!error) { return std::forward<T>(value); }
-		else { return makeUnexpected(std::forward<E>(error)); }
+		else { return makeUnexpected<E>(std::forward<E>(error)); }
 	}

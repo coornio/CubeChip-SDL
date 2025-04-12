@@ -19,6 +19,8 @@
 #elif defined(__APPLE__)
 	#include <pthread.h>
 	#include <sys/sysctl.h>
+	#include <mach/mach.h>
+	#include <mach/thread_policy.h>
 #endif
 
 namespace thread_affinity {
