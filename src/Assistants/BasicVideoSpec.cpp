@@ -198,7 +198,7 @@ void BasicVideoSpec::renderViewport() {
 		const auto scaling{ mTextureScale.load(mo::acquire) };
 
 		mEnableScanline = padding > 0;
-		mViewportFrame = { *texture, scaling, padding };
+		mViewportFrame = { *texture, scaling, std::abs(padding) };
 
 		const auto outerRect{ mViewportFrame.padded() };
 		mSuccessful = mOuterTexture = SDL_CreateTexture(

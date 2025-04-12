@@ -10,6 +10,11 @@
 #include <mutex>
 #include <shared_mutex>
 
+/*
+	Semi-functional mutex-based stub for unfortunate situations where
+	std::atomic<std::shared_ptr<T>> is not yet officially supported
+*/
+
 template <typename T>
 class AtomSharedProxy {
 	using shared_ptr = std::shared_ptr<T>;
@@ -30,22 +35,22 @@ public:
 		: mSharedPtr{ std::move(new_ptr) }
 	{}
 
-	inline void store(const shared_ptr& new_ptr, std::memory_order = std::memory_order::memory_order_seq_cst) {
+	inline void store(const shared_ptr& new_ptr, std::memory_order = std::memory_order_seq_cst) {
 		std::unique_lock lock(mLock);
 		mSharedPtr = new_ptr;
 	}
 
-	inline void store(shared_ptr&& new_ptr, std::memory_order = std::memory_order::memory_order_seq_cst) {
+	inline void store(shared_ptr&& new_ptr, std::memory_order = std::memory_order_seq_cst) {
 		std::unique_lock lock(mLock);
 		mSharedPtr = std::move(new_ptr);
 	}
 
-	auto load(std::memory_order = std::memory_order::memory_order_seq_cst) const {
+	auto load(std::memory_order = std::memory_order_seq_cst) const {
 		std::shared_lock lock(mLock);
 		return mSharedPtr;
 	}
 
-	auto exchange(const shared_ptr& new_ptr, std::memory_order) {
+	auto exchange(const shared_ptr& new_ptr, std::memory_order = std::memory_order::memory_order_seq_cst) {
 		std::unique_lock lock(mLock);
 		auto old = mSharedPtr;
 		mSharedPtr = new_ptr;

@@ -28,7 +28,7 @@ class BasicVideoSpec final {
 	struct Rect {
 		s32 W{}, H{};
 
-		constexpr auto frect() const noexcept {
+		auto frect() const noexcept {
 			return SDL_FRect{
 				static_cast<f32>(0),
 				static_cast<f32>(0),
@@ -44,11 +44,11 @@ class BasicVideoSpec final {
 		Rect rect{};
 		s32 scale{}, pad{};
 
-		Viewport(s32 W = 0, s32 H = 0, s32 scale = 0, s32 pad = 0)
-			: rect{ W, H }, scale{ std::max(1, scale) }, pad{ std::abs(pad) }
+		constexpr Viewport(s32 W = 0, s32 H = 0, s32 scale = 0, s32 pad = 0)
+			: rect{ W, H }, scale{ std::max(1, scale) }, pad{ std::max(0, pad) }
 		{}
-		Viewport(Rect rect, s32 scale = 1, s32 pad = 0)
-			: rect{ rect }, scale{ std::max(1, scale) }, pad{ std::abs(pad) }
+		constexpr Viewport(Rect rect, s32 scale = 1, s32 pad = 0)
+			: rect{ rect }, scale{ std::max(1, scale) }, pad{ std::max(0, pad) }
 		{}
 
 		constexpr Viewport rotate_if(bool cond) const noexcept {
@@ -62,7 +62,7 @@ class BasicVideoSpec final {
 			return Rect{ rect.W * scale + pad * 2, rect.H * scale + pad * 2 };
 		}
 
-		constexpr auto frect() const noexcept {
+		auto frect() const noexcept {
 			return SDL_FRect{
 				static_cast<f32>(pad),
 				static_cast<f32>(pad),
