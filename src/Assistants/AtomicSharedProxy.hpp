@@ -50,14 +50,14 @@ public:
 		return mSharedPtr;
 	}
 
-	auto exchange(const shared_ptr& new_ptr, std::memory_order = std::memory_order::memory_order_seq_cst) {
+	auto exchange(const shared_ptr& new_ptr, std::memory_order = std::memory_order_seq_cst) {
 		std::unique_lock lock(mLock);
 		auto old = mSharedPtr;
 		mSharedPtr = new_ptr;
 		return old;
 	}
 
-	auto exchange(shared_ptr&& new_ptr, std::memory_order = std::memory_order::memory_order_seq_cst) {
+	auto exchange(shared_ptr&& new_ptr, std::memory_order = std::memory_order_seq_cst) {
 		std::unique_lock lock(mLock);
 		auto old = std::move(mSharedPtr);
 		mSharedPtr = std::move(new_ptr);

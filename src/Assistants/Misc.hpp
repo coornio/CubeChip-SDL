@@ -37,18 +37,11 @@ inline constexpr auto intByteMult(u32 color1, u32 color2) noexcept {
 /*==================================================================*/
 
 #if defined(__has_include) && __has_include(<expected>) \
-	&& defined(__cpp_lib_expected) && (__cpp_lib_expected >= 202202L)
+&& defined(__cpp_lib_expected) && (__cpp_lib_expected >= 202202L)
 	#include <expected>
 
 	template <typename T, typename E>
 	using Expected = std::expected<T, E>;
-
-	// factory for Expected<T, E> type, <E> should be able to override as a boolean.
-	template <typename T, typename E>
-	Expected<T, E> makeExpected(T&& value, E&& error) {
-		if (error) { return std::unexpected(error); }
-		else { return std::forward<T&&>(value); }
-	}
 
 	template <typename T>
 	using Unexpected = std::unexpected<T>;
@@ -58,13 +51,18 @@ inline constexpr auto intByteMult(u32 color1, u32 color2) noexcept {
 	template <typename T, typename E>
 	using Expected = tl::expected<T, E>;
 
-	// factory for Expected<T, E> type, <E> should be able to override as a boolean.
-	template <typename T, typename E>
-	Expected<T, E> makeExpected(T&& value, E&& error) {
-		if (error) { return tl::unexpected(error); }
-		else { return std::forward<T&&>(value); }
-	}
-
 	template <typename T>
 	using Unexpected = tl::unexpected<T>;
 #endif
+
+	template <typename T>
+	Unexpected<T> makeUnexpected(T&& value) {
+		return Unexpected<T>(std::forward<T>(value));
+	}
+
+	// factory for Expected<T, E> type, <E> should be able to override as a boolean.
+	template <typename T, typename E>
+	Expected<T, E> makeExpected(T&& value, E&& error) {
+		if (!error) { return std::forward<T>(value); }
+		else { return makeUnexpected(std::forward<E>(error)); }
+	}

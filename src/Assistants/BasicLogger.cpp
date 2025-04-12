@@ -18,21 +18,22 @@ bool BasicLogger::initLogFile(const Str& filename, const Path& directory) noexce
 		return false;
 	}
 
-	const auto newPath{ directory / filename.c_str()};
+	const auto newPath{ directory / filename };
+	const auto tmpPath{ directory / (filename + ".tmp") };
 
-	const auto fileExists{ fs::is_regular_file(newPath) };
-	if (!fileExists) {
+	if (std::ofstream logFile{ tmpPath })
+		{ logFile.close(); }
+	else {
 		newEntry(BLOG::ERROR,
-			"Unable to ascertain if path to Log file is valid: \"{}\" [{}]",
-			newPath.string(), fileExists.error().message());
+			"Unable to create new Log file: \"{}\"", tmpPath.string());
 		return false;
 	}
 
-	const auto fileDelete{ fs::remove_all(newPath) };
-	if (!fileDelete) {
+	const auto fileRename{ fs::rename(tmpPath, newPath) };
+	if (!fileRename) {
 		newEntry(BLOG::ERROR,
-			"Unable to remove previous Log file: \"{}\" [{}]",
-			newPath.string(), fileDelete.error().message());
+			"Unable to replace old Log file: \"{}\" [{}]",
+			newPath.string(), fileRename.error().message());
 		return false;
 	}
 

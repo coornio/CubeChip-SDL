@@ -249,11 +249,11 @@ void BasicVideoSpec::renderViewport() {
 
 	const RGBA Color{ mOutlineColor.load(mo::acquire) };
 	SDL_SetRenderDrawColor(mMainRenderer, Color.R, Color.G, Color.B, SDL_ALPHA_OPAQUE);
-	const SDL_FRect outerFRect{ mViewportFrame.padded().frect() };
+	const auto outerFRect{ mViewportFrame.padded().frect() };
 	SDL_RenderFillRect(mMainRenderer, &outerFRect);
 
 	SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-	const SDL_FRect innerFRect{ mViewportFrame.frect() };
+	const auto innerFRect{ mViewportFrame.frect() };
 	SDL_RenderFillRect(mMainRenderer, &innerFRect);
 
 	SDL_RenderTexture(mMainRenderer, mInnerTexture, nullptr, &innerFRect);

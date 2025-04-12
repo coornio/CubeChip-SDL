@@ -8,46 +8,44 @@
 
 #include <atomic>
 
-namespace ShutdownSignal {
-	namespace {
-		static std::atomic<bool>
-			sIsRequested{};
-	}
+class ShutdownSignal {
+	static inline std::atomic<bool>
+		sIsRequested{};
 
-	inline void isRequested(bool state) noexcept { sIsRequested.store(state); }
-	inline bool isRequested()           noexcept { return sIsRequested.load(); }
-}
+public:
+	static void isRequested(bool state) noexcept { sIsRequested.store(state, std::memory_order_release); }
+	static bool isRequested()           noexcept { return sIsRequested.load(std::memory_order_relaxed); }
+
+	static void registerHandler() noexcept;
+};
 
 #if defined(_WIN32)
 #define NOMINMAX
 #include <windows.h>
 
-namespace ShutdownSignal {
-	inline void registerHandler() noexcept {
-		SetConsoleCtrlHandler([](DWORD signal) -> BOOL {
-			if (signal == CTRL_C_EVENT || signal == CTRL_CLOSE_EVENT) {
+void ShutdownSignal::registerHandler() noexcept {
+	SetConsoleCtrlHandler([](DWORD signal) -> BOOL {
+		switch (signal) {
+			case CTRL_C_EVENT:
+			case CTRL_CLOSE_EVENT:
 				isRequested(true);
 				return TRUE;
-			} else {
+
+			default:
 				return FALSE;
-			}
-		}, TRUE);
-	}
+		}
+	}, TRUE);
 }
 
 #elif defined(__unix__) || defined(__APPLE__)
 #include <csignal>
 
-namespace ShutdownSignal {
-	inline void registerHandler() noexcept {
-		std::signal(SIGINT,  [](int) { ShutdownSignal::isRequested(true); });
-		std::signal(SIGTERM, [](int) { ShutdownSignal::isRequested(true); });
-	}
+void ShutdownSignal::registerHandler() noexcept {
+	std::signal(SIGINT,  [](int) { ShutdownSignal::isRequested(true); });
+	std::signal(SIGTERM, [](int) { ShutdownSignal::isRequested(true); });
 }
 
 #else
-namespace ShutdownSignal {
-	inline void registerHandler() noexcept {} // no-op
-}
+	void ShutdownSignal::registerHandler() noexcept {} // no-op
 
 #endif

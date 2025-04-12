@@ -28,6 +28,11 @@ class BasicVideoSpec final {
 	struct Rect {
 		s32 W{}, H{};
 
+		constexpr Rect() noexcept {}
+		constexpr Rect(s32 W, s32 H) noexcept
+			: W{ W }, H{ H }
+		{}
+
 		auto frect() const noexcept {
 			return SDL_FRect{
 				static_cast<f32>(0),

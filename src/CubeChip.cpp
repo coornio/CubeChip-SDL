@@ -15,7 +15,6 @@
 #include "Assistants/BasicVideoSpec.hpp"
 #include "Assistants/BasicAudioSpec.hpp"
 #include "Assistants/ThreadAffinity.hpp"
-#include "Assistants/ShutdownSignal.hpp"
 
 #include "Cubechip.hpp"
 #include "EmuHost.hpp"
@@ -56,8 +55,6 @@ SDL_AppResult SDL_AppInit(void **Host, int argc, char *argv[]) {
 	}
 #endif
 
-	ShutdownSignal::registerHandler();
-
 #ifdef _WIN32
 	_setmbcp(CP_UTF8);
 	setlocale(LC_CTYPE, ".UTF-8");
@@ -82,8 +79,7 @@ SDL_AppResult SDL_AppInit(void **Host, int argc, char *argv[]) {
 
 	thread_affinity::set_affinity(0b11ull);
 
-	return ShutdownSignal::isRequested()
-		? SDL_APP_SUCCESS : SDL_APP_CONTINUE;
+	return SDL_APP_CONTINUE;
 }
 
 /*==================================================================*/
@@ -94,8 +90,7 @@ SDL_AppResult SDL_AppIterate(void *pHost) {
 
 	Host.processFrame();
 
-	return ShutdownSignal::isRequested()
-		? SDL_APP_SUCCESS : SDL_APP_CONTINUE;
+	return SDL_APP_CONTINUE;
 }
 
 /*==================================================================*/
@@ -111,6 +106,7 @@ SDL_AppResult SDL_AppEvent(void *pHost, SDL_Event *Event) {
 		switch (Event->type) {
 			case SDL_EVENT_QUIT:
 			case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+				blog.newEntry(BLOG::DEBUG, "SDL_EVENT_QUIT caught!");
 				return SDL_APP_SUCCESS;
 
 			case SDL_EVENT_DROP_FILE:
@@ -132,8 +128,7 @@ SDL_AppResult SDL_AppEvent(void *pHost, SDL_Event *Event) {
 		}
 	}
 
-	return ShutdownSignal::isRequested()
-		? SDL_APP_SUCCESS : SDL_APP_CONTINUE;
+	return SDL_APP_CONTINUE;
 }
 
 /*==================================================================*/
