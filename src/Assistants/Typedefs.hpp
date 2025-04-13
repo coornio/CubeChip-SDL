@@ -19,6 +19,9 @@
 
 #include <SDL3/SDL_scancode.h>
 
+#define FMT_HEADER_ONLY
+#include "../Libraries/fmt/format.h"
+
 using mo = std::memory_order;
 
 using f64 = long double;
@@ -86,4 +89,35 @@ struct Epsilon {
 
 	template <typename T>
 	using AtomSharedPtr = Atom<std::shared_ptr<T>>;
+#endif
+
+#if defined(__has_include) && __has_include(<stop_token>) \
+&& defined(__cpp_lib_jthread)
+	#include <thread>
+	using Thread    = std::jthread;
+	using StopToken = std::stop_token;
+#else
+	#include "../Libraries/jthread/jthread.hpp"
+	using Thread    = nonstd::jthread;
+	using StopToken = nonstd::stop_token;
+#endif
+
+
+#if defined(__has_include) && __has_include(<expected>) \
+&& defined(__cpp_lib_expected) && (__cpp_lib_expected >= 202202L)
+	#include <expected>
+
+	template <typename T, typename E>
+	using Expected = std::expected<T, E>;
+
+	template <typename E>
+	using Unexpected = std::unexpected<E>;
+#else
+	#include "../Libraries/tartanllama/expected.hpp"
+
+	template <typename T, typename E>
+	using Expected = tl::expected<T, E>;
+
+	template <typename E>
+	using Unexpected = tl::unexpected<E>;
 #endif

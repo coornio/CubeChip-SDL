@@ -66,7 +66,7 @@ protected:
 	static inline BasicVideoSpec* BVS{};
 	static inline Well512*        RNG{};
 
-	std::jthread mCoreThread;
+	Thread mCoreThread;
 	AtomSharedPtr<Str> mStatistics;
 
 public:
@@ -74,7 +74,7 @@ public:
 	void stopWorker() noexcept;
 
 protected:
-	void threadEntry(std::stop_token token);
+	void threadEntry(StopToken token);
 
 	std::unique_ptr<FrameLimiter>  Pacer;
 	std::unique_ptr<BasicKeyboard> Input;

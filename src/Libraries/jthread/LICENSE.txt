@@ -1,0 +1,7 @@
+The code is licensed under a Creative Commons Attribution 4.0 International License (http://creativecommons.org/licenses/by/4.0/).
+
+Main authors: Nicolai Josuttis (http://www.josuttis.com/contact.html) and Lewis Baker.
+
+Modifications made:
+1) Change of namespace enclosure to avoid UB from polluting the std namespace.
+2) Remove Windows-aimed __spin_yield() inline method in favor of std::this_thread::yield().

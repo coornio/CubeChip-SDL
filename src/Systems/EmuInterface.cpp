@@ -16,7 +16,7 @@
 
 void EmuInterface::startWorker() noexcept {
 	if (mCoreThread.joinable()) { return; }
-	mCoreThread = std::jthread([this](std::stop_token token) { threadEntry(token); });
+	mCoreThread = Thread([this](StopToken token) { threadEntry(token); });
 }
 
 void EmuInterface::stopWorker() noexcept {
@@ -26,7 +26,7 @@ void EmuInterface::stopWorker() noexcept {
 	}
 }
 
-void EmuInterface::threadEntry(std::stop_token token) {
+void EmuInterface::threadEntry(StopToken token) {
 	thread_affinity::set_affinity(~0b11ull);
 	
 	while (!token.stop_requested())
@@ -56,7 +56,7 @@ void EmuInterface::setSystemFramerate(f32 value) noexcept {
 
 void EmuInterface::writeStatistics() {
 	if (Pacer->getValidFrameCounter() & 0x1) [[likely]] {
-		mStatistics.store(std::make_shared<Str>(std::format(
+		mStatistics.store(std::make_shared<Str>(fmt::format(
 			"Time Since:{:9.3f} ms\n"
 			"Frame Work:{:9.3f} ms\n",
 			Pacer->getElapsedMillisLast(),

@@ -8,9 +8,6 @@
 
 #include "Typedefs.hpp"
 
-#define FMT_HEADER_ONLY
-#include "../Libraries/fmt/format.h"
-
 /*==================================================================*/
 
 enum class BLOG { INFO, WARN, ERROR, DEBUG };
