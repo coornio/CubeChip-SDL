@@ -143,7 +143,7 @@ public:
 	}
 
 
-	void setOutlineColor(u32 color) noexcept;
+	void setBorderColor(u32 color) noexcept;
 
 	template <typename T, size_type N>
 	void scaleInterface(T(&appFont)[N]) {

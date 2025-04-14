@@ -65,13 +65,13 @@ public:
 	bool checkTime();
 
 	auto getElapsedMillisSince() const noexcept {
-		using tmillis = std::chrono::milliseconds;
-		return duration_cast<tmillis>(getElapsedTime()).count();
+		using namespace std::chrono;
+		return duration_cast<milliseconds>(getElapsedTime()).count();
 	}
 
 	auto getElapsedMicrosSince() const noexcept {
-		using tmicros = std::chrono::microseconds;
-		return duration_cast<tmicros>(getElapsedTime()).count();
+		using namespace std::chrono;
+		return duration_cast<microseconds>(getElapsedTime()).count();
 	}
 
 /*==================================================================*/

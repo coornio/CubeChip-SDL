@@ -28,7 +28,7 @@ GameBoy_CoreInterface::GameBoy_CoreInterface() noexcept
 
 void GameBoy_CoreInterface::mainSystemLoop() {
 	if (Pacer->checkTime()) {
-		if (getSystemState())
+		if (isSystemRunning())
 			[[unlikely]] { return; }
 
 		updateKeyStates();

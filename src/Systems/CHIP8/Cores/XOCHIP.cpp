@@ -264,7 +264,7 @@ void XOCHIP::renderAudioData() {
 	pushPatternTone(STREAM::UNIQUE);
 	pushSquareTone(STREAM::BUZZER);
 
-	BVS->setOutlineColor(mBitColors[!!mAudioTimer[STREAM::BUZZER]]);
+	setDisplayBorderColor(mBitColors[!!mAudioTimer[STREAM::BUZZER]]);
 }
 
 void XOCHIP::renderVideoData() {

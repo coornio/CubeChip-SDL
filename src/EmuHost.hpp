@@ -49,6 +49,7 @@ private:
 	bool mUnlimited{};
 
 	void checkForHotkeys();
+	void toggleSystemLimiter() noexcept;
 
 	void discardCore();
 	void replaceCore();

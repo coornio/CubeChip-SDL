@@ -223,7 +223,7 @@ void SCHIP_LEGACY::renderAudioData() {
 	pushSquareTone(STREAM::CHANN2);
 	pushSquareTone(STREAM::BUZZER);
 
-	BVS->setOutlineColor(sBitColors[!!std::accumulate(mAudioTimer.begin(), mAudioTimer.end(), 0)]);
+	setDisplayBorderColor(sBitColors[!!std::accumulate(mAudioTimer.begin(), mAudioTimer.end(), 0)]);
 }
 
 void SCHIP_LEGACY::renderVideoData() {

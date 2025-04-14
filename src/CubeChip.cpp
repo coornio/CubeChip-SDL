@@ -61,10 +61,6 @@ SDL_AppResult SDL_AppInit(void **Host, int argc, char *argv[]) {
 	SetConsoleOutputCP(CP_UTF8);
 #endif
 
-#ifdef SDL_PLATFORM_WIN32
-	SDL_SetHint(SDL_HINT_RENDER_DRIVER, "direct3d");
-	SDL_SetHint(SDL_HINT_WINDOWS_RAW_KEYBOARD, "0");
-#endif
 	SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1");
 	SDL_SetHint(SDL_HINT_APP_NAME, AppName);
 	SDL_SetAppMetadata(AppName, AppVer, nullptr);
@@ -106,7 +102,6 @@ SDL_AppResult SDL_AppEvent(void *pHost, SDL_Event *Event) {
 		switch (Event->type) {
 			case SDL_EVENT_QUIT:
 			case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
-				blog.newEntry(BLOG::DEBUG, "SDL_EVENT_QUIT caught!");
 				return SDL_APP_SUCCESS;
 
 			case SDL_EVENT_DROP_FILE:

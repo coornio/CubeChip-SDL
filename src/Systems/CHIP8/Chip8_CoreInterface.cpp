@@ -177,7 +177,7 @@ void Chip8_CoreInterface::performProgJump(u32 next) noexcept {
 
 void Chip8_CoreInterface::mainSystemLoop() {
 	if (Pacer->checkTime()) {
-		if (getSystemState())
+		if (isSystemRunning())
 			[[unlikely]] { return; }
 
 		updateKeyStates();
@@ -194,14 +194,13 @@ void Chip8_CoreInterface::mainSystemLoop() {
 }
 
 void Chip8_CoreInterface::writeStatistics() {
-	// XXX need to find a way to toggle flag for benchmarking
-	if (!true) [[unlikely]] {
+	if ((getSystemState() & EmuState::BENCH) == 0) [[unlikely]] {
 		EmuInterface::writeStatistics();
 		return;
 	}
 
 	const auto currentFrameTime{ Pacer->getElapsedMicrosSince() / 1000.0f };
-	const auto frameTimeBias{ currentFrameTime * 1.03f / Pacer->getFramespan() };
+	const auto frameTimeBias{ currentFrameTime * 1.025f / Pacer->getFramespan() };
 	const auto workCycleBias{ 1e5f * std::sin((1 - frameTimeBias) * 1.5707963f) };
 
 	if (mInterrupt == Interrupt::CLEAR) [[likely]]

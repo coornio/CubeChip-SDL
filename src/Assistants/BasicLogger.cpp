@@ -72,7 +72,7 @@ void BasicLogger::writeEntry(BLOG type, const Str& message) {
 		else {
 			newEntry(BLOG::ERROR, "Unable to write to Log file: \"{}\"",
 				std::move(mLogPath).string());
-			fmt::println("{}", std::move(output));
+			fmt::println(stderr, "{}", std::move(output));
 		}
 	}
 }

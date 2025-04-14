@@ -156,7 +156,7 @@ void BasicVideoSpec::setViewportSizes(s32 texture_W, s32 texture_H, s32 upscale_
 	}
 }
 
-void BasicVideoSpec::setOutlineColor(u32 color) noexcept {
+void BasicVideoSpec::setBorderColor(u32 color) noexcept {
 	mOutlineColor.store(color, mo::release);
 }
 

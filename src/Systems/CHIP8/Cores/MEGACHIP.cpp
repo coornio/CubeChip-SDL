@@ -302,7 +302,7 @@ void MEGACHIP::renderAudioData() {
 		pushByteAudio(STREAM::UNIQUE);
 		pushSquareTone(STREAM::BUZZER);
 
-		BVS->setOutlineColor(sBitColors[!!mAudioTimer[STREAM::BUZZER]]);
+		setDisplayBorderColor(sBitColors[!!mAudioTimer[STREAM::BUZZER]]);
 	}
 	else {
 		pushSquareTone(STREAM::CHANN0);
@@ -310,7 +310,7 @@ void MEGACHIP::renderAudioData() {
 		pushSquareTone(STREAM::CHANN2);
 		pushSquareTone(STREAM::BUZZER);
 
-		BVS->setOutlineColor(sBitColors[!!std::accumulate(mAudioTimer.begin(), mAudioTimer.end(), 0)]);
+		setDisplayBorderColor(sBitColors[!!std::accumulate(mAudioTimer.begin(), mAudioTimer.end(), 0)]);
 	}
 }
 

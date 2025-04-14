@@ -35,11 +35,14 @@
 /*==================================================================*/
 
 enum EmuState {
-	NORMAL = 0x0, // normal operation
-	HIDDEN = 0x1, // window is hidden
-	PAUSED = 0x2, // paused by hotkey
-	HALTED = 0x4, // normal end path
-	FATAL  = 0x8, // fatal error path
+	NORMAL = 0x00, // normal operation
+	HIDDEN = 0x01, // window is hidden
+	PAUSED = 0x02, // paused by hotkey
+	HALTED = 0x04, // normal end path
+	FATAL  = 0x08, // fatal error path
+	BENCH  = 0x10, // benchmarking mode
+
+	NOT_RUNNING = 0xF // mask
 };
 
 struct SimpleKeyMapping {
@@ -103,7 +106,8 @@ public:
 	void xorSystemState(EmuState state) noexcept { mGlobalState.fetch_xor( state, mo::acq_rel); }
 
 	void setSystemState(EmuState state) noexcept { mGlobalState.store(state, mo::release); }
-	auto getSystemState()               noexcept { return mGlobalState.load(mo::acquire);  }
+	auto getSystemState()         const noexcept { return mGlobalState.load(mo::acquire);  }
+	bool isSystemRunning()        const noexcept { return getSystemState() & EmuState::NOT_RUNNING; }
 
 	virtual s32 getMaxDisplayW() const noexcept = 0;
 	virtual s32 getMaxDisplayH() const noexcept = 0;
@@ -113,6 +117,8 @@ protected:
 	void setSystemFramerate(f32 value) noexcept;
 
 	void setViewportSizes(s32 texture_W, s32 texture_H, s32 upscale_M = 0, s32 padding_S = 0) noexcept;
+
+	void setDisplayBorderColor(u32 color) noexcept;
 
 	virtual void mainSystemLoop() = 0;
 

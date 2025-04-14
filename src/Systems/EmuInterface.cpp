@@ -28,6 +28,7 @@ void EmuInterface::stopWorker() noexcept {
 
 void EmuInterface::threadEntry(StopToken token) {
 	thread_affinity::set_affinity(~0b11ull);
+	SDL_SetCurrentThreadPriority(SDL_THREAD_PRIORITY_HIGH);
 	
 	while (!token.stop_requested())
 		[[likely]] { mainSystemLoop(); }
@@ -47,6 +48,10 @@ EmuInterface::~EmuInterface() noexcept {}
 
 void EmuInterface::setViewportSizes(s32 texture_W, s32 texture_H, s32 upscale_M, s32 padding_S) noexcept {
 	BVS->setViewportSizes(texture_W, texture_H, upscale_M, padding_S);
+}
+
+void EmuInterface::setDisplayBorderColor(u32 color) noexcept {
+	BVS->setBorderColor(color);
 }
 
 void EmuInterface::setSystemFramerate(f32 value) noexcept {

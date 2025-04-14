@@ -46,6 +46,7 @@ void EmuHost::replaceCore() {
 	if (iGuest) {
 		BVS->setMainWindowTitle(HDM->getFileStem().c_str());
 		BVS->displayBuffer.resize(iGuest->getDisplaySize());
+		toggleSystemLimiter();
 		iGuest->startWorker();
 	}
 }
@@ -145,11 +146,20 @@ void EmuHost::checkForHotkeys() {
 
 		if (Input.isPressed(KEY(RSHIFT))) {
 			mFrameStat = !mFrameStat;
-			if (!mFrameStat) { mUnlimited = false; }
 		}
 		if (Input.isPressed(KEY(F11))) {
-			if (mFrameStat) { mUnlimited = !mUnlimited; }
+			mUnlimited = !mUnlimited;
+			toggleSystemLimiter();
 		}
+	}
+}
+
+void EmuHost::toggleSystemLimiter() noexcept {
+	if (!iGuest) { return; }
+	if (mUnlimited) {
+		iGuest->addSystemState(EmuState::BENCH);
+	} else {
+		iGuest->subSystemState(EmuState::BENCH);
 	}
 }
 

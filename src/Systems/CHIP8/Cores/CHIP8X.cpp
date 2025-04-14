@@ -215,7 +215,7 @@ void CHIP8X::renderAudioData() {
 	pushSquareTone(STREAM::BUZZER);
 
 	static constexpr u32 idx[]{ 2, 7, 4, 1 };
-	BVS->setOutlineColor(
+	setDisplayBorderColor(
 		std::accumulate(mAudioTimer.begin(), mAudioTimer.end(), 0)
 		? cForeColor[idx[mBackgroundColor]] : cBackColor[mBackgroundColor]);
 }
@@ -287,7 +287,7 @@ void CHIP8X::drawHiresColor(s32 X, s32 Y, s32 idx, s32 N) noexcept {
 		mCurrentPC = mStackBank[--mStackTop & 0xF];
 	}
 	void CHIP8X::instruction_02A0() noexcept {
-		BVS->setOutlineColor(cBackColor[++mBackgroundColor &= 0x3]);
+		setDisplayBorderColor(cBackColor[++mBackgroundColor &= 0x3]);
 	}
 
 	#pragma endregion

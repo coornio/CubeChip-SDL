@@ -17,7 +17,7 @@ REGISTER_CORE(BYTEPUSHER_STANDARD, ".BytePusher")
 BYTEPUSHER_STANDARD::BYTEPUSHER_STANDARD() {
 	copyGameToMemory(mMemoryBank.data());
 
-	BVS->setOutlineColor(cBitsColor[0]);
+	setDisplayBorderColor(cBitsColor[0]);
 
 	setViewportSizes(cScreenSizeX, cScreenSizeY, cResSizeMult, -2);
 	setSystemFramerate(cRefreshRate);
