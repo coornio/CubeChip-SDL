@@ -207,7 +207,7 @@ void Chip8_CoreInterface::writeStatistics() {
 	if (mInterrupt == Interrupt::CLEAR) [[likely]]
 		{ mTargetCPF += static_cast<s32>(workCycleBias); }
 
-	mStatistics.store(std::make_shared<Str>(std::format(
+	mStatistics.store(std::make_shared<Str>(fmt::format(
 		" ::   MIPS:{:8.2f}\n"
 		"Time Since:{:9.3f} ms\n"
 		"Frame Work:{:9.3f} ms\n",

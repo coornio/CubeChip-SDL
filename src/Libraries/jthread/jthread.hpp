@@ -6,8 +6,6 @@
 
 #include "stop_token.hpp"
 
-#include <thread>
-#include <type_traits>
 #include <functional>
 
 namespace nonstd {

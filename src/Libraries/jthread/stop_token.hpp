@@ -4,6 +4,7 @@
 #include <atomic>
 #include <thread>
 #include <type_traits>
+#include <concepts>
 #include <utility>
 
 #if defined(__x86_64__) || defined(_M_X64)
@@ -293,7 +294,6 @@ namespace nonstd {
 		std::thread::id __signallingThread_{};
 	};
 
-
 	//-----------------------------------------------
 	// forward declarations
 	//-----------------------------------------------
@@ -306,7 +306,6 @@ namespace nonstd {
 	// - to initialize a stop_source without shared stop state
 	struct nostopstate_t { explicit nostopstate_t() = default; };
 	inline constexpr nostopstate_t nostopstate{};
-
 
 	//-----------------------------------------------
 	// stop_token
@@ -532,6 +531,6 @@ namespace nonstd {
 		stop_callback(stop_callback&&) = delete;
 	};
 
-	template<typename _Callback>
+	template <typename _Callback>
 	stop_callback(stop_token, _Callback) -> stop_callback<_Callback>;
 }
