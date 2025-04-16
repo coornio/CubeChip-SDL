@@ -35,8 +35,9 @@ protected:
 	virtual void renderAudioData() = 0;
 	virtual void renderVideoData() = 0;
 
-public:
+protected:
 	GameBoy_CoreInterface() noexcept;
 
+public:
 	void mainSystemLoop() override;
 };

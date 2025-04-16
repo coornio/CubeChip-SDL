@@ -20,12 +20,12 @@
 #include "EmuHost.hpp"
 
 #ifdef _WIN32
-	#define NOMINMAX
 	#pragma warning(push)
 	#pragma warning(disable : 5039)
 		#include <mbctype.h>
-		#include <windows.h>
 	#pragma warning(pop)
+	#define NOMINMAX
+	#include <windows.h>
 #endif
 
 /*==================================================================*/
@@ -59,6 +59,7 @@ SDL_AppResult SDL_AppInit(void **Host, int argc, char *argv[]) {
 	_setmbcp(CP_UTF8);
 	setlocale(LC_CTYPE, ".UTF-8");
 	SetConsoleOutputCP(CP_UTF8);
+	SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
 #endif
 
 	SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1");

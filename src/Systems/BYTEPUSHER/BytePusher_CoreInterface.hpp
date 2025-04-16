@@ -36,9 +36,10 @@ protected:
 	virtual void renderAudioData() = 0;
 	virtual void renderVideoData() = 0;
 
-public:
+protected:
 	BytePusher_CoreInterface() noexcept;
 
+public:
 	void mainSystemLoop() override;
 
 protected:

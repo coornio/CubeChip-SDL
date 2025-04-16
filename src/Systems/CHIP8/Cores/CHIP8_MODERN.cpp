@@ -451,7 +451,7 @@ void CHIP8_MODERN::renderVideoData() {
 				for (auto H{ 0 }; H < N; ++H, ++pY %= cScreenSizeY)
 				{
 					drawByte(pX, pY, readMemoryI(H));
-					if (!Quirk.wrapSprite && pY == cScreenSizeY) { break; }
+					if (!Quirk.wrapSprite && pY == cScreenSizeY - 1) { break; }
 				}
 				break;
 		}

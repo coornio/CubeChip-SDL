@@ -177,9 +177,10 @@ protected:
 	virtual void renderAudioData() = 0;
 	virtual void renderVideoData() = 0;
 
-public:
+protected:
 	Chip8_CoreInterface() noexcept;
 
+public:
 	void mainSystemLoop() override;
 	void writeStatistics() override;
 

@@ -89,10 +89,13 @@ protected:
 private:
 	Atom<u32> mGlobalState{ EmuState::NORMAL };
 
-public:
+protected:
 	EmuInterface() noexcept;
+
+public:
 	virtual ~EmuInterface() noexcept;
 
+public:
 	static void assignComponents(
 		HomeDirManager* const pHDM,
 		BasicVideoSpec* const pBVS
