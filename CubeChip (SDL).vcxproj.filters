@@ -47,6 +47,18 @@
     <Filter Include="Source Files\Libraries\nlohmann">
       <UniqueIdentifier>{7306d220-21ca-4515-83a6-f47988b1312a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Libraries\tartanllama">
+      <UniqueIdentifier>{d4c3c012-936f-4201-aaae-bbe93c281c0b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Libraries\fmt">
+      <UniqueIdentifier>{e68069d2-a9f7-44e5-866a-9d5724cc7230}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Libraries\jthread">
+      <UniqueIdentifier>{af2d6bf9-49dd-44a5-afc1-48dce1c3e632}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Libraries\toml++">
+      <UniqueIdentifier>{df4f07ae-f914-4edc-922c-84664ba284b1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\CubeChip.cpp">
@@ -135,6 +147,9 @@
     </ClCompile>
     <ClCompile Include="src\Libraries\imgui\imgui_widgets.cpp">
       <Filter>Source Files\Libraries\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Assistants\DefaultConfig.cpp">
+      <Filter>Source Files\Assistants</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -300,23 +315,63 @@
     <ClInclude Include="src\Assistants\ShutdownSignal.hpp">
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
-    <ClInclude Include="src\Assistants\SimpleTomlFileIO.hpp" />
-    <ClInclude Include="src\Libraries\fmt\args.h" />
-    <ClInclude Include="src\Libraries\fmt\base.h" />
-    <ClInclude Include="src\Libraries\fmt\chrono.h" />
-    <ClInclude Include="src\Libraries\fmt\color.h" />
-    <ClInclude Include="src\Libraries\fmt\compile.h" />
-    <ClInclude Include="src\Libraries\fmt\core.h" />
-    <ClInclude Include="src\Libraries\fmt\format-inl.h" />
-    <ClInclude Include="src\Libraries\fmt\format.h" />
-    <ClInclude Include="src\Libraries\fmt\os.h" />
-    <ClInclude Include="src\Libraries\fmt\ostream.h" />
-    <ClInclude Include="src\Libraries\fmt\printf.h" />
-    <ClInclude Include="src\Libraries\fmt\ranges.h" />
-    <ClInclude Include="src\Libraries\fmt\std.h" />
-    <ClInclude Include="src\Libraries\fmt\xchar.h" />
-    <ClInclude Include="src\Libraries\tartanllama\expected.hpp" />
-    <ClInclude Include="src\Libraries\toml++\toml.hpp" />
+    <ClInclude Include="src\Assistants\DefaultConfig.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\tartanllama\expected.hpp">
+      <Filter>Source Files\Libraries\tartanllama</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\fmt\args.h">
+      <Filter>Source Files\Libraries\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\fmt\base.h">
+      <Filter>Source Files\Libraries\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\fmt\chrono.h">
+      <Filter>Source Files\Libraries\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\fmt\color.h">
+      <Filter>Source Files\Libraries\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\fmt\compile.h">
+      <Filter>Source Files\Libraries\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\fmt\core.h">
+      <Filter>Source Files\Libraries\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\fmt\format.h">
+      <Filter>Source Files\Libraries\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\fmt\format-inl.h">
+      <Filter>Source Files\Libraries\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\fmt\os.h">
+      <Filter>Source Files\Libraries\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\fmt\ostream.h">
+      <Filter>Source Files\Libraries\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\fmt\printf.h">
+      <Filter>Source Files\Libraries\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\fmt\ranges.h">
+      <Filter>Source Files\Libraries\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\fmt\std.h">
+      <Filter>Source Files\Libraries\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\toml++\toml.hpp">
+      <Filter>Source Files\Libraries\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\fmt\xchar.h">
+      <Filter>Source Files\Libraries\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\jthread\jthread.hpp">
+      <Filter>Source Files\Libraries\jthread</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\jthread\stop_token.hpp">
+      <Filter>Source Files\Libraries\jthread</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="external\imgui\misc\debuggers\imgui.natvis" />

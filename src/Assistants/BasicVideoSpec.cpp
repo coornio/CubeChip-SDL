@@ -31,14 +31,19 @@
 /*==================================================================*/
 	#pragma region BasicVideoSpec Singleton Class
 
-BasicVideoSpec::BasicVideoSpec() noexcept {
+BasicVideoSpec::BasicVideoSpec(const Settings& settings) noexcept {
 	mSuccessful = SDL_InitSubSystem(SDL_INIT_VIDEO);
 	if (!mSuccessful) {
 		showErrorBox("Failed to init SDL video!");
 		return;
 	}
 
-	mSuccessful = mMainWindow = SDL_CreateWindow(sAppName, 0, 0, SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE);
+	mViewportScaleMode = (settings.viewportScaleMode < 0) ? 0 : settings.viewportScaleMode % 3;
+
+	mIntegerScaling    = settings.integerScaling;
+	mUsingScanlines    = settings.usingScanlines;
+
+	mSuccessful = mMainWindow = SDL_CreateWindow(nullptr, 0, 0, SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE);
 	if (!mSuccessful) {
 		showErrorBox("Failed to create main window!");
 		return;
@@ -63,6 +68,15 @@ BasicVideoSpec::BasicVideoSpec() noexcept {
 	}
 	#endif
 
+	SDL_Rect rect{
+		settings.windowPosX,  settings.windowPosY,
+		settings.windowSizeX, settings.windowSizeY
+	};
+	normalizeRectToDisplay(rect);
+
+	SDL_SetWindowPosition(mMainWindow, rect.x, rect.y);
+	SDL_SetWindowSize(mMainWindow, rect.w, rect.h);
+
 	mSuccessful = mMainRenderer = SDL_CreateRenderer(mMainWindow, nullptr);
 	if (!mSuccessful) {
 		showErrorBox("Failed to create Main renderer!");
@@ -71,6 +85,8 @@ BasicVideoSpec::BasicVideoSpec() noexcept {
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
+	ImGui::GetIO().IniFilename = nullptr;
+	ImGui::GetIO().LogFilename = nullptr;
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 
@@ -93,13 +109,8 @@ BasicVideoSpec::~BasicVideoSpec() noexcept {
 	SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }
 
-void BasicVideoSpec::setMainWindowTitle(const Str& name) {
-	const auto windowTitle{ (sAppName ? (sAppName + " :: "s) : "") + name};
-	SDL_SetWindowTitle(mMainWindow, windowTitle.c_str());
-}
-
-void BasicVideoSpec::setWindowTitle(SDL_Window* window, const Str& name) {
-	SDL_SetWindowTitle(window, name.c_str());
+void BasicVideoSpec::setMainWindowTitle(const Str& title, const Str& desc) {
+	SDL_SetWindowTitle(mMainWindow, (desc.empty() ? title : title + " :: " + desc).c_str());
 }
 
 void BasicVideoSpec::showErrorBox(const char* const title) noexcept {
@@ -109,33 +120,84 @@ void BasicVideoSpec::showErrorBox(const char* const title) noexcept {
 	);
 }
 
+void BasicVideoSpec::normalizeRectToDisplay(SDL_Rect& rect) noexcept {
+	// 1: fetch all eligible display IDs
+	auto numDisplays{ 0 };
+	SDL_Unique<SDL_DisplayID> displays{ SDL_GetDisplays(&numDisplays) };
+	if (!displays || numDisplays <= 0) [[unlikely]]
+		{ rect = cDefaultWindow; return; }
+
+	// 2: fill vector with usable display bounds rects
+	std::vector<SDL_Rect> displayBounds;
+	displayBounds.reserve(numDisplays);
+
+	for (auto i{ 0 }; i < numDisplays; ++i) {
+		SDL_Rect usableBounds;
+		if (SDL_GetDisplayUsableBounds(displays[i], &usableBounds)) {
+			displayBounds.push_back(usableBounds);
+		}
+	}
+	if (displayBounds.empty()) [[unlikely]]
+		{ rect = cDefaultWindow; return; }
+
+	// 3: validate rect values, use fallbacks if needed
+	static constexpr auto none{ std::numeric_limits<s32>::min() };
+	if (rect.x == none) { rect.x = cDefaultWindow.x; }
+	if (rect.y == none) { rect.y = cDefaultWindow.y; }
+	if (rect.w <= 0)    { rect.w = cDefaultWindow.w; }
+	if (rect.h <= 0)    { rect.h = cDefaultWindow.h; }
+
+	// 4: find largest window/display overlap, if any
+	auto bestDisplay{ -1 };
+	auto bestOverlap{  0 };
+	for (auto i{ 0 }; i < static_cast<s32>(displayBounds.size()); ++i) {
+		const auto overlap{ computeOverlapArea(rect, displayBounds[i]) };
+		if (overlap > bestOverlap) { bestOverlap = overlap; bestDisplay = i; }
+	}
+
+	// 5: fall back to searching for closest display
+	if (bestOverlap == 0) {
+		auto bestDistance{ std::numeric_limits<s64>::max() };
+		const auto cx{ rect.x + rect.w / 2 };
+		const auto cy{ rect.y + rect.h / 2 };
+
+		for (auto i{ 0 }; i < static_cast<s32>(displayBounds.size()); ++i) {
+			const auto tcx{ displayBounds[i].x + displayBounds[i].w / 2 };
+			const auto tcy{ displayBounds[i].y + displayBounds[i].h / 2 };
+			const auto distance{ squaredDistance(cx, cy, tcx, tcy) };
+			if (distance < bestDistance) { bestDistance = distance; bestDisplay = i; }
+		}
+	}
+
+	// 6: shrink window to best fit chosen display
+	const auto& target{ displayBounds[bestDisplay] };
+	rect.w = std::min(rect.w, target.w);
+	rect.h = std::min(rect.h, target.h);
+
+	if (bestOverlap == 0) { // 7a: if we didn't overlap before, center to display
+		rect.x = target.x + (target.w - rect.w) / 2;
+		rect.y = target.y + (target.h - rect.h) / 2;
+	} else { // 7b: otherwise, clamp origin to lie within display bounds
+		rect.x = std::clamp(rect.x, target.x, target.x + target.w - rect.w);
+		rect.y = std::clamp(rect.y, target.y, target.y + target.h - rect.h);
+	}
+}
+
 void BasicVideoSpec::raiseMainWindow() {
 	SDL_RaiseWindow(mMainWindow);
 }
 
-void BasicVideoSpec::raiseWindow(SDL_Window* window) {
-	SDL_RaiseWindow(window);
-}
+void BasicVideoSpec::resetMainWindow() {
+	SDL_ShowWindow(mMainWindow);
+	//SDL_SyncWindow(mMainWindow);
 
-void BasicVideoSpec::resetMainWindow(s32 window_W, s32 window_H) {
-	SDL_SetWindowMinimumSize(mMainWindow, window_W, window_H);
-
-	setWindowSize(mMainWindow, window_W, window_H);
-	setMainWindowTitle("Waiting for file..."s);
-
-	mViewportFrame = { window_W, window_H };
+	mViewportFrame = { mViewportFrame.rect.W, mViewportFrame.rect.H };
 	mViewportRotation = 0;
 
 	mInnerTexture.reset();
 	mOuterTexture.reset();
 	mTextureSize.store(nullptr, mo::release);
 	mNewTextureNeeded.store(false, mo::release);
-}
-
-void BasicVideoSpec::setWindowSize(SDL_Window* window, s32 window_W, s32 window_H) {
-	SDL_SetWindowSize(window, window_W, window_H);
-	SDL_ShowWindow(window);
-	SDL_SyncWindow(window);
 }
 
 void BasicVideoSpec::setViewportAlpha(u32 alpha) {
@@ -197,7 +259,6 @@ void BasicVideoSpec::renderViewport() {
 		const auto padding{ mFramePadding.load(mo::acquire) };
 		const auto scaling{ mTextureScale.load(mo::acquire) };
 
-		mEnableScanline = padding > 0;
 		mViewportFrame = { *texture, scaling, std::abs(padding) };
 
 		const auto outerRect{ mViewportFrame.padded() };
@@ -212,7 +273,12 @@ void BasicVideoSpec::renderViewport() {
 			showErrorBox("Failed to create GUI texture!");
 			return;
 		} else {
-			SDL_SetTextureScaleMode(mOuterTexture, mViewportScaleMode);
+			if (mViewportScaleMode >= 0 && mViewportScaleMode <= 2) {
+				SDL_SetTextureScaleMode(mOuterTexture, static_cast<SDL_ScaleMode>(mViewportScaleMode));
+			} else {
+				mViewportScaleMode = SDL_SCALEMODE_NEAREST;
+				SDL_SetTextureScaleMode(mOuterTexture, SDL_SCALEMODE_NEAREST);
+			}
 			SDL_SetRenderTarget(mMainRenderer, mOuterTexture);
 			SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 			SDL_RenderClear(mMainRenderer);
@@ -258,7 +324,7 @@ void BasicVideoSpec::renderViewport() {
 
 	SDL_RenderTexture(mMainRenderer, mInnerTexture, nullptr, &innerFRect);
 
-	if (mEnableScanline) {
+	if (mUsingScanlines) {
 		SDL_SetRenderDrawBlendMode(mMainRenderer, SDL_BLENDMODE_BLEND);
 		SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, 0x20);
 
@@ -379,8 +445,6 @@ namespace ImGui {
 }
 
 void BasicVideoSpec::renderPresent(const char* const stats) {
-	//if (!mSuccessful) [[unlikely]] { return; }
-
 	renderViewport();
 
 	#pragma region IMGUI LOGIC

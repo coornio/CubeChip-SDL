@@ -133,7 +133,7 @@ inline auto readFileData(
 		} else {
 			try {
 				fileData.assign(std::istreambuf_iterator(inFile), {});
-				if (!inFile.good()) { throw std::exception(); }
+				if (!inFile.good()) { throw std::exception{}; }
 			} catch (const std::exception&) {
 				return makeUnexpected(std::make_error_code(std::errc::not_enough_memory));
 			}
@@ -166,8 +166,8 @@ inline auto writeFileData(
 		outFile.seekp(static_cast<std::streampos>(dataWriteOffset));
 		if (!outFile) { return makeUnexpected(std::make_error_code(std::errc::invalid_argument)); }
 
-		outFile.write(reinterpret_cast<const char*>(fileData), dataWriteSize * sizeof(T));
-		if (!outFile.good()) { throw std::exception(); } else { return true; }
+		if (outFile.write(reinterpret_cast<const char*>(fileData), dataWriteSize * sizeof(T)))
+			{ return true; } else { throw std::exception{}; }
 	}
 	catch (const std::exception&) {
 		return makeUnexpected(std::make_error_code(std::errc::io_error));

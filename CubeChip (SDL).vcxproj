@@ -22,6 +22,7 @@
     <ClCompile Include="src\Assistants\BasicAudioSpec.cpp" />
     <ClCompile Include="src\Assistants\BasicLogger.cpp" />
     <ClCompile Include="src\Assistants\BasicVideoSpec.cpp" />
+    <ClCompile Include="src\Assistants\DefaultConfig.cpp" />
     <ClCompile Include="src\Assistants\FrameLimiter.cpp" />
     <ClCompile Include="src\Assistants\HomeDirManager.cpp" />
     <ClCompile Include="src\Assistants\SHA1.cpp" />
@@ -58,6 +59,7 @@
     <ClInclude Include="src\Assistants\BasicVideoSpec.hpp" />
     <ClInclude Include="src\Assistants\BytePun.hpp" />
     <ClInclude Include="src\Assistants\Concepts.hpp" />
+    <ClInclude Include="src\Assistants\DefaultConfig.hpp" />
     <ClInclude Include="src\Assistants\FrameLimiter.hpp" />
     <ClInclude Include="src\Assistants\HomeDirManager.hpp" />
     <ClInclude Include="src\Assistants\LifetimeWrapperSDL.hpp" />
@@ -69,7 +71,6 @@
     <ClInclude Include="src\Assistants\SHA1.hpp" />
     <ClInclude Include="src\Assistants\ShutdownSignal.hpp" />
     <ClInclude Include="src\Assistants\SimpleFileIO.hpp" />
-    <ClInclude Include="src\Assistants\SimpleTomlFileIO.hpp" />
     <ClInclude Include="src\Assistants\ThreadAffinity.hpp" />
     <ClInclude Include="src\Assistants\TripleBuffer.hpp" />
     <ClInclude Include="src\Assistants\Typedefs.hpp" />
@@ -104,6 +105,8 @@
     <ClInclude Include="src\Libraries\imgui\imstb_rectpack.h" />
     <ClInclude Include="src\Libraries\imgui\imstb_textedit.h" />
     <ClInclude Include="src\Libraries\imgui\imstb_truetype.h" />
+    <ClInclude Include="src\Libraries\jthread\jthread.hpp" />
+    <ClInclude Include="src\Libraries\jthread\stop_token.hpp" />
     <ClInclude Include="src\Libraries\nlohmann\json.hpp" />
     <ClInclude Include="src\Libraries\nlohmann\json_fwd.hpp" />
     <ClInclude Include="src\Libraries\tartanllama\expected.hpp" />
@@ -291,7 +294,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>SDL3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <Profile>true</Profile>
-      <LinkTimeCodeGeneration>PGOptimization</LinkTimeCodeGeneration>
+      <LinkTimeCodeGeneration>PGInstrument</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

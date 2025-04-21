@@ -10,7 +10,7 @@
 
 struct alignas(4) RGBA {
 	using u8  = std::uint8_t;
-	using u32 = std::uint_fast32_t;
+	using u32 = std::uint32_t;
 
 	u8 R{}, G{}, B{}, A{};
 

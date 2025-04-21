@@ -6,29 +6,104 @@
 
 #include "HomeDirManager.hpp"
 
-#include "../Assistants/SHA1.hpp"
-#include "../Assistants/SimpleFileIO.hpp"
-#include "../Assistants/PathGetters.hpp"
-#include "../Assistants/BasicLogger.hpp"
+#include "SHA1.hpp"
+#include "SimpleFileIO.hpp"
+#include "BasicLogger.hpp"
+#include "DefaultConfig.hpp"
+#include "PathGetters.hpp"
 
 #include <SDL3/SDL_messagebox.h>
 
 /*==================================================================*/
 	#pragma region HomeDirManager Class
 
-HomeDirManager::HomeDirManager(const char* homePath) noexcept {
-	if (homePath) { blog.initLogFile("program.log", homePath); }
+HomeDirManager::HomeDirManager(
+	const char* override, const char* config,
+	const char* org,      const char* app
+) noexcept {
+	if (!setPortable(override))
+		{ /* nothing here yet */ }
+
+	if (!setHomePath(org, app))
+		{ mSuccessful = false; return; }
+
+	blog.initLogFile("program.log", sHomePath);
+
+	if (!config) { config = "settings.toml"; }
+	static const auto mainConfig{ (Path{ sHomePath } / config).string() };
+	sMainConf = mainConfig.c_str();
+
+	if (const auto result{ config::parseFromFile(sMainConf) }) {
+		config::safeTableUpdate(getAppConfig(), result.table());
+		blog.newEntry(BLOG::INFO,
+			"[TOML] App Config found, previous settings loaded!");
+	} else {
+		blog.newEntry(BLOG::WARN,
+			"[TOML] App Config failed to load! [{}]", result.error().description());
+	}
 }
 
-HomeDirManager* HomeDirManager::create(const char* const org, const char* const app) noexcept {
-	static HomeDirManager self(getHomePath(org, app));
-	return getHomePath() ? &self : nullptr;
+bool HomeDirManager::setPortable(const char* override) noexcept {
+	if (override) {
+		sHomePath = override;
+		sPortable = true;
+		return sPortable;
+	}
+	if (!::getBasePath()) {
+		sPortable = false;
+		return sPortable;
+	}
+
+	const auto fileExists{ fs::exists(Path{ ::getBasePath() } / "portable.txt") };
+	if (!fileExists || !fileExists.value()) {
+		sPortable = false;
+		return sPortable;
+	} else {
+		sHomePath = ::getBasePath();
+		sPortable = true;
+		return sPortable;
+	}
+}
+
+bool HomeDirManager::setHomePath(const char* org, const char* app) noexcept {
+	if (sHomePath) { return true; }
+	else { ::getHomePath(org, app); }
+
+	if (sPortable) {
+		if (!sHomePath) // something went wrong
+			{ goto fallback; }
+		else { return true; }
+	} else {
+		fallback:
+		sHomePath = ::getHomePath();
+		sPortable = false;
+		return sHomePath;
+	}
+}
+
+void HomeDirManager::writeMainConfig() const noexcept {
+	if (const auto result{ config::writeToFile(getAppConfig(), sMainConf) }) {
+		blog.newEntry(BLOG::INFO,
+			"[TOML] App Config written to file successfully!");
+	} else {
+		blog.newEntry(BLOG::ERROR,
+			"[TOML] Failed to write App Config, runtime settings lost! [{}]", result.error().message());
+	}
+}
+
+HomeDirManager* HomeDirManager::initialize(
+	const char* override, const char* config,
+	const char* org,      const char* app
+) noexcept {
+	/*pass settings filename here, and cxx params*/
+	static HomeDirManager self(override, config, org, app);
+	return mSuccessful ? &self : nullptr;
 }
 
 Path* HomeDirManager::addSystemDir(const Path& sub, const Path& sys) noexcept {
 	if (sub.empty()) { return nullptr; }
 	
-	const auto newDirPath{ ::getHomePath() / sys / sub };
+	const auto newDirPath{ sHomePath / sys / sub };
 
 	const auto it{ std::find_if(EXEC_POLICY(unseq)
 		mDirectories.begin(), mDirectories.end(),

@@ -10,14 +10,19 @@
 #include <vector>
 #include <algorithm>
 
-#include "Typedefs.hpp"
+#include "Misc.hpp"
+
+#define TOML_EXCEPTIONS 0
+#include "../Libraries/toml++/toml.hpp"
 
 /*==================================================================*/
 	#pragma region HomeDirManager Singleton Class
 
 class HomeDirManager final {
-	HomeDirManager(const char* homePath) noexcept;
-	~HomeDirManager() noexcept = default;
+	HomeDirManager(
+		const char* override, const char* config,
+		const char* org,      const char* app
+	) noexcept;
 	HomeDirManager(const HomeDirManager&) = delete;
 	HomeDirManager& operator=(const HomeDirManager&) = delete;
 
@@ -39,17 +44,26 @@ class HomeDirManager final {
 
 	GameValidator checkGame{};
 
+	inline static const char* sHomePath{};
+	inline static const char* sMainConf{};
+	inline static bool sPortable{};
+
 	static inline bool mSuccessful{ true };
 
-public:
-	static HomeDirManager* create(const char* const org, const char* const app) noexcept;
+	bool setPortable(const char* override) noexcept;
+	bool setHomePath(const char* org, const char* app) noexcept;
 
+public:
+	void writeMainConfig() const noexcept;
+
+public:
+	static HomeDirManager* initialize(
+		const char* override, const char* config,
+		const char* org,      const char* app
+	) noexcept;
 	static bool isSuccessful() noexcept { return mSuccessful; }
 
-	Path* addSystemDir(
-		const Path& sub,
-		const Path& sys = {}
-	) noexcept;
+	Path* addSystemDir(const Path& sub, const Path& sys = Path{}) noexcept;
 
 	auto getFullPath() const noexcept { return mFilePath; }
 	auto getFilePath() const noexcept { return mFilePath.string(); }

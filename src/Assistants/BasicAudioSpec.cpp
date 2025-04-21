@@ -9,15 +9,18 @@
 /*==================================================================*/
 	#pragma region BasicAudioSpec Singleton Class
 
-BasicAudioSpec::BasicAudioSpec() noexcept {
+BasicAudioSpec::BasicAudioSpec(const Settings& settings) noexcept {
 	mSuccessful = SDL_InitSubSystem(SDL_INIT_AUDIO);
 	if (!mSuccessful) {
 		SDL_ShowSimpleMessageBox(
 			SDL_MESSAGEBOX_ERROR, "Failed to init SDL audio!",
 			SDL_GetError(), nullptr
 		);
-		
 	}
+
+	setGlobalGain(settings.globalGain);
+	isMuted(settings.isMuted);
+
 }
 
 BasicAudioSpec::~BasicAudioSpec() noexcept {
@@ -25,16 +28,16 @@ BasicAudioSpec::~BasicAudioSpec() noexcept {
 }
 
 void BasicAudioSpec::setGlobalGain(f32 gain) noexcept {
-	mGlobalGain.store(std::clamp(gain, 0.0f, 1.0f), mo::release);
+	mGlobalGain.store(std::clamp(gain, 0.0f, 1.0f), mo::relaxed);
 }
 
 void BasicAudioSpec::addGlobalGain(f32 gain) noexcept {
-	mGlobalGain.store(std::clamp(getGlobalGain() + gain, 0.0f, 1.0f), mo::release);
+	mGlobalGain.store(std::clamp(getGlobalGain() + gain, 0.0f, 1.0f), mo::relaxed);
 }
 
 void BasicAudioSpec::addGlobalGain(s32 gain) noexcept {
 	static constexpr f32 minF{ 1.0f / 255.0f };
-	mGlobalGain.store(std::clamp(getGlobalGain() + gain * minF, 0.0f, 1.0f), mo::release);
+	mGlobalGain.store(std::clamp(getGlobalGain() + gain * minF, 0.0f, 1.0f), mo::relaxed);
 }
 
 	#pragma endregion

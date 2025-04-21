@@ -24,23 +24,46 @@
 	#pragma region BasicAudioSpec Singleton Class
 
 class BasicAudioSpec final {
-	BasicAudioSpec() noexcept;
+
+public:
+	struct Settings {
+		f32  globalGain{};
+		bool isMuted{};
+	};
+
+	[[nodiscard]]
+	auto exportSettings() const noexcept {
+		Settings out;
+
+		out.globalGain = mGlobalGain.load(mo::relaxed);
+		out.isMuted    = mIsMuted.load(mo::relaxed);
+
+		return out;
+	}
+
+private:
+	BasicAudioSpec(const Settings& settings) noexcept;
 	~BasicAudioSpec() noexcept;
 	BasicAudioSpec(const BasicAudioSpec&) = delete;
 	BasicAudioSpec& operator=(const BasicAudioSpec&) = delete;
 
-	static inline std::atomic<f32> mGlobalGain{ 0.75f };
+	static inline Atom<f32> mGlobalGain{};
+	static inline Atom<bool> mIsMuted{};
 	static inline bool mSuccessful{ true };
 
 public:
-	static auto* create() noexcept {
-		static BasicAudioSpec self;
+	static auto* create(const Settings& settings) noexcept {
+		static BasicAudioSpec self(settings);
 		return mSuccessful ? &self : nullptr;
 	}
 
 	static bool isSuccessful() noexcept { return mSuccessful; }
 
-	static auto getGlobalGain()     noexcept { return mGlobalGain.load(mo::acquire); }
+	static bool isMuted()           noexcept { return mIsMuted.load(mo::relaxed); }
+	static void isMuted(bool state) noexcept { mIsMuted.store(state, mo::relaxed); }
+	static void toggleMuted()       noexcept { mIsMuted.store(isMuted(), mo::relaxed); }
+
+	static auto getGlobalGain()     noexcept { return mGlobalGain.load(mo::relaxed); }
 	static auto getGlobalGainByte() noexcept { return static_cast<s32>(getGlobalGain() * 255.0f); }
 
 	static void setGlobalGain(f32 gain) noexcept;
@@ -97,7 +120,8 @@ public:
 	void pushAudioData(u32 index, T* sampleData, ust bufferSize) const {
 		if (isStreamPaused(index) || !bufferSize) { return; }
 
-		const auto globalGain{ BasicAudioSpec::getGlobalGain() };
+		const auto globalGain{ BasicAudioSpec::isMuted()
+			? 0.0f : BasicAudioSpec::getGlobalGain() };
 
 		std::transform(EXEC_POLICY(unseq)
 			sampleData, sampleData + bufferSize, sampleData,

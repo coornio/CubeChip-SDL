@@ -167,7 +167,7 @@ void Chip8_CoreInterface::skipInstruction() noexcept {
 void Chip8_CoreInterface::performProgJump(u32 next) noexcept {
 	const auto NNN{ next & 0xFFF };
 	if (mCurrentPC - 2u != NNN) [[likely]] {
-		mCurrentPC = NNN & 0xFFF;
+		mCurrentPC = NNN;
 	} else {
 		triggerInterrupt(Interrupt::SOUND);
 	}

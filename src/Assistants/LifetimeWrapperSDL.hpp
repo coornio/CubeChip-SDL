@@ -19,22 +19,27 @@ struct SDL_Deleter {
 };
 template <>
 struct SDL_Deleter<SDL_Window> {
-	static void deleter(SDL_Window* ptr) { SDL_DestroyWindow(ptr); }
+	static void deleter(SDL_Window* ptr) { if (ptr) { SDL_DestroyWindow(ptr); } }
 	using type = decltype(&deleter);
 };
 template <>
 struct SDL_Deleter<SDL_Renderer> {
-	static void deleter(SDL_Renderer* ptr) { SDL_DestroyRenderer(ptr); }
+	static void deleter(SDL_Renderer* ptr) { if (ptr) { SDL_DestroyRenderer(ptr); } }
 	using type = decltype(&deleter);
 };
 template <>
 struct SDL_Deleter<SDL_Texture> {
-	static void deleter(SDL_Texture* ptr) { SDL_DestroyTexture(ptr); }
+	static void deleter(SDL_Texture* ptr) { if (ptr) { SDL_DestroyTexture(ptr); } }
 	using type = decltype(&deleter);
 };
 template <>
 struct SDL_Deleter<SDL_AudioStream> {
-	static void deleter(SDL_AudioStream* ptr) { SDL_DestroyAudioStream(ptr); }
+	static void deleter(SDL_AudioStream* ptr) { if (ptr) { SDL_DestroyAudioStream(ptr); } }
+	using type = decltype(&deleter);
+};
+template <>
+struct SDL_Deleter<SDL_DisplayID> {
+	static void deleter(SDL_DisplayID* ptr) { if (ptr) { SDL_free(ptr); } }
 	using type = decltype(&deleter);
 };
 

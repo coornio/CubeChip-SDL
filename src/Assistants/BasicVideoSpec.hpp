@@ -7,6 +7,7 @@
 #pragma once
 
 #include <utility>
+#include <optional>
 #include <execution>
 
 #include <SDL3/SDL.h>
@@ -20,10 +21,6 @@
 	#pragma region BasicVideoSpec Singleton Class
 
 class BasicVideoSpec final {
-	BasicVideoSpec() noexcept;
-	~BasicVideoSpec() noexcept;
-	BasicVideoSpec(const BasicVideoSpec&) = delete;
-	BasicVideoSpec& operator=(const BasicVideoSpec&) = delete;
 
 	struct Rect {
 		s32 W{}, H{};
@@ -82,8 +79,9 @@ class BasicVideoSpec final {
 	SDL_Unique<SDL_Texture>  mOuterTexture{};
 	SDL_Unique<SDL_Texture>  mInnerTexture{};
 
-	static inline const char* sAppName{};
-	static inline bool mSuccessful{ true };
+/*==================================================================*/
+
+	static constexpr SDL_Rect cDefaultWindow{ 240, 240, 640, 480 };
 
 	Viewport mViewportFrame{};
 
@@ -94,24 +92,55 @@ class BasicVideoSpec final {
 	Atom<u8>  mTextureAlpha{ 0xFF };
 	Atom<bool> mNewTextureNeeded{};
 
-	bool mEnableScanline{};
+	bool mUsingScanlines{};
 	bool mIntegerScaling{};
 
-	s32  mViewportRotation{};
-	SDL_ScaleMode mViewportScaleMode
-		{ SDL_SCALEMODE_NEAREST };
+	s32 mViewportRotation{};
+	s32 mViewportScaleMode{ SDL_SCALEMODE_NEAREST };
 
 public:
 	TripleBuffer<u32> displayBuffer;
 
-	static auto* create(const char* appName) noexcept {
-		sAppName = appName;
-		static BasicVideoSpec self;
+	struct Settings {
+		s32 windowPosX{};
+		s32 windowPosY{};
+		s32 windowSizeX{};
+		s32 windowSizeY{};
+		s32 viewportScaleMode{};
+		bool integerScaling{};
+		bool usingScanlines{};
+	};
+
+	[[nodiscard]]
+	Settings exportSettings() const noexcept {
+		Settings out;
+
+		SDL_GetWindowPosition(mMainWindow, &out.windowPosX,  &out.windowPosY );
+		SDL_GetWindowSize    (mMainWindow, &out.windowSizeX, &out.windowSizeY);
+		out.viewportScaleMode = mViewportScaleMode;
+		out.integerScaling    = mIntegerScaling;
+		out.usingScanlines    = mUsingScanlines;
+	
+		return out;
+	}
+
+private:
+	BasicVideoSpec(const Settings& settings) noexcept;
+	~BasicVideoSpec() noexcept;
+	BasicVideoSpec(const BasicVideoSpec&) = delete;
+	BasicVideoSpec& operator=(const BasicVideoSpec&) = delete;
+
+/*==================================================================*/
+
+	static inline bool mSuccessful{ true };
+
+public:
+	static auto* create(const Settings& settings) noexcept {
+		static BasicVideoSpec self(settings);
 		return mSuccessful ? &self : nullptr;
 	}
 
 	static bool isSuccessful() noexcept { return mSuccessful; }
-
 	static void showErrorBox(const char* const title) noexcept;
 
 	static auto getCurrentDisplaySize(u32 displayID) noexcept {
@@ -119,14 +148,48 @@ public:
 		return Rect{ displayMode->w, displayMode->h };
 	}
 
+/*==================================================================*/
+
+private:
+	auto computeOverlapArea(const SDL_Rect& a, const SDL_Rect& b) {
+		auto xOverlap{ std::max(0, std::min(a.x + a.w, b.x + b.w) - std::max(a.x, b.x)) };
+		auto yOverlap{ std::max(0, std::min(a.y + a.h, b.y + b.h) - std::max(a.y, b.y)) };
+		return xOverlap * yOverlap;
+	}
+
+	auto squaredDistance(s32 x1, s32 y1, s32 x2, s32 y2) {
+		s64 dx{ x1 - x2 };
+		s64 dy{ y1 - y2 };
+		return dx * dx + dy * dy;
+	}
+
+public:
+	void normalizeRectToDisplay(SDL_Rect& rect) noexcept;
+
+/*==================================================================*/
+
 	bool isIntegerScaling()     const noexcept { return mIntegerScaling; }
 	void isIntegerScaling(bool state) noexcept { mIntegerScaling = state; }
 	void toggleIntegerScaling()       noexcept { mIntegerScaling = !mIntegerScaling; }
 
+	bool isUsingScanlines()     const noexcept { return mUsingScanlines; }
+	void isUsingScanlines(bool state) noexcept { mUsingScanlines = state; }
+	void toggleUsingScanlines()       noexcept { mUsingScanlines = !mUsingScanlines; }
+
+	void rotateViewport(s32 delta) noexcept {
+		mViewportRotation += delta;
+		mViewportRotation &= 3;
+	}
+	void setViewportRotation(s32 value) noexcept {
+		mViewportRotation = value & 3;
+	}
+
 	auto getViewportScaleMode() const noexcept { return mViewportScaleMode; }
 	void setViewportScaleMode(SDL_ScaleMode mode) noexcept {
-		if (mode != SDL_SCALEMODE_INVALID) [[likely]]
-			{ SDL_SetTextureScaleMode(mOuterTexture, mViewportScaleMode = mode); }
+		if (mode != SDL_SCALEMODE_INVALID) {
+			mViewportScaleMode = mode;
+			SDL_SetTextureScaleMode(mOuterTexture, mode);
+		}
 	}
 	void cycleViewportScaleMode() noexcept {
 		switch (mViewportScaleMode) {
@@ -141,9 +204,9 @@ public:
 				break;
 		}
 	}
-
-
 	void setBorderColor(u32 color) noexcept;
+
+/*==================================================================*/
 
 	template <typename T, size_type N>
 	void scaleInterface(T(&appFont)[N]) {
@@ -153,13 +216,7 @@ public:
 
 	void processInterfaceEvent(SDL_Event* event) const noexcept;
 
-	void rotateViewport(s32 delta) noexcept {
-		mViewportRotation += delta;
-		mViewportRotation &= 3;
-	}
-	void setViewportRotation(s32 value) noexcept {
-		mViewportRotation = value & 3;
-	}
+/*==================================================================*/
 
 private:
 	void updateInterfacePixelScaling(const void* fontData, s32 fontSize, f32 newScale);
@@ -181,19 +238,12 @@ public:
 	void setViewportSizes(s32 texture_W, s32 texture_H, s32 upscale_M = 0, s32 padding_S = 0);
 
 public:
-	void resetMainWindow(s32 window_W = 640, s32 window_H = 480);
-	void setMainWindowTitle(const Str& title);
+	void resetMainWindow();
+	void setMainWindowTitle(const Str& title, const Str& desc);
 	auto getMainWindowID() const noexcept {
 		return SDL_GetWindowID(mMainWindow);
 	}
 	void raiseMainWindow();
-
-	void setWindowTitle(SDL_Window* window, const Str& title);
-	void setWindowSize(SDL_Window* window, s32 window_W, s32 window_H);
-	auto getWindowID(SDL_Window* window) const noexcept {
-		return SDL_GetWindowID(window);
-	}
-	void raiseWindow(SDL_Window* window);
 
 	void renderPresent(const char* const stats);
 };

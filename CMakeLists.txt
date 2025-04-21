@@ -32,6 +32,7 @@ add_executable(${PROJECT_NAME}
   src/Assistants/HomeDirManager.cpp
   src/Assistants/BasicVideoSpec.cpp
   src/Assistants/BasicAudioSpec.cpp
+  src/Assistants/DefaultConfig.cpp
   src/Assistants/FrameLimiter.cpp
   src/Assistants/SHA1.cpp
 
