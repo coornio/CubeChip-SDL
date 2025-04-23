@@ -11,6 +11,7 @@
 #include <algorithm>
 
 #include "Misc.hpp"
+#include "SettingWrapper.hpp"
 
 #define TOML_EXCEPTIONS 0
 #include "../Libraries/toml++/toml.hpp"
@@ -44,8 +45,12 @@ class HomeDirManager final {
 
 	GameValidator checkGame{};
 
+public:
+	inline static toml::table sMainAppConfig{};
+
+private:
 	inline static const char* sHomePath{};
-	inline static const char* sMainConf{};
+	inline static const char* sConfPath{};
 	inline static bool sPortable{};
 
 	static inline bool mSuccessful{ true };
@@ -54,7 +59,28 @@ class HomeDirManager final {
 	bool setHomePath(const char* org, const char* app) noexcept;
 
 public:
-	void writeMainConfig() const noexcept;
+	void parseMainAppConfig() const noexcept;
+
+	template <typename... Maps>
+		requires (std::same_as<Maps, SettingsMap> && ...)
+	void parseMainAppConfig(const Maps&... maps) const noexcept {
+		(insertIntoMainAppConfig(maps), ...);
+		parseMainAppConfig();
+		(updateFromMainAppConfig(maps), ...);
+	}
+
+	void writeMainAppConfig() const noexcept;
+
+	template <typename... Maps>
+		requires (std::same_as<Maps, SettingsMap> && ...)
+	void writeMainAppConfig(const Maps&... maps) const noexcept {
+		(insertIntoMainAppConfig(maps), ...);
+		writeMainAppConfig();
+	}
+
+private:
+	void insertIntoMainAppConfig(const SettingsMap& map) const noexcept;
+	void updateFromMainAppConfig(const SettingsMap& map) const noexcept;
 
 public:
 	static HomeDirManager* initialize(

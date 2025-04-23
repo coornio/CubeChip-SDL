@@ -12,10 +12,9 @@
 
 #include <SDL3/SDL.h>
 
-#include "Typedefs.hpp"
-#include "Concepts.hpp"
 #include "TripleBuffer.hpp"
 #include "LifetimeWrapperSDL.hpp"
+#include "SettingWrapper.hpp"
 
 /*==================================================================*/
 	#pragma region BasicVideoSpec Singleton Class
@@ -81,8 +80,6 @@ class BasicVideoSpec final {
 
 /*==================================================================*/
 
-	static constexpr SDL_Rect cDefaultWindow{ 240, 240, 640, 480 };
-
 	Viewport mViewportFrame{};
 
 	AtomSharedPtr<Rect> mTextureSize{};
@@ -102,24 +99,42 @@ public:
 	TripleBuffer<u32> displayBuffer;
 
 	struct Settings {
-		s32 windowPosX{};
-		s32 windowPosY{};
-		s32 windowSizeX{};
-		s32 windowSizeY{};
-		s32 viewportScaleMode{};
-		bool integerScaling{};
-		bool usingScanlines{};
+		static constexpr SDL_Rect
+			defaults{ 0, 0, 640, 480 };
+
+		SDL_Rect window{ defaults };
+		struct Viewport {
+			s32  filtering{ 0 };
+			bool int_scale{ true };
+			bool scanlines{ true };
+		} viewport;
+		bool first_run{ true };
+
+		auto serialize() {
+			SettingsMap output{
+				makeSetting("VIDEO.Window.X", &window.x),
+				makeSetting("VIDEO.Window.Y", &window.y),
+				makeSetting("VIDEO.Window.W", &window.w),
+				makeSetting("VIDEO.Window.H", &window.h),
+				makeSetting("VIDEO.Window.FirstRun", &first_run),
+				makeSetting("VIDEO.Viewport.Filtering", &viewport.filtering),
+				makeSetting("VIDEO.Viewport.Int_Scale", &viewport.int_scale),
+				makeSetting("VIDEO.Viewport.Scanlines", &viewport.scanlines),
+			};
+			return output;
+		}
 	};
 
 	[[nodiscard]]
-	Settings exportSettings() const noexcept {
+	auto exportSettings() const noexcept {
 		Settings out;
 
-		SDL_GetWindowPosition(mMainWindow, &out.windowPosX,  &out.windowPosY );
-		SDL_GetWindowSize    (mMainWindow, &out.windowSizeX, &out.windowSizeY);
-		out.viewportScaleMode = mViewportScaleMode;
-		out.integerScaling    = mIntegerScaling;
-		out.usingScanlines    = mUsingScanlines;
+		SDL_GetWindowPosition(mMainWindow, &out.window.x, &out.window.y);
+		SDL_GetWindowSize    (mMainWindow, &out.window.w, &out.window.h);
+		out.viewport.filtering = mViewportScaleMode;
+		out.viewport.int_scale = mIntegerScaling;
+		out.viewport.scanlines = mUsingScanlines;
+		out.first_run = false;
 	
 		return out;
 	}
@@ -164,7 +179,7 @@ private:
 	}
 
 public:
-	void normalizeRectToDisplay(SDL_Rect& rect) noexcept;
+	void normalizeRectToDisplay(SDL_Rect& rect, bool first_run) noexcept;
 
 /*==================================================================*/
 

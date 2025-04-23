@@ -18,9 +18,8 @@ BasicAudioSpec::BasicAudioSpec(const Settings& settings) noexcept {
 		);
 	}
 
-	setGlobalGain(settings.globalGain);
-	isMuted(settings.isMuted);
-
+	setGlobalGain(settings.volume);
+	isMuted(settings.muted);
 }
 
 BasicAudioSpec::~BasicAudioSpec() noexcept {

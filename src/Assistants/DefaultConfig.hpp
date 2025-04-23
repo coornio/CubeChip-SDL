@@ -14,20 +14,9 @@
 /*==================================================================*/
 
 namespace config {
-	inline const char* HomePath{};
-	inline const char* FilePath{};
-	inline       bool  Portable{};
-}
-
-/*==================================================================*/
-
-toml::table& getAppConfig() noexcept;
-
-/*==================================================================*/
-
-namespace config {
 	// copies key values from the right table to the left, if they exist already
 	void safeTableUpdate(toml::table& dst, const toml::table& src);
+	void safeTableInsert(toml::table& dst, const toml::table& src);
 
 	// expects full filename/path
 	auto writeToFile(

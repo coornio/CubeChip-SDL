@@ -19,6 +19,7 @@
 #include "Typedefs.hpp"
 #include "Concepts.hpp"
 #include "LifetimeWrapperSDL.hpp"
+#include "SettingWrapper.hpp"
 
 /*==================================================================*/
 	#pragma region BasicAudioSpec Singleton Class
@@ -27,16 +28,25 @@ class BasicAudioSpec final {
 
 public:
 	struct Settings {
-		f32  globalGain{};
-		bool isMuted{};
+		f32  volume{ 0.75f };
+		bool muted{ false };
+
+		auto serialize() {
+			SettingsMap output{
+				makeSetting("Audio.Volume", &volume),
+				makeSetting("Audio.Muted", &muted),
+			};
+			return output;
+		}
 	};
+
 
 	[[nodiscard]]
 	auto exportSettings() const noexcept {
 		Settings out;
 
-		out.globalGain = mGlobalGain.load(mo::relaxed);
-		out.isMuted    = mIsMuted.load(mo::relaxed);
+		out.volume = mGlobalGain.load(mo::relaxed);
+		out.muted  = mIsMuted.load(mo::relaxed);
 
 		return out;
 	}

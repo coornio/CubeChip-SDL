@@ -165,9 +165,6 @@
     <ClInclude Include="src\Assistants\BasicVideoSpec.hpp">
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
-    <ClInclude Include="src\Assistants\BytePun.hpp">
-      <Filter>Source Files\Assistants</Filter>
-    </ClInclude>
     <ClInclude Include="src\Assistants\Concepts.hpp">
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
@@ -312,9 +309,6 @@
     <ClInclude Include="src\Assistants\ThreadAffinity.hpp">
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
-    <ClInclude Include="src\Assistants\ShutdownSignal.hpp">
-      <Filter>Source Files\Assistants</Filter>
-    </ClInclude>
     <ClInclude Include="src\Assistants\DefaultConfig.hpp">
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
@@ -371,6 +365,9 @@
     </ClInclude>
     <ClInclude Include="src\Libraries\jthread\stop_token.hpp">
       <Filter>Source Files\Libraries\jthread</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\SettingWrapper.hpp">
+      <Filter>Source Files\Assistants</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

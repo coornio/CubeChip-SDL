@@ -38,10 +38,10 @@ BasicVideoSpec::BasicVideoSpec(const Settings& settings) noexcept {
 		return;
 	}
 
-	mViewportScaleMode = (settings.viewportScaleMode < 0) ? 0 : settings.viewportScaleMode % 3;
+	mViewportScaleMode = (settings.viewport.filtering < 0) ? 0 : settings.viewport.filtering % 3;
 
-	mIntegerScaling    = settings.integerScaling;
-	mUsingScanlines    = settings.usingScanlines;
+	mIntegerScaling    = settings.viewport.int_scale;
+	mUsingScanlines    = settings.viewport.scanlines;
 
 	mSuccessful = mMainWindow = SDL_CreateWindow(nullptr, 0, 0, SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE);
 	if (!mSuccessful) {
@@ -69,10 +69,10 @@ BasicVideoSpec::BasicVideoSpec(const Settings& settings) noexcept {
 	#endif
 
 	SDL_Rect rect{
-		settings.windowPosX,  settings.windowPosY,
-		settings.windowSizeX, settings.windowSizeY
+		settings.window.x,  settings.window.y,
+		settings.window.w, settings.window.h
 	};
-	normalizeRectToDisplay(rect);
+	normalizeRectToDisplay(rect, settings.first_run);
 
 	SDL_SetWindowPosition(mMainWindow, rect.x, rect.y);
 	SDL_SetWindowSize(mMainWindow, rect.w, rect.h);
@@ -120,52 +120,54 @@ void BasicVideoSpec::showErrorBox(const char* const title) noexcept {
 	);
 }
 
-void BasicVideoSpec::normalizeRectToDisplay(SDL_Rect& rect) noexcept {
+void BasicVideoSpec::normalizeRectToDisplay(SDL_Rect& rect, bool first_run) noexcept {
+	auto numDisplays{  0 }; // count of displays SDL found
+	auto bestDisplay{ -1 }; // index of display our window will use
+	bool rectOverlap{};
+	
 	// 1: fetch all eligible display IDs
-	auto numDisplays{ 0 };
 	SDL_Unique<SDL_DisplayID> displays{ SDL_GetDisplays(&numDisplays) };
 	if (!displays || numDisplays <= 0) [[unlikely]]
-		{ rect = cDefaultWindow; return; }
+		{ rect = Settings::defaults; return; }
 
 	// 2: fill vector with usable display bounds rects
 	std::vector<SDL_Rect> displayBounds;
 	displayBounds.reserve(numDisplays);
 
 	for (auto i{ 0 }; i < numDisplays; ++i) {
+		if (displays[i] == SDL_GetPrimaryDisplay()) { bestDisplay = i; }
 		SDL_Rect usableBounds;
 		if (SDL_GetDisplayUsableBounds(displays[i], &usableBounds)) {
 			displayBounds.push_back(usableBounds);
 		}
 	}
 	if (displayBounds.empty()) [[unlikely]]
-		{ rect = cDefaultWindow; return; }
+		{ rect = Settings::defaults; return; }
 
-	// 3: validate rect values, use fallbacks if needed
-	static constexpr auto none{ std::numeric_limits<s32>::min() };
-	if (rect.x == none) { rect.x = cDefaultWindow.x; }
-	if (rect.y == none) { rect.y = cDefaultWindow.y; }
-	if (rect.w <= 0)    { rect.w = cDefaultWindow.w; }
-	if (rect.h <= 0)    { rect.h = cDefaultWindow.h; }
+	// 3: validate rect w/h, use fallbacks if needed
+	if (rect.w <= 0) { rect.w = Settings::defaults.w; }
+	if (rect.h <= 0) { rect.h = Settings::defaults.h; }
 
-	// 4: find largest window/display overlap, if any
-	auto bestDisplay{ -1 };
-	auto bestOverlap{  0 };
-	for (auto i{ 0 }; i < static_cast<s32>(displayBounds.size()); ++i) {
-		const auto overlap{ computeOverlapArea(rect, displayBounds[i]) };
-		if (overlap > bestOverlap) { bestOverlap = overlap; bestDisplay = i; }
-	}
-
-	// 5: fall back to searching for closest display
-	if (bestOverlap == 0) {
-		auto bestDistance{ std::numeric_limits<s64>::max() };
-		const auto cx{ rect.x + rect.w / 2 };
-		const auto cy{ rect.y + rect.h / 2 };
-
+	if (!first_run) {
+		// 4: find largest window/display overlap, if any
+		auto bestOverlap{ 0 };
 		for (auto i{ 0 }; i < static_cast<s32>(displayBounds.size()); ++i) {
-			const auto tcx{ displayBounds[i].x + displayBounds[i].w / 2 };
-			const auto tcy{ displayBounds[i].y + displayBounds[i].h / 2 };
-			const auto distance{ squaredDistance(cx, cy, tcx, tcy) };
-			if (distance < bestDistance) { bestDistance = distance; bestDisplay = i; }
+			const auto overlap{ computeOverlapArea(rect, displayBounds[i]) };
+			if (overlap > bestOverlap) { bestOverlap = overlap; bestDisplay = i; }
+		}
+	
+		// 5: fall back to searching for closest display
+		if (!(rectOverlap = bestOverlap != 0)) {
+			auto bestDistance{ std::numeric_limits<s64>::max() };
+			const auto cx{ rect.x + rect.w / 2 };
+			const auto cy{ rect.y + rect.h / 2 };
+	
+			for (auto i{ 0 }; i < static_cast<s32>(displayBounds.size()); ++i) {
+				const auto tcx{ displayBounds[i].x + displayBounds[i].w / 2 };
+				const auto tcy{ displayBounds[i].y + displayBounds[i].h / 2 };
+				const auto distance{ squaredDistance(cx, cy, tcx, tcy) };
+				if (distance < bestDistance) { bestDistance = distance; bestDisplay = i; }
+			}
 		}
 	}
 
@@ -174,10 +176,10 @@ void BasicVideoSpec::normalizeRectToDisplay(SDL_Rect& rect) noexcept {
 	rect.w = std::min(rect.w, target.w);
 	rect.h = std::min(rect.h, target.h);
 
-	if (bestOverlap == 0) { // 7a: if we didn't overlap before, center to display
+	if (!rectOverlap) { // 7a: if we didn't overlap before, center to display
 		rect.x = target.x + (target.w - rect.w) / 2;
 		rect.y = target.y + (target.h - rect.h) / 2;
-	} else { // 7b: otherwise, clamp origin to lie within display bounds
+	} else {            // 7b: otherwise, clamp origin to lie within display bounds
 		rect.x = std::clamp(rect.x, target.x, target.x + target.w - rect.w);
 		rect.y = std::clamp(rect.y, target.y, target.y + target.h - rect.h);
 	}

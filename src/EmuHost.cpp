@@ -92,42 +92,27 @@ void EmuHost::pauseSystem(bool state) noexcept {
 void EmuHost::quitApplication() noexcept {
 	iGuest.reset();
 
-	auto BAS_settings{ BAS->exportSettings() };
-	config::set(getAppConfig(), "Audio.f_Volume", BAS_settings.globalGain);
-	config::set(getAppConfig(), "Audio.b_Muted",  BAS_settings.isMuted);
-
-	auto BVS_settings{ BVS->exportSettings() };
-	config::set(getAppConfig(), "Window.Position.i_X",       BVS_settings.windowPosX);
-	config::set(getAppConfig(), "Window.Position.i_Y",       BVS_settings.windowPosY);
-	config::set(getAppConfig(), "Window.Size.i_X",           BVS_settings.windowSizeX);
-	config::set(getAppConfig(), "Window.Size.i_Y",           BVS_settings.windowSizeY);
-	config::set(getAppConfig(), "Viewport.i_ScaleMode",      BVS_settings.viewportScaleMode);
-	config::set(getAppConfig(), "Viewport.b_IntegerScaling", BVS_settings.integerScaling);
-	config::set(getAppConfig(), "Viewport.b_UsingScanlines", BVS_settings.usingScanlines);
-
-	HDM->writeMainConfig();
+	HDM->writeMainAppConfig(
+		BAS->exportSettings().serialize(),
+		BVS->exportSettings().serialize()
+	);
 }
 
 bool EmuHost::initApplication(const char*) noexcept {
 	HDM = HomeDirManager::initialize(nullptr, nullptr, nullptr, AppName);
 	if (!HDM) { return false; }
 
-	BasicAudioSpec::Settings BAS_settings{
-		config::get<f32>(getAppConfig(),  "Audio.f_Volume"),
-		config::get<bool>(getAppConfig(), "Audio.b_Muted"),
-	};
+	BasicAudioSpec::Settings BAS_settings;
+	BasicVideoSpec::Settings BVS_settings;
+
+	HDM->parseMainAppConfig(
+		BAS_settings.serialize(),
+		BVS_settings.serialize()
+	);
+
 	BAS = BasicAudioSpec::create(BAS_settings);
 	if (!HDM) { return false; }
 
-	BasicVideoSpec::Settings BVS_settings{
-		config::get<s32> (getAppConfig(), "Window.Position.i_X"),
-		config::get<s32> (getAppConfig(), "Window.Position.i_Y"),
-		config::get<s32> (getAppConfig(), "Window.Size.i_X"),
-		config::get<s32> (getAppConfig(), "Window.Size.i_Y"),
-		config::get<s32> (getAppConfig(), "Viewport.i_ScaleMode"),
-		config::get<bool>(getAppConfig(), "Viewport.b_IntegerScaling"),
-		config::get<bool>(getAppConfig(), "Viewport.b_UsingScanlines"),
-	};
 	BVS = BasicVideoSpec::create(BVS_settings);
 	if (!BVS) { return false; }
 

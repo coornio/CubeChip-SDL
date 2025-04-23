@@ -31,16 +31,7 @@ HomeDirManager::HomeDirManager(
 
 	if (!config) { config = "settings.toml"; }
 	static const auto mainConfig{ (Path{ sHomePath } / config).string() };
-	sMainConf = mainConfig.c_str();
-
-	if (const auto result{ config::parseFromFile(sMainConf) }) {
-		config::safeTableUpdate(getAppConfig(), result.table());
-		blog.newEntry(BLOG::INFO,
-			"[TOML] App Config found, previous settings loaded!");
-	} else {
-		blog.newEntry(BLOG::WARN,
-			"[TOML] App Config failed to load! [{}]", result.error().description());
-	}
+	sConfPath = mainConfig.c_str();
 }
 
 bool HomeDirManager::setPortable(const char* override) noexcept {
@@ -81,14 +72,55 @@ bool HomeDirManager::setHomePath(const char* org, const char* app) noexcept {
 	}
 }
 
-void HomeDirManager::writeMainConfig() const noexcept {
-	if (const auto result{ config::writeToFile(getAppConfig(), sMainConf) }) {
+void HomeDirManager::parseMainAppConfig() const noexcept {
+	if (const auto result{ config::parseFromFile(sConfPath) }) {
+		config::safeTableUpdate(sMainAppConfig, result.table());
+		blog.newEntry(BLOG::INFO,
+			"[TOML] App Config found, previous settings loaded!");
+	} else {
+		blog.newEntry(BLOG::WARN,
+			"[TOML] App Config failed to load! [{}]", result.error().description());
+	}
+}
+
+void HomeDirManager::writeMainAppConfig() const noexcept {
+	if (const auto result{ config::writeToFile(sMainAppConfig, sConfPath) }) {
 		blog.newEntry(BLOG::INFO,
 			"[TOML] App Config written to file successfully!");
 	} else {
 		blog.newEntry(BLOG::ERROR,
 			"[TOML] Failed to write App Config, runtime settings lost! [{}]", result.error().message());
 	}
+}
+
+void HomeDirManager::insertIntoMainAppConfig(const SettingsMap& map) const noexcept {
+	for (auto const& [path, ref] : map) {
+		ref.visit([&](auto* ptr) { config::set(sMainAppConfig, path, *ptr); });
+	}
+
+	//if (const auto result{ toml::parse(table) }) {
+	//	config::safeTableInsert(sMainAppConfig, result.table());
+	//	return true;
+	//} else {
+	//	blog.newEntry(BLOG::WARN,
+	//		"[TOML] Component Config insert failed for [{}]", component);
+	//	return false;
+	//}
+}
+
+void HomeDirManager::updateFromMainAppConfig(const SettingsMap& map) const noexcept {
+	for (auto const& [path, ref] : map) {
+		ref.visit([&](auto* ptr) { *ptr = config::get(sMainAppConfig, path, *ptr); });
+	}
+
+	//if (const auto result{ toml::parse(table) }) {
+	//	config::safeTableUpdate(sMainAppConfig, result.table());
+	//	return true;
+	//} else {
+	//	blog.newEntry(BLOG::WARN,
+	//		"[TOML] Component Config update failed for [{}]", component);
+	//	return false;
+	//}
 }
 
 HomeDirManager* HomeDirManager::initialize(
