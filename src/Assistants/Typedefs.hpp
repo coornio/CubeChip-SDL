@@ -24,7 +24,7 @@
 
 using mo = std::memory_order;
 
-using f64 = long double;
+using f64 = double;
 using f32 = float;
 
 using size_type       = std::size_t;
