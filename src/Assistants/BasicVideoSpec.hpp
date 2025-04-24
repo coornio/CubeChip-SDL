@@ -110,8 +110,8 @@ public:
 		} viewport;
 		bool first_run{ true };
 
-		auto serialize() {
-			SettingsMap output{
+		SettingsMap map() noexcept {
+			return {
 				makeSetting("VIDEO.Window.X", &window.x),
 				makeSetting("VIDEO.Window.Y", &window.y),
 				makeSetting("VIDEO.Window.W", &window.w),
@@ -121,7 +121,6 @@ public:
 				makeSetting("VIDEO.Viewport.Int_Scale", &viewport.int_scale),
 				makeSetting("VIDEO.Viewport.Scanlines", &viewport.scanlines),
 			};
-			return output;
 		}
 	};
 
@@ -150,7 +149,7 @@ private:
 	static inline bool mSuccessful{ true };
 
 public:
-	static auto* create(const Settings& settings) noexcept {
+	static auto* initialize(const Settings& settings = Settings{}) noexcept {
 		static BasicVideoSpec self(settings);
 		return mSuccessful ? &self : nullptr;
 	}

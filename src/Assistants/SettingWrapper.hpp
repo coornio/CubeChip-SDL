@@ -17,10 +17,13 @@
 
 /*==================================================================*/
 
-using PtrVariant = std::variant<
-	std::int8_t  *, std::int16_t  *, std::int32_t  *, std::int64_t  *,
-	std::uint8_t *, std::uint16_t *, std::uint32_t *,
-	bool *, float *, double *, std::string *
+template <typename... T>
+using PtrVariant = std::variant<T*...>;
+
+using SettingVar = PtrVariant<
+	std::int8_t,  std::int16_t,  std::int32_t,  std::int64_t,
+	std::uint8_t, std::uint16_t, std::uint32_t,
+	bool, float, double, std::string
 >;
 
 template <typename T, typename Variant, std::size_t... I>
@@ -33,12 +36,12 @@ concept SettingVisitor = is_invocable_over_variant_<T, Variant>(
 	std::make_index_sequence<std::variant_size_v<Variant>>{}
 );
 
-static_assert(SettingVisitor<decltype([](auto*) {}), PtrVariant>, "Visitor type mismatch!");
+static_assert(SettingVisitor<decltype([](auto*) {}), SettingVar>, "Visitor type mismatch!");
 
 /*==================================================================*/
 
 class SettingWrapper {
-	PtrVariant mSettingPtr;
+	SettingVar mSettingPtr;
 
 public:
 	template <typename T>
@@ -66,11 +69,11 @@ public:
 		}, mSettingPtr);
 	}
 
-	void visit(SettingVisitor<PtrVariant> auto&& visitor) {
+	void visit(SettingVisitor<SettingVar> auto&& visitor) {
 		std::visit(std::forward<decltype(visitor)>(visitor), mSettingPtr);
 	}
 
-	void visit(SettingVisitor<PtrVariant> auto&& visitor) const {
+	void visit(SettingVisitor<SettingVar> auto&& visitor) const {
 		std::visit(std::forward<decltype(visitor)>(visitor), mSettingPtr);
 	}
 };
@@ -85,7 +88,7 @@ concept VariantCompatible = requires {
 };
 
 template <typename T>
-	requires (VariantCompatible<T*, PtrVariant>)
+	requires (VariantCompatible<T*, SettingVar>)
 inline auto makeSetting(const Str& key, T* const ptr) noexcept {
 	return std::pair{ key, SettingWrapper{ ptr } };
 }

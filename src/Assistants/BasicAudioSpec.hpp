@@ -31,12 +31,11 @@ public:
 		f32  volume{ 0.75f };
 		bool muted{ false };
 
-		auto serialize() {
-			SettingsMap output{
+		SettingsMap map() noexcept {
+			return {
 				makeSetting("Audio.Volume", &volume),
 				makeSetting("Audio.Muted", &muted),
 			};
-			return output;
 		}
 	};
 
@@ -62,7 +61,7 @@ private:
 	static inline bool mSuccessful{ true };
 
 public:
-	static auto* create(const Settings& settings) noexcept {
+	static auto* initialize(const Settings& settings = Settings{}) noexcept {
 		static BasicAudioSpec self(settings);
 		return mSuccessful ? &self : nullptr;
 	}

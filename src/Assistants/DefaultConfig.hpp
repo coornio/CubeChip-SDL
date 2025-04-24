@@ -30,30 +30,30 @@ namespace config {
 
 namespace config {
 	template <typename T>
-	inline T get(const toml::table& table, StrV path, T value = T{}) {
-		const auto val{ table.at_path(path).value<T>() };
-		return val ? static_cast<T>(*val) : value;
+	inline void get(const toml::table& src, StrV key, T& dst) {
+		if (auto val = src.at_path(key).value<T>())
+			{ dst = static_cast<T>(*val); }
 	}
 
 	template <typename T>
-	inline void set(toml::table& root, StrV path, T value = T{}) {
-		auto* current{ &root };
-		auto start{ path.begin() };
+	inline void set(toml::table& dst, StrV key, T src = T{}) {
+		auto* current{ &dst };
+		auto start{ key.begin() };
 
-		while (start != path.end()) {
-			auto end{ std::find(start, path.end(), '.') };
-			StrV key{ start, end };
+		while (start != key.end()) {
+			auto end{ std::find(start, key.end(), '.') };
+			StrV subkey{ start, end };
 
-			if (end == path.end()) {
-				current->insert_or_assign(key, value);
+			if (end == key.end()) {
+				current->insert_or_assign(subkey, src);
 				return;
 			}
 
-			if (!current->contains(key)) {
-				current->insert(key, toml::table{});
+			if (!current->contains(subkey)) {
+				current->insert(subkey, toml::table{});
 			}
 
-			current = current->get(key)->as_table();
+			current = current->get(subkey)->as_table();
 			if (!current) { return; }
 			else { start = end + 1; }
 		}

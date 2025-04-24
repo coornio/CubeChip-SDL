@@ -93,8 +93,8 @@ void EmuHost::quitApplication() noexcept {
 	iGuest.reset();
 
 	HDM->writeMainAppConfig(
-		BAS->exportSettings().serialize(),
-		BVS->exportSettings().serialize()
+		BAS->exportSettings().map(),
+		BVS->exportSettings().map()
 	);
 }
 
@@ -106,14 +106,14 @@ bool EmuHost::initApplication(const char*) noexcept {
 	BasicVideoSpec::Settings BVS_settings;
 
 	HDM->parseMainAppConfig(
-		BAS_settings.serialize(),
-		BVS_settings.serialize()
+		BAS_settings.map(),
+		BVS_settings.map()
 	);
 
-	BAS = BasicAudioSpec::create(BAS_settings);
-	if (!HDM) { return false; }
+	BAS = BasicAudioSpec::initialize(BAS_settings);
+	if (!BAS) { return false; }
 
-	BVS = BasicVideoSpec::create(BVS_settings);
+	BVS = BasicVideoSpec::initialize(BVS_settings);
 	if (!BVS) { return false; }
 
 	return true;

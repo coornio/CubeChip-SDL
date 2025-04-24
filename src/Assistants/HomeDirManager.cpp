@@ -99,32 +99,14 @@ void HomeDirManager::insertIntoMainAppConfig(const SettingsMap& map) const noexc
 		const auto& ref{ pair.second };
 		ref.visit([&](auto* ptr) { config::set(sMainAppConfig, key, *ptr); });
 	}
-
-	//if (const auto result{ toml::parse(table) }) {
-	//	config::safeTableInsert(sMainAppConfig, result.table());
-	//	return true;
-	//} else {
-	//	blog.newEntry(BLOG::WARN,
-	//		"[TOML] Component Config insert failed for [{}]", component);
-	//	return false;
-	//}
 }
 
 void HomeDirManager::updateFromMainAppConfig(const SettingsMap& map) const noexcept {
 	for (auto const& pair : map) {
 		const auto& key{ pair.first };
 		const auto& ref{ pair.second };
-		ref.visit([&](auto* ptr) { *ptr = config::get(sMainAppConfig, key, *ptr); });
+		ref.visit([&](auto* ptr) { config::get(sMainAppConfig, key, *ptr); });
 	}
-
-	//if (const auto result{ toml::parse(table) }) {
-	//	config::safeTableUpdate(sMainAppConfig, result.table());
-	//	return true;
-	//} else {
-	//	blog.newEntry(BLOG::WARN,
-	//		"[TOML] Component Config update failed for [{}]", component);
-	//	return false;
-	//}
 }
 
 HomeDirManager* HomeDirManager::initialize(
