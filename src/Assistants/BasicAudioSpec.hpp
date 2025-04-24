@@ -61,7 +61,7 @@ private:
 	static inline bool mSuccessful{ true };
 
 public:
-	static auto* initialize(const Settings& settings = Settings{}) noexcept {
+	static auto* initialize(const Settings& settings) noexcept {
 		static BasicAudioSpec self(settings);
 		return mSuccessful ? &self : nullptr;
 	}
