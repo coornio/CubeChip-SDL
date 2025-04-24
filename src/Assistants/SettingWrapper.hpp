@@ -23,10 +23,15 @@ using PtrVariant = std::variant<
 	bool *, float *, double *, std::string *
 >;
 
-template<typename T, typename Variant>
-concept SettingVisitor = []<std::size_t... I>(std::index_sequence<I...>) {
+template <typename T, typename Variant, std::size_t... I>
+consteval bool is_invocable_over_variant_(std::index_sequence<I...>) {
 	return (std::invocable<T, std::variant_alternative_t<I, Variant>> && ...);
-}(std::make_index_sequence<std::variant_size_v<Variant>>{});
+}
+
+template<typename T, typename Variant>
+concept SettingVisitor = is_invocable_over_variant_<T, Variant>(
+	std::make_index_sequence<std::variant_size_v<Variant>>{}
+);
 
 static_assert(SettingVisitor<decltype([](auto*) {}), PtrVariant>, "Visitor type mismatch!");
 
@@ -74,13 +79,13 @@ public:
 
 using SettingsMap = std::unordered_map<Str, SettingWrapper>;
 
-template<typename T>
-concept PtrVariantCompatible = []<std::size_t... I>(std::index_sequence<I...>) {
-	return (std::same_as<T, std::variant_alternative_t<I, PtrVariant>> || ...);
-}(std::make_index_sequence<std::variant_size_v<PtrVariant>>{});
+template<typename T, typename Variant>
+concept VariantCompatible = requires {
+	Variant(std::in_place_type<T>);
+};
 
 template <typename T>
-	requires (PtrVariantCompatible<T*>)
-inline auto makeSetting(const Str& key, T* ptr) noexcept {
+	requires (VariantCompatible<T*, PtrVariant>)
+inline auto makeSetting(const Str& key, T* const ptr) noexcept {
 	return std::pair{ key, SettingWrapper{ ptr } };
 }

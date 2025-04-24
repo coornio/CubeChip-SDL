@@ -94,8 +94,10 @@ void HomeDirManager::writeMainAppConfig() const noexcept {
 }
 
 void HomeDirManager::insertIntoMainAppConfig(const SettingsMap& map) const noexcept {
-	for (auto const& [path, ref] : map) {
-		ref.visit([&](auto* ptr) { config::set(sMainAppConfig, path, *ptr); });
+	for (auto const& pair : map) {
+		const auto& key{ pair.first };
+		const auto& ref{ pair.second };
+		ref.visit([&](auto* ptr) { config::set(sMainAppConfig, key, *ptr); });
 	}
 
 	//if (const auto result{ toml::parse(table) }) {
@@ -109,8 +111,10 @@ void HomeDirManager::insertIntoMainAppConfig(const SettingsMap& map) const noexc
 }
 
 void HomeDirManager::updateFromMainAppConfig(const SettingsMap& map) const noexcept {
-	for (auto const& [path, ref] : map) {
-		ref.visit([&](auto* ptr) { *ptr = config::get(sMainAppConfig, path, *ptr); });
+	for (auto const& pair : map) {
+		const auto& key{ pair.first };
+		const auto& ref{ pair.second };
+		ref.visit([&](auto* ptr) { *ptr = config::get(sMainAppConfig, key, *ptr); });
 	}
 
 	//if (const auto result{ toml::parse(table) }) {
