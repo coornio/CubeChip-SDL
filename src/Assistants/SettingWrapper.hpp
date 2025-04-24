@@ -9,6 +9,7 @@
 #include <string>
 #include <variant>
 #include <cstdint>
+#include <cstddef>
 #include <concepts>
 #include <utility>
 #include <type_traits>
@@ -22,10 +23,10 @@ using PtrVariant = std::variant<
 	bool *, float *, double *, std::string *
 >;
 
-template<typename V, typename Variant>
+template<typename T, typename Variant>
 concept SettingVisitor = []<std::size_t... I>(std::index_sequence<I...>) {
-	return (std::invocable<V, std::variant_alternative_t<I, Variant>> && ...);
-} (std::make_index_sequence<std::variant_size_v<Variant>>{});
+	return (std::invocable<T, std::variant_alternative_t<I, Variant>> && ...);
+}(std::make_index_sequence<std::variant_size_v<Variant>>{});
 
 static_assert(SettingVisitor<decltype([](auto*) {}), PtrVariant>, "Visitor type mismatch!");
 
@@ -73,7 +74,13 @@ public:
 
 using SettingsMap = std::unordered_map<Str, SettingWrapper>;
 
+template<typename T>
+concept PtrVariantCompatible = []<std::size_t... I>(std::index_sequence<I...>) {
+	return (std::same_as<T, std::variant_alternative_t<I, PtrVariant>> || ...);
+}(std::make_index_sequence<std::variant_size_v<PtrVariant>>{});
+
 template <typename T>
+	requires (PtrVariantCompatible<T*>)
 inline auto makeSetting(const Str& key, T* ptr) noexcept {
 	return std::pair{ key, SettingWrapper{ ptr } };
 }
