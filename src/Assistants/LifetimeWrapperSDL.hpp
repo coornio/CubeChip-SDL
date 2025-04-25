@@ -42,6 +42,16 @@ struct SDL_Deleter<SDL_DisplayID> {
 	static void deleter(SDL_DisplayID* ptr) { if (ptr) { SDL_free(ptr); } }
 	using type = decltype(&deleter);
 };
+template <>
+struct SDL_Deleter<char> {
+	static void deleter(char* ptr) { if (ptr) { SDL_free(ptr); } }
+	using type = decltype(&deleter);
+};
+template <>
+struct SDL_Deleter<const char> {
+	static void deleter(const char* ptr) { if (ptr) { SDL_free(const_cast<char*>(ptr)); } }
+	using type = decltype(&deleter);
+};
 
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
@@ -52,7 +62,7 @@ struct SDL_Deleter<SDL_DisplayID> {
 template <typename T>
 class SDL_Unique {
 	using DeleterType = typename SDL_Deleter<T>::type;
-	std::unique_ptr <T, DeleterType> mPtr;
+	std::unique_ptr<T, DeleterType> mPtr;
 
 public:
 	SDL_Unique(T* ptr = nullptr) noexcept

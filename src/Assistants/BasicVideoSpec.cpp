@@ -126,7 +126,7 @@ void BasicVideoSpec::normalizeRectToDisplay(SDL_Rect& rect, bool first_run) noex
 	bool rectOverlap{};
 	
 	// 1: fetch all eligible display IDs
-	SDL_Unique<SDL_DisplayID> displays{ SDL_GetDisplays(&numDisplays) };
+	SDL_Unique displays{ SDL_GetDisplays(&numDisplays) };
 	if (!displays || numDisplays <= 0) [[unlikely]]
 		{ rect = Settings::defaults; return; }
 
