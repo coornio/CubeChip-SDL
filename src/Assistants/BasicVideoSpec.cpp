@@ -137,16 +137,15 @@ void BasicVideoSpec::normalizeRectToDisplay(SDL_Rect& rect, bool first_run) noex
 	for (auto i{ 0 }; i < numDisplays; ++i) {
 		if (displays[i] == SDL_GetPrimaryDisplay()) { bestDisplay = i; }
 		SDL_Rect usableBounds;
-		if (SDL_GetDisplayUsableBounds(displays[i], &usableBounds)) {
-			displayBounds.push_back(usableBounds);
-		}
+		if (SDL_GetDisplayUsableBounds(displays[i], &usableBounds))
+			{ displayBounds.push_back(usableBounds); }
 	}
 	if (displayBounds.empty()) [[unlikely]]
 		{ rect = Settings::defaults; return; }
 
 	// 3: validate rect w/h, use fallbacks if needed
-	if (rect.w <= 0) { rect.w = Settings::defaults.w; }
-	if (rect.h <= 0) { rect.h = Settings::defaults.h; }
+	rect.w = std::max(rect.w, Settings::defaults.w);
+	rect.h = std::max(rect.h, Settings::defaults.h);
 
 	if (!first_run) {
 		// 4: find largest window/display overlap, if any
