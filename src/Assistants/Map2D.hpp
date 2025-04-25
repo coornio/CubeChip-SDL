@@ -15,11 +15,6 @@
 #include <algorithm>
 #include <utility>
 
-#ifdef WIN32
-	#undef min
-	#undef max
-#endif
-
 #pragma region Map2D Class
 template <typename T> requires (std::is_default_constructible_v<T>)
 class Map2D final {

@@ -8,12 +8,6 @@
     <Filter Include="Source Files\Assistants">
       <UniqueIdentifier>{89a55c14-1a9b-486e-9b28-16af4d258b1c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="to_be_removed">
-      <UniqueIdentifier>{5efef33a-fd49-4994-9c98-d0080b4b7d89}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="to_be_removed\InstructionSets">
-      <UniqueIdentifier>{f124b1ff-b297-4745-ade8-c28e4686f1c8}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\Systems">
       <UniqueIdentifier>{6fc556f9-a527-48ce-9095-97e687e85301}</UniqueIdentifier>
     </Filter>
@@ -58,6 +52,9 @@
     </Filter>
     <Filter Include="Source Files\Libraries\toml++">
       <UniqueIdentifier>{df4f07ae-f914-4edc-922c-84664ba284b1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Libraries\cxxopts">
+      <UniqueIdentifier>{42f46bcb-6584-4cee-9502-e00bfec53b8a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -285,80 +282,11 @@
     <ClInclude Include="src\Libraries\imgui\imstb_truetype.h">
       <Filter>Source Files\Libraries\imgui</Filter>
     </ClInclude>
-    <ClInclude Include="src\Libraries\atomic_queue\atomic_queue.h">
-      <Filter>Source Files\Libraries\atomic_queue</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Libraries\atomic_queue\atomic_queue_mutex.h">
-      <Filter>Source Files\Libraries\atomic_queue</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Libraries\atomic_queue\barrier.h">
-      <Filter>Source Files\Libraries\atomic_queue</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Libraries\atomic_queue\defs.h">
-      <Filter>Source Files\Libraries\atomic_queue</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Libraries\atomic_queue\spinlock.h">
-      <Filter>Source Files\Libraries\atomic_queue</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Libraries\nlohmann\json.hpp">
-      <Filter>Source Files\Libraries\nlohmann</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Libraries\nlohmann\json_fwd.hpp">
-      <Filter>Source Files\Libraries\nlohmann</Filter>
-    </ClInclude>
     <ClInclude Include="src\Assistants\ThreadAffinity.hpp">
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
     <ClInclude Include="src\Assistants\DefaultConfig.hpp">
       <Filter>Source Files\Assistants</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Libraries\tartanllama\expected.hpp">
-      <Filter>Source Files\Libraries\tartanllama</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Libraries\fmt\args.h">
-      <Filter>Source Files\Libraries\fmt</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Libraries\fmt\base.h">
-      <Filter>Source Files\Libraries\fmt</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Libraries\fmt\chrono.h">
-      <Filter>Source Files\Libraries\fmt</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Libraries\fmt\color.h">
-      <Filter>Source Files\Libraries\fmt</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Libraries\fmt\compile.h">
-      <Filter>Source Files\Libraries\fmt</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Libraries\fmt\core.h">
-      <Filter>Source Files\Libraries\fmt</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Libraries\fmt\format.h">
-      <Filter>Source Files\Libraries\fmt</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Libraries\fmt\format-inl.h">
-      <Filter>Source Files\Libraries\fmt</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Libraries\fmt\os.h">
-      <Filter>Source Files\Libraries\fmt</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Libraries\fmt\ostream.h">
-      <Filter>Source Files\Libraries\fmt</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Libraries\fmt\printf.h">
-      <Filter>Source Files\Libraries\fmt</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Libraries\fmt\ranges.h">
-      <Filter>Source Files\Libraries\fmt</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Libraries\fmt\std.h">
-      <Filter>Source Files\Libraries\fmt</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Libraries\toml++\toml.hpp">
-      <Filter>Source Files\Libraries\fmt</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Libraries\fmt\xchar.h">
-      <Filter>Source Files\Libraries\fmt</Filter>
     </ClInclude>
     <ClInclude Include="src\Libraries\jthread\jthread.hpp">
       <Filter>Source Files\Libraries\jthread</Filter>
