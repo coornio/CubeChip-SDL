@@ -299,9 +299,9 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Natvis Include="external\imgui\misc\debuggers\imgui.natvis" />
+    <Natvis Include="src\Libraries\imgui\debuggers\imgui.natvis" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="external\imgui\misc\debuggers\imgui.natstepfilter" />
+    <None Include="src\Libraries\imgui\debuggers\imgui.natstepfilter" />
   </ItemGroup>
 </Project>
