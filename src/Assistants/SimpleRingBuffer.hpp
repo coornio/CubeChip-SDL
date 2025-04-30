@@ -28,8 +28,8 @@
  *          Internally uses atomic operations and shared pointers to manage lifetime.
  * @note Values passed to the push() method must be same as or convertible to `T`.
  * @code{.cpp}
- *  SimpleRingBuffer<std::string, 256> buffer;
- *  buffer.push("hello");
+ *   SimpleRingBuffer<std::string, 256> buffer;
+ *   buffer.push("hello");
  * @endcode
  */
 template <typename T, std::size_t N = 8>
@@ -58,6 +58,8 @@ public:
 	constexpr auto head() const noexcept { return mReadHead.load(mo::acquire); }
 
 private:
+	enum class SnapshotOrder { DESCENDING, ASCENDING };
+
 	void push_(size_type index, std::shared_ptr<T>&& ptr) noexcept {
 		std::shared_lock lock{ mGuard };
 		mBuffer[index & (N - 1)].store(std::move(ptr), mo::release);
@@ -73,15 +75,18 @@ private:
 		return ptr ? *ptr : T{};
 	}
 
-	auto snapshot_() const noexcept {
+	auto snapshot_(SnapshotOrder order) const noexcept {
 		std::array<T, N> output;
-		const auto pos{ head() & (N - 1) };
+		const auto pos{ head() };
 
 		std::for_each(EXEC_POLICY(unseq)
 			output.begin(), output.end(),
-			[&](auto& entry) noexcept { entry = std::move(
-				at_((N - 1) - (&entry - output.data()), pos)
-			); }
+			[&](auto& entry) noexcept {
+				const auto index{ &entry - output.data() };
+				entry = std::move(at_(
+					order == SnapshotOrder::ASCENDING
+					? (N - 1 - index) : index, pos));
+			}
 		);
 
 		return output;
@@ -115,23 +120,30 @@ public:
 
 	/**
 	 * @brief Create a non-blocking snapshot of the internal buffer's contents. Values are ordered
-	 *        from oldest to newest at the time of the call, from 0 to N-1, respectively.
+	 *        from oldest first (ascending) or newest first (descending) at the time of the call.
 	 * @returns A vector of T representing the buffer contents; missing values are default-constructed.
 	 * @note This method is thread-safe, but may return stale data due to its non-blocking nature.
 	 */
-	std::array<T, N> fast_snapshot() const noexcept {
-		return snapshot_();
+	std::array<T, N> fast_snapshot_asc() const noexcept {
+		return snapshot_(SnapshotOrder::ASCENDING);
+	}
+	std::array<T, N> fast_snapshot_desc() const noexcept {
+		return snapshot_(SnapshotOrder::DESCENDING);
 	}
 
 	/**
 	 * @brief Create a blocking snapshot of the internal buffer's contents. Values are ordered
-	 *        from oldest to newest at the time of the call, from 0 to N-1, respectively.
+	 *        from oldest first (ascending) or newest first (descending) at the time of the call.
 	 * @returns A vector of T representing the buffer contents; missing values are default-constructed.
 	 * @note This method is thread-safe, but cannot run concurrently with push() calls.
 	 */
-	std::array<T, N> safe_snapshot() const noexcept {
+	std::array<T, N> safe_snapshot_asc() const noexcept {
 		std::unique_lock lock{ mGuard };
-		return snapshot_();
+		return snapshot_(SnapshotOrder::ASCENDING);
+	}
+	std::array<T, N> safe_snapshot_desc() const noexcept {
+		std::unique_lock lock{ mGuard };
+		return snapshot_(SnapshotOrder::DESCENDING);
 	}
 };
 
