@@ -453,7 +453,7 @@ void CHIP8X::drawHiresColor(s32 X, s32 Y, s32 idx, s32 N) noexcept {
 	#pragma region C instruction branch
 
 	void CHIP8X::instruction_CxNN(s32 X, s32 NN) noexcept {
-		mRegisterV[X] = RNG->get<u8>() & NN;
+		mRegisterV[X] = RNG->next<u8>() & NN;
 	}
 
 	#pragma endregion

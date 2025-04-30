@@ -59,11 +59,11 @@ using Json        = nlohmann::json;
 /*==================================================================*/
 
 #define REGISTER_CORE(CoreType, ...) \
-	static auto CONCAT_TOKENS(sCoreRegID_, __COUNTER__) = \
-		CoreRegistry::registerCore( \
-			[]() -> EmuInterface* { return new CoreType(); }, \
-			CoreType::validateProgram, { __VA_ARGS__ } \
-		);
+static auto CONCAT_TOKENS(sCoreRegID_, __COUNTER__) = \
+	CoreRegistry::registerCore( \
+		[]() -> EmuInterface* { return new CoreType(); }, \
+		CoreType::validateProgram, { __VA_ARGS__ } \
+	);
 
 /*==================================================================*/
 

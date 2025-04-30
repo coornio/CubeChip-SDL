@@ -19,7 +19,7 @@ SCHIP_LEGACY::SCHIP_LEGACY()
 	: mDisplayBuffer{ {cDisplayResW, cDisplayResH} }
 {
 	std::generate(EXEC_POLICY(unseq)
-		mMemoryBank.begin(), mMemoryBank.end() - cSafezoneOOB, []() { return RNG->get<u8>(); });
+		mMemoryBank.begin(), mMemoryBank.end() - cSafezoneOOB, []() { return RNG->next<u8>(); });
 
 	std::fill(EXEC_POLICY(unseq)
 		mMemoryBank.end() - cSafezoneOOB, mMemoryBank.end(), u8{ 0xFF });
@@ -452,7 +452,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 	#pragma region C instruction branch
 
 	void SCHIP_LEGACY::instruction_CxNN(s32 X, s32 NN) noexcept {
-		mRegisterV[X] = RNG->get<u8>() & NN;
+		mRegisterV[X] = RNG->next<u8>() & NN;
 	}
 
 	#pragma endregion

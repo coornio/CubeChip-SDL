@@ -18,17 +18,13 @@ namespace config {
 	void safeTableUpdate(toml::table& dst, const toml::table& src);
 	void safeTableInsert(toml::table& dst, const toml::table& src);
 
-	// expects full filename/path
 	auto writeToFile(
 		const toml::table& table,
 		const char* filename
 	) noexcept -> Expected<bool, std::error_code>;
 
-	// expects full filename/path
 	auto parseFromFile(const char* filename) noexcept -> toml::parse_result;
-}
 
-namespace config {
 	template <typename T>
 	inline void get(const toml::table& src, StrV key, T& dst) {
 		if (auto val = src.at_path(key).value<T>())

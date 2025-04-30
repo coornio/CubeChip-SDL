@@ -7,25 +7,35 @@
 #pragma once
 
 #include "Typedefs.hpp"
+#include "SimpleRingBuffer.hpp"
 
 /*==================================================================*/
 
-enum class BLOG { INFO, WARN, ERROR, DEBUG };
+enum class BLOG {
+	INFO,  // Events that are innocuous and informational.
+	WARN,  // Events that are unexpected and warrant attention.
+	ERROR, // Events that resulted in a predictable/recoverable error.
+	CRIT,  // Events that resulted in unrecoverable failure.
+	DEBUG, // Events meant for debugging purposes.
+};
 
 /*==================================================================*/
 	#pragma region BasicLogger Singleton Class
 
 class BasicLogger final {
-	BasicLogger() = default;
-	BasicLogger(const BasicLogger&) = delete;
-	BasicLogger& operator=(const BasicLogger&) = delete;
+	SimpleRingBuffer<Str, 1024>
+		mLogBuffer;
 
 	Path mLogPath{};
+
+	BasicLogger() noexcept = default;
+	BasicLogger(const BasicLogger&) = delete;
+	BasicLogger& operator=(const BasicLogger&) = delete;
 
 	StrV getSeverity(BLOG type) const noexcept;
 
 public:
-	static auto* create() noexcept {
+	static auto* initialize() noexcept {
 		static BasicLogger self;
 		return &self;
 	}

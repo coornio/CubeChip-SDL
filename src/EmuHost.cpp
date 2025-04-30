@@ -18,7 +18,6 @@
 /*==================================================================*/
 	#pragma region VM_Host Singleton Class
 
-EmuHost::~EmuHost() noexcept = default;
 EmuHost::EmuHost(const Path& gamePath) noexcept {
 	EmuInterface::assignComponents(HDM, BVS);
 	HDM->setValidator(CoreRegistry::validateProgram);
@@ -98,8 +97,11 @@ void EmuHost::quitApplication() noexcept {
 	);
 }
 
-bool EmuHost::initApplication(const char*) noexcept {
-	HDM = HomeDirManager::initialize(nullptr, nullptr, nullptr, AppName);
+bool EmuHost::initApplication(
+	StrV overrideHome, StrV configName,
+	bool forcePortable, StrV org, StrV app
+) noexcept {
+	HDM = HomeDirManager::initialize(overrideHome, configName, forcePortable, org, app);
 	if (!HDM) { return false; }
 
 	BasicAudioSpec::Settings BAS_settings;

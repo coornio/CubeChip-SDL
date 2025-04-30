@@ -148,6 +148,21 @@
     <ClCompile Include="src\Assistants\DefaultConfig.cpp">
       <Filter>Source Files\Assistants</Filter>
     </ClCompile>
+    <ClCompile Include="src\Assistants\AttachConsole.cpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Assistants\ThreadAffinity.cpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Assistants\PathGetters.cpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Assistants\ShutdownSignal.cpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Assistants\Well512.cpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Assistants\BasicAudioSpec.hpp">
@@ -295,6 +310,12 @@
       <Filter>Source Files\Libraries\jthread</Filter>
     </ClInclude>
     <ClInclude Include="src\Assistants\SettingWrapper.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\AttachConsole.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\SimpleRingBuffer.hpp">
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
   </ItemGroup>

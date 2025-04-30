@@ -11,9 +11,10 @@
 
 #include <bit>
 #include <fstream>
-#include <sstream>
 #include <iomanip>
 #include <utility>
+
+/*==================================================================*/
 
 static constexpr ust BLOCK_INTS  { 16 }; // number of 32-bit integers per SHA1 block
 static constexpr ust BLOCK_BYTES { BLOCK_INTS * 4 };

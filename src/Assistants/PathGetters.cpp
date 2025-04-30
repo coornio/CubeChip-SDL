@@ -4,13 +4,21 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#pragma once
+#include <SDL3/SDL_filesystem.h>
+
+#include "PathGetters.hpp"
 
 /*==================================================================*/
 
 const char* getHomePath(
-	const char* org = nullptr,
-	const char* app = nullptr
-) noexcept;
+	const char* org,
+	const char* app
+) noexcept {
+	static auto* homePath{ SDL_GetPrefPath(org, app) };
+	return homePath;
+}
 
-const char* getBasePath() noexcept;
+const char* getBasePath() noexcept {
+	static auto* basePath{ SDL_GetBasePath() };
+	return basePath;
+}

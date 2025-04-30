@@ -19,13 +19,18 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\Assistants\AttachConsole.cpp" />
     <ClCompile Include="src\Assistants\BasicAudioSpec.cpp" />
     <ClCompile Include="src\Assistants\BasicLogger.cpp" />
     <ClCompile Include="src\Assistants\BasicVideoSpec.cpp" />
     <ClCompile Include="src\Assistants\DefaultConfig.cpp" />
     <ClCompile Include="src\Assistants\FrameLimiter.cpp" />
     <ClCompile Include="src\Assistants\HomeDirManager.cpp" />
+    <ClCompile Include="src\Assistants\PathGetters.cpp" />
     <ClCompile Include="src\Assistants\SHA1.cpp" />
+    <ClCompile Include="src\Assistants\ShutdownSignal.cpp" />
+    <ClCompile Include="src\Assistants\ThreadAffinity.cpp" />
+    <ClCompile Include="src\Assistants\Well512.cpp" />
     <ClCompile Include="src\CubeChip.cpp" />
     <ClCompile Include="src\EmuHost.cpp" />
     <ClCompile Include="src\Libraries\imgui\imgui.cpp" />
@@ -53,6 +58,7 @@
   <ItemGroup>
     <ClInclude Include="src\Assistants\Aligned.hpp" />
     <ClInclude Include="src\Assistants\AtomicSharedProxy.hpp" />
+    <ClInclude Include="src\Assistants\AttachConsole.hpp" />
     <ClInclude Include="src\Assistants\BasicAudioSpec.hpp" />
     <ClInclude Include="src\Assistants\BasicInput.hpp" />
     <ClInclude Include="src\Assistants\BasicLogger.hpp" />
@@ -70,6 +76,7 @@
     <ClInclude Include="src\Assistants\SettingWrapper.hpp" />
     <ClInclude Include="src\Assistants\SHA1.hpp" />
     <ClInclude Include="src\Assistants\SimpleFileIO.hpp" />
+    <ClInclude Include="src\Assistants\SimpleRingBuffer.hpp" />
     <ClInclude Include="src\Assistants\ThreadAffinity.hpp" />
     <ClInclude Include="src\Assistants\TripleBuffer.hpp" />
     <ClInclude Include="src\Assistants\Typedefs.hpp" />
@@ -270,7 +277,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>SDL3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <Profile>true</Profile>
-      <LinkTimeCodeGeneration>PGInstrument</LinkTimeCodeGeneration>
+      <LinkTimeCodeGeneration>PGOptimization</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

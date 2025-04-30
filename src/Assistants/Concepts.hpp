@@ -10,6 +10,11 @@
 #include <iterator>
 #include <concepts>
 
+/*==================================================================*/
+
+template <std::size_t N, std::size_t MIN = 1>
+concept PowerOfTwo = (N >= MIN) && ((N & (N - 1)) == 0);
+
 template <typename T>
 using ValueType = typename T::value_type;
 

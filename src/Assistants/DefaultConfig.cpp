@@ -6,10 +6,6 @@
 
 #pragma once
 
-#include <fstream>
-#include <limits>
-
-#include "PathGetters.hpp"
 #include "SimpleFileIO.hpp"
 #include "DefaultConfig.hpp"
 
@@ -29,7 +25,7 @@ auto config::writeToFile(
 auto config::parseFromFile(
 	const char* filename
 ) noexcept -> toml::parse_result {
-	const auto rawData{ readFileData(filename ? filename : "") };
+	const auto rawData{ ::readFileData(filename ? filename : "") };
 	const StrV tableData{ rawData ? StrV{rawData.value().data(), rawData.value().size() } : "" };
 
 	return toml::parse(tableData);

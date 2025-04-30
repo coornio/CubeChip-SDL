@@ -785,7 +785,7 @@ void MEGACHIP::scrollBuffersRT() {
 	#pragma region C instruction branch
 
 	void MEGACHIP::instruction_CxNN(s32 X, s32 NN) noexcept {
-		mRegisterV[X] = RNG->get<u8>() & NN;
+		mRegisterV[X] = RNG->next<u8>() & NN;
 	}
 
 	#pragma endregion

@@ -36,6 +36,17 @@ inline constexpr auto intByteMult(u32 color1, u32 color2) noexcept {
 
 /*==================================================================*/
 
+inline constexpr bool simplePathValidityCheck(StrV path) noexcept {
+#ifdef _WIN32
+	constexpr StrV illegal{ R"(<>:"/\|?*)" };
+	return !path.empty() && path.find_first_of(illegal) == StrV::npos;
+#else
+	return !path.empty();
+#endif
+}
+
+/*==================================================================*/
+
 template <typename E>
 Unexpected<E> makeUnexpected(E&& value) {
 	return Unexpected<E>(std::forward<E>(value));

@@ -34,6 +34,11 @@ add_executable(${PROJECT_NAME}
   src/Assistants/BasicAudioSpec.cpp
   src/Assistants/DefaultConfig.cpp
   src/Assistants/FrameLimiter.cpp
+  src/Assistants/AttachConsole.cpp
+  src/Assistants/PathGetters.cpp
+  src/Assistants/ShutdownSignal.cpp
+  src/Assistants/ThreadAffinity.cpp
+  src/Assistants/Well512.cpp
   src/Assistants/SHA1.cpp
 
   src/Systems/EmuInterface.cpp

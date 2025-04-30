@@ -10,10 +10,10 @@
 #pragma once
 
 #include <sstream>
-#include <filesystem>
 
 #include "Typedefs.hpp"
-#include "Concepts.hpp"
+
+/*==================================================================*/
 
 class SHA1 {
 	u32 digest[5]{};
@@ -30,23 +30,10 @@ public:
 
 	void update(const Str& s);
 	void update(std::istream& is);
-
 	void update(const char* data, ust size);
-
-	template <IsContiguousContainer T>
-		requires (MatchingValueType<char, T>)
-	void update(const T& data) noexcept {
-		update(std::data(data), std::size(data));
-	}
 
 	Str final();
 
 	static Str from_file(const Path& filePath);
 	static Str from_data(const char* data, ust size);
-
-	template <IsContiguousContainer T>
-		requires (MatchingValueType<char, T>)
-	static Str from_data(const T& data) {
-		return from_data(std::data(data), std::size(data));
-	}
 };

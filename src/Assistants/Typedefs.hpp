@@ -9,7 +9,9 @@
 #include <new>
 #include <atomic>
 #include <limits>
+#include <memory>
 #include <string>
+#include <vector>
 #include <cstdint>
 #include <cstddef>
 #include <execution>
@@ -21,6 +23,8 @@
 
 #define FMT_HEADER_ONLY
 #include "../Libraries/fmt/format.h"
+
+/*==================================================================*/
 
 using mo = std::memory_order;
 
@@ -50,6 +54,9 @@ using Path = std::filesystem::path;
 template <typename T>
 using Atom = std::atomic<T>;
 
+template <typename T>
+using Vec = std::vector<T>;
+
 using namespace std::string_literals;
 using namespace std::string_view_literals;
 
@@ -58,8 +65,7 @@ struct Epsilon {
 	constexpr static ::f64 f64{ std::numeric_limits<::f64>::epsilon() };
 };
 
-#define CONCAT_TOKENS_INTERNAL(x, y) x##y
-#define CONCAT_TOKENS(x, y) CONCAT_TOKENS_INTERNAL(x, y)
+/*==================================================================*/
 
 #ifdef __GNUC__
 	#pragma GCC diagnostic push
@@ -78,30 +84,45 @@ struct Epsilon {
 	#pragma GCC diagnostic pop
 #endif
 
+/*==================================================================*/
+
+#define CONCAT_TOKENS_INTERNAL(x, y) x##y
+#define CONCAT_TOKENS(x, y) CONCAT_TOKENS_INTERNAL(x, y)
+
 #ifdef __APPLE__
 	#define EXEC_POLICY(policy)
+#else
+	#define EXEC_POLICY(policy) std::execution::policy,
+#endif
+
+/*==================================================================*/
+
+#ifdef __APPLE__
 	#include "AtomicSharedProxy.hpp"
 
 	template <typename T>
 	using AtomSharedPtr = AtomSharedProxy<T>;
 #else
-	#define EXEC_POLICY(policy) std::execution::policy,
-
 	template <typename T>
 	using AtomSharedPtr = Atom<std::shared_ptr<T>>;
 #endif
 
+/*==================================================================*/
+
 #if defined(__has_include) && __has_include(<stop_token>) \
 && defined(__cpp_lib_jthread)
 	#include <thread>
+
 	using Thread    = std::jthread;
 	using StopToken = std::stop_token;
 #else
 	#include "../Libraries/jthread/jthread.hpp"
+
 	using Thread    = nonstd::jthread;
 	using StopToken = nonstd::stop_token;
 #endif
 
+/*==================================================================*/
 
 #if defined(__has_include) && __has_include(<expected>) \
 && defined(__cpp_lib_expected) && (__cpp_lib_expected >= 202202L)

@@ -10,7 +10,7 @@
 #include <vector>
 #include <algorithm>
 
-#include "Misc.hpp"
+#include "Typedefs.hpp"
 #include "SettingWrapper.hpp"
 
 #define TOML_EXCEPTIONS 0
@@ -21,8 +21,9 @@
 
 class HomeDirManager final {
 	HomeDirManager(
-		const char* override, const char* config,
-		const char* org,      const char* app
+		StrV overrideHome, StrV configName,
+		bool forcePortable, StrV org, StrV app,
+		bool& initError
 	) noexcept;
 	HomeDirManager(const HomeDirManager&) = delete;
 	HomeDirManager& operator=(const HomeDirManager&) = delete;
@@ -49,14 +50,12 @@ public:
 	inline static toml::table sMainAppConfig{};
 
 private:
-	inline static const char* sHomePath{};
-	inline static const char* sConfPath{};
-	inline static bool sPortable{};
+	Str  sHomePath{};
+	Str  sConfPath{};
 
-	static inline bool mSuccessful{ true };
-
-	bool setPortable(const char* override) noexcept;
-	bool setHomePath(const char* org, const char* app) noexcept;
+	static void triggerCriticalError(const char* error) noexcept;
+	static bool isLocationWritable(const char* path) noexcept;
+	bool setHomePath(StrV override, bool portable, StrV org, StrV app) noexcept;
 
 public:
 	void parseMainAppConfig() const noexcept;
@@ -84,10 +83,9 @@ private:
 
 public:
 	static HomeDirManager* initialize(
-		const char* override, const char* config,
-		const char* org,      const char* app
+		StrV overrideHome, StrV configName,
+		bool forcePortable, StrV org, StrV app
 	) noexcept;
-	static bool isSuccessful() noexcept { return mSuccessful; }
 
 	Path* addSystemDir(const Path& sub, const Path& sys = Path{}) noexcept;
 

@@ -6,12 +6,17 @@
 
 #pragma once
 
-#include <chrono>
 #include <cstddef>
 #include <concepts>
 
+/*==================================================================*/
+
 class Well512 {
-	using result_type = unsigned int;
+
+public:
+	using result_type = unsigned;
+
+private:
 	result_type mIndex{};
 	result_type mState[16];
 
@@ -19,28 +24,19 @@ public:
 	static constexpr result_type min() noexcept { return 0x00000000; }
 	static constexpr result_type max() noexcept { return 0xFFFFFFFF; }
 
-	Well512() noexcept {
-		using chrono = std::chrono::steady_clock;
-		const auto seed{ chrono::now().time_since_epoch().count() };
-		for (auto i{ 0 }; i < 16; ++i) {
-			mState[i] = static_cast<result_type>(seed >> i * 2);
-		}
-	}
+	Well512() noexcept; // automatic seeding based on chrono
 
 	template <typename T, std::size_t N>
-		requires (std::is_arithmetic_v<T> && N >= 16)
+		requires (std::is_convertible_v<T, result_type> && N >= 16)
 	constexpr Well512(T(&seeds)[N]) noexcept {
 		for (auto i{ 0 }; i < 16; ++i) {
 			mState[i] = static_cast<result_type>(seeds[i]);
 		}
 	}
 
-	constexpr operator result_type() noexcept
-		{ return get<result_type>(); }
-
 	template <typename T = result_type>
-		requires (std::is_arithmetic_v<T>)
-	constexpr T get() noexcept {
+		requires (std::is_convertible_v<T, result_type>)
+	constexpr T next() noexcept {
 		result_type a, b, c, d;
 
 		a = mState[mIndex];
@@ -55,4 +51,7 @@ public:
 		mState[mIndex] = a ^ b ^ d ^ a << 2 ^ b << 18 ^ c << 28;
 		return static_cast<T>(mState[mIndex]);
 	}
+
+	constexpr operator result_type()
+		noexcept { return next(); }
 };

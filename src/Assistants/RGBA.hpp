@@ -8,6 +8,8 @@
 
 #include <cstdint>
 
+/*==================================================================*/
+
 struct alignas(4) RGBA {
 	using u8  = std::uint8_t;
 	using u32 = std::uint32_t;

@@ -9,6 +9,8 @@
 #include "BasicLogger.hpp"
 #include "SimpleFileIO.hpp"
 
+#include <SDL3/SDL_messagebox.h>
+
 /*==================================================================*/
 	#pragma region BasicLogger Singleton Class
 
@@ -54,6 +56,9 @@ StrV BasicLogger::getSeverity(BLOG type) const noexcept {
 		case BLOG::ERROR:
 			return "ERROR";
 
+		case BLOG::CRIT:
+			return "CRIT";
+
 		case BLOG::DEBUG:
 			return "DEBUG";
 
@@ -65,14 +70,15 @@ StrV BasicLogger::getSeverity(BLOG type) const noexcept {
 void BasicLogger::writeEntry(BLOG type, const Str& message) {
 	auto output{ fmt::format("{} :: {}", getSeverity(type), message) };
 
-	if (mLogPath.empty()) { fmt::println("{}", std::move(output)); }
+	mLogBuffer.push(output);
+	if (mLogPath.empty()) { fmt::println("{}", output); }
 	else {
 		std::ofstream logFile(mLogPath, std::ios::app);
-		if (logFile) { logFile << std::move(output) << std::endl; }
+		if (logFile) { logFile << output << std::endl; }
 		else {
 			newEntry(BLOG::ERROR, "Unable to write to Log file: \"{}\"",
 				std::move(mLogPath).string());
-			fmt::println(stderr, "{}", std::move(output));
+			fmt::println(stderr, "{}", output);
 		}
 	}
 }

@@ -8,9 +8,8 @@
 
 /*==================================================================*/
 
-const char* getHomePath(
-	const char* org = nullptr,
-	const char* app = nullptr
-) noexcept;
-
-const char* getBasePath() noexcept;
+namespace Console {
+	void Attach() noexcept;
+	void Show()   noexcept;
+	void Hide()   noexcept;
+}

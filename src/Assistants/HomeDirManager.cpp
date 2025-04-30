@@ -6,6 +6,7 @@
 
 #include "HomeDirManager.hpp"
 
+#include "Misc.hpp"
 #include "SHA1.hpp"
 #include "SimpleFileIO.hpp"
 #include "BasicLogger.hpp"
@@ -18,73 +19,100 @@
 	#pragma region HomeDirManager Class
 
 HomeDirManager::HomeDirManager(
-	const char* override, const char* config,
-	const char* org,      const char* app
+	StrV overrideHome, StrV configName,
+	bool forcePortable, StrV org, StrV app,
+	bool& initError
 ) noexcept {
-	if (!setPortable(override))
-		{ /* nothing here yet */ }
-
-	if (!setHomePath(org, app))
-		{ mSuccessful = false; return; }
+	if (!setHomePath(overrideHome, forcePortable, org, app))
+		{ initError = true; return; }
 
 	blog.initLogFile("program.log", sHomePath);
 
-	if (!config) { config = "settings.toml"; }
-	static const auto mainConfig{ (Path{ sHomePath } / config).string() };
-	sConfPath = mainConfig.c_str();
+	if (configName.empty()) { configName = "settings.toml"; }
+	sConfPath = (Path{ sHomePath } / configName).string();
 }
 
-bool HomeDirManager::setPortable(const char* override) noexcept {
-	if (override) {
-		sHomePath = override;
-		sPortable = true;
-		return sPortable;
-	}
-	if (!::getBasePath()) {
-		sPortable = false;
-		return sPortable;
-	}
+void HomeDirManager::triggerCriticalError(const char* error) noexcept {
+	blog.newEntry(BLOG::CRIT, error);
+	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING,
+		"Critical Initialization Error", error, nullptr);
+}
 
-	const auto fileExists{ fs::exists(Path{ ::getBasePath() } / "portable.txt") };
-	if (!fileExists || !fileExists.value()) {
-		sPortable = false;
-		return sPortable;
+bool HomeDirManager::isLocationWritable(const char* path) noexcept {
+	if (!path) { return false; }
+	const auto file{ Path{ path } / "__DELETE_ME__" };
+	std::ofstream test{ file };
+
+	if (test.is_open()) {
+		test.close();
+		const auto result{ fs::remove(file) };
+		return result && result.value();
 	} else {
-		sHomePath = ::getBasePath();
-		sPortable = true;
-		return sPortable;
+		return false;
 	}
 }
 
-bool HomeDirManager::setHomePath(const char* org, const char* app) noexcept {
-	if (sHomePath) { return true; }
-	else { ::getHomePath(org, app); }
+bool HomeDirManager::setHomePath(StrV overrideHome, bool forcePortable, StrV org, StrV app) noexcept {
+	if (!overrideHome.empty()) {
+		if (isLocationWritable(overrideHome.data())) {
+			blog.newEntry(BLOG::INFO, "Home path override successful!");
+			sHomePath = overrideHome;
+			return true;
+		} else {
+			triggerCriticalError("Home path override failure: cannot write to location!");
+			return false;
+		}
+	}
 
-	if (sPortable) {
-		if (!sHomePath) // something went wrong
-			{ goto fallback; }
-		else { return true; }
-	} else {
-		fallback:
+	if (forcePortable) {
+		if (isLocationWritable(::getBasePath())) {
+			blog.newEntry(BLOG::INFO, "Forced portable mode successful!");
+			sHomePath = ::getBasePath();
+			return true;
+		} else {
+			triggerCriticalError("Forced portable mode failure: cannot write to location!");
+			return false;
+		}
+	}
+
+	if (::getBasePath()) {
+		const auto fileExists{ fs::exists(Path{ ::getBasePath() } / "portable.txt") };
+		if (fileExists && fileExists.value()) {
+			if (isLocationWritable(::getBasePath())) {
+				sHomePath = ::getBasePath();
+				return true;
+			} else {
+				blog.newEntry(BLOG::ERROR,
+					"Portable mode: cannot write to location, falling back to Home path!");
+			}
+		}
+	}
+
+	if (isLocationWritable(::getHomePath(
+		org.empty() ? nullptr : org.data(),
+		app.empty() ? nullptr : app.data()
+	))) {
 		sHomePath = ::getHomePath();
-		sPortable = false;
-		return sHomePath;
+		return true;
+	} else {
+		triggerCriticalError("Failed to determine Home path: cannot write to location!");
+		return false;
 	}
 }
 
 void HomeDirManager::parseMainAppConfig() const noexcept {
-	if (const auto result{ config::parseFromFile(sConfPath) }) {
+	if (const auto result{ config::parseFromFile(sConfPath.c_str()) }) {
 		config::safeTableUpdate(sMainAppConfig, result.table());
 		blog.newEntry(BLOG::INFO,
 			"[TOML] App Config found, previous settings loaded!");
 	} else {
 		blog.newEntry(BLOG::WARN,
-			"[TOML] App Config failed to load! [{}]", result.error().description());
+			"[TOML] App Config failed to prase! [{}]", result.error().description());
 	}
 }
 
 void HomeDirManager::writeMainAppConfig() const noexcept {
-	if (const auto result{ config::writeToFile(sMainAppConfig, sConfPath) }) {
+	if (const auto result{ config::writeToFile(sMainAppConfig, sConfPath.c_str()) }) {
 		blog.newEntry(BLOG::INFO,
 			"[TOML] App Config written to file successfully!");
 	} else {
@@ -110,12 +138,12 @@ void HomeDirManager::updateFromMainAppConfig(const SettingsMap& map) const noexc
 }
 
 HomeDirManager* HomeDirManager::initialize(
-	const char* override, const char* config,
-	const char* org,      const char* app
+	StrV overridePath, StrV configName,
+	bool forcePortable, StrV org, StrV app
 ) noexcept {
-	/*pass settings filename here, and cxx params*/
-	static HomeDirManager self(override, config, org, app);
-	return mSuccessful ? &self : nullptr;
+	static bool initError{};
+	static HomeDirManager self(overridePath, configName, forcePortable, org, app, initError);
+	return initError ? nullptr : &self;
 }
 
 Path* HomeDirManager::addSystemDir(const Path& sub, const Path& sys) noexcept {
@@ -185,11 +213,11 @@ bool HomeDirManager::validateGameFile(const Path& gamePath) noexcept {
 		mFileData = std::move(fileData.value());
 	}
 
-	const auto tempSHA1{ SHA1::from_data(mFileData) };
+	const auto tempSHA1{ SHA1::from_data(getFileData(), getFileSize()) };
 	blog.newEntry(BLOG::INFO, "File SHA1: {}", tempSHA1);
 
 	if (checkGame(
-		std::data(mFileData), std::size(mFileData),
+		getFileData(), getFileSize(),
 		gamePath.extension().string(), tempSHA1
 	)) {
 		mFilePath = gamePath;

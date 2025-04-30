@@ -27,10 +27,12 @@
 #endif
 	#include <algorithm>
 
+/*==================================================================*/
+
 template <typename U>
 	requires (std::is_trivially_copyable_v<U>)
 class TripleBuffer {
-	using Buffer  = Aligned<U>;
+	using Buffer = Aligned<U>;
 
 	Buffer mDataBuffer[3];
 

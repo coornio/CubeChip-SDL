@@ -15,6 +15,8 @@
 
 #include "Assistants/Typedefs.hpp"
 
+#include "Libraries/cxxopts/cxxopts.hpp"
+
 /*==================================================================*/
 
 constexpr auto* AppName{ "CubeChip" };
@@ -33,7 +35,6 @@ class EmuInterface;
 
 class EmuHost final {
 	EmuHost(const Path&) noexcept;
-	~EmuHost() noexcept;
 
 	EmuHost(const EmuHost&) = delete;
 	EmuHost& operator=(const EmuHost&) = delete;
@@ -62,12 +63,15 @@ private:
 	void replaceCore();
 
 public:
-	static auto* create(const Path& gamePath) noexcept {
+	static auto* initialize(const Path& gamePath) noexcept {
 		static EmuHost self(gamePath);
 		return &self;
 	}
 
-	static bool initApplication(const char* = nullptr) noexcept;
+	static bool initApplication(
+		StrV overrideHome, StrV configName,
+		bool forcePortable, StrV org, StrV app
+	) noexcept;
 
 	SDL_AppResult processEvents(SDL_Event* event) noexcept;
 
