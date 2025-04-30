@@ -20,10 +20,22 @@
 	#pragma warning(disable: 4324)
 #endif
 
+/**
+ * @brief A lock-free, multi-producer, multi-consumer ring buffer.
+ * @tparam T :: The type stored in the buffer. Must be default constructible.
+ * @tparam N :: The number of slots in the buffer. Must be a power of two, and at least 8.
+ * @details This ring buffer allows concurrent push and read operations from multiple threads.
+ *          Internally uses atomic operations and shared pointers to manage lifetime.
+ * @note Values passed to the push() method must be same as or convertible to `T`.
+ * @code{.cpp}
+ *  SimpleRingBuffer<std::string, 256> buffer;
+ *  buffer.push("hello");
+ * @endcode
+ */
 template <typename T, std::size_t N = 8>
 	requires (std::is_default_constructible_v<T>)
 class SimpleRingBuffer {
-	static_assert((N & N-1) == 0, "N must be a power of two.");
+	static_assert((N & (N - 1)) == 0, "N must be a power of two.");
 	static_assert(N >= 8, "N must be at least 8.");
 
 	using self = SimpleRingBuffer;
@@ -62,8 +74,8 @@ private:
 	}
 
 	auto snapshot_() const noexcept {
-		std::array<T, N> output(size());
-		const auto pos{ head() };
+		std::array<T, N> output;
+		const auto pos{ head() & (N - 1) };
 
 		std::for_each(EXEC_POLICY(unseq)
 			output.begin(), output.end(),
@@ -79,7 +91,7 @@ public:
 	/**
 	 * @brief Push a new value into the internal buffer. Each call advances the relative index
 	 *        used by at() calls in a monotonic fashion.
-	 * @param[in] value :: value to copy or move into the internal buffer.
+	 * @param[in] value :: Value to copy or move into the internal buffer.
 	 * @note This method is thread-safe, but cannot run concurrently with safe_snapshot() calls.
 	 */
 	template <typename U>
