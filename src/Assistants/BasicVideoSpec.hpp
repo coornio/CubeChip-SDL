@@ -178,7 +178,7 @@ private:
 	}
 
 public:
-	void normalizeRectToDisplay(SDL_Rect& rect, bool first_run) noexcept;
+	void normalizeRectToDisplay(SDL_Rect& rect, SDL_Rect& deco, bool first_run) noexcept;
 
 /*==================================================================*/
 

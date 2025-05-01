@@ -46,7 +46,6 @@ class HomeDirManager final {
 
 	GameValidator checkGame{};
 
-public:
 	inline static toml::table sMainAppConfig{};
 
 private:

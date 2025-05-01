@@ -68,11 +68,24 @@ BasicVideoSpec::BasicVideoSpec(const Settings& settings) noexcept {
 	}
 	#endif
 
+	SDL_Rect deco{};
+
+	if (SDL_Unique dummy{ SDL_CreateWindow(
+		nullptr, 64, 64, SDL_WINDOW_UTILITY | SDL_WINDOW_HIDDEN
+	) }) {
+		constexpr auto away{ std::numeric_limits<int>::min() };
+		SDL_SetWindowPosition(dummy, away, away);
+		SDL_ShowWindow(dummy);
+		SDL_SyncWindow(dummy);
+		SDL_RenderPresent(mMainRenderer);
+		SDL_GetWindowBordersSize(dummy, &deco.x, &deco.y, &deco.w, &deco.h);
+	}
+
 	SDL_Rect rect{
-		settings.window.x,  settings.window.y,
+		settings.window.x, settings.window.y,
 		settings.window.w, settings.window.h
 	};
-	normalizeRectToDisplay(rect, settings.first_run);
+	normalizeRectToDisplay(rect, deco, settings.first_run);
 
 	SDL_SetWindowPosition(mMainWindow, rect.x, rect.y);
 	SDL_SetWindowSize(mMainWindow, rect.w, rect.h);
@@ -120,7 +133,7 @@ void BasicVideoSpec::showErrorBox(const char* const title) noexcept {
 	);
 }
 
-void BasicVideoSpec::normalizeRectToDisplay(SDL_Rect& rect, bool first_run) noexcept {
+void BasicVideoSpec::normalizeRectToDisplay(SDL_Rect& rect, SDL_Rect& deco, bool first_run) noexcept {
 	auto numDisplays{  0 }; // count of displays SDL found
 	auto bestDisplay{ -1 }; // index of display our window will use
 	bool rectOverlap{};
@@ -172,15 +185,19 @@ void BasicVideoSpec::normalizeRectToDisplay(SDL_Rect& rect, bool first_run) noex
 
 	// 6: shrink window to best fit chosen display
 	const auto& target{ displayBounds[bestDisplay] };
-	rect.w = std::min(rect.w, target.w);
-	rect.h = std::min(rect.h, target.h);
+
+	const auto up{ deco.x }, lt{ deco.y };
+	const auto dn{ deco.w }, rt{ deco.h };
+
+	rect.w = std::min(rect.w, target.w - lt - rt);
+	rect.h = std::min(rect.h, target.h - up - dn);
 
 	if (!rectOverlap) { // 7a: if we didn't overlap before, center to display
-		rect.x = target.x + (target.w - rect.w) / 2;
-		rect.y = target.y + (target.h - rect.h) / 2;
+		rect.x = target.x + (target.w - lt - rt - rect.w) / 2 + lt;
+		rect.y = target.y + (target.h - up - dn - rect.h) / 2 + up;
 	} else {            // 7b: otherwise, clamp origin to lie within display bounds
-		rect.x = std::clamp(rect.x, target.x, target.x + target.w - rect.w);
-		rect.y = std::clamp(rect.y, target.y, target.y + target.h - rect.h);
+		rect.x = std::clamp(rect.x, target.x + lt, target.x + target.w - rt - rect.w);
+		rect.y = std::clamp(rect.y, target.y + up, target.y + target.h - dn - rect.h);
 	}
 }
 

@@ -138,10 +138,8 @@ private:
 		u8& mIE   { mMemoryBanks[0xFFFF] }; // Interrupt enable
 	} mMMU;
 
-	struct {
-		u8 mInputControl{};
-		u8 mInputData[2]{};
-	};
+	u8 mInputControl{};
+	u8 mInputData[2]{};
 
 	void updateKeyStates() noexcept override {
 		const auto keyState{ static_cast<u8>(getKeyStates()) };
