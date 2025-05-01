@@ -14,8 +14,6 @@
 #include "../Libraries/imgui/imgui_impl_sdl3.h"
 #include "../Libraries/imgui/imgui_impl_sdlrenderer3.h"
 
-#include <SDL3/SDL_platform_defines.h>
-
 #ifdef _WIN32
 	#define NOMINMAX
 	#pragma warning(push)
@@ -48,7 +46,7 @@ BasicVideoSpec::BasicVideoSpec(const Settings& settings) noexcept {
 		showErrorBox("Failed to create main window!");
 		return;
 	}
-	#if defined(SDL_PLATFORM_WIN32) && !defined(OLD_WINDOWS_SDK)
+	#if defined(_WIN32) && !defined(OLD_WINDOWS_SDK)
 	else {
 		const auto windowHandle{ SDL_GetPointerProperty(
 			SDL_GetWindowProperties(mMainWindow),
@@ -57,12 +55,11 @@ BasicVideoSpec::BasicVideoSpec(const Settings& settings) noexcept {
 		) };
 
 		if (windowHandle) {
-			const auto windowRound{ DWMWCP_DONOTROUND };
+			const auto cornerMode{ DWMWCP_DONOTROUND };
 			DwmSetWindowAttribute(
 				static_cast<HWND>(windowHandle),
 				DWMWA_WINDOW_CORNER_PREFERENCE,
-				&windowRound,
-				sizeof(windowRound)
+				&cornerMode, sizeof(cornerMode)
 			);
 		}
 	}

@@ -26,15 +26,16 @@ namespace nonstd {
 			requires (!std::is_same_v<std::decay_t<Callable>, jthread>)
 		explicit jthread(Callable&& func, Args&&... args)
 			: mStopSource{}
-			, mThread{ [](stop_token token, auto&& func, auto&&... args) {
-				if constexpr (std::is_invocable_v<Callable, stop_token, Args...>) {
-					std::invoke(std::forward<decltype(func)>(func),
-								std::move(token),
-								std::forward<decltype(args)>(args)...);
+			, mThread{
+				[](stop_token token, auto&& func, auto&&... args) {
+					if constexpr (std::is_invocable_v<Callable, stop_token, Args...>) {
+						std::invoke(std::forward<decltype(func)>(func),
+									std::move(token),
+									std::forward<decltype(args)>(args)...);
 					}
-				else {
-					std::invoke(std::forward<decltype(func)>(func),
-								std::forward<decltype(args)>(args)...);
+					else {
+						std::invoke(std::forward<decltype(func)>(func),
+									std::forward<decltype(args)>(args)...);
 					}
 				}
 				, mStopSource.get_token()      // not captured due to possible races if immediately set
@@ -64,7 +65,6 @@ namespace nonstd {
 			return *this;
 		}
 
-
 		void swap(jthread& other) noexcept {
 			std::swap(mStopSource, other.mStopSource);
 			std::swap(mThread, other.mThread);
@@ -86,11 +86,9 @@ namespace nonstd {
 			return mThread.native_handle();
 		}
 
-
 		static unsigned hardware_concurrency() noexcept {
 			return std::thread::hardware_concurrency();
 		};
-
 
 		[[nodiscard]]
 		auto get_stop_source() noexcept {

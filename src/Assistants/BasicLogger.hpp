@@ -23,7 +23,7 @@ enum class BLOG {
 	#pragma region BasicLogger Singleton Class
 
 class BasicLogger final {
-	SimpleRingBuffer<Str, 1024>
+	SimpleRingBuffer<Str, 8>
 		mLogBuffer;
 
 	Path mLogPath{};
