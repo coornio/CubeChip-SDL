@@ -35,18 +35,20 @@
 template <typename T, std::size_t N = 8>
 	requires (std::is_default_constructible_v<T>)
 class SimpleRingBuffer {
-	static_assert((N & (N - 1)) == 0, "N must be a power of two.");
-	static_assert(N >= 8, "N must be at least 8.");
+	static_assert((N & (N - 1)) == 0, "Buffer size (N) must be a power of two.");
+	static_assert(N >= 8, "Buffer size (N) must be at least 8.");
 
 	using self = SimpleRingBuffer;
 
 	alignas(HDIS) std::array<AtomSharedPtr<T>, N> mBuffer{};
 	alignas(HDIS) std::atomic<size_type>          mPushHead{ 0 };
 	alignas(HDIS) std::atomic<size_type>          mReadHead{ 0 };
-	mutable       std::shared_mutex               mGuard;
+	alignas(HDIS) mutable std::shared_mutex       mGuard;
+
+	static inline auto sDefaultT{ std::make_shared<T>(T{}) };
 
 public:
-	SimpleRingBuffer() noexcept = default;
+	SimpleRingBuffer() noexcept { clear(); }
 
 	SimpleRingBuffer(self&&) = delete;
 	SimpleRingBuffer(const self&) = delete;
@@ -70,42 +72,59 @@ private:
 	}
 
 	auto at_(size_type index, size_type head) const noexcept {
-		const auto pos{ (head + N - index) & (N - 1) };
-		const auto ptr{ mBuffer[pos].load(mo::acquire) };
-		return ptr ? *ptr : T{};
+		return *mBuffer[(head + N - index) & (N - 1)].load(mo::acquire);
 	}
 
-	auto snapshot_(SnapshotOrder order) const noexcept {
+	template <SnapshotOrder Order>
+	auto snapshot_() const noexcept {
 		std::array<T, N> output;
 		const auto pos{ head() };
 
-		std::for_each(EXEC_POLICY(unseq)
-			output.begin(), output.end(),
-			[&](auto& entry) noexcept {
-				const auto index{ &entry - output.data() };
-				entry = std::move(at_(
-					order == SnapshotOrder::ASCENDING
-					? (N - 1 - index) : index, pos));
-			}
-		);
+		if constexpr (Order == SnapshotOrder::ASCENDING) {
+			std::for_each(EXEC_POLICY(unseq)
+				output.begin(), output.end(),
+				[&](auto& entry) noexcept {
+					entry = std::move(at_(N - 1 - (&entry - output.data()), pos)); }
+			);
+		} else {
+			std::for_each(EXEC_POLICY(unseq)
+				output.begin(), output.end(),
+				[&](auto& entry) noexcept {
+					entry = std::move(at_(&entry - output.data(), pos)); }
+			);
+		}
 
 		return output;
 	}
 
 public:
 	/**
+	 * @brief Empty the internal buffer by default-initializing its contents.
+	 * @note This method is thread-safe, but cannot run concurrently with push() or safe_snapshot_*() calls.
+	 */
+	void clear() noexcept {
+		std::unique_lock lock{ mGuard };
+
+		std::for_each(EXEC_POLICY(unseq)
+			mBuffer.begin(), mBuffer.end(),
+			[](auto& entry) noexcept {
+				entry.store(sDefaultT, mo::relaxed); }
+		);
+	}
+
+	/**
 	 * @brief Push a new value into the internal buffer. Each call advances the relative index
 	 *        used by at() calls in a monotonic fashion.
 	 * @param[in] value :: Value to copy or move into the internal buffer.
-	 * @note This method is thread-safe, but cannot run concurrently with safe_snapshot() calls.
+	 * @note This method is thread-safe, but cannot run concurrently with clear() or safe_snapshot_*() calls.
 	 */
-	template <typename U>
-		requires (std::is_convertible_v<U, T>)
-	void push(U&& value) {
-		push_(
-			mPushHead.fetch_add(1, mo::acq_rel),
-			std::make_shared<T>(std::forward<U>(value))
-		);
+	void push(auto&& value) noexcept {
+		using U = decltype(value);
+		static_assert(std::is_convertible_v<U, T>,
+			"Pushed value is not convertible to buffer type.");
+
+		push_(mPushHead.fetch_add(1, mo::acq_rel),
+			std::make_shared<T>(std::forward<U>(value)));
 	}
 
 	/**
@@ -125,25 +144,25 @@ public:
 	 * @note This method is thread-safe, but may return stale data due to its non-blocking nature.
 	 */
 	std::array<T, N> fast_snapshot_asc() const noexcept {
-		return snapshot_(SnapshotOrder::ASCENDING);
+		return snapshot_<SnapshotOrder::ASCENDING>();
 	}
 	std::array<T, N> fast_snapshot_desc() const noexcept {
-		return snapshot_(SnapshotOrder::DESCENDING);
+		return snapshot_<SnapshotOrder::DESCENDING>();
 	}
 
 	/**
 	 * @brief Create a blocking snapshot of the internal buffer's contents. Values are ordered
 	 *        from oldest first (ascending) or newest first (descending) at the time of the call.
 	 * @returns A vector of T representing the buffer contents; missing values are default-constructed.
-	 * @note This method is thread-safe, but cannot run concurrently with push() calls.
+	 * @note This method is thread-safe, but cannot run concurrently with push() or clear() calls.
 	 */
 	std::array<T, N> safe_snapshot_asc() const noexcept {
 		std::unique_lock lock{ mGuard };
-		return snapshot_(SnapshotOrder::ASCENDING);
+		return snapshot_<SnapshotOrder::ASCENDING>();
 	}
 	std::array<T, N> safe_snapshot_desc() const noexcept {
 		std::unique_lock lock{ mGuard };
-		return snapshot_(SnapshotOrder::DESCENDING);
+		return snapshot_<SnapshotOrder::DESCENDING>();
 	}
 };
 
