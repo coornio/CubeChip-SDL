@@ -11,12 +11,14 @@
 /*==================================================================*/
 
 class ShutdownSignal {
-	static inline std::atomic<bool>
-		sIsRequested{};
+	static auto& requested_() noexcept {
+		static std::atomic<bool> state{};
+		return state;
+	}
 
 public:
-	static void isRequested(bool state) noexcept { sIsRequested.store(state, std::memory_order_release); }
-	static bool isRequested()           noexcept { return sIsRequested.load(std::memory_order_relaxed); }
+	static void isRequested(bool state) noexcept { requested_().store(state, std::memory_order_release); }
+	static bool isRequested()           noexcept { return requested_().load(std::memory_order_relaxed); }
 
 	static void registerHandler() noexcept;
 };
