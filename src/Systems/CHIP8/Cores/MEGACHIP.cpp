@@ -472,7 +472,7 @@ void MEGACHIP::startAudioTrack(const bool repeat) noexcept {
 	}
 
 	mTrackStepping = readMemoryI(0) << 8 | readMemoryI(1);
-	mTrackStepping = mTrackStepping / ASB->getFrequency();
+	mTrackStepping = mTrackStepping / mAudio.getFrequency();
 
 	mTrackTotalLen = repeat ? -mTrackTotalLen : mTrackTotalLen;
 	mTrackPosition = 0.0;
@@ -480,7 +480,7 @@ void MEGACHIP::startAudioTrack(const bool repeat) noexcept {
 }
 
 void MEGACHIP::pushByteAudio(u32 index) noexcept {
-	static const auto samplesTotal{ ASB->getSampleRate(cRefreshRate) };
+	static const auto samplesTotal{ mAudio.getSampleRate(cRefreshRate) };
 	std::vector<s16> samplesBuffer(static_cast<ust>(samplesTotal));
 
 	if (mTrackTotalLen) {
@@ -499,7 +499,8 @@ void MEGACHIP::pushByteAudio(u32 index) noexcept {
 			}
 		}
 	}
-	ASB->pushAudioData(index, samplesBuffer);
+
+	mAudio.pushAudioData(index, samplesBuffer);
 }
 
 void MEGACHIP::scrollBuffersUP(s32 N) {
@@ -576,8 +577,8 @@ void MEGACHIP::scrollBuffersRT() {
 	void MEGACHIP::instruction_0010() noexcept {
 		triggerInterrupt(Interrupt::FRAME);
 
-		ASB->resumeStream(STREAM::CHANN1);
-		ASB->resumeStream(STREAM::CHANN2);
+		mAudio.resumeStream(STREAM::CHANN1);
+		mAudio.resumeStream(STREAM::CHANN2);
 
 		resetAudioTrack();
 		flushAllVideoBuffers();
@@ -587,8 +588,8 @@ void MEGACHIP::scrollBuffersRT() {
 	void MEGACHIP::instruction_0011() noexcept {
 		triggerInterrupt(Interrupt::FRAME);
 
-		ASB->pauseStream(STREAM::CHANN1);
-		ASB->pauseStream(STREAM::CHANN2);
+		mAudio.pauseStream(STREAM::CHANN1);
+		mAudio.pauseStream(STREAM::CHANN2);
 
 		resetAudioTrack();
 		scrapAllVideoBuffers();

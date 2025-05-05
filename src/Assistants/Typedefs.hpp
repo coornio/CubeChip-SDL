@@ -14,12 +14,10 @@
 #include <vector>
 #include <cstdint>
 #include <cstddef>
-#include <execution>
 
 #include <filesystem>
 #include <string_view>
 
-#include <SDL3/SDL_scancode.h>
 
 #define FMT_HEADER_ONLY
 #include "../Libraries/fmt/format.h"
@@ -54,9 +52,6 @@ using Path = std::filesystem::path;
 template <typename T>
 using Atom = std::atomic<T>;
 
-template <typename T>
-using Vec = std::vector<T>;
-
 using namespace std::string_literals;
 using namespace std::string_view_literals;
 
@@ -76,8 +71,8 @@ struct Epsilon {
 	constexpr static auto HDIS{ std::hardware_destructive_interference_size };
 	constexpr static auto HCIS{ std::hardware_constructive_interference_size };
 #else
-	constexpr static auto HDIS{ size_type(64) };
-	constexpr static auto HCIS{ size_type(64) };
+	constexpr static auto HDIS{ std::size_t(64) };
+	constexpr static auto HCIS{ std::size_t(64) };
 #endif
 
 #ifdef __GNUC__
@@ -92,6 +87,7 @@ struct Epsilon {
 #ifdef __APPLE__
 	#define EXEC_POLICY(policy)
 #else
+	#include <execution>
 	#define EXEC_POLICY(policy) std::execution::policy,
 #endif
 

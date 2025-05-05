@@ -14,13 +14,13 @@
 /*==================================================================*/
 
 GameBoy_CoreInterface::GameBoy_CoreInterface() noexcept
-	: ASB{ std::make_unique<AudioSpecBlock>(SDL_AUDIO_S16, 1, 48'000, 4) }
+	: mAudio{ AUDIOFORMAT::S16, 1, 48'000, 4 }
 {
 	if ((sSavestatePath = HDM->addSystemDir("savestate", "GAMEBOY"))) {
 		*sSavestatePath /= HDM->getFileSHA1();
 	}
 
-	ASB->resumeStreams();
+	mAudio.resumeStreams();
 	loadPresetBinds();
 }
 

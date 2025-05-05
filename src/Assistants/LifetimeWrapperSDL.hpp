@@ -6,50 +6,57 @@
 
 #pragma once
 
-#include <SDL3/SDL.h>
-
 #include <memory>
 
 /*==================================================================*/
 	#pragma region SDL_Deleter & Specializations
 
 template <typename T>
-struct SDL_Deleter {
-	using type = std::default_delete<T>;
-};
+struct SDL_Deleter;
+
+struct SDL_Window;
 template <>
 struct SDL_Deleter<SDL_Window> {
-	static void deleter(SDL_Window* ptr) { if (ptr) { SDL_DestroyWindow(ptr); } }
+	static void deleter(SDL_Window*);
 	using type = decltype(&deleter);
 };
+
+struct SDL_Renderer;
 template <>
 struct SDL_Deleter<SDL_Renderer> {
-	static void deleter(SDL_Renderer* ptr) { if (ptr) { SDL_DestroyRenderer(ptr); } }
+	static void deleter(SDL_Renderer*);
 	using type = decltype(&deleter);
 };
+
+struct SDL_Texture;
 template <>
 struct SDL_Deleter<SDL_Texture> {
-	static void deleter(SDL_Texture* ptr) { if (ptr) { SDL_DestroyTexture(ptr); } }
+	static void deleter(SDL_Texture*);
 	using type = decltype(&deleter);
 };
+
+struct SDL_AudioStream;
 template <>
 struct SDL_Deleter<SDL_AudioStream> {
-	static void deleter(SDL_AudioStream* ptr) { if (ptr) { SDL_DestroyAudioStream(ptr); } }
+	static void deleter(SDL_AudioStream*);
 	using type = decltype(&deleter);
 };
+
+using SDL_DisplayID = unsigned;
 template <>
 struct SDL_Deleter<SDL_DisplayID> {
-	static void deleter(SDL_DisplayID* ptr) { if (ptr) { SDL_free(ptr); } }
+	static void deleter(SDL_DisplayID*);
 	using type = decltype(&deleter);
 };
+
 template <>
 struct SDL_Deleter<char> {
-	static void deleter(char* ptr) { if (ptr) { SDL_free(ptr); } }
+	static void deleter(char*);
 	using type = decltype(&deleter);
 };
 template <>
 struct SDL_Deleter<const char> {
-	static void deleter(const char* ptr) { if (ptr) { SDL_free(const_cast<char*>(ptr)); } }
+	static void deleter(const char*);
 	using type = decltype(&deleter);
 };
 
@@ -57,7 +64,7 @@ struct SDL_Deleter<const char> {
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 
 /*==================================================================*/
-	#pragma region SDL_Unique
+	#pragma region SDL_Unique (unique_ptr convenience wrapper)
 
 template <typename T>
 class SDL_Unique {
@@ -69,11 +76,11 @@ public:
 		: mPtr{ ptr, SDL_Deleter<T>::deleter }
 	{}
 
-	SDL_Unique(SDL_Unique&&) noexcept = default; // move constructor
-	SDL_Unique(const SDL_Unique&) = delete; // copy constructor
+	SDL_Unique(SDL_Unique&&) noexcept = default;
+	SDL_Unique(const SDL_Unique&) = delete;
 
-	SDL_Unique& operator=(SDL_Unique&&) noexcept = default; // move assignment
-	SDL_Unique& operator=(const SDL_Unique&) = delete; // copy assignment
+	SDL_Unique& operator=(SDL_Unique&&) noexcept = default;
+	SDL_Unique& operator=(const SDL_Unique&) = delete; 
 
 	SDL_Unique& operator=(T* ptr) noexcept { reset(ptr); return *this; }
 

@@ -20,15 +20,18 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Assistants\AttachConsole.cpp" />
+    <ClCompile Include="src\Assistants\AudioSpecBlock.cpp" />
     <ClCompile Include="src\Assistants\BasicAudioSpec.cpp" />
+    <ClCompile Include="src\Assistants\BasicInput.cpp" />
     <ClCompile Include="src\Assistants\BasicLogger.cpp" />
     <ClCompile Include="src\Assistants\BasicVideoSpec.cpp" />
     <ClCompile Include="src\Assistants\DefaultConfig.cpp" />
     <ClCompile Include="src\Assistants\FrameLimiter.cpp" />
+    <ClCompile Include="src\Assistants\FrontendInterface.cpp" />
     <ClCompile Include="src\Assistants\HomeDirManager.cpp" />
+    <ClCompile Include="src\Assistants\LifetimeWrapperSDL.cpp" />
     <ClCompile Include="src\Assistants\PathGetters.cpp" />
     <ClCompile Include="src\Assistants\SHA1.cpp" />
-    <ClCompile Include="src\Assistants\ShutdownSignal.cpp" />
     <ClCompile Include="src\Assistants\ThreadAffinity.cpp" />
     <ClCompile Include="src\Assistants\Well512.cpp" />
     <ClCompile Include="src\CubeChip.cpp" />
@@ -59,6 +62,7 @@
     <ClInclude Include="src\Assistants\Aligned.hpp" />
     <ClInclude Include="src\Assistants\AtomicSharedProxy.hpp" />
     <ClInclude Include="src\Assistants\AttachConsole.hpp" />
+    <ClInclude Include="src\Assistants\AudioSpecBlock.hpp" />
     <ClInclude Include="src\Assistants\BasicAudioSpec.hpp" />
     <ClInclude Include="src\Assistants\BasicInput.hpp" />
     <ClInclude Include="src\Assistants\BasicLogger.hpp" />
@@ -66,6 +70,7 @@
     <ClInclude Include="src\Assistants\Concepts.hpp" />
     <ClInclude Include="src\Assistants\DefaultConfig.hpp" />
     <ClInclude Include="src\Assistants\FrameLimiter.hpp" />
+    <ClInclude Include="src\Assistants\FrontendInterface.hpp" />
     <ClInclude Include="src\Assistants\HomeDirManager.hpp" />
     <ClInclude Include="src\Assistants\LifetimeWrapperSDL.hpp" />
     <ClInclude Include="src\Assistants\Map2D.hpp" />
@@ -81,7 +86,6 @@
     <ClInclude Include="src\Assistants\TripleBuffer.hpp" />
     <ClInclude Include="src\Assistants\Typedefs.hpp" />
     <ClInclude Include="src\Assistants\Well512.hpp" />
-    <ClInclude Include="src\Cubechip.hpp" />
     <ClInclude Include="src\EmuHost.hpp" />
     <ClInclude Include="src\Libraries\imgui\imconfig.h" />
     <ClInclude Include="src\Libraries\imgui\imgui.h" />
@@ -277,7 +281,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>SDL3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <Profile>true</Profile>
-      <LinkTimeCodeGeneration>PGOptimization</LinkTimeCodeGeneration>
+      <LinkTimeCodeGeneration>PGInstrument</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

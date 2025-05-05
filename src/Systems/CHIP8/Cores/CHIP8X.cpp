@@ -31,8 +31,8 @@ CHIP8X::CHIP8X() {
 
 	mColoredBuffer(0, 0) = cForeColor[2];
 
-	ASB->pauseStream(STREAM::CHANN1);
-	ASB->pauseStream(STREAM::CHANN2);
+	mAudio.pauseStream(STREAM::CHANN1);
+	mAudio.pauseStream(STREAM::CHANN2);
 }
 
 /*==================================================================*/
@@ -257,7 +257,7 @@ void CHIP8X::renderVideoData() {
 void CHIP8X::setBuzzerPitch(s32 pitch) noexcept {
 	mPhaseStep[STREAM::UNIQUE] = (sTonalOffset + (
 		(0xFF - (pitch ? pitch : 0x80)) >> 3 << 4)
-	) / ASB->getFrequency();
+	) / mAudio.getFrequency();
 }
 
 void CHIP8X::drawLoresColor(s32 X, s32 Y, s32 idx) noexcept {

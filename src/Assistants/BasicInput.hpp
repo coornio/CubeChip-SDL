@@ -11,17 +11,14 @@
 #include <SDL3/SDL_gamepad.h>
 #include <SDL3/SDL_mouse.h>
 
-#include "Typedefs.hpp"
-#include "Concepts.hpp"
-
-#include <algorithm>
+#include <concepts>
 
 /*==================================================================*/
 
 #define KEY(i) SDL_SCANCODE_##i
 #define BTN(i) BIC_MOUSE_##i
 
-enum BIC_Button {
+enum BIC_Button : unsigned {
 	BIC_MOUSE_LEFT   = SDL_BUTTON_LMASK,
 	BIC_MOUSE_RIGHT  = SDL_BUTTON_RMASK,
 	BIC_MOUSE_MIDDLE = SDL_BUTTON_MMASK,
@@ -35,17 +32,11 @@ enum BIC_Button {
 class BasicKeyboard final {
 	static constexpr auto TOTALKEYS{ 0u + SDL_SCANCODE_COUNT };
 
-	u8 mOldState[TOTALKEYS]{};
-	u8 mCurState[TOTALKEYS]{};
+	bool mOldState[TOTALKEYS]{};
+	bool mCurState[TOTALKEYS]{};
 
 public:
-	void updateStates() noexcept {
-		std::copy_n(EXEC_POLICY(unseq)
-			mCurState, TOTALKEYS, mOldState);
-
-		std::copy_n(EXEC_POLICY(unseq)
-			SDL_GetKeyboardState(nullptr), TOTALKEYS, mCurState);
-	}
+	void updateStates() noexcept;
 
 	bool isHeldPrev(SDL_Scancode key) const noexcept { return mOldState[key]; }
 	bool isHeld    (SDL_Scancode key) const noexcept { return mCurState[key]; }
@@ -72,23 +63,17 @@ public:
 	#pragma region BasicMouse Class
 
 class BasicMouse final {
-	u32 mCurState{}, mOldState{};
-	f32 mPosX{}, mPosY{};
-	f32 mRelX{}, mRelY{};
+	unsigned mCurState{}, mOldState{};
+	float mPosX{}, mPosY{};
+	float mRelX{}, mRelY{};
 
 public:
-	void updateStates() noexcept {
-		mOldState = mCurState;
+	void updateStates() noexcept;
 
-		const auto oldX{ mPosX }, oldY{ mPosY };
-		mCurState = SDL_GetMouseState(&mPosX, &mPosY);
-		mRelX = mPosX - oldX; mRelY = mPosY - oldY;
-	}
-
-	f32  getRelX() const noexcept { return mRelX; }
-	f32  getRelY() const noexcept { return mRelY; }
-	f32  getPosX() const noexcept { return mPosX; }
-	f32  getPosY() const noexcept { return mPosY; }
+	float getRelX() const noexcept { return mRelX; }
+	float getRelY() const noexcept { return mRelY; }
+	float getPosX() const noexcept { return mPosX; }
+	float getPosY() const noexcept { return mPosY; }
 
 	bool isHeldPrev(BIC_Button key) const noexcept { return mOldState & key; }
 	bool isHeld    (BIC_Button key) const noexcept { return mCurState & key; }

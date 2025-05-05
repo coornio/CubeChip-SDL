@@ -15,7 +15,7 @@ class BytePusher_CoreInterface : public EmuInterface {
 protected:
 	static inline Path* sSavestatePath{};
 
-	std::unique_ptr<AudioSpecBlock> ASB;
+	AudioSpecBlock mAudio;
 
 	std::vector<SimpleKeyMapping> mCustomBinds;
 

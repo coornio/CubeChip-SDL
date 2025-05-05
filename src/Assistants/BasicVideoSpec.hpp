@@ -10,33 +10,30 @@
 #include <optional>
 #include <execution>
 
-#include <SDL3/SDL.h>
-
 #include "TripleBuffer.hpp"
 #include "LifetimeWrapperSDL.hpp"
 #include "SettingWrapper.hpp"
+
+union  SDL_Event;
+
+struct SDL_Rect;
+struct SDL_FRect;
 
 /*==================================================================*/
 	#pragma region BasicVideoSpec Singleton Class
 
 class BasicVideoSpec final {
 
+public:
 	struct Rect {
 		s32 W{}, H{};
 
-		constexpr Rect() noexcept {}
+		constexpr Rect() noexcept = default;
 		constexpr Rect(s32 W, s32 H) noexcept
 			: W{ W }, H{ H }
 		{}
 
-		auto frect() const noexcept {
-			return SDL_FRect{
-				static_cast<f32>(0),
-				static_cast<f32>(0),
-				static_cast<f32>(W),
-				static_cast<f32>(H)
-			};
-		}
+		auto frect() const noexcept -> SDL_FRect;
 
 		constexpr operator s32() const noexcept { return W * H; }
 	};
@@ -45,15 +42,17 @@ class BasicVideoSpec final {
 		Rect rect{};
 		s32 scale{}, pad{};
 
-		constexpr Viewport(s32 W = 0, s32 H = 0, s32 scale = 0, s32 pad = 0)
+		constexpr Viewport(s32 W = 0, s32 H = 0, s32 scale = 0, s32 pad = 0) noexcept
 			: rect{ W, H }, scale{ std::max(1, scale) }, pad{ std::max(0, pad) }
 		{}
-		constexpr Viewport(Rect rect, s32 scale = 1, s32 pad = 0)
+		constexpr Viewport(Rect rect, s32 scale = 1, s32 pad = 0) noexcept
 			: rect{ rect }, scale{ std::max(1, scale) }, pad{ std::max(0, pad) }
 		{}
 
-		constexpr Viewport rotate_if(bool cond) const noexcept {
-			return cond ? Viewport{ rect.H, rect.W, scale, pad } : Viewport{ rect.W, rect.H, scale, pad };
+		constexpr auto rotate_if(bool cond) const noexcept {
+			return cond
+				? Viewport{ rect.H, rect.W, scale, pad }
+				: Viewport{ rect.W, rect.H, scale, pad };
 		}
 
 		constexpr auto scaled() const noexcept {
@@ -63,16 +62,10 @@ class BasicVideoSpec final {
 			return Rect{ rect.W * scale + pad * 2, rect.H * scale + pad * 2 };
 		}
 
-		auto frect() const noexcept {
-			return SDL_FRect{
-				static_cast<f32>(pad),
-				static_cast<f32>(pad),
-				static_cast<f32>(rect.W * scale),
-				static_cast<f32>(rect.H * scale)
-			};
-		}
+		auto frect() const noexcept -> SDL_FRect;
 	};
 
+private:
 	SDL_Unique<SDL_Window>   mMainWindow{};
 	SDL_Unique<SDL_Renderer> mMainRenderer{};
 	SDL_Unique<SDL_Texture>  mOuterTexture{};
@@ -93,16 +86,21 @@ class BasicVideoSpec final {
 	bool mIntegerScaling{};
 
 	s32 mViewportRotation{};
-	s32 mViewportScaleMode{ SDL_SCALEMODE_NEAREST };
+	s32 mViewportScaleMode{};
 
 public:
 	TripleBuffer<u32> displayBuffer;
 
 	struct Settings {
-		static constexpr SDL_Rect
+		struct Window {
+			s32 x{}, y{}, w{}, h{};
+			operator SDL_Rect() const noexcept;
+		};
+
+		static constexpr Window
 			defaults{ 0, 0, 640, 480 };
 
-		SDL_Rect window{ defaults };
+		Window window{ defaults };
 		struct Viewport {
 			s32  filtering{ 0 };
 			bool int_scale{ true };
@@ -110,8 +108,8 @@ public:
 		} viewport;
 		bool first_run{ true };
 
-		SettingsMap map() noexcept {
-			return {
+		auto map() noexcept {
+			return SettingsMap{
 				makeSetting("VIDEO.Window.X", &window.x),
 				makeSetting("VIDEO.Window.Y", &window.y),
 				makeSetting("VIDEO.Window.W", &window.w),
@@ -125,18 +123,7 @@ public:
 	};
 
 	[[nodiscard]]
-	auto exportSettings() const noexcept {
-		Settings out;
-
-		SDL_GetWindowPosition(mMainWindow, &out.window.x, &out.window.y);
-		SDL_GetWindowSize    (mMainWindow, &out.window.w, &out.window.h);
-		out.viewport.filtering = mViewportScaleMode;
-		out.viewport.int_scale = mIntegerScaling;
-		out.viewport.scanlines = mUsingScanlines;
-		out.first_run = false;
-	
-		return out;
-	}
+	auto exportSettings() const noexcept -> Settings;
 
 private:
 	BasicVideoSpec(const Settings& settings) noexcept;
@@ -157,25 +144,12 @@ public:
 	static bool isSuccessful() noexcept { return mSuccessful; }
 	static void showErrorBox(const char* const title) noexcept;
 
-	static auto getCurrentDisplaySize(u32 displayID) noexcept {
-		const auto displayMode{ SDL_GetCurrentDisplayMode(displayID) };
-		return Rect{ displayMode->w, displayMode->h };
-	}
-
 /*==================================================================*/
 
 private:
-	auto computeOverlapArea(const SDL_Rect& a, const SDL_Rect& b) {
-		auto xOverlap{ std::max(0, std::min(a.x + a.w, b.x + b.w) - std::max(a.x, b.x)) };
-		auto yOverlap{ std::max(0, std::min(a.y + a.h, b.y + b.h) - std::max(a.y, b.y)) };
-		return xOverlap * yOverlap;
-	}
+	auto computeOverlapArea(const SDL_Rect& a, const SDL_Rect& b) noexcept;
 
-	auto squaredDistance(s32 x1, s32 y1, s32 x2, s32 y2) {
-		s64 dx{ x1 - x2 };
-		s64 dy{ y1 - y2 };
-		return dx * dx + dy * dy;
-	}
+	auto squaredDistance(s32 x1, s32 y1, s32 x2, s32 y2) noexcept;
 
 public:
 	void normalizeRectToDisplay(SDL_Rect& rect, SDL_Rect& deco, bool first_run) noexcept;
@@ -199,33 +173,19 @@ public:
 	}
 
 	auto getViewportScaleMode() const noexcept { return mViewportScaleMode; }
-	void setViewportScaleMode(SDL_ScaleMode mode) noexcept {
-		if (mode != SDL_SCALEMODE_INVALID) {
-			mViewportScaleMode = mode;
-			SDL_SetTextureScaleMode(mOuterTexture, mode);
-		}
-	}
-	void cycleViewportScaleMode() noexcept {
-		switch (mViewportScaleMode) {
-			case SDL_SCALEMODE_NEAREST:
-				setViewportScaleMode(SDL_SCALEMODE_LINEAR);
-				break;
-			case SDL_SCALEMODE_LINEAR:
-				setViewportScaleMode(SDL_SCALEMODE_PIXELART);
-				break;
-			default:
-				setViewportScaleMode(SDL_SCALEMODE_NEAREST);
-				break;
-		}
-	}
+	void setViewportScaleMode(s32 mode) noexcept;
+	void cycleViewportScaleMode() noexcept;
 	void setBorderColor(u32 color) noexcept;
 
 /*==================================================================*/
 
-	template <typename T, size_type N>
+private:
+	void scaleInterface(const void* data, size_type size);
+
+public:
+	template <typename T, std::size_t N>
 	void scaleInterface(T(&appFont)[N]) {
-		updateInterfacePixelScaling(appFont, static_cast<s32>(N),
-			SDL_GetWindowDisplayScale(mMainWindow));
+		scaleInterface(appFont, N);
 	}
 
 	void processInterfaceEvent(SDL_Event* event) const noexcept;
@@ -233,7 +193,6 @@ public:
 /*==================================================================*/
 
 private:
-	void updateInterfacePixelScaling(const void* fontData, s32 fontSize, f32 newScale);
 	void renderViewport();
 
 public:
@@ -254,12 +213,10 @@ public:
 public:
 	void resetMainWindow();
 	void setMainWindowTitle(const Str& title, const Str& desc);
-	auto getMainWindowID() const noexcept {
-		return SDL_GetWindowID(mMainWindow);
-	}
+	bool isMainWindowID(u32 id) const noexcept;
 	void raiseMainWindow();
 
-	void renderPresent(const char* const stats);
+	void renderPresent(const char* overlay_data);
 };
 
 	#pragma endregion

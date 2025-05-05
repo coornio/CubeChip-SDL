@@ -41,8 +41,8 @@ XOCHIP::XOCHIP()
 	mCurrentPC = cStartOffset;
 	mTargetCPF = cInstSpeedLo;
 
-	ASB->pauseStream(STREAM::CHANN1);
-	ASB->pauseStream(STREAM::CHANN2);
+	mAudio.pauseStream(STREAM::CHANN1);
+	mAudio.pauseStream(STREAM::CHANN2);
 }
 
 /*==================================================================*/
@@ -319,12 +319,12 @@ void XOCHIP::setColorBit332(s32 bit, s32 color) noexcept {
 }
 
 void XOCHIP::pushPatternTone(u32 index) noexcept {
-	static const auto samplesTotal{ ASB->getSampleRate(cRefreshRate) };
+	static const auto samplesTotal{ mAudio.getSampleRate(cRefreshRate) };
 	std::vector<s16> samplesBuffer(static_cast<ust>(samplesTotal));
 
 	if (mAudioTimer[index]) {
 		const auto audioTone{ std::pow(2.0f, (mAudioPitch - 64.0f) / 48.0f) };
-		const auto audioStep{ 31.25f / ASB->getFrequency() * audioTone };
+		const auto audioStep{ 31.25f / mAudio.getFrequency() * audioTone };
 
 		for (auto& audioSample : samplesBuffer) {
 			const auto bitOffset{ static_cast<s32>(std::clamp(mAudioPhase[index] * 128.0f, 0.0f, 127.0f)) };
@@ -334,7 +334,7 @@ void XOCHIP::pushPatternTone(u32 index) noexcept {
 		}
 	} else { mAudioPhase[index] = 0.0f; }
 
-	ASB->pushAudioData(index, samplesBuffer);
+	mAudio.pushAudioData(index, samplesBuffer);
 }
 
 /*==================================================================*/

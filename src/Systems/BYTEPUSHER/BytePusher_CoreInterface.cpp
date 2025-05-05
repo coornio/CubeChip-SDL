@@ -14,13 +14,13 @@
 /*==================================================================*/
 
 BytePusher_CoreInterface::BytePusher_CoreInterface() noexcept
-	: ASB{ std::make_unique<AudioSpecBlock>(SDL_AUDIO_S16, 1, 15'360, STREAM::COUNT) }
+	: mAudio{ AUDIOFORMAT::S16, 1, 15'360, STREAM::COUNT }
 {
 	if ((sSavestatePath = HDM->addSystemDir("savestate", "BYTEPUSHER"))) {
 		*sSavestatePath /= HDM->getFileSHA1();
 	}
 
-	ASB->resumeStreams();
+	mAudio.resumeStreams();
 	loadPresetBinds();
 }
 

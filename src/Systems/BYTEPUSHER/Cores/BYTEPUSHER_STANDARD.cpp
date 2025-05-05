@@ -54,7 +54,7 @@ void BYTEPUSHER_STANDARD::renderAudioData() {
 		}
 	);
 
-	ASB->pushAudioData(STREAM::CHANN0, samplesBuffer);
+	mAudio.pushAudioData(STREAM::CHANN0, samplesBuffer);
 }
 
 void BYTEPUSHER_STANDARD::renderVideoData() {

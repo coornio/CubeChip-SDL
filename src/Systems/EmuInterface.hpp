@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <SDL3/SDL_scancode.h>
+
 #include <shared_mutex>
 #include <execution>
 #include <iostream>
@@ -25,6 +27,7 @@
 #include <span>
 #include <bit>
 
+#include "../Assistants/AudioSpecBlock.hpp"
 #include "../Assistants/Typedefs.hpp"
 #include "../Assistants/Concepts.hpp"
 #include "../Assistants/Misc.hpp"

@@ -13,19 +13,19 @@
 class Chip8_CoreInterface : public EmuInterface {
 	
 protected:
-	static inline Path* sPermaRegsPath{};
-	static inline Path* sSavestatePath{};
-	static inline f32   sTonalOffset{ 160.0f };
-
-	std::unique_ptr<AudioSpecBlock> ASB;
-
-	std::vector<SimpleKeyMapping> mCustomBinds;
-
 	enum STREAM {
 		CHANN0, CHANN1, CHANN2, CHANN3, COUNT,
 		BUZZER = CHANN3,
 		UNIQUE = CHANN0,
 	};
+
+	static inline Path* sPermaRegsPath{};
+	static inline Path* sSavestatePath{};
+	static inline f32   sTonalOffset{ 160.0f };
+
+	AudioSpecBlock mAudio;
+
+	std::vector<SimpleKeyMapping> mCustomBinds;
 
 private:
 	u32  mTickLast{};

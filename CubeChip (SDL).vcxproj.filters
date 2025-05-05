@@ -157,10 +157,19 @@
     <ClCompile Include="src\Assistants\PathGetters.cpp">
       <Filter>Source Files\Assistants</Filter>
     </ClCompile>
-    <ClCompile Include="src\Assistants\ShutdownSignal.cpp">
+    <ClCompile Include="src\Assistants\Well512.cpp">
       <Filter>Source Files\Assistants</Filter>
     </ClCompile>
-    <ClCompile Include="src\Assistants\Well512.cpp">
+    <ClCompile Include="src\Assistants\FrontendInterface.cpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Assistants\LifetimeWrapperSDL.cpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Assistants\AudioSpecBlock.cpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Assistants\BasicInput.cpp">
       <Filter>Source Files\Assistants</Filter>
     </ClCompile>
   </ItemGroup>
@@ -249,9 +258,6 @@
     <ClInclude Include="src\Assistants\LifetimeWrapperSDL.hpp">
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
-    <ClInclude Include="src\Cubechip.hpp">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\Assistants\TripleBuffer.hpp">
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
@@ -316,6 +322,12 @@
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
     <ClInclude Include="src\Assistants\SimpleRingBuffer.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\FrontendInterface.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\AudioSpecBlock.hpp">
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
   </ItemGroup>

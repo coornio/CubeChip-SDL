@@ -9,11 +9,6 @@
 #include <stdexcept>
 #include <algorithm>
 
-#define IMGUI_DEFINE_MATH_OPERATORS
-#include "../Libraries/imgui/imgui.h"
-#include "../Libraries/imgui/imgui_impl_sdl3.h"
-#include "../Libraries/imgui/imgui_impl_sdlrenderer3.h"
-
 #ifdef _WIN32
 	#define NOMINMAX
 	#pragma warning(push)
@@ -23,8 +18,31 @@
 	#pragma warning(pop)
 #endif
 
+#include "FrontendInterface.hpp"
 #include "BasicVideoSpec.hpp"
 #include "RGBA.hpp"
+
+#include <SDL3/SDL.h>
+
+/*==================================================================*/
+
+auto BasicVideoSpec::Rect::frect() const noexcept -> SDL_FRect {
+	return SDL_FRect{
+		static_cast<f32>(0),
+		static_cast<f32>(0),
+		static_cast<f32>(W),
+		static_cast<f32>(H)
+	};
+}
+
+auto BasicVideoSpec::Viewport::frect() const noexcept -> SDL_FRect {
+	return SDL_FRect{
+		static_cast<f32>(pad),
+		static_cast<f32>(pad),
+		static_cast<f32>(rect.W * scale),
+		static_cast<f32>(rect.H * scale)
+	};
+}
 
 /*==================================================================*/
 	#pragma region BasicVideoSpec Singleton Class
@@ -32,7 +50,7 @@
 BasicVideoSpec::BasicVideoSpec(const Settings& settings) noexcept {
 	mSuccessful = SDL_InitSubSystem(SDL_INIT_VIDEO);
 	if (!mSuccessful) {
-		showErrorBox("Failed to init SDL video!");
+		showErrorBox("Failed to init Video Subsystem!");
 		return;
 	}
 
@@ -93,34 +111,36 @@ BasicVideoSpec::BasicVideoSpec(const Settings& settings) noexcept {
 		return;
 	}
 
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGui::GetIO().IniFilename = nullptr;
-	ImGui::GetIO().LogFilename = nullptr;
-	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
-
-	//updateInterfacePixelScaling();
-
-	ImGui::StyleColorsDark();
-	//ImGui::StyleColorsLight();
-
-	ImGui_ImplSDL3_InitForSDLRenderer(mMainWindow, mMainRenderer);
-	ImGui_ImplSDLRenderer3_Init(mMainRenderer);
+	FrontendInterface::Initialize(mMainWindow, mMainRenderer);
 
 	resetMainWindow();
 }
 
 BasicVideoSpec::~BasicVideoSpec() noexcept {
-	ImGui_ImplSDLRenderer3_Shutdown();
-	ImGui_ImplSDL3_Shutdown();
-	ImGui::DestroyContext();
+	FrontendInterface::Shutdown();
 
 	SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }
 
+auto BasicVideoSpec::exportSettings() const noexcept -> BasicVideoSpec::Settings {
+	Settings out;
+
+	SDL_GetWindowPosition(mMainWindow, &out.window.x, &out.window.y);
+	SDL_GetWindowSize(mMainWindow, &out.window.w, &out.window.h);
+	out.viewport.filtering = mViewportScaleMode;
+	out.viewport.int_scale = mIntegerScaling;
+	out.viewport.scanlines = mUsingScanlines;
+	out.first_run = false;
+
+	return out;
+}
+
 void BasicVideoSpec::setMainWindowTitle(const Str& title, const Str& desc) {
 	SDL_SetWindowTitle(mMainWindow, (desc.empty() ? title : title + " :: " + desc).c_str());
+}
+
+bool BasicVideoSpec::isMainWindowID(u32 id) const noexcept {
+	return id == SDL_GetWindowID(mMainWindow);
 }
 
 void BasicVideoSpec::showErrorBox(const char* const title) noexcept {
@@ -128,6 +148,18 @@ void BasicVideoSpec::showErrorBox(const char* const title) noexcept {
 		SDL_MESSAGEBOX_ERROR, title,
 		SDL_GetError(), nullptr
 	);
+}
+
+auto BasicVideoSpec::computeOverlapArea(const SDL_Rect& a, const SDL_Rect& b) noexcept {
+	auto xOverlap{ std::max(0, std::min(a.x + a.w, b.x + b.w) - std::max(a.x, b.x)) };
+	auto yOverlap{ std::max(0, std::min(a.y + a.h, b.y + b.h) - std::max(a.y, b.y)) };
+	return xOverlap * yOverlap;
+}
+
+auto BasicVideoSpec::squaredDistance(s32 x1, s32 y1, s32 x2, s32 y2) noexcept {
+	s64 dx{ x1 - x2 };
+	s64 dy{ y1 - y2 };
+	return dx * dx + dy * dy;
 }
 
 void BasicVideoSpec::normalizeRectToDisplay(SDL_Rect& rect, SDL_Rect& deco, bool first_run) noexcept {
@@ -233,35 +265,42 @@ void BasicVideoSpec::setViewportSizes(s32 texture_W, s32 texture_H, s32 upscale_
 	}
 }
 
+void BasicVideoSpec::setViewportScaleMode(s32 mode) noexcept {
+	switch (mode) {
+		case SDL_SCALEMODE_NEAREST:
+		case SDL_SCALEMODE_LINEAR:
+			SDL_SetTextureScaleMode(mOuterTexture,
+				static_cast<SDL_ScaleMode>(mode));
+			mViewportScaleMode = mode;
+			[[fallthrough]];
+		default: return;
+	}
+}
+
+void BasicVideoSpec::cycleViewportScaleMode() noexcept {
+	switch (mViewportScaleMode) {
+		case SDL_SCALEMODE_NEAREST:
+			setViewportScaleMode(SDL_SCALEMODE_LINEAR);
+			break;
+		case SDL_SCALEMODE_LINEAR:
+			setViewportScaleMode(SDL_SCALEMODE_PIXELART);
+			break;
+		default:
+			setViewportScaleMode(SDL_SCALEMODE_NEAREST);
+			break;
+	}
+}
+
 void BasicVideoSpec::setBorderColor(u32 color) noexcept {
 	mOutlineColor.store(color, mo::release);
 }
 
-void BasicVideoSpec::processInterfaceEvent(SDL_Event* event) const noexcept {
-	ImGui_ImplSDL3_ProcessEvent(event);
+void BasicVideoSpec::scaleInterface(const void* data, size_type size) {
+	FrontendInterface::UpdateFontScale(data, static_cast<s32>(size), SDL_GetWindowDisplayScale(mMainWindow));
 }
 
-void BasicVideoSpec::updateInterfacePixelScaling(const void* fontData, s32 fontSize, f32 newScale) {
-	static auto currentScale{ 0.0f };
-
-	if (newScale < 1.0f) { return; }
-	if (std::fabs(currentScale - newScale) > Epsilon::f32) {
-		currentScale = newScale;
-		auto& io{ ImGui::GetIO() };
-
-		if (fontData && fontSize) {
-			io.Fonts->AddFontFromMemoryCompressedTTF(
-				fontData, fontSize, newScale * 17.0f
-			);
-		} else {
-			ImFontConfig fontConfig;
-			fontConfig.SizePixels = 16.0f * newScale;
-
-			io.Fonts->Clear();
-			io.Fonts->AddFontDefault(&fontConfig);
-		}
-		ImGui::GetStyle().ScaleAllSizes(newScale);
-	}
+void BasicVideoSpec::processInterfaceEvent(SDL_Event* event) const noexcept {
+	FrontendInterface::ProcessEvent(event);
 }
 
 /*==================================================================*/
@@ -357,190 +396,30 @@ void BasicVideoSpec::renderViewport() {
 	SDL_SetRenderTarget(mMainRenderer, nullptr);
 }
 
-enum class Corner {
-	TopLeft,
-	TopRight,
-	BottomLeft,
-	BottomRight
-};
-
-namespace ImGui {
-	[[maybe_unused]]
-	inline auto clamp(const ImVec2& value, const ImVec2& min, const ImVec2& max) {
-		return ImVec2{
-			std::clamp(value.x, min.x, max.x),
-			std::clamp(value.y, min.y, max.y)
-		};
-	}
-
-	[[maybe_unused]]
-	inline auto abs(const ImVec2& value) {
-		return ImVec2{ std::abs(value.x), std::abs(value.y) };
-	}
-
-	[[maybe_unused]]
-	static void writeText(
-		const Str& textString,
-		ImVec2 textAlign   = ImVec2{ 0.5f, 0.5f },
-		ImVec4 textColor   = ImVec4{ 1.0f, 1.0f, 1.0f, 1.0f },
-		ImVec2 textPadding = ImVec2{ 6.0f, 6.0f }
-	) {
-		using namespace ImGui;
-		const auto textPos{ (
-			GetWindowSize() - CalcTextSize(textString.c_str()) - textPadding * 2
-		) * textAlign + textPadding };
-
-		PushStyleColor(ImGuiCol_Text, textColor);
-		SetCursorPos(textPos);
-		TextUnformatted(textString.c_str());
-		PopStyleColor();
-	}
-
-	[[maybe_unused]]
-	static void writeShadowedText(
-		const Str& textString,
-		ImVec2 textAlign   = ImVec2{ 0.5f, 0.5f },
-		ImVec4 textColor   = ImVec4{ 1.0f, 1.0f, 1.0f, 1.0f },
-		ImVec2 textPadding = ImVec2{ 6.0f, 6.0f },
-		ImVec2 shadowDist  = ImVec2{ 2.0f, 2.0f }
-	) {
-		using namespace ImGui;
-		const auto textPos{ (
-			GetWindowSize() - CalcTextSize(textString.c_str()) - textPadding * 2
-		) * textAlign + textPadding };
-
-		const auto shadowOffset{ shadowDist * 0.5f };
-		PushStyleColor(ImGuiCol_Text, { 0.0f, 0.0f, 0.0f, 1.0f });
-		SetCursorPos(textPos + shadowOffset);
-		TextUnformatted(textString.c_str());
-		PopStyleColor();
-
-		PushStyleColor(ImGuiCol_Text, textColor);
-		SetCursorPos(textPos - shadowOffset);
-		TextUnformatted(textString.c_str());
-		PopStyleColor();
-	}
-
-	static void DrawRotatedImage(void* texture, const ImVec2& dimensions, int rotation) {
-		static constexpr ImVec2 TL{ 0, 0 };
-		static constexpr ImVec2 TR{ 1, 0 };
-		static constexpr ImVec2 BL{ 0, 1 };
-		static constexpr ImVec2 BR{ 1, 1 };
-
-		const auto pos{ ImGui::GetCursorScreenPos() };
-
-		const ImVec2 A{ pos.x,                pos.y };
-		const ImVec2 B{ pos.x + dimensions.x, pos.y };
-		const ImVec2 C{ pos.x + dimensions.x, pos.y + dimensions.y };
-		const ImVec2 D{ pos.x,                pos.y + dimensions.y };
-
-		switch (rotation & 3) {
-			case 0:
-				ImGui::GetWindowDrawList()->AddImageQuad(
-					reinterpret_cast<ImTextureID>(texture), A, B, C, D, TL, TR, BR, BL);
-				break;
-
-			case 1:
-				ImGui::GetWindowDrawList()->AddImageQuad(
-					reinterpret_cast<ImTextureID>(texture), A, B, C, D, BL, TL, TR, BR);
-				break;
-
-			case 2:
-				ImGui::GetWindowDrawList()->AddImageQuad(
-					reinterpret_cast<ImTextureID>(texture), A, B, C, D, BR, BL, TL, TR);
-				break;
-
-			case 3:
-				ImGui::GetWindowDrawList()->AddImageQuad(
-					reinterpret_cast<ImTextureID>(texture), A, B, C, D, TR, BR, BL, TL);
-				break;
-		}
-		ImGui::Dummy(dimensions);
-	}
-}
-
-void BasicVideoSpec::renderPresent(const char* const stats) {
+void BasicVideoSpec::renderPresent(const char* overlay_data) {
 	renderViewport();
 
-	#pragma region IMGUI LOGIC
-		ImGui_ImplSDLRenderer3_NewFrame();
-		ImGui_ImplSDL3_NewFrame();
-		ImGui::NewFrame();
+	FrontendInterface::NewFrame();
 
-		const auto outerRect{ mViewportFrame.rotate_if(mViewportRotation & 1).padded() };
-		const auto frameHeight{ static_cast<s32>(ImGui::GetFrameHeight()) };
+	const auto outerRect{ mViewportFrame.rotate_if(mViewportRotation & 1).padded() };
+	const auto frameHeight{ static_cast<s32>(FrontendInterface::GetFrameHeight()) };
 
-		SDL_SetWindowMinimumSize(mMainWindow, outerRect.W, outerRect.H + frameHeight);
+	SDL_SetWindowMinimumSize(mMainWindow, outerRect.W, outerRect.H + frameHeight);
 
-		const auto viewportFrameDimensions{ ImVec2{
-			ImGui::GetIO().DisplaySize.x,
-			ImGui::GetIO().DisplaySize.y - ImGui::GetFrameHeight()
-		} };
-
-		ImGui::SetNextWindowSize(viewportFrameDimensions);
-		ImGui::SetNextWindowPos({ 0.0f, ImGui::GetFrameHeight() });
-
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
-		ImGui::Begin("ViewportFrame", nullptr,
-			ImGuiWindowFlags_NoTitleBar |
-			ImGuiWindowFlags_NoResize |
-			ImGuiWindowFlags_NoMove |
-			ImGuiWindowFlags_NoScrollbar |
-			ImGuiWindowFlags_NoScrollWithMouse |
-			ImGuiWindowFlags_NoBringToFrontOnFocus
-		);
-		ImGui::PopStyleVar();
-
-		if (ImGui::BeginMainMenuBar()) {
-			if (ImGui::BeginMenu("File")) {
-				if (ImGui::MenuItem("Open...")) {
-
-				}
-				ImGui::EndMenu();
-			}
-			ImGui::EndMainMenuBar();
-		}
-
-		if (mSuccessful && mOuterTexture) {
-			const auto aspectRatio{ mIntegerScaling
-				? std::floor(std::min(
-					viewportFrameDimensions.x / outerRect.W,
-					viewportFrameDimensions.y / outerRect.H
-				))
-				: std::min(
-					viewportFrameDimensions.x / outerRect.W,
-					viewportFrameDimensions.y / outerRect.H
-				)
-			};
-
-			const auto viewportDimensions{ ImVec2{
-				outerRect.W * std::max(aspectRatio, 1.0f),
-				outerRect.H * std::max(aspectRatio, 1.0f)
-			} };
-
-			const auto viewportOffsets{ (viewportFrameDimensions - viewportDimensions) / 2.0f };
-
-			if (viewportOffsets.x > 0.0f) { ImGui::SetCursorPosX(std::floor(ImGui::GetCursorPosX() + viewportOffsets.x)); }
-			if (viewportOffsets.y > 0.0f) { ImGui::SetCursorPosY(std::floor(ImGui::GetCursorPosY() + viewportOffsets.y)); }
-
-			ImGui::DrawRotatedImage(mOuterTexture, viewportDimensions, mViewportRotation);
-
-			if (stats) { ImGui::writeShadowedText(stats, { 0.0f, 1.0f }); }
-		}
-
-		ImGui::End();
-
-		//static bool show_demo_window{ true };
-		//if (show_demo_window) {
-		//	ImGui::ShowDemoWindow(&show_demo_window);
-		//}
-
-		ImGui::Render();
-		ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), mMainRenderer);
-	#pragma endregion
+	FrontendInterface::PrepareViewport(
+		mSuccessful && mOuterTexture, mIntegerScaling,
+		outerRect.W, outerRect.H, mViewportRotation,
+		overlay_data, mOuterTexture
+	);
+	FrontendInterface::PrepareGeneralUI();
+	FrontendInterface::RenderFrame(mMainRenderer);
 
 	SDL_RenderPresent(mMainRenderer);
 }
 
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
+
+BasicVideoSpec::Settings::Window::operator SDL_Rect() const noexcept {
+	return SDL_Rect{ x, y, w, h };
+}

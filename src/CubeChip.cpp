@@ -4,18 +4,12 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#define SDL_MAIN_USE_CALLBACKS
-#include <SDL3/SDL_main.h>
-
 #include "Assistants/BasicLogger.hpp"
-#include "Assistants/BasicInput.hpp"
 #include "Assistants/ThreadAffinity.hpp"
 #include "Assistants/AttachConsole.hpp"
 
 #include "Libraries/cxxopts/cxxopts.hpp"
-#include "Assistants/SimpleRingBuffer.hpp"
 
-#include "Cubechip.hpp"
 #include "EmuHost.hpp"
 
 #ifdef _WIN32
@@ -25,6 +19,15 @@
 	#pragma warning(pop)
 	#define NOMINMAX
 	#include <windows.h>
+#endif
+
+#define SDL_MAIN_USE_CALLBACKS
+#include <SDL3/SDL_main.h>
+#include <SDL3/SDL_hints.h>
+#include <SDL3/SDL_version.h>
+
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+	#error Only little-endian systems are supported!
 #endif
 
 /*==================================================================*/
@@ -135,7 +138,7 @@ SDL_AppResult SDL_AppEvent(void *pHost, SDL_Event *event) {
 	auto& Host{ *static_cast<EmuHost*>(pHost) };
 	const std::lock_guard lock{ Host.Mutex };
 
-	return Host.processEvents(event);
+	return static_cast<SDL_AppResult>(Host.processEvents(event));
 }
 
 /*==================================================================*/

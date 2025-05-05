@@ -41,8 +41,8 @@ class SimpleRingBuffer {
 	using self = SimpleRingBuffer;
 
 	alignas(HDIS) std::array<AtomSharedPtr<T>, N> mBuffer{};
-	alignas(HDIS) std::atomic<size_type>          mPushHead{ 0 };
-	alignas(HDIS) std::atomic<size_type>          mReadHead{ 0 };
+	alignas(HDIS) std::atomic<std::size_t>        mPushHead{ 0 };
+	alignas(HDIS) std::atomic<std::size_t>        mReadHead{ 0 };
 	alignas(HDIS) mutable std::shared_mutex       mGuard;
 
 	static inline auto sDefaultT{ std::make_shared<T>(T{}) };
@@ -62,7 +62,7 @@ public:
 private:
 	enum class SnapshotOrder { DESCENDING, ASCENDING };
 
-	void push_(size_type index, std::shared_ptr<T>&& ptr) noexcept {
+	void push_(std::size_t index, std::shared_ptr<T>&& ptr) noexcept {
 		std::shared_lock lock{ mGuard };
 		mBuffer[index & (N - 1)].store(std::move(ptr), mo::release);
 
@@ -71,7 +71,7 @@ private:
 			(expected, index, mo::acq_rel, mo::acquire)) {}
 	}
 
-	auto at_(size_type index, size_type head) const noexcept {
+	auto at_(std::size_t index, std::size_t head) const noexcept {
 		return *mBuffer[(head + N - index) & (N - 1)].load(mo::acquire);
 	}
 
@@ -133,7 +133,7 @@ public:
 	 * @param[in] index :: Offset relative to the most recent entry.
 	 * @note This method is thread-safe, but may return stale data due to its non-blocking nature.
 	 */
-	T at(size_type index) const noexcept {
+	T at(std::size_t index) const noexcept {
 		return at_(index, head());
 	}
 

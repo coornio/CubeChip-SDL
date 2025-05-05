@@ -4,6 +4,9 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include <SDL3/SDL_init.h>
+#include <SDL3/SDL_events.h>
+
 #include "Assistants/BasicLogger.hpp"
 #include "Assistants/BasicInput.hpp"
 #include "Assistants/HomeDirManager.hpp"
@@ -12,6 +15,7 @@
 #include "Assistants/DefaultConfig.hpp"
 
 #include "EmuHost.hpp"
+#include "Fonts/RobotoMono.hpp"
 #include "Systems/EmuInterface.hpp"
 #include "Systems/CoreRegistry.hpp"
 
@@ -24,7 +28,7 @@ EmuHost::EmuHost(const Path& gamePath) noexcept {
 	CoreRegistry::loadProgramDB();
 
 	if (!gamePath.empty()) { loadGameFile(gamePath); }
-	else { BVS->setMainWindowTitle(AppName, "Waiting for file..."); }
+	if (!iGuest) { BVS->setMainWindowTitle(AppName, "Waiting for file..."); }
 }
 
 void EmuHost::StopEmuCoreThread::operator()(EmuInterface* ptr) noexcept {
@@ -61,8 +65,8 @@ void EmuHost::loadGameFile(const Path& gameFile) {
 	BVS->raiseMainWindow();
 	blog.newEntry(BLOG::INFO, "Attempting to load: \"{}\"", gameFile.string());
 	if (HDM->validateGameFile(gameFile)) {
-		replaceCore();
 		blog.newEntry(BLOG::INFO, "File has been accepted!");
+		replaceCore();
 	} else {
 		blog.newEntry(BLOG::INFO, "Path has been rejected!");
 	}
@@ -121,10 +125,10 @@ bool EmuHost::initApplication(
 	return true;
 }
 
-SDL_AppResult EmuHost::processEvents(SDL_Event* event) noexcept {
+s32  EmuHost::processEvents(SDL_Event* event) noexcept {
 	BVS->processInterfaceEvent(event);
 
-	if (event->window.windowID == BVS->getMainWindowID()) {
+	if (BVS->isMainWindowID(event->window.windowID)) {
 		switch (event->type) {
 			case SDL_EVENT_QUIT:
 			case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
@@ -144,7 +148,7 @@ SDL_AppResult EmuHost::processEvents(SDL_Event* event) noexcept {
 
 			case SDL_EVENT_WINDOW_DISPLAY_CHANGED:
 			case SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED:
-				BVS->scaleInterface(AppFontData);
+				BVS->scaleInterface(AppFontData_Roboto_Mono);
 				break;
 		}
 	}

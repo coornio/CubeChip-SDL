@@ -16,7 +16,7 @@ struct alignas(4) RGBA {
 
 	u8 R{}, G{}, B{}, A{};
 
-	constexpr RGBA() noexcept {}
+	constexpr RGBA() noexcept = default;
 	constexpr RGBA(u32 color) noexcept
 		: R{ static_cast<u8>(color >> 24) }
 		, G{ static_cast<u8>(color >> 16) }
