@@ -116,12 +116,12 @@ float AudioSpecBlock::getSampleRate(float framerate) const noexcept {
 }
 
 float AudioSpecBlock::getGain(unsigned index) const noexcept {
-	assert(index < mSDL->streamGain.size() && "getGain() index out-of-bounds");
+	assert(index < mSDL->audioStreams.size() && "getGain() index out-of-bounds");
 	return mSDL->audioStreams[index].gain;
 }
 
 signed AudioSpecBlock::getGainByte(unsigned index) const noexcept {
-	assert(index < mSDL->streamGain.size() && "getGainByte() index out-of-bounds");
+	assert(index < mSDL->audioStreams.size() && "getGainByte() index out-of-bounds");
 	return static_cast<signed>(getGain(index) * 255.0f);
 }
 
