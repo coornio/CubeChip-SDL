@@ -41,9 +41,10 @@ static SDL_AudioFormat parseFormat(AUDIOFORMAT format) noexcept {
 
 		case AUDIOFORMAT::F32BE:
 			return SDL_AUDIO_F32BE;
-	}
 
-	return SDL_AUDIO_UNKNOWN;
+		case AUDIOFORMAT::UNKNOWN:
+		default: return SDL_AUDIO_UNKNOWN;
+	}
 }
 
 static float calculateGain(float streamGain) noexcept {
