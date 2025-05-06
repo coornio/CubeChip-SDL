@@ -7,9 +7,7 @@
 #pragma once
 
 #include <memory>
-#include <mutex>
 #include <atomic>
-#include <shared_mutex>
 
 #include "Assistants/Typedefs.hpp"
 
@@ -57,8 +55,6 @@ public:
 	static inline HomeDirManager* HDM{};
 	static inline BasicAudioSpec* BAS{};
 	static inline BasicVideoSpec* BVS{};
-
-	std::shared_mutex Mutex;
 
 private:
 	bool mFrameStat{};

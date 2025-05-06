@@ -125,7 +125,6 @@ SDL_AppResult SDL_AppInit(void **Host, int argc, char *argv[]) {
 
 SDL_AppResult SDL_AppIterate(void *pHost) {
 	auto& Host{ *static_cast<EmuHost*>(pHost) };
-	const std::lock_guard lock{ Host.Mutex };
 
 	Host.processFrame();
 
@@ -136,7 +135,6 @@ SDL_AppResult SDL_AppIterate(void *pHost) {
 
 SDL_AppResult SDL_AppEvent(void *pHost, SDL_Event *event) {
 	auto& Host{ *static_cast<EmuHost*>(pHost) };
-	const std::lock_guard lock{ Host.Mutex };
 
 	return static_cast<SDL_AppResult>(Host.processEvents(event));
 }
@@ -148,5 +146,4 @@ void SDL_AppQuit(void *pHost, SDL_AppResult) {
 		auto& Host{ *static_cast<EmuHost*>(pHost) };
 		Host.quitApplication();
 	}
-	std::this_thread::sleep_for(std::chrono::milliseconds(300));
 }
