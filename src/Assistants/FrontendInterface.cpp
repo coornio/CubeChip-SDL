@@ -179,7 +179,7 @@ void FrontendInterface::UpdateFontScale(const void* data, int size, float scale)
 void FrontendInterface::PrepareViewport(
 	bool enable, bool integer_scaling,
 	int width, int height, int rotation,
-	const char* overlay, SDL_Texture* texture
+	const char* overlay_data, SDL_Texture* texture
 ) {
 	const auto viewportFrameDimensions{ ImVec2{
 		ImGui::GetIO().DisplaySize.x,
@@ -234,7 +234,7 @@ void FrontendInterface::PrepareViewport(
 
 		ImGui::DrawRotatedImage(texture, viewportDimensions, rotation);
 
-		if (overlay) { ImGui::writeShadowedText(overlay, { 0.0f, 1.0f }); }
+		if (overlay_data) { ImGui::writeShadowedText(overlay_data, { 0.0f, 1.0f }); }
 	}
 
 	ImGui::End();

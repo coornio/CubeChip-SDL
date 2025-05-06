@@ -269,6 +269,7 @@ void BasicVideoSpec::setViewportScaleMode(s32 mode) noexcept {
 	switch (mode) {
 		case SDL_SCALEMODE_NEAREST:
 		case SDL_SCALEMODE_LINEAR:
+		case SDL_SCALEMODE_PIXELART:
 			SDL_SetTextureScaleMode(mOuterTexture,
 				static_cast<SDL_ScaleMode>(mode));
 			mViewportScaleMode = mode;

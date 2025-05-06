@@ -165,7 +165,7 @@ void EmuHost::processFrame() {
 	checkForHotkeys();
 
 	if (iGuest && mFrameStat) {
-		BVS->renderPresent(iGuest->fetchStatistics().c_str());
+		BVS->renderPresent(iGuest->copyOverlayData().c_str());
 	} else {
 		BVS->renderPresent(nullptr);
 	}

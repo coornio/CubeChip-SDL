@@ -177,7 +177,7 @@ void Chip8_CoreInterface::performProgJump(u32 next) noexcept {
 
 void Chip8_CoreInterface::mainSystemLoop() {
 	if (Pacer->checkTime()) {
-		if (isSystemRunning())
+		if (!isSystemRunning())
 			[[unlikely]] { return; }
 
 		updateKeyStates();
@@ -189,16 +189,11 @@ void Chip8_CoreInterface::mainSystemLoop() {
 
 		renderAudioData();
 		renderVideoData();
-		writeStatistics();
+		pushOverlayData();
 	}
 }
 
-void Chip8_CoreInterface::writeStatistics() {
-	if ((getSystemState() & EmuState::BENCH) == 0) [[unlikely]] {
-		EmuInterface::writeStatistics();
-		return;
-	}
-
+Str Chip8_CoreInterface::makeOverlayData() {
 	const auto currentFrameTime{ Pacer->getElapsedMicrosSince() / 1000.0f };
 	const auto frameTimeBias{ currentFrameTime * 1.025f / Pacer->getFramespan() };
 	const auto workCycleBias{ 1e5f * std::sin((1 - frameTimeBias) * 1.5707963f) };
@@ -206,13 +201,19 @@ void Chip8_CoreInterface::writeStatistics() {
 	if (mInterrupt == Interrupt::CLEAR) [[likely]]
 		{ mTargetCPF += static_cast<s32>(workCycleBias); }
 
-	mStatistics.store(std::make_shared<Str>(fmt::format(
-		" ::   MIPS:{:8.2f}\n"
-		"Time Since:{:9.3f} ms\n"
-		"Frame Work:{:9.3f} ms\n",
-		mTargetCPF * mTargetFPS / 1'000'000.0f,
-		Pacer->getElapsedMillisLast(), currentFrameTime
-	)), mo::release);
+	return fmt::format(
+		" ::  MIPS:{:8.2f}\n{}",
+		mTargetCPF * getSystemFramerate() / 1'000'000.0f,
+		EmuInterface::makeOverlayData()
+	);
+}
+
+void Chip8_CoreInterface::pushOverlayData() {
+	if (getSystemState() & EmuState::BENCH) [[likely]] {
+		mOverlayData.store(std::make_shared<Str> \
+			(makeOverlayData()), mo::release);
+	}
+	else { EmuInterface::pushOverlayData(); }
 }
 
 /*==================================================================*/
@@ -234,7 +235,7 @@ void Chip8_CoreInterface::startAudioAtChannel(u32 index, s32 duration, s32 tone)
 
 void Chip8_CoreInterface::pushSquareTone(u32 index) noexcept {
 	std::vector<s16> samplesBuffer \
-		(static_cast<ust>(mAudio.getSampleRate(mTargetFPS)));
+		(static_cast<ust>(mAudio.getSampleRate(getSystemFramerate())));
 
 	if (mAudioTimer[index]) {
 		for (auto& audioSample : samplesBuffer) {

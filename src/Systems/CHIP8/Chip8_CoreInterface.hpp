@@ -182,7 +182,9 @@ protected:
 
 public:
 	void mainSystemLoop() override;
-	void writeStatistics() override;
+
+	Str  makeOverlayData() override;
+	void pushOverlayData() override;
 
 protected:
 	static constexpr std::array<u8, 240> cFontsData{ {

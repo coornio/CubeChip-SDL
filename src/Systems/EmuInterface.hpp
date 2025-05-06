@@ -45,7 +45,7 @@ enum EmuState {
 	FATAL  = 0x08, // fatal error path
 	BENCH  = 0x10, // benchmarking mode
 
-	NOT_RUNNING = 0xF // mask
+	NOT_RUNNING = HIDDEN | PAUSED | HALTED | FATAL // mask
 };
 
 struct SimpleKeyMapping {
@@ -73,7 +73,7 @@ protected:
 	static inline Well512*        RNG{};
 
 	Thread mCoreThread;
-	AtomSharedPtr<Str> mStatistics;
+	AtomSharedPtr<Str> mOverlayData;
 
 public:
 	void startWorker() noexcept;
@@ -86,7 +86,7 @@ protected:
 	std::unique_ptr<BasicKeyboard> Input;
 
 	u64 mElapsedCycles{};
-	f32 mTargetFPS{};
+	Atom<f32> mTargetFPS{};
 	s32 mTargetCPF{};
 
 private:
@@ -113,23 +113,25 @@ public:
 
 	void setSystemState(EmuState state) noexcept { mGlobalState.store(state, mo::release); }
 	auto getSystemState()         const noexcept { return mGlobalState.load(mo::acquire);  }
-	bool isSystemRunning()        const noexcept { return getSystemState() & EmuState::NOT_RUNNING; }
+	bool isSystemRunning()        const noexcept { return !(getSystemState() & EmuState::NOT_RUNNING); }
 
 	virtual s32 getMaxDisplayW() const noexcept = 0;
 	virtual s32 getMaxDisplayH() const noexcept = 0;
 	virtual s32 getDisplaySize() const noexcept { return getMaxDisplayW() * getMaxDisplayH(); }
 
-protected:
+	f32  getSystemFramerate() const noexcept;
 	void setSystemFramerate(f32 value) noexcept;
 
+protected:
 	void setViewportSizes(s32 texture_W, s32 texture_H, s32 upscale_M = 0, s32 padding_S = 0) noexcept;
 
 	void setDisplayBorderColor(u32 color) noexcept;
 
 	virtual void mainSystemLoop() = 0;
 
-	virtual void writeStatistics();
+	virtual Str  makeOverlayData();
+	virtual void pushOverlayData();
 
 public:
-	Str fetchStatistics() const noexcept;
+	Str copyOverlayData() const noexcept;
 };
