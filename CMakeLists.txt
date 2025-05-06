@@ -45,7 +45,7 @@ add_executable(${PROJECT_NAME}
   src/Assistants/BasicInput.cpp
   src/Assistants/SHA1.cpp
 
-  src/Systems/EmuInterface.cpp
+  src/Systems/SystemsInterface.cpp
   src/Systems/CoreRegistry.cpp
 
   src/Systems/BYTEPUSHER/BytePusher_CoreInterface.cpp
@@ -62,7 +62,7 @@ add_executable(${PROJECT_NAME}
   src/Systems/CHIP8/Cores/MEGACHIP.cpp
   src/Systems/CHIP8/Cores/CHIP8X.cpp
 
-  src/EmuHost.cpp
+  src/FrontendHost.cpp
   src/CubeChip.cpp
 )
 

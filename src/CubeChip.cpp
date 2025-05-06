@@ -10,7 +10,7 @@
 
 #include "Libraries/cxxopts/cxxopts.hpp"
 
-#include "EmuHost.hpp"
+#include "FrontendHost.hpp"
 
 #ifdef _WIN32
 	#pragma warning(push)
@@ -108,13 +108,13 @@ SDL_AppResult SDL_AppInit(void **Host, int argc, char *argv[]) {
 		return SDL_APP_SUCCESS;
 	}
 
-	if (!EmuHost::initApplication(
+	if (!FrontendHost::initApplication(
 		result.count("homedir")  ? result["homedir"].as<Str>() : ""s,
 		result.count("config")   ? result["config"] .as<Str>() : ""s,
 		result.count("portable") ? true : false, "", AppName
 	)) { return SDL_APP_FAILURE; }
 
-	*Host = EmuHost::initialize(result.count("program") ? result["program"].as<Str>() : ""s);
+	*Host = FrontendHost::initialize(result.count("program") ? result["program"].as<Str>() : ""s);
 
 	thread_affinity::set_affinity(0b11ull);
 
@@ -124,7 +124,7 @@ SDL_AppResult SDL_AppInit(void **Host, int argc, char *argv[]) {
 /*==================================================================*/
 
 SDL_AppResult SDL_AppIterate(void *pHost) {
-	auto& Host{ *static_cast<EmuHost*>(pHost) };
+	auto& Host{ *static_cast<FrontendHost*>(pHost) };
 
 	Host.processFrame();
 
@@ -134,7 +134,7 @@ SDL_AppResult SDL_AppIterate(void *pHost) {
 /*==================================================================*/
 
 SDL_AppResult SDL_AppEvent(void *pHost, SDL_Event *event) {
-	auto& Host{ *static_cast<EmuHost*>(pHost) };
+	auto& Host{ *static_cast<FrontendHost*>(pHost) };
 
 	return static_cast<SDL_AppResult>(Host.processEvents(event));
 }
@@ -143,7 +143,7 @@ SDL_AppResult SDL_AppEvent(void *pHost, SDL_Event *event) {
 
 void SDL_AppQuit(void *pHost, SDL_AppResult) {
 	if (pHost) {
-		auto& Host{ *static_cast<EmuHost*>(pHost) };
+		auto& Host{ *static_cast<FrontendHost*>(pHost) };
 		Host.quitApplication();
 	}
 }

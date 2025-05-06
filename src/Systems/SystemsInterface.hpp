@@ -65,7 +65,7 @@ class Well512;
 
 /*==================================================================*/
 
-class EmuInterface {
+class SystemsInterface {
 	Thread mCoreThread;
 	AtomSharedPtr<Str> mOverlayData;
 
@@ -92,10 +92,10 @@ private:
 	Atom<u32> mGlobalState{ EmuState::NORMAL };
 
 protected:
-	EmuInterface() noexcept;
+	SystemsInterface() noexcept;
 
 public:
-	virtual ~EmuInterface() noexcept;
+	virtual ~SystemsInterface() noexcept;
 
 public:
 	static void assignComponents(

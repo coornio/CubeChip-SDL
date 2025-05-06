@@ -77,7 +77,7 @@ const CoreRegList* CoreRegistry::findEligibleCores(const Str& ext) noexcept {
 	return it != sRegistry.end() ? &it->second : nullptr;
 }
 
-EmuInterface* CoreRegistry::constructCore(size_type idx) noexcept {
+SystemsInterface* CoreRegistry::constructCore(size_type idx) noexcept {
 	try {
 		// this will later need to handle choosing a specific core out of all available
 		// rather than the first one present, adding flexibility

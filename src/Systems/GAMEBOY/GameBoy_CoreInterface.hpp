@@ -6,11 +6,11 @@
 
 #pragma once
 
-#include "../EmuInterface.hpp"
+#include "../SystemsInterface.hpp"
 
 /*==================================================================*/
 
-class GameBoy_CoreInterface : public EmuInterface {
+class GameBoy_CoreInterface : public SystemsInterface {
 
 protected:
 	static inline Path* sSavestatePath{};

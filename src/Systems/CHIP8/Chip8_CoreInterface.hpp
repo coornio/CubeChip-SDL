@@ -6,11 +6,11 @@
 
 #pragma once
 
-#include "../EmuInterface.hpp"
+#include "../SystemsInterface.hpp"
 
 /*==================================================================*/
 
-class Chip8_CoreInterface : public EmuInterface {
+class Chip8_CoreInterface : public SystemsInterface {
 	
 protected:
 	enum STREAM {

@@ -204,14 +204,14 @@ Str Chip8_CoreInterface::makeOverlayData() {
 	return fmt::format(
 		" ::  MIPS:{:8.2f}\n{}",
 		mTargetCPF * getSystemFramerate() / 1'000'000.0f,
-		EmuInterface::makeOverlayData()
+		SystemsInterface::makeOverlayData()
 	);
 }
 
 void Chip8_CoreInterface::pushOverlayData() {
 	if (getSystemState() & EmuState::BENCH) [[likely]]
 		{ saveOverlayData(makeOverlayData().c_str()); }
-	else { EmuInterface::pushOverlayData(); }
+	else { SystemsInterface::pushOverlayData(); }
 }
 
 /*==================================================================*/

@@ -14,16 +14,16 @@
 #include "Assistants/BasicAudioSpec.hpp"
 #include "Assistants/DefaultConfig.hpp"
 
-#include "EmuHost.hpp"
+#include "FrontendHost.hpp"
 #include "Fonts/RobotoMono.hpp"
-#include "Systems/EmuInterface.hpp"
+#include "Systems/SystemsInterface.hpp"
 #include "Systems/CoreRegistry.hpp"
 
 /*==================================================================*/
 	#pragma region VM_Host Singleton Class
 
-EmuHost::EmuHost(const Path& gamePath) noexcept {
-	EmuInterface::assignComponents(HDM, BVS);
+FrontendHost::FrontendHost(const Path& gamePath) noexcept {
+	SystemsInterface::assignComponents(HDM, BVS);
 	HDM->setValidator(CoreRegistry::validateProgram);
 	CoreRegistry::loadProgramDB();
 
@@ -31,13 +31,13 @@ EmuHost::EmuHost(const Path& gamePath) noexcept {
 	if (!iGuest) { BVS->setMainWindowTitle(AppName, "Waiting for file..."); }
 }
 
-void EmuHost::StopEmuCoreThread::operator()(EmuInterface* ptr) noexcept {
+void FrontendHost::StopEmuCoreThread::operator()(SystemsInterface* ptr) noexcept {
 	if (ptr) { ptr->stopWorker(); delete ptr; }
 }
 
 /*==================================================================*/
 
-void EmuHost::discardCore() {
+void FrontendHost::discardCore() {
 	iGuest.reset();
 	
 	BVS->setMainWindowTitle(AppName, "Waiting for file...");
@@ -48,7 +48,7 @@ void EmuHost::discardCore() {
 	HDM->clearCachedFileData();
 }
 
-void EmuHost::replaceCore() {
+void FrontendHost::replaceCore() {
 	iGuest.reset();
 	iGuest.reset(CoreRegistry::constructCore());
 	if (iGuest) {
@@ -61,7 +61,7 @@ void EmuHost::replaceCore() {
 
 /*==================================================================*/
 
-void EmuHost::loadGameFile(const Path& gameFile) {
+void FrontendHost::loadGameFile(const Path& gameFile) {
 	BVS->raiseMainWindow();
 	blog.newEntry(BLOG::INFO, "Attempting to load: \"{}\"", gameFile.string());
 	if (HDM->validateGameFile(gameFile)) {
@@ -72,7 +72,7 @@ void EmuHost::loadGameFile(const Path& gameFile) {
 	}
 }
 
-void EmuHost::hideMainWindow(bool state) noexcept {
+void FrontendHost::hideMainWindow(bool state) noexcept {
 	if (!iGuest) { return; }
 
 	if (state) {
@@ -82,7 +82,7 @@ void EmuHost::hideMainWindow(bool state) noexcept {
 	}
 }
 
-void EmuHost::pauseSystem(bool state) noexcept {
+void FrontendHost::pauseSystem(bool state) noexcept {
 	if (!iGuest) { return; }
 
 	if (state) {
@@ -92,7 +92,7 @@ void EmuHost::pauseSystem(bool state) noexcept {
 	}
 }
 
-void EmuHost::quitApplication() noexcept {
+void FrontendHost::quitApplication() noexcept {
 	iGuest.reset();
 
 	HDM->writeMainAppConfig(
@@ -101,7 +101,7 @@ void EmuHost::quitApplication() noexcept {
 	);
 }
 
-bool EmuHost::initApplication(
+bool FrontendHost::initApplication(
 	StrV overrideHome, StrV configName,
 	bool forcePortable, StrV org, StrV app
 ) noexcept {
@@ -125,7 +125,7 @@ bool EmuHost::initApplication(
 	return true;
 }
 
-s32  EmuHost::processEvents(SDL_Event* event) noexcept {
+s32  FrontendHost::processEvents(SDL_Event* event) noexcept {
 	BVS->processInterfaceEvent(event);
 
 	if (BVS->isMainWindowID(event->window.windowID)) {
@@ -158,7 +158,7 @@ s32  EmuHost::processEvents(SDL_Event* event) noexcept {
 
 /*==================================================================*/
 
-void EmuHost::processFrame() {
+void FrontendHost::processFrame() {
 	if (!BVS->isSuccessful())
 		[[unlikely]] { return; }
 
@@ -171,7 +171,7 @@ void EmuHost::processFrame() {
 	}
 }
 
-void EmuHost::checkForHotkeys() {
+void FrontendHost::checkForHotkeys() {
 	static BasicKeyboard Input;
 	Input.updateStates();
 
@@ -221,7 +221,7 @@ void EmuHost::checkForHotkeys() {
 	}
 }
 
-void EmuHost::toggleSystemLimiter() noexcept {
+void FrontendHost::toggleSystemLimiter() noexcept {
 	if (!iGuest) { return; }
 	if (mUnlimited) {
 		iGuest->addSystemState(EmuState::BENCH);

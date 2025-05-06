@@ -35,7 +35,7 @@
     <ClCompile Include="src\Assistants\ThreadAffinity.cpp" />
     <ClCompile Include="src\Assistants\Well512.cpp" />
     <ClCompile Include="src\CubeChip.cpp" />
-    <ClCompile Include="src\EmuHost.cpp" />
+    <ClCompile Include="src\FrontendHost.cpp" />
     <ClCompile Include="src\Libraries\imgui\imgui.cpp" />
     <ClCompile Include="src\Libraries\imgui\imgui_demo.cpp" />
     <ClCompile Include="src\Libraries\imgui\imgui_draw.cpp" />
@@ -53,7 +53,7 @@
     <ClCompile Include="src\Systems\CHIP8\Cores\SCHIP_LEGACY.cpp" />
     <ClCompile Include="src\Systems\CHIP8\Cores\SCHIP_MODERN.cpp" />
     <ClCompile Include="src\Systems\CHIP8\Cores\XOCHIP.cpp" />
-    <ClCompile Include="src\Systems\EmuInterface.cpp" />
+    <ClCompile Include="src\Systems\SystemsInterface.cpp" />
     <ClCompile Include="src\Systems\GAMEBOY\Cores\GAMEBOY_CLASSIC.cpp" />
     <ClCompile Include="src\Systems\GAMEBOY\GameBoy_CoreInterface.cpp" />
     <ClCompile Include="src\Systems\CoreRegistry.cpp" />
@@ -86,7 +86,7 @@
     <ClInclude Include="src\Assistants\TripleBuffer.hpp" />
     <ClInclude Include="src\Assistants\Typedefs.hpp" />
     <ClInclude Include="src\Assistants\Well512.hpp" />
-    <ClInclude Include="src\EmuHost.hpp" />
+    <ClInclude Include="src\FrontendHost.hpp" />
     <ClInclude Include="src\Libraries\imgui\imconfig.h" />
     <ClInclude Include="src\Libraries\imgui\imgui.h" />
     <ClInclude Include="src\Libraries\imgui\imgui_impl_sdl3.h" />
@@ -107,7 +107,7 @@
     <ClInclude Include="src\Systems\CHIP8\Cores\SCHIP_LEGACY.hpp" />
     <ClInclude Include="src\Systems\CHIP8\Cores\SCHIP_MODERN.hpp" />
     <ClInclude Include="src\Systems\CHIP8\Cores\XOCHIP.hpp" />
-    <ClInclude Include="src\Systems\EmuInterface.hpp" />
+    <ClInclude Include="src\Systems\SystemsInterface.hpp" />
     <ClInclude Include="src\Systems\GAMEBOY\Cores\GAMEBOY_CLASSIC.hpp" />
     <ClInclude Include="src\Systems\GAMEBOY\GameBoy_CoreInterface.hpp" />
     <ClInclude Include="src\Systems\CoreRegistry.hpp" />

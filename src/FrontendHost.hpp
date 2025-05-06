@@ -29,25 +29,25 @@ class HomeDirManager;
 class BasicAudioSpec;
 class BasicVideoSpec;
 
-class EmuInterface;
+class SystemsInterface;
 
 union SDL_Event;
 
 /*==================================================================*/
-	#pragma region EmuHost Singleton Class
+	#pragma region FrontendHost Singleton Class
 
-class EmuHost final {
-	EmuHost(const Path&) noexcept;
+class FrontendHost final {
+	FrontendHost(const Path&) noexcept;
 
-	EmuHost(const EmuHost&) = delete;
-	EmuHost& operator=(const EmuHost&) = delete;
+	FrontendHost(const FrontendHost&) = delete;
+	FrontendHost& operator=(const FrontendHost&) = delete;
 
 	struct StopEmuCoreThread {
-		void operator()(EmuInterface* ptr) noexcept;
+		void operator()(SystemsInterface* ptr) noexcept;
 	};
 
 	std::unique_ptr<
-		EmuInterface,
+		SystemsInterface,
 		StopEmuCoreThread
 	> iGuest;
 
@@ -68,7 +68,7 @@ private:
 
 public:
 	static auto* initialize(const Path& gamePath) noexcept {
-		static EmuHost self(gamePath);
+		static FrontendHost self(gamePath);
 		return &self;
 	}
 

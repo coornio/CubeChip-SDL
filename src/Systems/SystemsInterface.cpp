@@ -10,23 +10,23 @@
 #include "../Assistants/BasicInput.hpp"
 #include "../Assistants/Well512.hpp"
 
-#include "EmuInterface.hpp"
+#include "SystemsInterface.hpp"
 
 /*==================================================================*/
 
-void EmuInterface::startWorker() noexcept {
+void SystemsInterface::startWorker() noexcept {
 	if (mCoreThread.joinable()) { return; }
 	mCoreThread = Thread([this](StopToken token) { threadEntry(token); });
 }
 
-void EmuInterface::stopWorker() noexcept {
+void SystemsInterface::stopWorker() noexcept {
 	if (mCoreThread.joinable()) {
 		mCoreThread.request_stop();
 		mCoreThread.join();
 	}
 }
 
-void EmuInterface::threadEntry(StopToken token) {
+void SystemsInterface::threadEntry(StopToken token) {
 	thread_affinity::set_affinity(~0b11ull);
 	SDL_SetCurrentThreadPriority(SDL_THREAD_PRIORITY_HIGH);
 	
@@ -34,7 +34,7 @@ void EmuInterface::threadEntry(StopToken token) {
 		[[likely]] { mainSystemLoop(); }
 }
 
-EmuInterface::EmuInterface() noexcept
+SystemsInterface::SystemsInterface() noexcept
 	: mOverlayData{ std::make_shared<Str>() }
 	, Input{ std::make_unique<BasicKeyboard>() }
 	, Pacer{ std::make_unique<FrameLimiter>() }
@@ -43,32 +43,32 @@ EmuInterface::EmuInterface() noexcept
 	RNG = &sWell512;
 }
 
-EmuInterface::~EmuInterface() noexcept {}
+SystemsInterface::~SystemsInterface() noexcept {}
 
 /*==================================================================*/
 
-void EmuInterface::setViewportSizes(s32 texture_W, s32 texture_H, s32 upscale_M, s32 padding_S) noexcept {
+void SystemsInterface::setViewportSizes(s32 texture_W, s32 texture_H, s32 upscale_M, s32 padding_S) noexcept {
 	BVS->setViewportSizes(texture_W, texture_H, upscale_M, padding_S);
 }
 
-void EmuInterface::setDisplayBorderColor(u32 color) noexcept {
+void SystemsInterface::setDisplayBorderColor(u32 color) noexcept {
 	BVS->setBorderColor(color);
 }
 
-f32 EmuInterface::getSystemFramerate() const noexcept {
+f32 SystemsInterface::getSystemFramerate() const noexcept {
 	return mTargetFPS.load(mo::relaxed);
 }
 
-void EmuInterface::setSystemFramerate(f32 value) noexcept {
+void SystemsInterface::setSystemFramerate(f32 value) noexcept {
 	mTargetFPS.store(value, mo::relaxed);
 	Pacer->setLimiter(value);
 }
 
-void EmuInterface::saveOverlayData(const char* data) {
+void SystemsInterface::saveOverlayData(const char* data) {
 	mOverlayData.store(std::make_shared<Str>(data), mo::release);
 }
 
-Str EmuInterface::makeOverlayData() {
+Str SystemsInterface::makeOverlayData() {
 	const auto frameMS{ Pacer->getElapsedMillisLast() };
 	const auto elapsed{ Pacer->getElapsedMicrosSince() / 1000.0f };
 
@@ -81,12 +81,12 @@ Str EmuInterface::makeOverlayData() {
 	);
 }
 
-void EmuInterface::pushOverlayData() {
+void SystemsInterface::pushOverlayData() {
 	if (Pacer->getValidFrameCounter() & 0x1) [[likely]] {
-		saveOverlayData(EmuInterface::makeOverlayData().c_str());
+		saveOverlayData(SystemsInterface::makeOverlayData().c_str());
 	}
 }
 
-Str EmuInterface::copyOverlayData() const noexcept {
+Str SystemsInterface::copyOverlayData() const noexcept {
 	return *mOverlayData.load(mo::acquire);
 }

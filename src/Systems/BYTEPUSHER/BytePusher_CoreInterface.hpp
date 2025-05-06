@@ -6,11 +6,11 @@
 
 #pragma once
 
-#include "../EmuInterface.hpp"
+#include "../SystemsInterface.hpp"
 
 /*==================================================================*/
 
-class BytePusher_CoreInterface : public EmuInterface {
+class BytePusher_CoreInterface : public SystemsInterface {
 
 protected:
 	static inline Path* sSavestatePath{};
