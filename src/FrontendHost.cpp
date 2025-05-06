@@ -20,7 +20,6 @@
 #include "Systems/CoreRegistry.hpp"
 
 /*==================================================================*/
-	#pragma region VM_Host Singleton Class
 
 FrontendHost::FrontendHost(const Path& gamePath) noexcept {
 	SystemsInterface::assignComponents(HDM, BVS);
@@ -28,7 +27,7 @@ FrontendHost::FrontendHost(const Path& gamePath) noexcept {
 	CoreRegistry::loadProgramDB();
 
 	if (!gamePath.empty()) { loadGameFile(gamePath); }
-	if (!iGuest) { BVS->setMainWindowTitle(AppName, "Waiting for file..."); }
+	if (!mSystemCore) { BVS->setMainWindowTitle(AppName, "Waiting for file..."); }
 }
 
 void FrontendHost::StopEmuCoreThread::operator()(SystemsInterface* ptr) noexcept {
@@ -38,7 +37,7 @@ void FrontendHost::StopEmuCoreThread::operator()(SystemsInterface* ptr) noexcept
 /*==================================================================*/
 
 void FrontendHost::discardCore() {
-	iGuest.reset();
+	mSystemCore.reset();
 	
 	BVS->setMainWindowTitle(AppName, "Waiting for file...");
 	BVS->resetMainWindow();
@@ -49,13 +48,13 @@ void FrontendHost::discardCore() {
 }
 
 void FrontendHost::replaceCore() {
-	iGuest.reset();
-	iGuest.reset(CoreRegistry::constructCore());
-	if (iGuest) {
+	mSystemCore.reset();
+	mSystemCore.reset(CoreRegistry::constructCore());
+	if (mSystemCore) {
 		BVS->setMainWindowTitle(AppName, HDM->getFileStem());
-		BVS->displayBuffer.resize(iGuest->getDisplaySize());
+		BVS->displayBuffer.resize(mSystemCore->getDisplaySize());
 		toggleSystemLimiter();
-		iGuest->startWorker();
+		mSystemCore->startWorker();
 	}
 }
 
@@ -73,27 +72,27 @@ void FrontendHost::loadGameFile(const Path& gameFile) {
 }
 
 void FrontendHost::hideMainWindow(bool state) noexcept {
-	if (!iGuest) { return; }
+	if (!mSystemCore) { return; }
 
 	if (state) {
-		iGuest->addSystemState(EmuState::HIDDEN);
+		mSystemCore->addSystemState(EmuState::HIDDEN);
 	} else {
-		iGuest->subSystemState(EmuState::HIDDEN);
+		mSystemCore->subSystemState(EmuState::HIDDEN);
 	}
 }
 
 void FrontendHost::pauseSystem(bool state) noexcept {
-	if (!iGuest) { return; }
+	if (!mSystemCore) { return; }
 
 	if (state) {
-		iGuest->addSystemState(EmuState::PAUSED);
+		mSystemCore->addSystemState(EmuState::PAUSED);
 	} else {
-		iGuest->subSystemState(EmuState::PAUSED);
+		mSystemCore->subSystemState(EmuState::PAUSED);
 	}
 }
 
 void FrontendHost::quitApplication() noexcept {
-	iGuest.reset();
+	mSystemCore.reset();
 
 	HDM->writeMainAppConfig(
 		BAS->exportSettings().map(),
@@ -164,8 +163,8 @@ void FrontendHost::processFrame() {
 
 	checkForHotkeys();
 
-	if (iGuest && mFrameStat) {
-		BVS->renderPresent(iGuest->copyOverlayData().c_str());
+	if (mSystemCore && mFrameStat) {
+		BVS->renderPresent(mSystemCore->copyOverlayData().c_str());
 	} else {
 		BVS->renderPresent(nullptr);
 	}
@@ -201,7 +200,7 @@ void FrontendHost::checkForHotkeys() {
 		BVS->cycleViewportScaleMode();
 	}
 
-	if (iGuest) {
+	if (mSystemCore) {
 		if (Input.isPressed(KEY(ESCAPE))) {
 			discardCore();
 			return;
@@ -222,13 +221,12 @@ void FrontendHost::checkForHotkeys() {
 }
 
 void FrontendHost::toggleSystemLimiter() noexcept {
-	if (!iGuest) { return; }
+	if (!mSystemCore) { return; }
 	if (mUnlimited) {
-		iGuest->addSystemState(EmuState::BENCH);
+		mSystemCore->addSystemState(EmuState::BENCH);
 	} else {
-		iGuest->subSystemState(EmuState::BENCH);
+		mSystemCore->subSystemState(EmuState::BENCH);
 	}
 }
 
-	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/

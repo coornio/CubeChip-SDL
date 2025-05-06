@@ -34,7 +34,6 @@ class SystemsInterface;
 union SDL_Event;
 
 /*==================================================================*/
-	#pragma region FrontendHost Singleton Class
 
 class FrontendHost final {
 	FrontendHost(const Path&) noexcept;
@@ -49,7 +48,7 @@ class FrontendHost final {
 	std::unique_ptr<
 		SystemsInterface,
 		StopEmuCoreThread
-	> iGuest;
+	> mSystemCore;
 
 public:
 	static inline HomeDirManager* HDM{};
@@ -87,5 +86,4 @@ public:
 	void processFrame();
 };
 
-	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/

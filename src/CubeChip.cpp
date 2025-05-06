@@ -124,9 +124,9 @@ SDL_AppResult SDL_AppInit(void **Host, int argc, char *argv[]) {
 /*==================================================================*/
 
 SDL_AppResult SDL_AppIterate(void *pHost) {
-	auto& Host{ *static_cast<FrontendHost*>(pHost) };
+	auto Host{ static_cast<FrontendHost*>(pHost) };
 
-	Host.processFrame();
+	Host->processFrame();
 
 	return SDL_APP_CONTINUE;
 }
@@ -134,16 +134,16 @@ SDL_AppResult SDL_AppIterate(void *pHost) {
 /*==================================================================*/
 
 SDL_AppResult SDL_AppEvent(void *pHost, SDL_Event *event) {
-	auto& Host{ *static_cast<FrontendHost*>(pHost) };
+	auto Host{ static_cast<FrontendHost*>(pHost) };
 
-	return static_cast<SDL_AppResult>(Host.processEvents(event));
+	return static_cast<SDL_AppResult>(Host->processEvents(event));
 }
 
 /*==================================================================*/
 
 void SDL_AppQuit(void *pHost, SDL_AppResult) {
 	if (pHost) {
-		auto& Host{ *static_cast<FrontendHost*>(pHost) };
-		Host.quitApplication();
+		auto Host{ static_cast<FrontendHost*>(pHost) };
+		Host->quitApplication();
 	}
 }
