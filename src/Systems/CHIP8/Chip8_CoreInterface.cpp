@@ -209,10 +209,8 @@ Str Chip8_CoreInterface::makeOverlayData() {
 }
 
 void Chip8_CoreInterface::pushOverlayData() {
-	if (getSystemState() & EmuState::BENCH) [[likely]] {
-		mOverlayData.store(std::make_shared<Str> \
-			(makeOverlayData()), mo::release);
-	}
+	if (getSystemState() & EmuState::BENCH) [[likely]]
+		{ saveOverlayData(makeOverlayData().c_str()); }
 	else { EmuInterface::pushOverlayData(); }
 }
 

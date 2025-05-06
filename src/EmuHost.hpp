@@ -17,7 +17,12 @@
 
 /*==================================================================*/
 
-constexpr auto* AppName{ "CubeChip" };
+#if !defined(NDEBUG) || defined(DEBUG)
+	constexpr auto* AppName{ "[DEBUG] CubeChip" };
+#else
+	constexpr auto* AppName{ "CubeChip" };
+#endif
+
 constexpr auto* AppVer{ __DATE__ };
 
 /*==================================================================*/

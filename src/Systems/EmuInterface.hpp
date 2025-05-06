@@ -66,14 +66,13 @@ class Well512;
 /*==================================================================*/
 
 class EmuInterface {
+	Thread mCoreThread;
+	AtomSharedPtr<Str> mOverlayData;
 
 protected:
 	static inline HomeDirManager* HDM{};
 	static inline BasicVideoSpec* BVS{};
 	static inline Well512*        RNG{};
-
-	Thread mCoreThread;
-	AtomSharedPtr<Str> mOverlayData;
 
 public:
 	void startWorker() noexcept;
@@ -128,7 +127,8 @@ protected:
 	void setDisplayBorderColor(u32 color) noexcept;
 
 	virtual void mainSystemLoop() = 0;
-
+	
+	/*   */ void saveOverlayData(const char* data);
 	virtual Str  makeOverlayData();
 	virtual void pushOverlayData();
 

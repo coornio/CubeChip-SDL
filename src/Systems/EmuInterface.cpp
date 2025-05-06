@@ -35,9 +35,9 @@ void EmuInterface::threadEntry(StopToken token) {
 }
 
 EmuInterface::EmuInterface() noexcept
-	: Pacer{ std::make_unique<FrameLimiter>() }
+	: mOverlayData{ std::make_shared<Str>() }
 	, Input{ std::make_unique<BasicKeyboard>() }
-	, mOverlayData{ std::make_shared<Str>() }
+	, Pacer{ std::make_unique<FrameLimiter>() }
 {
 	static Well512 sWell512;
 	RNG = &sWell512;
@@ -64,22 +64,26 @@ void EmuInterface::setSystemFramerate(f32 value) noexcept {
 	Pacer->setLimiter(value);
 }
 
+void EmuInterface::saveOverlayData(const char* data) {
+	mOverlayData.store(std::make_shared<Str>(data), mo::release);
+}
+
 Str EmuInterface::makeOverlayData() {
-	const auto elapsedMillis{ Pacer->getElapsedMillisLast() };
+	const auto frameMS{ Pacer->getElapsedMillisLast() };
+	const auto elapsed{ Pacer->getElapsedMicrosSince() / 1000.0f };
 
 	return fmt::format(
-		"Framerate:{:9.3f}\n"
-		"Frametime:{:9.3f}ms |{:9.3f}ms\n",
-		elapsedMillis < Epsilon::f32 ? getSystemFramerate()
-			: std::round(1000.0f / elapsedMillis * 100.0f) / 100.0f,
-		elapsedMillis, Pacer->getElapsedMicrosSince() / 1000.0f
+		"Framerate:{:9.3f} fps |{:9.3f}ms\n"
+		"Frametime:{:9.3f} ms ({:3.2f}%)\n",
+		frameMS < Epsilon::f32 ? getSystemFramerate()
+			: std::round(1000.0f / frameMS * 100.0f) / 100.0f,
+		frameMS, elapsed, elapsed / Pacer->getFramespan() * 100.0f
 	);
 }
 
 void EmuInterface::pushOverlayData() {
 	if (Pacer->getValidFrameCounter() & 0x1) [[likely]] {
-		mOverlayData.store(std::make_shared<Str> \
-			(EmuInterface::makeOverlayData()), mo::release);
+		saveOverlayData(EmuInterface::makeOverlayData().c_str());
 	}
 }
 

@@ -175,16 +175,16 @@ void EmuHost::checkForHotkeys() {
 	static BasicKeyboard Input;
 	Input.updateStates();
 
-	if (Input.isPressed(KEY(RIGHT))) {
+	if (Input.isPressed(KEY(UP))) {
 		BAS->addGlobalGain(+15);
 	}
-	if (Input.isPressed(KEY(LEFT))) {
+	if (Input.isPressed(KEY(DOWN))) {
 		BAS->addGlobalGain(-15);
 	}
-	if (Input.isPressed(KEY(UP))) {
+	if (Input.isPressed(KEY(RIGHT))) {
 		BVS->rotateViewport(+1);
 	}
-	if (Input.isPressed(KEY(DOWN))) {
+	if (Input.isPressed(KEY(LEFT))) {
 		BVS->rotateViewport(-1);
 	}
 	if (Input.isPressed(KEY(F9))) {
