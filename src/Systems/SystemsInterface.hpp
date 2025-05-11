@@ -67,7 +67,13 @@ class Well512;
 
 class SystemsInterface {
 	Thread mCoreThread;
+
+	Str mOverlayDataBuffer{};
 	AtomSharedPtr<Str> mOverlayData;
+
+protected:
+	Str* getOverlayDataBuffer() noexcept
+		{ return &mOverlayDataBuffer; }
 
 protected:
 	static inline HomeDirManager* HDM{};
@@ -122,16 +128,32 @@ public:
 	void setSystemFramerate(f32 value) noexcept;
 
 protected:
-	void setViewportSizes(s32 texture_W, s32 texture_H, s32 upscale_M = 0, s32 padding_S = 0) noexcept;
+	void setViewportSizes(bool cond, s32 W, s32 H, s32 mult, s32 ppad) noexcept;
 
 	void setDisplayBorderColor(u32 color) noexcept;
 
 	virtual void mainSystemLoop() = 0;
 	
-	/*   */ void saveOverlayData(const char* data);
-	virtual Str  makeOverlayData();
+	/**
+	 * @brief Save the Overlay data buffer contents to the public-facing buffer as a final step.
+	 * @param[in] data :: A pointer to a string object, typically the return of getOverlayDataBuffer().
+	 */
+	/*   */ void saveOverlayData(const Str* data);
+	/**
+	 * @brief Overridable method dedicated to assembling the string of Overlay data.
+	 */
+	virtual Str* makeOverlayData();
+	/**
+	 * @brief Overridable method dedicated to controlling when/how the Overlay data is pushed to
+	 *        the public-facing buffer, typically used along with saveOverlayData().
+	 */
 	virtual void pushOverlayData();
 
 public:
+	/**
+	 * @brief Public-facing method dedicated to fetching a copy of the Overlay data string from
+	 *        the public-facing buffer, thread-safe.
+	 * @note This method should not be used across a DLL boundary, as it is not ABI-safe.
+	 */
 	Str copyOverlayData() const noexcept;
 };

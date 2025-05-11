@@ -27,7 +27,7 @@ SCHIP_MODERN::SCHIP_MODERN()
 	copyFontToMemory(mMemoryBank.data(), 0xF0);
 
 	setDisplayResolution(cScreenSizeX, cScreenSizeY);
-	setViewportSizes(cScreenSizeX, cScreenSizeY, cResSizeMult, +2);
+	setViewportSizes(true, cScreenSizeX, cScreenSizeY, cResSizeMult, 2);
 	setSystemFramerate(cRefreshRate);
 
 	mCurrentPC = cStartOffset;
@@ -225,7 +225,7 @@ void SCHIP_MODERN::renderAudioData() {
 }
 
 void SCHIP_MODERN::renderVideoData() {
-	BVS->displayBuffer.write(mDisplayBuffer[0], isPixelTrailing()
+	BVS->displayBuffer.write(mDisplayBuffer[0], isUsingPixelTrails()
 		? [](u32 pixel) noexcept {
 			static constexpr u32 layer[4]{ 0xFF, 0xE7, 0x6F, 0x37 };
 			const auto opacity{ layer[std::countl_zero(pixel) & 0x3] };
@@ -235,6 +235,9 @@ void SCHIP_MODERN::renderVideoData() {
 			return 0xFF | sBitColors[pixel >> 3];
 		}
 	);
+
+	setViewportSizes(isResolutionChanged(false), mDisplayW, mDisplayH,
+		isLargerDisplay() ? cResSizeMult / 2 : cResSizeMult, 2);
 
 	std::transform(EXEC_POLICY(unseq)
 		mDisplayBuffer[0].begin(),
@@ -249,13 +252,14 @@ void SCHIP_MODERN::renderVideoData() {
 }
 
 void SCHIP_MODERN::prepDisplayArea(const Resolution mode) {
-	isLargerDisplay(mode != Resolution::LO);
+	const bool wasLargerDisplay{ isLargerDisplay(mode != Resolution::LO) };
+	isResolutionChanged(wasLargerDisplay != isLargerDisplay());
 
 	const auto W{ isLargerDisplay() ? cScreenSizeX * 2 : cScreenSizeX };
 	const auto H{ isLargerDisplay() ? cScreenSizeY * 2 : cScreenSizeY };
 
 	setDisplayResolution(W, H);
-	setViewportSizes(W, H, isLargerDisplay() ? cResSizeMult / 2 : cResSizeMult, +2);
+	
 	mDisplayBuffer[0].resizeClean(W, H);
 };
 

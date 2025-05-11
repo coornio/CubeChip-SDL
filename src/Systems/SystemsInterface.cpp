@@ -29,7 +29,7 @@ void SystemsInterface::stopWorker() noexcept {
 void SystemsInterface::threadEntry(StopToken token) {
 	thread_affinity::set_affinity(~0b11ull);
 	SDL_SetCurrentThreadPriority(SDL_THREAD_PRIORITY_HIGH);
-	
+
 	while (!token.stop_requested())
 		[[likely]] { mainSystemLoop(); }
 }
@@ -47,8 +47,8 @@ SystemsInterface::~SystemsInterface() noexcept {}
 
 /*==================================================================*/
 
-void SystemsInterface::setViewportSizes(s32 texture_W, s32 texture_H, s32 upscale_M, s32 padding_S) noexcept {
-	BVS->setViewportSizes(texture_W, texture_H, upscale_M, padding_S);
+void SystemsInterface::setViewportSizes(bool cond, s32 W, s32 H, s32 mult, s32 ppad) noexcept {
+	if (cond) { BVS->setViewportSizes(W, H, mult, ppad); }
 }
 
 void SystemsInterface::setDisplayBorderColor(u32 color) noexcept {
@@ -64,26 +64,28 @@ void SystemsInterface::setSystemFramerate(f32 value) noexcept {
 	Pacer->setLimiter(value);
 }
 
-void SystemsInterface::saveOverlayData(const char* data) {
-	mOverlayData.store(std::make_shared<Str>(data), mo::release);
+void SystemsInterface::saveOverlayData(const Str* data) {
+	mOverlayData.store(std::make_shared<Str>(*data), mo::release);
 }
 
-Str SystemsInterface::makeOverlayData() {
+Str* SystemsInterface::makeOverlayData() {
 	const auto frameMS{ Pacer->getElapsedMillisLast() };
 	const auto elapsed{ Pacer->getElapsedMicrosSince() / 1000.0f };
 
-	return fmt::format(
+	*getOverlayDataBuffer() = fmt::format(
 		"Framerate:{:9.3f} fps |{:9.3f}ms\n"
 		"Frametime:{:9.3f} ms ({:3.2f}%)\n",
 		frameMS < Epsilon::f32 ? getSystemFramerate()
 			: std::round(1000.0f / frameMS * 100.0f) / 100.0f,
 		frameMS, elapsed, elapsed / Pacer->getFramespan() * 100.0f
 	);
+
+	return getOverlayDataBuffer();
 }
 
 void SystemsInterface::pushOverlayData() {
 	if (Pacer->getValidFrameCounter() & 0x1) [[likely]] {
-		saveOverlayData(SystemsInterface::makeOverlayData().c_str());
+		saveOverlayData(SystemsInterface::makeOverlayData());
 	}
 }
 

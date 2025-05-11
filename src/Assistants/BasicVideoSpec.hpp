@@ -30,7 +30,8 @@ public:
 
 		constexpr Rect() noexcept = default;
 		constexpr Rect(s32 W, s32 H) noexcept
-			: W{ W }, H{ H }
+			: W{ W < 0 ? 0 : W }
+			, H{ H < 0 ? 0 : H }
 		{}
 
 		auto frect() const noexcept -> SDL_FRect;
@@ -40,26 +41,41 @@ public:
 
 	struct Viewport {
 		Rect rect{};
-		s32 scale{}, pad{};
+		s32 mult{}, ppad{};
 
-		constexpr Viewport(s32 W = 0, s32 H = 0, s32 scale = 0, s32 pad = 0) noexcept
-			: rect{ W, H }, scale{ std::max(1, scale) }, pad{ std::max(0, pad) }
-		{}
-		constexpr Viewport(Rect rect, s32 scale = 1, s32 pad = 0) noexcept
-			: rect{ rect }, scale{ std::max(1, scale) }, pad{ std::max(0, pad) }
+		constexpr Viewport(s32 W = 0, s32 H = 0, s32 mult = 0, s32 ppad = 0) noexcept
+			: rect{ std::clamp(W, 0x0, 0xFFF), std::clamp(H, 0x0, 0xFFF) }
+			, mult{ std::clamp(mult, 0x1, 0xF) }
+			, ppad{ std::clamp(ppad, 0x0, 0xF) }
 		{}
 
 		constexpr auto rotate_if(bool cond) const noexcept {
 			return cond
-				? Viewport{ rect.H, rect.W, scale, pad }
-				: Viewport{ rect.W, rect.H, scale, pad };
+				? Viewport{ rect.H, rect.W, mult, ppad }
+				: Viewport{ rect.W, rect.H, mult, ppad };
 		}
 
 		constexpr auto scaled() const noexcept {
-			return Rect{ rect.W * scale, rect.H * scale };
+			return Rect{ rect.W * mult, rect.H * mult };
 		}
 		constexpr auto padded() const noexcept {
-			return Rect{ rect.W * scale + pad * 2, rect.H * scale + pad * 2 };
+			return Rect{ rect.W * mult + ppad * 2, rect.H * mult + ppad * 2 };
+		}
+
+		static constexpr auto pack(s32 W, s32 H, s32 mult, s32 ppad) noexcept {
+			return ((static_cast<u32>(W)     & 0xFFFu) << 00u) |
+				   ((static_cast<u32>(H)     & 0xFFFu) << 12u) |
+				   ((static_cast<u32>(mult)  & 0xFu)   << 24u) |
+				   ((static_cast<u32>(ppad)  & 0xFu)   << 28u);
+		}
+
+		static constexpr auto unpack(u32 packed) noexcept {
+			return Viewport{
+				static_cast<s32>((packed >> 00u) & 0xFFFu),
+				static_cast<s32>((packed >> 12u) & 0xFFFu),
+				static_cast<s32>((packed >> 24u) & 0xFu),
+				static_cast<s32>((packed >> 28u) & 0xFu)
+			};
 		}
 
 		auto frect() const noexcept -> SDL_FRect;
@@ -68,19 +84,18 @@ public:
 private:
 	SDL_Unique<SDL_Window>   mMainWindow{};
 	SDL_Unique<SDL_Renderer> mMainRenderer{};
-	SDL_Unique<SDL_Texture>  mOuterTexture{};
-	SDL_Unique<SDL_Texture>  mInnerTexture{};
+	SDL_Unique<SDL_Texture>  mWindowTexture{};
+	SDL_Unique<SDL_Texture>  mSystemTexture{};
+
+	auto getTextureSizeRect(SDL_Texture* texture) const noexcept -> Rect;
 
 /*==================================================================*/
 
-	Viewport mViewportFrame{};
+	Viewport  mCurViewport{};
+	Atom<u32> mNewViewport{};
 
-	AtomSharedPtr<Rect> mTextureSize{};
 	Atom<u32> mOutlineColor{};
-	Atom<s32> mTextureScale{};
-	Atom<s32> mFramePadding{};
 	Atom<u8>  mTextureAlpha{ 0xFF };
-	Atom<bool> mNewTextureNeeded{};
 
 	bool mUsingScanlines{};
 	bool mIntegerScaling{};
@@ -193,6 +208,8 @@ public:
 /*==================================================================*/
 
 private:
+	void prepareWindowTexture();
+	void prepareSystemTexture();
 	void renderViewport();
 
 public:
@@ -200,15 +217,16 @@ public:
 
 	/**
 	 * @brief Sets various parameters to shape, scale, and pad the system's Viewport. Thread-safe.
-	 * @param[in] texture_W :: The width of the output texture in pixels.
-	 * @param[in] texture_H :: The height of the output texture in pixels.
-	 * @param[in] upscale_M :: Integer multiplier of the texture size to adjust minimum size. Capped at 16.
-	 * @param[in] padding_S :: The thickness of the padding (colorable, see 'setOutlineColor')
+	 * @param[in] W :: The width of the output texture in pixels.
+	 * @param[in] H :: The height of the output texture in pixels.
+	 * @param[in] mult :: Integer multiplier of the texture size to adjust minimum size. Capped at 16.
+	 * @param[in] pad :: The thickness of the padding (colorable, see 'setOutlineColor')
 	 * surrounding the Viewport in pixels. When negative, doubles as a flag that controls whether
 	 * to draw scanlines over the Viewport. Capped at -16..16.
 	 * @return Boolean if successful.
 	 */
-	void setViewportSizes(s32 texture_W, s32 texture_H, s32 upscale_M = 0, s32 padding_S = 0);
+	void setViewportSizes(s32 W, s32 H, s32 mult = 0, s32 ppad = 0);
+	auto getViewportSizes() const noexcept -> Viewport;
 
 public:
 	void resetMainWindow();
@@ -216,7 +234,7 @@ public:
 	bool isMainWindowID(u32 id) const noexcept;
 	void raiseMainWindow();
 
-	void renderPresent(const char* overlay_data);
+	void renderPresent(bool core, const char* overlay_data);
 };
 
 	#pragma endregion

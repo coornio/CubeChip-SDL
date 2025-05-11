@@ -68,8 +68,6 @@ public:
 
 	// DO NOT CALL IF EITHER A CONSUMER OR PRODUCER IS ACTIVE!!
 	void resize(size_type buffer_size) {
-		if (buffer_size == size()) { return; }
-
 		mSize = buffer_size;
 		mDataBuffer[0].reallocate(buffer_size); assert(mDataBuffer[0].size());
 		mDataBuffer[1].reallocate(buffer_size); assert(mDataBuffer[1].size());

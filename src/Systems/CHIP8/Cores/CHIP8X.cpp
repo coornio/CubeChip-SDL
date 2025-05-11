@@ -23,7 +23,7 @@ CHIP8X::CHIP8X() {
 	copyFontToMemory(mMemoryBank.data(), 0x50);
 
 	setDisplayResolution(cScreenSizeX, cScreenSizeY);
-	setViewportSizes(cScreenSizeX, cScreenSizeY, cResSizeMult, +2);
+	setViewportSizes(true, cScreenSizeX, cScreenSizeY, cResSizeMult, 2);
 	setSystemFramerate(cRefreshRate);
 
 	mCurrentPC = cStartOffset;
@@ -221,7 +221,7 @@ void CHIP8X::renderAudioData() {
 }
 
 void CHIP8X::renderVideoData() {
-	if (isPixelTrailing()) {
+	if (isUsingPixelTrails()) {
 		BVS->displayBuffer.write(mDisplayBuffer, [this](const u8& pixel) noexcept {
 			static constexpr u32 layer[4]{ 0xFF, 0xE7, 0x6F, 0x37 };
 			const auto opacity{ layer[std::countl_zero(pixel) & 0x3] };
@@ -230,7 +230,7 @@ void CHIP8X::renderVideoData() {
 			const auto X = (idx % mDisplayW) >> 3;
 			return (pixel != 0)
 				? opacity | mColoredBuffer(X, Y)
-				: 0xFF | cBackColor[mBackgroundColor];
+				: 0xFF    | cBackColor[mBackgroundColor];
 		});
 	} else {
 		BVS->displayBuffer.write(mDisplayBuffer, [this](const u8& pixel) noexcept {

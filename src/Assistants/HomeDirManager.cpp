@@ -146,19 +146,19 @@ HomeDirManager* HomeDirManager::initialize(
 	return initError ? nullptr : &self;
 }
 
-Path* HomeDirManager::addSystemDir(const Path& sub, const Path& sys) noexcept {
+const Path* HomeDirManager::addSystemDir(const Path& sub, const Path& sys) noexcept {
 	if (sub.empty()) { return nullptr; }
 	
 	const auto newDirPath{ sHomePath / sys / sub };
 
 	const auto it{ std::find_if(EXEC_POLICY(unseq)
 		mDirectories.begin(), mDirectories.end(),
-		[&newDirPath](const Path& dirEntry) {
-			return dirEntry == newDirPath;
-		}
+		[&newDirPath](const Path& dirEntry) noexcept
+			{ return dirEntry == newDirPath; }
 	) };
 
-	if (it != mDirectories.end()) { return &(*it); }
+	if (it != mDirectories.end())
+		{ return &(*it); }
 
 	if (const auto dirCreated{ fs::create_directories(newDirPath) }) {
 		mDirectories.push_back(newDirPath);

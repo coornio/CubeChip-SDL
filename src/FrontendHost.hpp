@@ -11,8 +11,6 @@
 
 #include "Assistants/Typedefs.hpp"
 
-#include "Libraries/cxxopts/cxxopts.hpp"
-
 /*==================================================================*/
 
 #if !defined(NDEBUG) || defined(DEBUG)
@@ -42,7 +40,7 @@ class FrontendHost final {
 	FrontendHost& operator=(const FrontendHost&) = delete;
 
 	struct StopEmuCoreThread {
-		void operator()(SystemsInterface* ptr) noexcept;
+		void operator()(SystemsInterface*) noexcept;
 	};
 
 	std::unique_ptr<
@@ -56,7 +54,7 @@ public:
 	static inline BasicVideoSpec* BVS{};
 
 private:
-	bool mFrameStat{};
+	bool mShowOverlay{};
 	bool mUnlimited{};
 
 	void checkForHotkeys();

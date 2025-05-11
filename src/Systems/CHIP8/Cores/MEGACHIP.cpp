@@ -25,6 +25,7 @@ MEGACHIP::MEGACHIP()
 	copyGameToMemory(mMemoryBank.data() + cGameLoadPos);
 	copyFontToMemory(mMemoryBank.data(), 0xB4);
 
+	setViewportSizes(true, cScreenSizeX, cScreenSizeY, cResSizeMult, 2);
 	setSystemFramerate(cRefreshRate);
 
 	mCurrentPC = cStartOffset;
@@ -315,34 +316,37 @@ void MEGACHIP::renderAudioData() {
 }
 
 void MEGACHIP::renderVideoData() {
-	if (isManualRefresh()) { return; }
+	if (!isManualRefresh()) {
+		BVS->displayBuffer.write(mDisplayBuffer[0], isUsingPixelTrails()
+			? [](u32 pixel) noexcept {
+				static constexpr u32 layer[4]{ 0xFF, 0xE7, 0x6F, 0x37 };
+				const auto opacity{ layer[std::countl_zero(pixel) & 0x3] };
+				return opacity | sBitColors[pixel != 0];
+			}
+			: [](u32 pixel) noexcept {
+				return 0xFF | sBitColors[pixel >> 3];
+			}
+		);
 
-	BVS->displayBuffer.write(mDisplayBuffer[0], isPixelTrailing()
-		? [](u32 pixel) noexcept {
-			static constexpr u32 layer[4]{ 0xFF, 0xE7, 0x6F, 0x37 };
-			const auto opacity{ layer[std::countl_zero(pixel) & 0x3] };
-			return opacity | sBitColors[pixel != 0];
-		}
-		: [](u32 pixel) noexcept {
-			return 0xFF | sBitColors[pixel >> 3];
-		}
-	);
+		setViewportSizes(isResolutionChanged(false), cScreenSizeX, cScreenSizeY, cResSizeMult, 2);
+	} else {
+		setViewportSizes(isResolutionChanged(false), cScreenMegaX, cScreenMegaY, cResSizeMult / 2, 2);
+	}
 }
 
 void MEGACHIP::prepDisplayArea(const Resolution mode) {
-	isLargerDisplay(mode != Resolution::LO);
-	isManualRefresh(mode == Resolution::MC);
+	const bool wasManualRefresh{ isManualRefresh(mode == Resolution::MC) };
+	isResolutionChanged(wasManualRefresh != isManualRefresh());
 
 	if (isManualRefresh()) {
 		setDisplayResolution(cScreenMegaX, cScreenMegaY);
-		setViewportSizes(cScreenMegaX, cScreenMegaY, cResSizeMult / 2, +2);
 
 		Quirk.waitVblank = false;
 		mTargetCPF = cInstSpeedMC;
 	}
 	else {
+		isLargerDisplay(mode != Resolution::LO);
 		setDisplayResolution(cScreenSizeX, cScreenSizeY);
-		setViewportSizes(cScreenSizeX, cScreenSizeY, cResSizeMult, +2);
 
 		Quirk.waitVblank = !isLargerDisplay();
 		mTargetCPF = isLargerDisplay() ? cInstSpeedLo : cInstSpeedHi;

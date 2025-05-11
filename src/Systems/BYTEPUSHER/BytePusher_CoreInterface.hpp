@@ -13,7 +13,7 @@
 class BytePusher_CoreInterface : public SystemsInterface {
 
 protected:
-	static inline Path* sSavestatePath{};
+	static inline Path sSavestatePath{};
 
 	AudioSpecBlock mAudio;
 

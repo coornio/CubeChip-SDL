@@ -163,11 +163,8 @@ void FrontendHost::processFrame() {
 
 	checkForHotkeys();
 
-	if (mSystemCore && mFrameStat) {
-		BVS->renderPresent(mSystemCore->copyOverlayData().c_str());
-	} else {
-		BVS->renderPresent(nullptr);
-	}
+	BVS->renderPresent(!!mSystemCore, mSystemCore && mShowOverlay
+		? mSystemCore->copyOverlayData().c_str() : nullptr);
 }
 
 void FrontendHost::checkForHotkeys() {
@@ -211,7 +208,7 @@ void FrontendHost::checkForHotkeys() {
 		}
 
 		if (Input.isPressed(KEY(F11))) {
-			mFrameStat = !mFrameStat;
+			mShowOverlay = !mShowOverlay;
 		}
 		if (Input.isPressed(KEY(F12))) {
 			mUnlimited = !mUnlimited;

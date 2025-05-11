@@ -86,7 +86,7 @@ public:
 		bool forcePortable, StrV org, StrV app
 	) noexcept;
 
-	Path* addSystemDir(const Path& sub, const Path& sys = Path{}) noexcept;
+	const Path* addSystemDir(const Path& sub, const Path& sys = Path{}) noexcept;
 
 	auto getFullPath() const noexcept { return mFilePath; }
 	auto getFilePath() const noexcept { return mFilePath.string(); }

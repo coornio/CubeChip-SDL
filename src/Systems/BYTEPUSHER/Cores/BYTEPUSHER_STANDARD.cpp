@@ -19,7 +19,7 @@ BYTEPUSHER_STANDARD::BYTEPUSHER_STANDARD() {
 
 	setDisplayBorderColor(cBitsColor[0]);
 
-	setViewportSizes(cScreenSizeX, cScreenSizeY, cResSizeMult, -2);
+	setViewportSizes(true, cScreenSizeX, cScreenSizeY, cResSizeMult, 2);
 	setSystemFramerate(cRefreshRate);
 }
 
@@ -49,9 +49,8 @@ void BYTEPUSHER_STANDARD::renderAudioData() {
 		samplesOffset,
 		samplesOffset + cAudioLength,
 		samplesBuffer.data(),
-		[](const u8 sample) noexcept {
-			return static_cast<s16>(sample << 8);
-		}
+		[](const u8 sample) noexcept
+			{ return static_cast<s16>(sample << 8); }
 	);
 
 	mAudio.pushAudioData(STREAM::CHANN0, samplesBuffer);

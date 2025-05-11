@@ -23,7 +23,7 @@ CHIP8_MODERN::CHIP8_MODERN() {
 	copyFontToMemory(mMemoryBank.data(), 0x50);
 
 	setDisplayResolution(cScreenSizeX, cScreenSizeY);
-	setViewportSizes(cScreenSizeX, cScreenSizeY, cResSizeMult, +2);
+	setViewportSizes(true, cScreenSizeX, cScreenSizeY, cResSizeMult, 2);
 	setSystemFramerate(cRefreshRate);
 
 	mCurrentPC = cStartOffset;
@@ -191,7 +191,7 @@ void CHIP8_MODERN::renderAudioData() {
 }
 
 void CHIP8_MODERN::renderVideoData() {
-	BVS->displayBuffer.write(mDisplayBuffer, isPixelTrailing()
+	BVS->displayBuffer.write(mDisplayBuffer, isUsingPixelTrails()
 		? [](u32 pixel) noexcept {
 			static constexpr u32 layer[4]{ 0xFF, 0xE7, 0x6F, 0x37 };
 			const auto opacity{ layer[std::countl_zero(pixel) & 0x3] };

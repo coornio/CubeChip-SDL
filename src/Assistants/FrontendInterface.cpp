@@ -221,19 +221,19 @@ void FrontendInterface::PrepareViewport(
 				viewportFrameDimensions.y / height
 			)
 		};
-
+	
 		const auto viewportDimensions{ ImVec2{
 			width  * std::max(aspectRatio, 1.0f),
 			height * std::max(aspectRatio, 1.0f)
 		} };
-
+	
 		const auto viewportOffsets{ (viewportFrameDimensions - viewportDimensions) / 2.0f };
-
+	
 		if (viewportOffsets.x > 0.0f) { ImGui::SetCursorPosX(std::floor(ImGui::GetCursorPosX() + viewportOffsets.x)); }
 		if (viewportOffsets.y > 0.0f) { ImGui::SetCursorPosY(std::floor(ImGui::GetCursorPosY() + viewportOffsets.y)); }
-
+	
 		ImGui::DrawRotatedImage(texture, viewportDimensions, rotation);
-
+	
 		if (overlay_data) { ImGui::writeShadowedText(overlay_data, { 0.0f, 1.0f }); }
 	}
 

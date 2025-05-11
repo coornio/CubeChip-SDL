@@ -19,12 +19,11 @@
 Chip8_CoreInterface::Chip8_CoreInterface() noexcept
 	: mAudio{ AUDIOFORMAT::S16, 1, 48'000, STREAM::COUNT }
 {
-	if ((sSavestatePath = HDM->addSystemDir("savestate", "CHIP8"))) {
-		*sSavestatePath /= HDM->getFileSHA1();
-	}
-	if ((sPermaRegsPath = HDM->addSystemDir("permaRegs", "CHIP8"))) {
-		*sPermaRegsPath /= HDM->getFileSHA1();
-	}
+	if (const auto* path{ HDM->addSystemDir("savestate", "CHIP8") })
+		{ sSavestatePath = *path / HDM->getFileSHA1(); }
+
+	if (const auto* path{ HDM->addSystemDir("permaRegs", "CHIP8") })
+		{ sPermaRegsPath = *path / HDM->getFileSHA1(); }
 
 	mAudio.resumeStreams();
 	loadPresetBinds();
@@ -193,7 +192,7 @@ void Chip8_CoreInterface::mainSystemLoop() {
 	}
 }
 
-Str Chip8_CoreInterface::makeOverlayData() {
+Str* Chip8_CoreInterface::makeOverlayData() {
 	const auto currentFrameTime{ Pacer->getElapsedMicrosSince() / 1000.0f };
 	const auto frameTimeBias{ currentFrameTime * 1.025f / Pacer->getFramespan() };
 	const auto workCycleBias{ 1e5f * std::sin((1 - frameTimeBias) * 1.5707963f) };
@@ -201,16 +200,17 @@ Str Chip8_CoreInterface::makeOverlayData() {
 	if (mInterrupt == Interrupt::CLEAR) [[likely]]
 		{ mTargetCPF += static_cast<s32>(workCycleBias); }
 
-	return fmt::format(
+	*getOverlayDataBuffer() = fmt::format(
 		" ::  MIPS:{:8.2f}\n{}",
 		mTargetCPF * getSystemFramerate() / 1'000'000.0f,
-		SystemsInterface::makeOverlayData()
+		*SystemsInterface::makeOverlayData()
 	);
+	return getOverlayDataBuffer();
 }
 
 void Chip8_CoreInterface::pushOverlayData() {
 	if (getSystemState() & EmuState::BENCH) [[likely]]
-		{ saveOverlayData(makeOverlayData().c_str()); }
+		{ saveOverlayData(makeOverlayData()); }
 	else { SystemsInterface::pushOverlayData(); }
 }
 
@@ -278,39 +278,39 @@ bool Chip8_CoreInterface::newPermaRegsFile(const Path& filePath) const noexcept 
 }
 
 void Chip8_CoreInterface::setFilePermaRegs(u32 X) noexcept {
-	auto fileData{ ::writeFileData(*sPermaRegsPath, mRegisterV, X) };
+	auto fileData{ ::writeFileData(sPermaRegsPath, mRegisterV, X) };
 	if (!fileData) {
 		blog.newEntry(BLOG::ERROR, "File IO error: \"{}\" [{}]",
-			sPermaRegsPath->string(), fileData.error().message());
+			sPermaRegsPath.string(), fileData.error().message());
 	}
 }
 
 void Chip8_CoreInterface::getFilePermaRegs(u32 X) noexcept {
-	auto fileData{ ::readFileData(*sPermaRegsPath, X) };
+	auto fileData{ ::readFileData(sPermaRegsPath, X) };
 	if (!fileData) {
 		blog.newEntry(BLOG::ERROR, "File IO error: \"{}\" [{}]",
-			sPermaRegsPath->string(), fileData.error().message());
+			sPermaRegsPath.string(), fileData.error().message());
 	} else {
 		std::copy_n(fileData.value().begin(), X, sPermRegsV.begin());
 	}
 }
 
 void Chip8_CoreInterface::setPermaRegs(u32 X) noexcept {
-	if (sPermaRegsPath) {
-		if (checkRegularFile(*sPermaRegsPath)) { setFilePermaRegs(X); }
-		else { sPermaRegsPath = nullptr; }
+	if (!sPermaRegsPath.empty()) {
+		if (checkRegularFile(sPermaRegsPath)) { setFilePermaRegs(X); }
+		else { sPermaRegsPath.clear(); }
 	}
 	std::copy_n(mRegisterV.begin(), X, sPermRegsV.begin());
 }
 
 void Chip8_CoreInterface::getPermaRegs(u32 X) noexcept {
-	if (sPermaRegsPath) {
-		if (!checkRegularFile(*sPermaRegsPath)) {
-			if (!newPermaRegsFile(*sPermaRegsPath)) { sPermaRegsPath = nullptr; }
+	if (!sPermaRegsPath.empty()) {
+		if (!checkRegularFile(sPermaRegsPath)) {
+			if (!newPermaRegsFile(sPermaRegsPath)) { sPermaRegsPath.clear(); }
 		}
 
-		if (checkRegularFile(*sPermaRegsPath)) { getFilePermaRegs(X); }
-		else { sPermaRegsPath = nullptr; }
+		if (checkRegularFile(sPermaRegsPath)) { getFilePermaRegs(X); }
+		else { sPermaRegsPath.clear(); }
 	}
 	std::copy_n(sPermRegsV.begin(), X, mRegisterV.begin());
 }

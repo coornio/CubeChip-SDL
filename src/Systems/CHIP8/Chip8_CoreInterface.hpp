@@ -19,9 +19,9 @@ protected:
 		UNIQUE = CHANN0,
 	};
 
-	static inline Path* sPermaRegsPath{};
-	static inline Path* sSavestatePath{};
-	static inline f32   sTonalOffset{ 160.0f };
+	static inline Path sPermaRegsPath{};
+	static inline Path sSavestatePath{};
+	static inline f32  sTonalOffset{ 160.0f };
 
 	AudioSpecBlock mAudio;
 
@@ -65,9 +65,10 @@ protected:
 	} Quirk;
 
 	struct PlatformTraits final {
-		bool mLargerDisplay{};
-		bool mManualRefresh{};
-		bool mPixelTrailing{};
+		bool largerDisplay{};
+		bool manualRefresh{};
+		bool usingPixelTrails{};
+		bool resolutionChanged{};
 	} Trait;
 
 	enum class Interrupt {
@@ -82,21 +83,23 @@ protected:
 
 	enum class Resolution {
 		ERROR,
-		HI, // 128 x  64 - 2:1
-		LO, //  64 x  32 - 2:1
-		TP, //  64 x  64 - 2:1
-		FP, //  64 x 128 - 2:1
-		MC, // 256 x 192 - 4:3
+		HI, // 128 x  64 (display ratio 2:1)
+		LO, //  64 x  32 (display ratio 2:1)
+		TP, //  64 x  64 (display ratio 2:1)
+		FP, //  64 x 128 (display ratio 2:1)
+		MC, // 256 x 192 (display ratio 4:3)
 	};
 
 /*==================================================================*/
 
-	bool isLargerDisplay() const noexcept { return Trait.mLargerDisplay; }
-	bool isManualRefresh() const noexcept { return Trait.mManualRefresh; }
-	bool isPixelTrailing() const noexcept { return Trait.mPixelTrailing; }
-	void isLargerDisplay(bool state) noexcept { Trait.mLargerDisplay = state; }
-	void isManualRefresh(bool state) noexcept { Trait.mManualRefresh = state; }
-	void isPixelTrailing(bool state) noexcept { Trait.mPixelTrailing = state; }
+	bool isLargerDisplay()     const noexcept { return Trait.largerDisplay; }
+	bool isManualRefresh()     const noexcept { return Trait.manualRefresh; }
+	bool isUsingPixelTrails()  const noexcept { return Trait.usingPixelTrails; }
+	bool isResolutionChanged() const noexcept { return Trait.resolutionChanged; }
+	bool isLargerDisplay    (bool state) noexcept { return std::exchange(Trait.largerDisplay, state);     }
+	bool isManualRefresh    (bool state) noexcept { return std::exchange(Trait.manualRefresh, state);     }
+	bool isUsingPixelTrails (bool state) noexcept { return std::exchange(Trait.usingPixelTrails, state);  }
+	bool isResolutionChanged(bool state) noexcept { return std::exchange(Trait.resolutionChanged, state); }
 
 /*==================================================================*/
 
@@ -183,7 +186,7 @@ protected:
 public:
 	void mainSystemLoop() override;
 
-	Str  makeOverlayData() override;
+	Str* makeOverlayData() override;
 	void pushOverlayData() override;
 
 protected:

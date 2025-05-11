@@ -35,7 +35,7 @@ XOCHIP::XOCHIP()
 	copyColorsToCore(mBitColors.data());
 
 	setDisplayResolution(cScreenSizeX, cScreenSizeY);
-	setViewportSizes(cScreenSizeX, cScreenSizeY, cResSizeMult, +2);
+	setViewportSizes(true, cScreenSizeX, cScreenSizeY, cResSizeMult, 2);
 	setSystemFramerate(cRefreshRate);
 
 	mCurrentPC = cStartOffset;
@@ -283,23 +283,25 @@ void XOCHIP::renderVideoData() {
 		}
 	);
 
-	
 	const auto* pBitColors{ mBitColors.data()};
 	BVS->displayBuffer.write(textureBuffer,
 		[pBitColors](u32 pixel) noexcept {
 			return static_cast<u32>(0xFF | pBitColors[pixel]);
 		}
 	);
+
+	setViewportSizes(isResolutionChanged(false), mDisplayW, mDisplayH,
+		isLargerDisplay() ? cResSizeMult / 2 : cResSizeMult, 2);
 }
 
 void XOCHIP::prepDisplayArea(const Resolution mode) {
-	isLargerDisplay(mode != Resolution::LO);
+	const bool wasLargerDisplay{ isLargerDisplay(mode != Resolution::LO) };
+	isResolutionChanged(wasLargerDisplay != isLargerDisplay());
 
 	const auto W{ isLargerDisplay() ? cScreenSizeX * 2 : cScreenSizeX };
 	const auto H{ isLargerDisplay() ? cScreenSizeY * 2 : cScreenSizeY };
 
 	setDisplayResolution(W, H);
-	setViewportSizes(W, H, isLargerDisplay() ? cResSizeMult / 2 : cResSizeMult, +2);
 
 	mDisplayBuffer[0].resizeClean(W, H);
 	mDisplayBuffer[1].resizeClean(W, H);

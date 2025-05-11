@@ -16,9 +16,8 @@
 BytePusher_CoreInterface::BytePusher_CoreInterface() noexcept
 	: mAudio{ AUDIOFORMAT::S16, 1, 15'360, STREAM::COUNT }
 {
-	if ((sSavestatePath = HDM->addSystemDir("savestate", "BYTEPUSHER"))) {
-		*sSavestatePath /= HDM->getFileSHA1();
-	}
+	if (const auto* path{ HDM->addSystemDir("savestate", "BYTEPUSHER") })
+		{ sSavestatePath = *path / HDM->getFileSHA1(); }
 
 	mAudio.resumeStreams();
 	loadPresetBinds();

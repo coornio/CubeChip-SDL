@@ -16,9 +16,8 @@
 GameBoy_CoreInterface::GameBoy_CoreInterface() noexcept
 	: mAudio{ AUDIOFORMAT::S16, 1, 48'000, 4 }
 {
-	if ((sSavestatePath = HDM->addSystemDir("savestate", "GAMEBOY"))) {
-		*sSavestatePath /= HDM->getFileSHA1();
-	}
+	if (const auto* path{ HDM->addSystemDir("savestate", "GAMEBOY") })
+		{ sSavestatePath = *path / HDM->getFileSHA1(); }
 
 	mAudio.resumeStreams();
 	loadPresetBinds();

@@ -18,7 +18,7 @@ REGISTER_CORE(GAMEBOY_CLASSIC, ".gb")
 GAMEBOY_CLASSIC::GAMEBOY_CLASSIC() {
 
 	setSystemFramerate(cRefreshRate);
-	setViewportSizes(cScreenSizeX, cScreenSizeY, cResSizeMult, +2);
+	setViewportSizes(true, cScreenSizeX, cScreenSizeY, cResSizeMult, 2);
 }
 
 /*==================================================================*/
