@@ -36,8 +36,8 @@ void SystemsInterface::threadEntry(StopToken token) {
 
 SystemsInterface::SystemsInterface() noexcept
 	: mOverlayData{ std::make_shared<Str>() }
-	, Input{ std::make_unique<BasicKeyboard>() }
 	, Pacer{ std::make_unique<FrameLimiter>() }
+	, Input{ std::make_unique<BasicKeyboard>() }
 {
 	static Well512 sWell512;
 	RNG = &sWell512;
