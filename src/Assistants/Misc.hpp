@@ -30,6 +30,12 @@ inline void initialize(Object& array) noexcept {
 
 /*==================================================================*/
 
+template <typename Dst, typename Src>
+inline constexpr void assign_cast(Dst& dst, Src&& src) noexcept
+	{ dst = static_cast<Dst>(std::forward<Src>(src)); }
+
+/*==================================================================*/
+
 inline constexpr auto intByteMult(u32 color1, u32 color2) noexcept {
 	return static_cast<u8>(((color1 * (color2 | color2 << 8)) + 0x8080) >> 16);
 }

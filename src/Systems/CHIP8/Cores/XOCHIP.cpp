@@ -273,19 +273,19 @@ void XOCHIP::renderVideoData() {
 	std::for_each(EXEC_POLICY(unseq)
 		textureBuffer.begin(),
 		textureBuffer.end(),
-		[&](u8& pixel) noexcept {
+		[&](auto& pixel) noexcept {
 			const auto idx{ &pixel - textureBuffer.data() };
-			pixel = static_cast<u8>(
+			assign_cast(pixel,
 				mDisplayBuffer[3](idx) << 3 |
 				mDisplayBuffer[2](idx) << 2 |
 				mDisplayBuffer[1](idx) << 1 |
-				mDisplayBuffer[0](idx));
+				mDisplayBuffer[0](idx)
+			);
 		}
 	);
 
-	const auto* pBitColors{ mBitColors.data()};
 	BVS->displayBuffer.write(textureBuffer,
-		[pBitColors](u32 pixel) noexcept {
+		[pBitColors = mBitColors.data()](u32 pixel) noexcept {
 			return static_cast<u32>(0xFF | pBitColors[pixel]);
 		}
 	);

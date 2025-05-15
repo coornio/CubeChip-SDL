@@ -238,15 +238,11 @@ void SCHIP_LEGACY::renderVideoData() {
 		}
 	);
 
-	std::transform(EXEC_POLICY(unseq)
+	std::for_each(EXEC_POLICY(unseq)
 		mDisplayBuffer[0].begin(),
 		mDisplayBuffer[0].end(),
-		mDisplayBuffer[0].begin(),
-		[](u32 pixel) noexcept {
-			return static_cast<u8>(
-				(pixel & 0x8) | (pixel >> 1)
-			);
-		}
+		[](auto& pixel) noexcept
+			{ assign_cast(pixel, (pixel & 0x8) | (pixel >> 1)); }
 	);
 }
 

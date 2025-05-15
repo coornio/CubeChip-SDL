@@ -7,7 +7,7 @@
 #pragma once
 
 #include "../Chip8_CoreInterface.hpp"
-#include "../../../Assistants/Aligned.hpp"
+#include "../../../Assistants/Map2D.hpp"
 
 /*==================================================================*/
 

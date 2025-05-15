@@ -243,14 +243,11 @@ void CHIP8X::renderVideoData() {
 		});
 	}
 
-	std::transform(EXEC_POLICY(unseq)
+	std::for_each(EXEC_POLICY(unseq)
 		mDisplayBuffer.begin(),
 		mDisplayBuffer.end(),
-		mDisplayBuffer.begin(),
-		[](u32 pixel) noexcept {
-			return static_cast<u8>
-				((pixel & 0x8) | (pixel >> 1));
-		}
+		[](auto& pixel) noexcept
+			{ assign_cast(pixel, (pixel & 0x8) | (pixel >> 1)); }
 	);
 }
 
