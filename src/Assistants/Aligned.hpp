@@ -18,10 +18,10 @@
 template <typename T>
 	requires (std::is_default_constructible_v<T>)
 class Aligned {
+	static_assert(!std::is_const_v<T>, "Aligned<T>: T must not be const-qualified.");
 
 public:
 	using element_type    = T;
-	using axis_size       = std::uint32_t;
 	using size_type       = std::size_t;
 	using difference_type = std::ptrdiff_t;
 	using value_type      = std::remove_cv_t<T>;
@@ -40,9 +40,8 @@ public:
 
 private:
 	struct Deleter {
-		void operator()(T* ptr) const noexcept {
-			::operator delete[](ptr, std::align_val_t(HDIS));
-		}
+		void operator()(T* ptr) const noexcept
+			{ ::operator delete[](ptr, std::align_val_t{ HDIS }); }
 	};
 
 	std::unique_ptr<T[], Deleter> pData{};
@@ -101,9 +100,13 @@ public:
 	Aligned& operator=(Aligned&&) noexcept = default;
 
 public:
-	constexpr pointer   data()  const { return pData.get(); }
-	constexpr reference front() const { return data()[0]; }
-	constexpr reference back()  const { return data()[size() - 1]; }
+	constexpr       pointer   data()        { return pData.get(); }
+	constexpr       reference front()       { return data()[0]; }
+	constexpr       reference back()        { return data()[size() - 1]; }
+
+	constexpr const_pointer   data()  const { return pData.get(); }
+	constexpr const_reference front() const { return data()[0]; }
+	constexpr const_reference back()  const { return data()[size() - 1]; }
 
 	constexpr size_type size()       const noexcept { return mSize; }
 	constexpr size_type size_bytes() const noexcept { return size() * sizeof(value_type); }
@@ -119,25 +122,37 @@ public:
 	explicit constexpr operator bool() const noexcept { return static_cast<bool>(pData); }
 
 public:
-	constexpr reference at(size_type idx) const {
+	constexpr reference at(size_type idx) {
 		if (idx >= size()) { throw std::out_of_range("Aligned.at() index out of range"); }
 		return data()[idx];
 	}
-	constexpr reference operator[](size_type idx) const {
+	constexpr reference operator[](size_type idx) {
+		assert(idx < size() && "Aligned.operator[] index out of bounds");
+		return data()[idx];
+	}
+
+	constexpr const_reference at(size_type idx) const {
+		if (idx >= size()) { throw std::out_of_range("Aligned.at() index out of range"); }
+		return data()[idx];
+	}
+	constexpr const_reference operator[](size_type idx) const {
 		assert(idx < size() && "Aligned.operator[] index out of bounds");
 		return data()[idx];
 	}
 
 public:
-	constexpr iterator begin() const noexcept { return data(); }
-	constexpr iterator end()   const noexcept { return data() + size(); }
+	constexpr iterator begin() noexcept { return data(); }
+	constexpr iterator end()   noexcept { return data() + size(); }
+	constexpr reverse_iterator rbegin() noexcept { return std::make_reverse_iterator(end()); }
+	constexpr reverse_iterator rend()   noexcept { return std::make_reverse_iterator(begin()); }
 
-	constexpr reverse_iterator rbegin() const noexcept { return std::make_reverse_iterator(end()); }
-	constexpr reverse_iterator rend()   const noexcept { return std::make_reverse_iterator(begin()); }
+	constexpr const_iterator begin() const noexcept { return data(); }
+	constexpr const_iterator end()   const noexcept { return data() + size(); }
+	constexpr const_reverse_iterator rbegin() const noexcept { return std::make_reverse_iterator(end()); }
+	constexpr const_reverse_iterator rend()   const noexcept { return std::make_reverse_iterator(begin()); }
 
 	constexpr const_iterator cbegin() const noexcept { return begin(); }
 	constexpr const_iterator cend()   const noexcept { return end(); }
-
-	constexpr const_reverse_iterator crbegin() const noexcept { return std::make_reverse_iterator(cend()); }
-	constexpr const_reverse_iterator crend()   const noexcept { return std::make_reverse_iterator(cbegin()); }
+	constexpr const_reverse_iterator crbegin() const noexcept { return rbegin(); }
+	constexpr const_reverse_iterator crend()   const noexcept { return rend(); }
 };
