@@ -19,12 +19,14 @@
 	#define USE_MUTEX
 #endif
 
+#define USE_MUTEX
+
 #if defined(USE_MUTEX)
 	#include <mutex>
 	#include <shared_mutex>
-#else
-	#include <atomic>
 #endif
+	#include <memory>
+	#include <atomic>
 	#include <algorithm>
 
 /*==================================================================*/
@@ -32,31 +34,24 @@
 template <typename U>
 	requires (std::is_trivially_copyable_v<U>)
 class TripleBuffer {
-	using Buffer = Aligned<U>;
+	using Buffer = AlignedUnique<U>;
 
-	Buffer mDataBuffer[3];
+	alignas(HDIS) Buffer pWorkBuffer;
+	alignas(HDIS) Buffer pSwapBuffer;
+	alignas(HDIS) Buffer pReadBuffer;
 
-	mutable size_type mSize{};
-
-#if defined(USE_MUTEX)
-	mutable bool mBufferIsDirty{};
-	mutable std::shared_mutex mSwapLock{};
-
-	alignas(HDIS) mutable Buffer* pSwapBuffer { &mDataBuffer[1] };
-#else
-	alignas(HDIS) mutable Atom<std::uintptr_t> pSwapBuffer
-		{ reinterpret_cast<std::uintptr_t>(&mDataBuffer[1]) };
-#endif
-
-	alignas(HDIS) mutable Buffer* pWorkBuffer{ &mDataBuffer[0] };
-	alignas(HDIS) mutable Buffer* pReadBuffer{ &mDataBuffer[2] };
+	alignas(HDIS) std::shared_mutex mSwapLock{};
+	              std::atomic<bool> mBufferIsDirty{};
+	              std::size_t mSize{};
 	
 	/*==================================================================*/
 
 public:
-	constexpr TripleBuffer(size_type size = 0)
-		: mDataBuffer{ Buffer(size), Buffer(size), Buffer(size) }
-		, mSize(size)
+	constexpr TripleBuffer(std::size_t buffer_size = 0)
+		: pWorkBuffer{ ::allocate<U>(buffer_size).as_value() }
+		, pSwapBuffer{ ::allocate<U>(buffer_size).as_value() }
+		, pReadBuffer{ ::allocate<U>(buffer_size).as_value() }
+		, mSize(pWorkBuffer && pSwapBuffer && pReadBuffer ? buffer_size : 0)
 	{}
 
 	constexpr TripleBuffer(const TripleBuffer&)  = delete;
@@ -64,93 +59,81 @@ public:
 	TripleBuffer& operator=(const TripleBuffer&) = delete;
 	TripleBuffer& operator=(TripleBuffer&&)      = delete;
 
-	constexpr size_type size() const noexcept { return mSize; }
+	constexpr auto size() const noexcept { return mSize; }
 
 	// DO NOT CALL IF EITHER A CONSUMER OR PRODUCER IS ACTIVE!!
-	void resize(size_type buffer_size) {
+	void resize(std::size_t buffer_size) {
 		mSize = buffer_size;
-		mDataBuffer[0].reallocate(buffer_size); assert(mDataBuffer[0].size());
-		mDataBuffer[1].reallocate(buffer_size); assert(mDataBuffer[1].size());
-		mDataBuffer[2].reallocate(buffer_size); assert(mDataBuffer[2].size());
+		pWorkBuffer.reset(); pWorkBuffer = ::allocate<U>(buffer_size).as_value();
+		pSwapBuffer.reset(); pSwapBuffer = ::allocate<U>(buffer_size).as_value();
+		pReadBuffer.reset(); pReadBuffer = ::allocate<U>(buffer_size).as_value();
+		assert(pWorkBuffer && pSwapBuffer && pReadBuffer);
 	}
 
 	/*==================================================================*/
 
 private:
-	void acquireReadBuffer() const noexcept {
-	#if defined(USE_MUTEX)
-		std::unique_lock lock{ mSwapLock };
-		if (mBufferIsDirty) {
+	void acquireReadBuffer() noexcept {
+		if (mBufferIsDirty.load(mo::acquire)) {
+			std::unique_lock lock{ mSwapLock };
 			std::swap(pReadBuffer, pSwapBuffer);
-			mBufferIsDirty = false;
+			mBufferIsDirty.store(false, mo::release);
 		}
-	#else
-		if (pSwapBuffer.load(mo::relaxed) & 0x1ull) {
-			auto prev{ pSwapBuffer.exchange(reinterpret_cast<std::uintptr_t>(pReadBuffer), mo::acq_rel) };
-			pReadBuffer = reinterpret_cast<Buffer*>(prev & ~0x1ull);
-		}
-	#endif
 	}
 
 public:
-	Buffer copy(size_type amount) const {
+	Buffer copy(std::size_t amount) {
 		Buffer temp(amount);
 		acquireReadBuffer();
 
 		std::copy_n(EXEC_POLICY(unseq)
-			(*pReadBuffer).data(), std::min(size(), amount), temp.data());
+			pReadBuffer.get(), std::min(size(), amount), temp.data());
 
 		return temp;
 	}
 
-	Buffer copy() const {
+	Buffer copy() {
 		Buffer temp(size());
 		acquireReadBuffer();
 
-		std::copy(EXEC_POLICY(unseq)
-			(*pReadBuffer).begin(), (*pReadBuffer).end(), temp.data());
+		std::copy_n(EXEC_POLICY(unseq)
+			pReadBuffer.get(), size(), temp.data());
 
 		return temp;
 	}
 
 	template <typename T>
 		requires (sizeof(T) == sizeof(U) && std::is_trivially_copyable_v<T>)
-	void read(T* output, size_type N = 0) const noexcept {
+	void read(T* output, std::size_t N = 0) noexcept {
 		acquireReadBuffer();
 		
 		std::copy_n(EXEC_POLICY(unseq)
-			(*pReadBuffer).begin(), std::min(size(), N ? N : size()), output);
+			pReadBuffer.get(), std::min(size(), N ? N : size()), output);
 	}
 
 	template <IsContiguousContainer T>
 		requires MatchingValueType<T, U>
-	void read(T& output) const noexcept {
+	void read(T& output) noexcept {
 		acquireReadBuffer();
 		
 		std::copy(EXEC_POLICY(unseq)
-			(*pReadBuffer).begin(), (*pReadBuffer).end(), std::data(output));
+			pReadBuffer.get(), pReadBuffer.get() + mSize, std::data(output));
 	}
 
 	/*==================================================================*/
 
 private:
-	void commitWorkerChanges() const noexcept {
-	#if defined(USE_MUTEX)
-		std::unique_lock lock{ mSwapLock };
+	void commitWorkerChanges() noexcept {
 		std::swap(pWorkBuffer, pSwapBuffer);
-		mBufferIsDirty = true;
-	#else
-		const auto dirty{ 0x1ull | reinterpret_cast<std::uintptr_t>(pWorkBuffer) };
-		auto prev{ pSwapBuffer.exchange(dirty, mo::acq_rel) & ~0x1ull };
-		pWorkBuffer = reinterpret_cast<Buffer*>(prev);
-	#endif
+		mBufferIsDirty.store(true, mo::release);
 	}
 
 public:
 	template <typename T, typename Lambda>
-	void write(const T* data, size_type N, Lambda&& function) {
+	void write(const T* data, std::size_t N, Lambda&& function) {
+		std::unique_lock lock{ mSwapLock };
 		std::transform(EXEC_POLICY(unseq)
-			data, data + N, (*pWorkBuffer).data(), function);
+			data, data + N, pWorkBuffer.get(), function);
 		
 		commitWorkerChanges();
 	}
@@ -158,24 +141,27 @@ public:
 	template <IsContiguousContainer T>
 		requires (sizeof(ValueType<T>) == sizeof(U) && std::is_trivially_copyable_v<ValueType<T>>)
 	void write(const T& data) {
+		std::unique_lock lock{ mSwapLock };
 		std::copy(EXEC_POLICY(unseq)
-			std::begin(data), std::end(data), (*pWorkBuffer).data());
+			std::begin(data), std::end(data), pWorkBuffer.get());
 		
 		commitWorkerChanges();
 	}
 
 	template <IsContiguousContainer T, typename Lambda>
 	void write(const T& data, Lambda&& function) {
+		std::unique_lock lock{ mSwapLock };
 		std::transform(EXEC_POLICY(unseq)
-			std::begin(data), std::end(data), (*pWorkBuffer).data(), function);
+			std::begin(data), std::end(data), pWorkBuffer.get(), function);
 		
 		commitWorkerChanges();
 	}
 
 	template <IsContiguousContainer T, typename Lambda>
 	void write(const T& data1, const T& data2, Lambda&& function) {
+		std::unique_lock lock{ mSwapLock };
 		std::transform(EXEC_POLICY(unseq)
-			std::begin(data1), std::end(data1), std::begin(data2), (*pWorkBuffer).data(), function);
+			std::begin(data1), std::end(data1), std::begin(data2), pWorkBuffer.get(), function);
 		
 		commitWorkerChanges();
 	}

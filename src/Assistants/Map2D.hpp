@@ -7,16 +7,20 @@
 #pragma once
 
 #include "RangeIterator.hpp"
+#include "Aligned.hpp"
 
 #include <span>
+#include <array>
 #include <cmath>
 #include <cassert>
 #include <memory>
 #include <algorithm>
 #include <utility>
 
-#pragma region Map2D Class
-template <typename T> requires (std::is_default_constructible_v<T>)
+/*==================================================================*/
+
+template <typename T>
+	requires (std::is_default_constructible_v<T>)
 class Map2D final {
 	using self = Map2D;
 
@@ -42,7 +46,7 @@ public:
 private:
 	axis_size mCols;
 	axis_size mRows;
-	std::unique_ptr<T[]> pData;
+	AlignedUnique<T> pData;
 
 public:
 	constexpr size_type size()       const noexcept { return mRows * mCols; }
@@ -76,22 +80,28 @@ public:
 	constexpr Map2D(size_type cols = 1u, size_type rows = 1u)
 		: mCols{ std::max(1u, static_cast<axis_size>(cols)) }
 		, mRows{ std::max(1u, static_cast<axis_size>(rows)) }
-		, pData{ std::make_unique<T[]>(size()) }
+		, pData{ ::allocate<T>(size()).as_value() }
 	{}
 	#pragma endregion
 	
 	#pragma region Copy/Move Ctor
-	constexpr Map2D(self&&) = default; // move constructor
+	constexpr Map2D(self&& other) noexcept
+		: mCols{ std::exchange(other.mCols, 0) }
+		, mRows{ std::exchange(other.mRows, 0) }
+		, pData{ std::move(other.pData) }
+	{}
 	constexpr Map2D(const self& other) // copy constructor
 		: Map2D{ other.mCols, other.mRows }
-	{
-		std::copy(EXEC_POLICY(unseq)
-			other.begin(), other.end(), begin());
-	}
+	{}
 	#pragma endregion
 
 	#pragma region Move/Copy Assignment
-	constexpr self& operator=(self&&) = default;   // move assignment
+	constexpr self& operator=(self&& other) {
+		pData = std::move(other.pData);
+		mCols = std::exchange(other.mCols, 0);
+		mRows = std::exchange(other.mRows, 0);
+		return *this;
+	}
 	constexpr self& operator=(const self& other) { // copy assignment
 		if (this != &other && size() == other.size()) {
 			std::copy(EXEC_POLICY(unseq)
@@ -164,12 +174,13 @@ public:
 		const auto minCols{ std::min(cols, lenX()) };
 		const auto minRows{ std::min(rows, lenY()) };
 
-		auto pCopy{ std::make_unique<T[]>(rows * cols) };
+		auto pCopy{ ::allocate<T>(rows * cols).as_value() };
+		if (!pCopy) { return; }
 
 		for (size_type row{ 0u }; row < minRows; ++row) {
 			const auto srcIdx{ pData.get() + row * lenX() };
-			const auto dstIdx{ pCopy.get() + row * cols };
-			std::move_if_noexcept(EXEC_POLICY(unseq)
+			const auto dstIdx{ pCopy.get() + row * cols};
+			std::move(EXEC_POLICY(unseq)
 				srcIdx, srcIdx + minCols, dstIdx);
 		}
 
@@ -186,7 +197,8 @@ public:
 		mCols = static_cast<axis_size>(cols);
 		mRows = static_cast<axis_size>(rows);
 
-		pData = std::make_unique<T[]>(size());
+		pData.reset();
+		pData = ::allocate<T>(size()).as_value();
 		return *this;
 	}
 	#pragma endregion
@@ -448,8 +460,6 @@ public:
 
 	constexpr const_iterator cbegin() const noexcept { return begin(); }
 	constexpr const_iterator cend()   const noexcept { return end(); }
-
 	constexpr const_reverse_iterator crbegin() const noexcept { return std::make_reverse_iterator(cend()); }
 	constexpr const_reverse_iterator crend()   const noexcept { return std::make_reverse_iterator(cbegin()); }
 };
-#pragma endregion
