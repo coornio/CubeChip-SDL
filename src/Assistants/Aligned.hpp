@@ -205,7 +205,8 @@ inline AlignedMemoryBlock<T, N> allocate(std::size_t size) noexcept {
 template <typename T>
 	requires (std::is_default_constructible_v<T>)
 class Aligned {
-	static_assert(!std::is_const_v<T>, "Aligned<T>: T must not be const-qualified.");
+	static_assert(!std::is_const_v<T>,
+		"T must not be const-qualified.");
 
 public:
 	using element_type    = T;
@@ -227,10 +228,12 @@ public:
 
 private:
 	AlignedUnique<T> pData{};
+	size_type mSize{};
 
 public:
 	Aligned(size_type size = 0) noexcept
 		: pData{ ::allocate<T>(size).as_value() }
+		, mSize{ pData ? size : 0 }
 	{}
 
 	void initialize(const value_type& value = value_type()) noexcept {
@@ -263,6 +266,7 @@ public:
 	void reallocate(size_type size) {
 		pData.reset();
 		pData = ::allocate<T>(size).as_value();
+		mSize = pData ? size : 0;
 	}
 
 	Aligned(const Aligned&)            = delete;
@@ -280,7 +284,7 @@ public:
 	constexpr const_reference front() const { return data()[0]; }
 	constexpr const_reference back()  const { return data()[size() - 1]; }
 
-	constexpr size_type size()       const noexcept { return ::size(); }
+	constexpr size_type size()       const noexcept { return mSize; }
 	constexpr size_type size_bytes() const noexcept { return size() * sizeof(value_type); }
 	constexpr bool      empty()      const noexcept { return size() == 0; }
 	constexpr auto      span()       const noexcept { return std::span(data(), size()); }
