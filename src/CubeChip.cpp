@@ -26,10 +26,6 @@
 #include <SDL3/SDL_hints.h>
 #include <SDL3/SDL_version.h>
 
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-	#error Only little-endian systems are supported!
-#endif
-
 /*==================================================================*/
 
 BasicLogger& blog{ *BasicLogger::initialize() };
@@ -37,6 +33,8 @@ BasicLogger& blog{ *BasicLogger::initialize() };
 /*==================================================================*/
 
 SDL_AppResult SDL_AppInit(void **Host, int argc, char *argv[]) {
+	static_assert(std::endian::native == std::endian::little,
+		"Only little-endian systems are supported!");
 
 #ifdef _WIN32
 	_setmbcp(CP_UTF8);
