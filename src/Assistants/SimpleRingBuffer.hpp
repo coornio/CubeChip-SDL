@@ -22,7 +22,7 @@
 
 /**
  * @brief A lock-free, multi-producer, multi-consumer ring buffer.
- * @tparam T :: The type stored in the buffer. Must be default constructible.
+ * @tparam T :: The type stored in the buffer. Must be nothrow default constructible.
  * @tparam N :: The number of slots in the buffer. Must be a power of two, and at least 8.
  * @details This ring buffer allows concurrent push and read operations from multiple threads.
  *          Internally uses atomic operations and shared pointers to manage lifetime.
@@ -33,7 +33,7 @@
  * @endcode
  */
 template <typename T, std::size_t N = 8>
-	requires (std::is_default_constructible_v<T>)
+	requires (std::is_nothrow_default_constructible_v<T>)
 class SimpleRingBuffer {
 	static_assert((N & (N - 1)) == 0, "Buffer size (N) must be a power of two.");
 	static_assert(N >= 8, "Buffer size (N) must be at least 8.");

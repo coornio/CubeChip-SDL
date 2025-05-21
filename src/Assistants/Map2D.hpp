@@ -53,12 +53,16 @@ public:
 	constexpr size_type lenX() const noexcept { return mCols; }
 	constexpr size_type lenY() const noexcept { return mRows; }
 
-	constexpr pointer   data()  const { return pData.get(); }
-	constexpr reference front() const { return data()[0]; }
-	constexpr reference back()  const { return data()[size() - 1]; }
+	constexpr pointer   data()  { return pData.get(); }
+	constexpr reference front() { return data()[0]; }
+	constexpr reference back()  { return data()[size() - 1]; }
+
+	constexpr const_pointer   data()  const { return pData.get(); }
+	constexpr const_reference front() const { return data()[0]; }
+	constexpr const_reference back()  const { return data()[size() - 1]; }
 
 	constexpr auto first(size_type count) const { return RangeProxy(data(), count); }
-	constexpr auto last(size_type count)  const { return RangeProxy(data(), size() - count); }
+	constexpr auto last (size_type count) const { return RangeProxy(data(), size() - count); }
 
 	constexpr auto makeRowIter(size_type row)  const { return RangeIterator(data() + row * lenX(), lenX()); }
 	constexpr auto makeRowProxy(size_type row) const { return *makeRowIter(row); }
@@ -353,7 +357,7 @@ public:
 	 * @return Self reference for method chaining.
 	 */
 	constexpr self& transpose() {
-		if (lenX() > 1 || lenY() > 1) {
+		if (size() > 1) {
 			for (size_type a{ 1u }, b{ 1u }; a < size() - 1u; b = ++a) {
 				do { b = (b % lenY()) * lenX() + (b / lenY()); }
 					while (b < a);
@@ -367,32 +371,64 @@ public:
 	#pragma endregion
 
 public:
-	constexpr reference at(size_type idx) const {
+	constexpr reference at(size_type idx) {
 		if (idx >= size()) { throw std::out_of_range("Map2D.at() index out of range"); }
 		return data()[idx];
 	}
-	constexpr reference at(size_type col, size_type row) const {
+	constexpr reference at(size_type col, size_type row) {
 		if (col >= lenX()) { throw std::out_of_range("Map2D.at() col out of range"); }
 		if (row >= lenY()) { throw std::out_of_range("Map2D.at() row out of range"); }
 		return data()[row * lenX() + col];
 	}
 
-	constexpr reference operator()(size_type idx) const {
+	constexpr const_reference at(size_type idx) const {
+		if (idx >= size()) { throw std::out_of_range("Map2D.at() index out of range"); }
+		return data()[idx];
+	}
+	constexpr const_reference at(size_type col, size_type row) const {
+		if (col >= lenX()) { throw std::out_of_range("Map2D.at() col out of range"); }
+		if (row >= lenY()) { throw std::out_of_range("Map2D.at() row out of range"); }
+		return data()[row * lenX() + col];
+	}
+
+	constexpr reference operator()(size_type idx) {
 		assert(idx < size() && "Map2D.operator() index out of bounds");
 		return data()[idx];
 	}
-	constexpr reference operator[](size_type idx) const {
+	constexpr reference operator[](size_type idx) {
+		assert(idx < size() && "Map2D.operator[] index out of bounds");
+		return data()[idx];
+	}
+
+	constexpr const_reference operator()(size_type idx) const {
+		assert(idx < size() && "Map2D.operator() index out of bounds");
+		return data()[idx];
+	}
+	constexpr const_reference operator[](size_type idx) const {
 		assert(idx < size() && "Map2D.operator[] index out of bounds");
 		return data()[idx];
 	}
 	
-	constexpr reference operator()(size_type col, size_type row) const {
+	constexpr reference operator()(size_type col, size_type row) {
 		assert(col < lenX() && "Map2D.operator[] col out of bounds");
 		assert(row < lenY() && "Map2D.operator[] row out of bounds");
 		return data()[row * lenX() + col];
 	}
 	#ifndef _MSC_VER
-	constexpr reference operator[](size_type col, size_type row) const {
+	constexpr reference operator[](size_type col, size_type row) {
+		assert(col < lenX() && "Map2D.operator[] col out of bounds");
+		assert(row < lenY() && "Map2D.operator[] row out of bounds");
+		return data()[row * lenX() + col];
+	}
+	#endif
+	
+	constexpr const_reference operator()(size_type col, size_type row) const {
+		assert(col < lenX() && "Map2D.operator[] col out of bounds");
+		assert(row < lenY() && "Map2D.operator[] row out of bounds");
+		return data()[row * lenX() + col];
+	}
+	#ifndef _MSC_VER
+	constexpr const_reference operator[](size_type col, size_type row) const {
 		assert(col < lenX() && "Map2D.operator[] col out of bounds");
 		assert(row < lenY() && "Map2D.operator[] row out of bounds");
 		return data()[row * lenX() + col];
@@ -400,11 +436,15 @@ public:
 	#endif
 
 public:
-	constexpr iterator begin() const noexcept { return data(); }
-	constexpr iterator end()   const noexcept { return data() + size(); }
+	constexpr iterator begin() noexcept { return data(); }
+	constexpr iterator end()   noexcept { return data() + size(); }
+	constexpr reverse_iterator rbegin()noexcept { return std::make_reverse_iterator(end()); }
+	constexpr reverse_iterator rend()  noexcept { return std::make_reverse_iterator(begin()); }
 
-	constexpr reverse_iterator rbegin() const noexcept { return std::make_reverse_iterator(end()); }
-	constexpr reverse_iterator rend()   const noexcept { return std::make_reverse_iterator(begin()); }
+	constexpr const_iterator begin() const noexcept { return data(); }
+	constexpr const_iterator end()   const noexcept { return data() + size(); }
+	constexpr const_reverse_iterator rbegin() const noexcept { return std::make_reverse_iterator(end()); }
+	constexpr const_reverse_iterator rend()   const noexcept { return std::make_reverse_iterator(begin()); }
 
 	constexpr const_iterator cbegin() const noexcept { return begin(); }
 	constexpr const_iterator cend()   const noexcept { return end(); }
