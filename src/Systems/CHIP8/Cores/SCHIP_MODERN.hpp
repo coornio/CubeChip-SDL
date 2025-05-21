@@ -38,7 +38,7 @@ class SCHIP_MODERN final : public Chip8_CoreInterface {
 	void writeMemoryI(u32 value, u32 pos) noexcept {
 		const auto index{ mRegisterI + pos };
 		if (!(index & cTotalMemory)) [[likely]]
-			{ mMemoryBank[index] = value & 0xFF; }
+			{ ::assign_cast(mMemoryBank[index], value); }
 	}
 
 	auto readMemoryI(u32 pos) const noexcept {

@@ -82,7 +82,7 @@ class MEGACHIP final : public Chip8_CoreInterface {
 
 	void writeMemory(u32 value, u32 pos) noexcept {
 		if (pos < cTotalMemory) [[likely]]
-			{ mMemoryBank[pos] = value & 0xFF; }
+			{ ::assign_cast(mMemoryBank[pos], value); }
 	}
 
 	void writeMemoryI(u32 value, u32 pos) noexcept {

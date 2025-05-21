@@ -242,7 +242,7 @@ void SCHIP_LEGACY::renderVideoData() {
 		mDisplayBuffer[0].begin(),
 		mDisplayBuffer[0].end(),
 		[](auto& pixel) noexcept
-			{ assign_cast(pixel, (pixel & 0x8) | (pixel >> 1)); }
+			{ ::assign_cast(pixel, (pixel & 0x8) | (pixel >> 1)); }
 	);
 }
 
@@ -387,28 +387,28 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 	}
 	void SCHIP_LEGACY::instruction_8xy4(s32 X, s32 Y) noexcept {
 		const auto sum{ mRegisterV[X] + mRegisterV[Y] };
-		mRegisterV[X]   = static_cast<u8>(sum);
-		mRegisterV[0xF] = static_cast<u8>(sum >> 8);
+		::assign_cast(mRegisterV[X], sum);
+		::assign_cast(mRegisterV[0xF], sum >> 8);
 	}
 	void SCHIP_LEGACY::instruction_8xy5(s32 X, s32 Y) noexcept {
 		const bool nborrow{ mRegisterV[X] >= mRegisterV[Y] };
-		mRegisterV[X]   = static_cast<u8>(mRegisterV[X] - mRegisterV[Y]);
-		mRegisterV[0xF] = static_cast<u8>(nborrow);
+		::assign_cast(mRegisterV[X], mRegisterV[X] - mRegisterV[Y]);
+		::assign_cast(mRegisterV[0xF], nborrow);
 	}
 	void SCHIP_LEGACY::instruction_8xy7(s32 X, s32 Y) noexcept {
 		const bool nborrow{ mRegisterV[Y] >= mRegisterV[X] };
-		mRegisterV[X]   = static_cast<u8>(mRegisterV[Y] - mRegisterV[X]);
-		mRegisterV[0xF] = static_cast<u8>(nborrow);
+		::assign_cast(mRegisterV[X], mRegisterV[Y] - mRegisterV[X]);
+		::assign_cast(mRegisterV[0xF], nborrow);
 	}
 	void SCHIP_LEGACY::instruction_8xy6(s32 X, s32  ) noexcept {
 		const bool lsb{ (mRegisterV[X] & 1) == 1 };
-		mRegisterV[X]   = static_cast<u8>(mRegisterV[X] >> 1);
-		mRegisterV[0xF] = static_cast<u8>(lsb);
+		::assign_cast(mRegisterV[X], mRegisterV[X] >> 1);
+		::assign_cast(mRegisterV[0xF], lsb);
 	}
 	void SCHIP_LEGACY::instruction_8xyE(s32 X, s32  ) noexcept {
 		const bool msb{ (mRegisterV[X] >> 7) == 1 };
-		mRegisterV[X]   = static_cast<u8>(mRegisterV[X] << 1);
-		mRegisterV[0xF] = static_cast<u8>(msb);
+		::assign_cast(mRegisterV[X], mRegisterV[X] << 1);
+		::assign_cast(mRegisterV[0xF], msb);
 	}
 
 	#pragma endregion
