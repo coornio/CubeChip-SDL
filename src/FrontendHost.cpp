@@ -210,7 +210,7 @@ void FrontendHost::checkForHotkeys() {
 		if (Input.isPressed(KEY(F11))) {
 			mShowOverlay = !mShowOverlay;
 		}
-		if (Input.isPressed(KEY(F12))) {
+		if (Input.isPressed(KEY(F10))) {
 			mUnlimited = !mUnlimited;
 			toggleSystemLimiter();
 		}

@@ -330,6 +330,9 @@
     <ClInclude Include="src\Assistants\AudioSpecBlock.hpp">
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
+    <ClInclude Include="src\Assistants\FriendlyUnique.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="src\Libraries\imgui\debuggers\imgui.natvis" />

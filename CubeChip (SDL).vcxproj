@@ -70,6 +70,7 @@
     <ClInclude Include="src\Assistants\Concepts.hpp" />
     <ClInclude Include="src\Assistants\DefaultConfig.hpp" />
     <ClInclude Include="src\Assistants\FrameLimiter.hpp" />
+    <ClInclude Include="src\Assistants\FriendlyUnique.hpp" />
     <ClInclude Include="src\Assistants\FrontendInterface.hpp" />
     <ClInclude Include="src\Assistants\HomeDirManager.hpp" />
     <ClInclude Include="src\Assistants\LifetimeWrapperSDL.hpp" />
@@ -145,7 +146,7 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
-    <EnableASAN>true</EnableASAN>
+    <EnableASAN>false</EnableASAN>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -237,12 +238,15 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <UseDynamicDebugging>
+      </UseDynamicDebugging>
+      <OmitFramePointers>false</OmitFramePointers>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>SDL3.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <Profile>true</Profile>
     </Link>
   </ItemDefinitionGroup>
@@ -273,6 +277,10 @@
       <StructMemberAlignment>Default</StructMemberAlignment>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <UseDynamicDebugging>
+      </UseDynamicDebugging>
+      <Optimization>MaxSpeed</Optimization>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -281,7 +289,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>SDL3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <Profile>true</Profile>
-      <LinkTimeCodeGeneration>PGInstrument</LinkTimeCodeGeneration>
+      <LinkTimeCodeGeneration>PGOptimization</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

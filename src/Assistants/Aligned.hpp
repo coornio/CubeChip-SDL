@@ -46,7 +46,7 @@ public:
 	void operator()(T* ptr) const
 		noexcept(std::is_nothrow_destructible_v<T>)
 	{
-		std::destroy_n(EXEC_POLICY(unseq) ptr, mSize);
+		if (ptr) { std::destroy_n(EXEC_POLICY(unseq) ptr, mSize); }
 		::operator delete[](ptr, std::align_val_t(N));
 	}
 
@@ -101,18 +101,21 @@ template <Allocatable T, std::size_t N>
 class AlignedMemoryBlock {
 	using memory_type = AlignedUnique<T, N>;
 	using self = AlignedMemoryBlock;
+	using size_type = std::size_t;
 
 	memory_type mAllocated;
-	std::size_t mSize{};
+	size_type mSize{};
+	size_type mOffset{};
 
-	[[nodiscard]] memory_type mark_constructed_and_release() noexcept {
-		mSize |= (1ull << 63);
-		return std::move(mAllocated);
-	}
+private:
+	friend self allocate<T, N>(std::size_t) noexcept;
 
-	AlignedMemoryBlock(T* ptr, std::size_t size) noexcept
+	AlignedMemoryBlock(T* ptr, size_type size) noexcept
 		: mAllocated{ ptr, { size } }, mSize{ size }
 	{}
+
+	constexpr size_type clamp_element_construction_count(size_type count) const noexcept
+		{ return count ? std::min(count, remaining_count()) : remaining_count(); }
 
 public:
 	AlignedMemoryBlock(const self&) = delete;
@@ -120,68 +123,135 @@ public:
 	self& operator=(const self&) = delete;
 	self& operator=(self&&)      = default;
 
-	friend self allocate<T, N>(std::size_t) noexcept;
+public:
+	constexpr size_type element_count()   const noexcept { return mSize; }
+	constexpr size_type construct_count() const noexcept { return mOffset; }
+	constexpr size_type remaining_count() const noexcept { return element_count() - construct_count(); }
 
-	constexpr auto element_count()  const noexcept { return mSize & ~(1ull << 63); }
-	constexpr bool is_constructed() const noexcept { return mSize >> 63 != 0ull; }
+public:
+	constexpr bool is_constructed() const noexcept { return construct_count() >= element_count(); }
 	constexpr bool has_valid_ptr()  const noexcept { return mAllocated.get() != nullptr; }
 
-	[[nodiscard]] memory_type as_value()
+	[[nodiscard]] memory_type release() noexcept
+		{ return has_valid_ptr() ? std::move(mAllocated) : memory_type{}; }
+
+	/*==================================================================*/
+
+public:
+	[[nodiscard]] self& as_value(size_type count = 0u) &
 		noexcept(std::is_nothrow_constructible_v<T>)
 		requires(std::is_default_constructible_v<T>)
 	{
 		if (has_valid_ptr() && !is_constructed()) {
-			std::uninitialized_value_construct_n(mAllocated.get(), element_count());
-			return mark_constructed_and_release();
+			const auto safe_count{ clamp_element_construction_count(count) };
+			std::uninitialized_value_construct_n(EXEC_POLICY(unseq)
+				mAllocated.get() + construct_count(), safe_count);
+			mOffset += safe_count;
 		}
-		return memory_type{};
+		return *this;
 	}
 
-	[[nodiscard]] memory_type as_default()
+	[[nodiscard]] self as_value(size_type count = 0u) &&
+		noexcept(std::is_nothrow_constructible_v<T>)
+		requires(std::is_default_constructible_v<T>)
+	{
+		return std::move(this->as_value(count));
+	}
+
+	[[nodiscard]] self& as_default(size_type count = 0u) &
 		noexcept(std::is_nothrow_default_constructible_v<T>)
 		requires(std::is_default_constructible_v<T>)
 	{
 		if (has_valid_ptr() && !is_constructed()) {
-			std::uninitialized_default_construct_n(mAllocated.get(), element_count());
-			return mark_constructed_and_release();
+			const auto safe_count{ clamp_element_construction_count(count) };
+			std::uninitialized_default_construct_n(EXEC_POLICY(unseq)
+				mAllocated.get() + construct_count(), safe_count);
+			mOffset += safe_count;
 		}
-		return memory_type{};
+		return *this;
+	}
+
+	[[nodiscard]] self as_default(size_type count = 0u) &&
+		noexcept(std::is_nothrow_default_constructible_v<T>)
+		requires(std::is_default_constructible_v<T>)
+	{
+		return std::move(this->as_default(count));
 	}
 
 	template <typename V>
-	[[nodiscard]] memory_type by_fill(V&& value)
+	[[nodiscard]] self& by_fill(V&& value, size_type count = 0u) &
 		noexcept(std::is_nothrow_copy_constructible_v<T>)
 		requires(std::is_copy_constructible_v<T> && std::is_convertible_v<V&&, T>)
 	{
 		if (has_valid_ptr() && !is_constructed()) {
-			std::uninitialized_fill_n(mAllocated.get(), element_count(), std::forward<V>(value));
-			return mark_constructed_and_release();
+			const auto safe_count{ clamp_element_construction_count(count) };
+			std::uninitialized_fill_n(EXEC_POLICY(unseq)
+				mAllocated.get() + construct_count(), safe_count, std::forward<V>(value));
+			mOffset += safe_count;
 		}
-		return memory_type{};
+		return *this;
 	}
 
 	template <typename V>
-	[[nodiscard]] memory_type by_copy(std::span<const V> from)
+	[[nodiscard]] self by_fill(V&& value, size_type count = 0u) &&
+		noexcept(std::is_nothrow_copy_constructible_v<T>)
+		requires(std::is_copy_constructible_v<T> && std::is_convertible_v<V&&, T>)
+	{
+		return std::move(this->by_fill(std::forward<V>(value), count));
+	}
+
+	// * No range overlap protection for trivial T=V types in fast path.
+	template <typename V>
+	[[nodiscard]] self& by_copy(const V* from, size_type count = 0u) &
 		noexcept(std::is_nothrow_copy_constructible_v<T>)
 		requires(std::is_copy_constructible_v<T> && std::is_convertible_v<V, T>)
 	{
-		if (has_valid_ptr() && !is_constructed() && from.size() >= element_count()) {
-			std::uninitialized_copy_n(from.begin(), element_count(), mAllocated.get());
-			return mark_constructed_and_release();
+		if (has_valid_ptr() && !is_constructed()) {
+			const auto safe_count{ clamp_element_construction_count(count) };
+			if constexpr (std::is_same_v<T, V> && std::is_trivially_copyable_v<T> && std::is_trivially_destructible_v<T>) {
+				std::memcpy(mAllocated.get() + construct_count(), from, safe_count * sizeof(T));
+			} else {
+				std::uninitialized_copy_n(EXEC_POLICY(unseq)
+					from, safe_count, mAllocated.get() + construct_count());
+			}
+			mOffset += safe_count;
 		}
-		return memory_type{};
+		return *this;
+	}
+
+	// * No range overlap protection for trivial T=V types in fast path.
+	template <typename V>
+	[[nodiscard]] self by_copy(const V* from, size_type count = 0u) &&
+		noexcept(std::is_nothrow_copy_constructible_v<T>)
+		requires(std::is_copy_constructible_v<T> && std::is_convertible_v<V, T>)
+	{
+		return std::move(this->by_copy(from, count));
 	}
 
 	template <typename V>
-	[[nodiscard]] memory_type by_move(std::span<V> from)
+	[[nodiscard]] self& by_move(V* from, size_type count = 0u) &
 		noexcept(std::is_nothrow_move_constructible_v<T>)
 		requires(std::is_move_constructible_v<T> && std::is_convertible_v<V, T>)
 	{
-		if (has_valid_ptr() && !is_constructed() && from.size() >= element_count()) {
-			std::uninitialized_move_n(from.begin(), element_count(), mAllocated.get());
-			return mark_constructed_and_release();
+		if (has_valid_ptr() && !is_constructed()) {
+			const auto safe_count{ clamp_element_construction_count(count) };
+			if constexpr (std::is_same_v<T, V> && std::is_trivially_move_constructible_v<T> && std::is_trivially_destructible_v<T>) {
+				std::memmove(mAllocated.get() + construct_count(), from, safe_count * sizeof(T));
+			} else {
+				std::uninitialized_move_n(EXEC_POLICY(unseq)
+					from, safe_count, mAllocated.get() + construct_count());
+			}
+			mOffset += safe_count;
 		}
-		return memory_type{};
+		return *this;
+	}
+
+	template <typename V>
+	[[nodiscard]] self by_move(V* from, size_type count = 0u) &&
+		noexcept(std::is_nothrow_move_constructible_v<T>)
+		requires(std::is_move_constructible_v<T> && std::is_convertible_v<V, T>)
+	{
+		return std::move(this->by_move(from, count));
 	}
 };
 
@@ -199,136 +269,3 @@ inline AlignedMemoryBlock<T, N> allocate(std::size_t size) noexcept {
 #ifdef MAX_ALIGN
 	#undef MAX_ALIGN
 #endif
-
-/*==================================================================*/
-
-template <typename T>
-	requires (std::is_default_constructible_v<T>)
-class Aligned {
-	static_assert(!std::is_const_v<T>,
-		"T must not be const-qualified.");
-
-public:
-	using element_type    = T;
-	using size_type       = std::size_t;
-	using difference_type = std::ptrdiff_t;
-	using value_type      = std::remove_cv_t<T>;
-
-	using pointer       = T*;
-	using const_pointer = const T*;
-
-	using reference       = T&;
-	using const_reference = const T&;
-
-	using iterator       = T*;
-	using const_iterator = const T*;
-
-	using reverse_iterator       = std::reverse_iterator<iterator>;
-	using const_reverse_iterator = std::reverse_iterator<const_iterator>;
-
-private:
-	AlignedUnique<T> pData{};
-	size_type mSize{};
-
-public:
-	Aligned(size_type size = 0) noexcept
-		: pData{ ::allocate<T>(size).as_value() }
-		, mSize{ pData ? size : 0 }
-	{}
-
-	void initialize(const value_type& value = value_type()) noexcept {
-		if (!size()) { return; }
-		std::fill(EXEC_POLICY(unseq)
-			begin(), end(), value);
-	}
-
-	void resize(size_type new_size) noexcept {
-		static_assert(std::is_copy_constructible_v<T> || std::is_move_constructible_v<T>,
-			"T must be copy or move constructible.");
-
-		if (new_size == size()) { return; }
-
-		Aligned other(new_size);
-		if (other.size() != new_size) { return; }
-
-		/**/ if constexpr (std::is_move_constructible_v<T>) {
-			std::move(EXEC_POLICY(unseq)
-				data(), data() + std::min(size(), new_size), other.data());
-		}
-		else if constexpr (std::is_copy_constructible_v<T>) {
-			std::copy(EXEC_POLICY(unseq)
-				data(), data() + std::min(size(), new_size), other.data());
-		}
-
-		*this = std::move(other);
-	}
-
-	void reallocate(size_type size) {
-		pData.reset();
-		pData = ::allocate<T>(size).as_value();
-		mSize = pData ? size : 0;
-	}
-
-	Aligned(const Aligned&)            = delete;
-	Aligned& operator=(const Aligned&) = delete;
-
-	Aligned(Aligned&&)            noexcept = default;
-	Aligned& operator=(Aligned&&) noexcept = default;
-
-public:
-	constexpr       pointer   data()        { return pData.get(); }
-	constexpr       reference front()       { return data()[0]; }
-	constexpr       reference back()        { return data()[size() - 1]; }
-
-	constexpr const_pointer   data()  const { return pData.get(); }
-	constexpr const_reference front() const { return data()[0]; }
-	constexpr const_reference back()  const { return data()[size() - 1]; }
-
-	constexpr size_type size()       const noexcept { return mSize; }
-	constexpr size_type size_bytes() const noexcept { return size() * sizeof(value_type); }
-	constexpr bool      empty()      const noexcept { return size() == 0; }
-	constexpr auto      span()       const noexcept { return std::span(data(), size()); }
-
-	constexpr auto first(size_type count) const { return RangeProxy(data(), count); }
-	constexpr auto last (size_type count) const { return RangeProxy(data(), size() - count); }
-
-	// cast underlying data to a RangeProxy (span) for a lot of added functionality
-	constexpr auto operator*() const noexcept { return RangeProxy(data(), size()); }
-
-	explicit constexpr operator bool() const noexcept { return static_cast<bool>(pData); }
-
-public:
-	constexpr reference at(size_type idx) {
-		if (idx >= size()) { throw std::out_of_range("Aligned.at() index out of range"); }
-		return data()[idx];
-	}
-	constexpr reference operator[](size_type idx) {
-		assert(idx < size() && "Aligned.operator[] index out of bounds");
-		return data()[idx];
-	}
-
-	constexpr const_reference at(size_type idx) const {
-		if (idx >= size()) { throw std::out_of_range("Aligned.at() index out of range"); }
-		return data()[idx];
-	}
-	constexpr const_reference operator[](size_type idx) const {
-		assert(idx < size() && "Aligned.operator[] index out of bounds");
-		return data()[idx];
-	}
-
-public:
-	constexpr iterator begin() noexcept { return data(); }
-	constexpr iterator end()   noexcept { return data() + size(); }
-	constexpr reverse_iterator rbegin() noexcept { return std::make_reverse_iterator(end()); }
-	constexpr reverse_iterator rend()   noexcept { return std::make_reverse_iterator(begin()); }
-
-	constexpr const_iterator begin() const noexcept { return data(); }
-	constexpr const_iterator end()   const noexcept { return data() + size(); }
-	constexpr const_reverse_iterator rbegin() const noexcept { return std::make_reverse_iterator(end()); }
-	constexpr const_reverse_iterator rend()   const noexcept { return std::make_reverse_iterator(begin()); }
-
-	constexpr const_iterator cbegin() const noexcept { return begin(); }
-	constexpr const_iterator cend()   const noexcept { return end(); }
-	constexpr const_reverse_iterator crbegin() const noexcept { return rbegin(); }
-	constexpr const_reverse_iterator crend()   const noexcept { return rend(); }
-};

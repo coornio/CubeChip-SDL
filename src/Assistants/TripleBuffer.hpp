@@ -48,9 +48,9 @@ class TripleBuffer {
 
 public:
 	constexpr TripleBuffer(std::size_t buffer_size = 0)
-		: pWorkBuffer{ ::allocate<U>(buffer_size).as_value() }
-		, pSwapBuffer{ ::allocate<U>(buffer_size).as_value() }
-		, pReadBuffer{ ::allocate<U>(buffer_size).as_value() }
+		: pWorkBuffer{ ::allocate<U>(buffer_size).as_value().release() }
+		, pSwapBuffer{ ::allocate<U>(buffer_size).as_value().release() }
+		, pReadBuffer{ ::allocate<U>(buffer_size).as_value().release() }
 		, mSize(pWorkBuffer && pSwapBuffer && pReadBuffer ? buffer_size : 0)
 	{}
 
@@ -64,60 +64,43 @@ public:
 	// DO NOT CALL IF EITHER A CONSUMER OR PRODUCER IS ACTIVE!!
 	void resize(std::size_t buffer_size) {
 		mSize = buffer_size;
-		pWorkBuffer.reset(); pWorkBuffer = ::allocate<U>(buffer_size).as_value();
-		pSwapBuffer.reset(); pSwapBuffer = ::allocate<U>(buffer_size).as_value();
-		pReadBuffer.reset(); pReadBuffer = ::allocate<U>(buffer_size).as_value();
+		pWorkBuffer.reset(); pWorkBuffer = ::allocate<U>(buffer_size).as_value().release();
+		pSwapBuffer.reset(); pSwapBuffer = ::allocate<U>(buffer_size).as_value().release();
+		pReadBuffer.reset(); pReadBuffer = ::allocate<U>(buffer_size).as_value().release();
 		assert(pWorkBuffer && pSwapBuffer && pReadBuffer);
 	}
 
 	/*==================================================================*/
 
 private:
-	void acquireReadBuffer() noexcept {
+	U* acquireReadBuffer() noexcept {
 		if (mBufferIsDirty.load(mo::acquire)) {
 			std::unique_lock lock{ mSwapLock };
 			std::swap(pReadBuffer, pSwapBuffer);
 			mBufferIsDirty.store(false, mo::release);
 		}
+		return pReadBuffer.get();
 	}
 
 public:
-	Buffer copy(std::size_t amount) {
-		Buffer temp(amount);
-		acquireReadBuffer();
-
-		std::copy_n(EXEC_POLICY(unseq)
-			pReadBuffer.get(), std::min(size(), amount), temp.data());
-
-		return temp;
-	}
-
-	Buffer copy() {
-		Buffer temp(size());
-		acquireReadBuffer();
-
-		std::copy_n(EXEC_POLICY(unseq)
-			pReadBuffer.get(), size(), temp.data());
-
-		return temp;
+	Buffer copy(std::size_t N = 0u) {
+		const auto new_count{ std::min(size(), N ? N : size()) };
+		auto temp{ ::allocate<U>(new_count).by_copy(acquireReadBuffer(), new_count).as_value() };
+		return temp.is_constructed() ? temp.release() : Buffer{};
 	}
 
 	template <typename T>
 		requires (sizeof(T) == sizeof(U) && std::is_trivially_copyable_v<T>)
 	void read(T* output, std::size_t N = 0) noexcept {
-		acquireReadBuffer();
-		
 		std::copy_n(EXEC_POLICY(unseq)
-			pReadBuffer.get(), std::min(size(), N ? N : size()), output);
+			acquireReadBuffer(), std::min(size(), N ? N : size()), output);
 	}
 
 	template <IsContiguousContainer T>
 		requires MatchingValueType<T, U>
 	void read(T& output) noexcept {
-		acquireReadBuffer();
-		
-		std::copy(EXEC_POLICY(unseq)
-			pReadBuffer.get(), pReadBuffer.get() + mSize, std::data(output));
+		std::copy_n(EXEC_POLICY(unseq)
+			acquireReadBuffer(), size(), std::data(output));
 	}
 
 	/*==================================================================*/
