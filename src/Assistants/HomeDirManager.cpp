@@ -199,7 +199,7 @@ bool HomeDirManager::validateGameFile(const Path& gamePath) noexcept {
 		blog.newEntry(BLOG::WARN, "File must not be empty!");
 		return false;
 	}
-	if (fileSize.value() >= ::CalcBytes(32, MiB)) {
+	if (fileSize.value() >= MiB(32)) {
 		blog.newEntry(BLOG::WARN, "File is too large!");
 		return false;
 	}

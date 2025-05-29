@@ -13,7 +13,7 @@
 /*==================================================================*/
 
 class SCHIP_LEGACY final : public Chip8_CoreInterface {
-	static constexpr u32 cTotalMemory{ ::CalcBytes(4, KiB) };
+	static constexpr u32 cTotalMemory{ KiB(4) };
 	static constexpr u32 cSafezoneOOB{    32 };
 	static constexpr u32 cGameLoadPos{   512 };
 	static constexpr u32 cStartOffset{   512 };

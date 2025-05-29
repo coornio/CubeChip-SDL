@@ -13,7 +13,7 @@
 /*==================================================================*/
 
 class CHIP8X final : public Chip8_CoreInterface {
-	static constexpr u32 cTotalMemory{ ::CalcBytes(4, KiB) };
+	static constexpr u32 cTotalMemory{ KiB(16) };
 	static constexpr u32 cSafezoneOOB{    32 };
 	static constexpr u32 cGameLoadPos{   768 };
 	static constexpr u32 cStartOffset{   768 };

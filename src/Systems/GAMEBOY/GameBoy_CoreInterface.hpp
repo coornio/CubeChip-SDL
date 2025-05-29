@@ -13,6 +13,10 @@
 class GameBoy_CoreInterface : public SystemsInterface {
 
 protected:
+	enum STREAM {
+		CHANN0, CHANN1, CHANN2, CHANN3, COUNT
+	};
+
 	static inline Path sSavestatePath{};
 
 	AudioSpecBlock mAudio;

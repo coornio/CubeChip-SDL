@@ -60,6 +60,22 @@ struct Epsilon {
 	constexpr static ::f64 f64{ std::numeric_limits<::f64>::epsilon() };
 };
 
+inline constexpr auto KiB(size_type n) noexcept { return 1024ull * n; }
+inline constexpr auto MiB(size_type n) noexcept { return 1024ull * KiB(n); }
+inline constexpr auto GiB(size_type n) noexcept { return 1024ull * MiB(n); }
+
+/*==================================================================*/
+
+#if defined(__clang__)
+	#define SUGGEST_VECTORIZABLE_LOOP _Pragma("clang loop vectorize(enable)")
+#elif defined(__GNUC__)
+	#define SUGGEST_VECTORIZABLE_LOOP _Pragma("GCC ivdep")
+#elif defined(_MSC_VER)
+	#define SUGGEST_VECTORIZABLE_LOOP _Pragma("loop(ivdep)")
+#else
+	#define SUGGEST_VECTORIZABLE_LOOP
+#endif
+
 /*==================================================================*/
 
 #ifdef __GNUC__

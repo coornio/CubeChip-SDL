@@ -11,16 +11,6 @@
 
 /*==================================================================*/
 
-inline constexpr u32 KiB{ 1024 };
-inline constexpr u32 MiB{ 1024 * KiB };
-inline constexpr u32 GiB{ 1024 * MiB };
-
-inline constexpr u32 CalcBytes(u32 value, u32 unit) noexcept {
-	return value * unit;
-}
-
-/*==================================================================*/
-
 template <IsContiguousContainer Object>
 	requires (!std::is_rvalue_reference_v<Object>)
 inline void initialize(Object& array) noexcept {
@@ -30,15 +20,20 @@ inline void initialize(Object& array) noexcept {
 
 /*==================================================================*/
 
+template<typename T, typename... Ts>
+inline constexpr bool is_any_of(T value, Ts... other) noexcept
+	{ return ((value == other) || ...); }
+
+/*==================================================================*/
+
 template <typename Dst, typename Src>
 inline constexpr void assign_cast(Dst& dst, Src&& src) noexcept
 	{ dst = static_cast<Dst>(std::forward<Src>(src)); }
 
 /*==================================================================*/
 
-inline constexpr auto intByteMult(u32 color1, u32 color2) noexcept {
-	return static_cast<u8>(((color1 * (color2 | color2 << 8)) + 0x8080) >> 16);
-}
+inline constexpr auto intByteMult(u32 color1, u32 color2) noexcept
+	{ return static_cast<u8>(((color1 * (color2 | color2 << 8)) + 0x8080) >> 16); }
 
 /*==================================================================*/
 
