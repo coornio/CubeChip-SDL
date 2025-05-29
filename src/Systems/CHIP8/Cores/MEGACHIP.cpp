@@ -476,7 +476,7 @@ void MEGACHIP::startAudioTrack(const bool repeat) noexcept {
 	}
 
 	mTrackStepping = readMemoryI(0) << 8 | readMemoryI(1);
-	mTrackStepping = mTrackStepping / mAudio.getFrequency();
+	mTrackStepping = mTrackStepping / mAudio[STREAM::UNIQUE].getFreq();
 
 	mTrackTotalLen = repeat ? -mTrackTotalLen : mTrackTotalLen;
 	mTrackPosition = 0.0;
@@ -484,9 +484,6 @@ void MEGACHIP::startAudioTrack(const bool repeat) noexcept {
 }
 
 void MEGACHIP::pushByteAudio(u32 index) noexcept {
-	static const auto samplesTotal{ mAudio.getSampleRate(cRefreshRate) };
-	std::vector<s16> samplesBuffer(static_cast<ust>(samplesTotal));
-
 	const auto samplesTotal{ mAudio[index].getNextBufferSize(cRefreshRate) };
 	auto samplesBuffer{ ::allocate<s16>(samplesTotal).as_value().release() };
 
