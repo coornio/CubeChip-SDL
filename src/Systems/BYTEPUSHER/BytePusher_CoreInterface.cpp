@@ -13,12 +13,11 @@
 
 /*==================================================================*/
 
-BytePusher_CoreInterface::BytePusher_CoreInterface() noexcept
-	: mAudio{ AUDIOFORMAT::S16, 1, 15'360, STREAM::COUNT }
-{
+BytePusher_CoreInterface::BytePusher_CoreInterface() noexcept {
 	if (const auto* path{ HDM->addSystemDir("savestate", "BYTEPUSHER") })
 		{ sSavestatePath = *path / HDM->getFileSHA1(); }
 
+	mAudio.addAudioStream(STREAM::CHANN0, AUDIOFORMAT::S16, 1, 15'360);
 	mAudio.resumeStreams();
 	loadPresetBinds();
 }

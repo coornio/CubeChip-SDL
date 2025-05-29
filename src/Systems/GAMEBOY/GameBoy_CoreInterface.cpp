@@ -13,12 +13,14 @@
 
 /*==================================================================*/
 
-GameBoy_CoreInterface::GameBoy_CoreInterface() noexcept
-	: mAudio{ AUDIOFORMAT::S16, 1, 48'000, 4 }
-{
+GameBoy_CoreInterface::GameBoy_CoreInterface() noexcept {
 	if (const auto* path{ HDM->addSystemDir("savestate", "GAMEBOY") })
 		{ sSavestatePath = *path / HDM->getFileSHA1(); }
 
+	mAudio.addAudioStream(STREAM::CHANN0, AUDIOFORMAT::S16, 1, 48'000);
+	mAudio.addAudioStream(STREAM::CHANN1, AUDIOFORMAT::S16, 1, 48'000);
+	mAudio.addAudioStream(STREAM::CHANN2, AUDIOFORMAT::S16, 1, 48'000);
+	mAudio.addAudioStream(STREAM::CHANN3, AUDIOFORMAT::S16, 1, 48'000);
 	mAudio.resumeStreams();
 	loadPresetBinds();
 }

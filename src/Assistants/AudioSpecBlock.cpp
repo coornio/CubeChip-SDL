@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cassert>
 
+#include "Misc.hpp"
 #include "BasicAudioSpec.hpp"
 #include "AudioSpecBlock.hpp"
 #include "LifetimeWrapperSDL.hpp"
@@ -53,130 +54,113 @@ static float calculateGain(float streamGain) noexcept {
 }
 
 /*==================================================================*/
-
-struct AudioSpecBlock::Internals {
-	struct Stream {
-		SDL_Unique<SDL_AudioStream> ptr;
-		float gain{};
-
-		operator SDL_AudioStream*() const noexcept
-			{ return ptr.get(); }
-	};
-
-	const SDL_AudioSpec audioSpec;
-	std::vector<Stream> audioStreams;
-
-	Internals(
-		unsigned streams, signed channels, signed frequency,
-		SDL_AudioFormat format, SDL_AudioDeviceID device
-	) noexcept
-		: audioSpec{ format, channels, frequency }
-		, audioStreams(streams)
-	{
-		for (auto& audioStream : audioStreams) {
-			audioStream.ptr  = SDL_OpenAudioDeviceStream(device, &audioSpec, nullptr, nullptr);
-			audioStream.gain = 1.0f;
-		}
-	}
-};
-
-/*==================================================================*/
 	#pragma region AudioSpecBlock Class
-
-AudioSpecBlock::AudioSpecBlock(
-	AUDIOFORMAT format,
-	unsigned channels, unsigned frequency,
-	unsigned streams,  unsigned device
-) noexcept
-	: mSDL{ std::make_unique<Internals>(
-		streams, channels, frequency, parseFormat(format),
-		device ? device : SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK
-	) }
-{}
 
 AudioSpecBlock::~AudioSpecBlock() noexcept {}
 
-/*==================================================================*/
+bool AudioSpecBlock::addAudioStream(
+	signed streamKey, AUDIOFORMAT format,
+	signed channels, signed frequency, unsigned device
+) {
+	SDL_AudioSpec spec{ parseFormat(format), channels, frequency };
+	if (spec.format == SDL_AUDIO_UNKNOWN) { return false; }
 
-signed AudioSpecBlock::getFrequency() const noexcept {
-	return mSDL->audioSpec.freq;
-}
+	auto* ptr{ SDL_OpenAudioDeviceStream(
+		device ? device : SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK
+		, &spec, nullptr, nullptr) };
 
-signed AudioSpecBlock::getStreamCount() const noexcept {
-	return static_cast<signed>(mSDL->audioStreams.size());
-}
+	if (ptr) {
+		if (audioStreams.contains(streamKey)) {
+			audioStreams.at(streamKey) =
+				Stream{ ptr, spec.format, spec.freq, spec.channels };
+		} else {
+			audioStreams.emplace(streamKey,
+				Stream{ ptr, spec.format, spec.freq, spec.channels });
+		}
+	}
 
-bool AudioSpecBlock::isStreamPaused(unsigned index) const noexcept {
-	assert(index < mSDL->audioStreams.size() && "isStreamPaused() index out-of-bounds");
-	const auto deviceID{ SDL_GetAudioStreamDevice(mSDL->audioStreams[index]) };
-	return deviceID ? SDL_AudioDevicePaused(deviceID) : true;
-}
-
-float AudioSpecBlock::getSampleRate(float framerate) const noexcept {
-	return framerate > 1.0f ? mSDL->audioSpec.freq / framerate * mSDL->audioSpec.channels : 0.0f;
-}
-
-float AudioSpecBlock::getGain(unsigned index) const noexcept {
-	assert(index < mSDL->audioStreams.size() && "getGain() index out-of-bounds");
-	return mSDL->audioStreams[index].gain;
-}
-
-signed AudioSpecBlock::getGainByte(unsigned index) const noexcept {
-	assert(index < mSDL->audioStreams.size() && "getGainByte() index out-of-bounds");
-	return static_cast<signed>(getGain(index) * 255.0f);
+	return ptr != nullptr;
 }
 
 /*==================================================================*/
 
-void AudioSpecBlock::pauseStream(unsigned index) noexcept {
-	assert(index < mSDL->audioStreams.size() && "pauseStream() index out-of-bounds");
-	SDL_PauseAudioStreamDevice(mSDL->audioStreams[index]);
-}
+unsigned AudioSpecBlock::getStreamCount() const noexcept
+	{ return static_cast<unsigned>(audioStreams.size()); }
 
 void AudioSpecBlock::pauseStreams() noexcept {
-	for (auto& stream : mSDL->audioStreams)
-		{ SDL_PauseAudioStreamDevice(stream); }
-}
-
-void AudioSpecBlock::resumeStream(unsigned index) noexcept {
-	assert(index < mSDL->audioStreams.size() && "resumeStream() index out-of-bounds");
-	SDL_ResumeAudioStreamDevice(mSDL->audioStreams[index]);
+	for (auto& stream : audioStreams)
+		{ SDL_PauseAudioStreamDevice(stream.second); }
 }
 
 void AudioSpecBlock::resumeStreams() noexcept {
-	for (auto& stream : mSDL->audioStreams)
-		{ SDL_ResumeAudioStreamDevice(stream); }
-}
-
-void AudioSpecBlock::setGain(unsigned index, float gain) noexcept {
-	assert(index < mSDL->audioStreams.size() && "setGain() index out-of-bounds");
-	mSDL->audioStreams[index].gain = std::clamp(gain, 0.0f, 2.0f);
-}
-
-void AudioSpecBlock::addGain(unsigned index, float gain) noexcept {
-	assert(index < mSDL->audioStreams.size() && "addGain() index out-of-bounds");
-	setGain(index, getGain(index) + gain);
-}
-
-void AudioSpecBlock::addGain(unsigned index, signed gain) noexcept {
-	assert(index < mSDL->audioStreams.size() && "addGain() index out-of-bounds");
-	setGain(index, getGain(index) + gain * (1.0f / 255.0f));
-}
-
-void AudioSpecBlock::pushRawAudio(
-	unsigned index, void* sampleData,
-	std::size_t bufferSize, std::size_t sampleSize
-) const {
-	if (isStreamPaused(index) || bufferSize == 0u) { return; }
-
-	SDL_SetAudioStreamGain(mSDL->audioStreams[index],
-		calculateGain(mSDL->audioStreams[index].gain));
-
-	SDL_PutAudioStreamData(
-		mSDL->audioStreams[index], sampleData,
-		static_cast<signed>(bufferSize * sampleSize)
-	);
+	for (auto& stream : audioStreams)
+		{ SDL_ResumeAudioStreamDevice(stream.second); }
 }
 
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
+
+AudioSpecBlock::Stream::Stream(
+	SDL_AudioStream* ptr,
+	signed format, signed freq, signed channels
+) noexcept
+	: ptr     { ptr      }
+	, format  { format   }
+	, freq    { freq     }
+	, channels{ channels }
+{}
+
+auto AudioSpecBlock::Stream::getSpec() const noexcept -> SDL_AudioSpec {
+	return { static_cast<SDL_AudioFormat>(format), freq, channels };
+}
+
+bool AudioSpecBlock::Stream::isPaused() const noexcept {
+	const auto deviceID{ SDL_GetAudioStreamDevice(ptr) };
+	return deviceID ? SDL_AudioDevicePaused(deviceID) : true;
+}
+
+bool AudioSpecBlock::Stream::isPlayback() const noexcept {
+	return SDL_IsAudioDevicePlayback(SDL_GetAudioStreamDevice(ptr));
+}
+
+double AudioSpecBlock::Stream::getRawSampleRate(double framerate) const noexcept {
+	if (framerate < 1.0) { return 0.0; }
+	return freq / framerate * channels;
+}
+
+unsigned AudioSpecBlock::Stream::getNextBufferSize(double framerate) noexcept {
+	if (framerate < 1.0f) { return 0u; }
+
+	static constexpr auto scale_factor{ 1ull << 24 };
+	::assign_cast(accumulator, accumulator + getRawSampleRate(framerate) * scale_factor);
+	const auto sample_amount{ accumulator >> 24 };
+	::assign_cast(accumulator, accumulator & (scale_factor - 1));
+
+	return static_cast<unsigned>(sample_amount);
+}
+
+void AudioSpecBlock::Stream::pause() noexcept
+	{ SDL_PauseAudioStreamDevice(ptr); }
+
+void AudioSpecBlock::Stream::resume() noexcept
+	{ SDL_ResumeAudioStreamDevice(ptr); }
+
+float AudioSpecBlock::Stream::getGain() const noexcept
+	{ return gain; }
+
+void AudioSpecBlock::Stream::setGain(float new_gain) noexcept
+	{ gain = std::clamp(new_gain, 0.0f, 2.0f); }
+
+void AudioSpecBlock::Stream::addGain(float add_gain) noexcept
+	{ setGain(gain + add_gain); }
+
+void AudioSpecBlock::Stream::pushRawAudio(void* sampleData,
+	std::size_t bufferSize, std::size_t sampleSize
+) const {
+	if (isPaused() || bufferSize == 0u) { return; }
+
+	SDL_SetAudioStreamGain(ptr, calculateGain(gain));
+
+	SDL_PutAudioStreamData(ptr, sampleData,
+		static_cast<signed>(bufferSize * sampleSize));
+}

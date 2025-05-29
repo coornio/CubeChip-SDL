@@ -41,8 +41,8 @@ XOCHIP::XOCHIP()
 	mCurrentPC = cStartOffset;
 	mTargetCPF = cInstSpeedLo;
 
-	mAudio.pauseStream(STREAM::CHANN1);
-	mAudio.pauseStream(STREAM::CHANN2);
+	mAudio[STREAM::CHANN1].pause();
+	mAudio[STREAM::CHANN2].pause();
 }
 
 /*==================================================================*/
@@ -321,22 +321,24 @@ void XOCHIP::setColorBit332(s32 bit, s32 color) noexcept {
 }
 
 void XOCHIP::pushPatternTone(u32 index) noexcept {
-	static const auto samplesTotal{ mAudio.getSampleRate(cRefreshRate) };
-	std::vector<s16> samplesBuffer(static_cast<ust>(samplesTotal));
+	const auto samplesTotal{ mAudio[index].getNextBufferSize(cRefreshRate) };
+	auto samplesBuffer{ ::allocate<s16>(samplesTotal).as_value().release() };
 
 	if (mAudioTimer[index]) {
 		const auto audioTone{ std::pow(2.0f, (mAudioPitch - 64.0f) / 48.0f) };
-		const auto audioStep{ 31.25f / mAudio.getFrequency() * audioTone };
+		const auto audioStep{ 31.25f / mAudio[index].getFreq() * audioTone };
 
-		for (auto& audioSample : samplesBuffer) {
+		for (auto& audioSample : std::span(samplesBuffer.get(), samplesTotal)) {
 			const auto bitOffset{ static_cast<s32>(std::clamp(mAudioPhase[index] * 128.0f, 0.0f, 127.0f)) };
 			const auto bytePhase{ 1 << (7 ^ (bitOffset & 7)) };
 			audioSample = (mPatternBuf[bitOffset >> 3] & bytePhase ? 0x0F : 0xF0) << 8;
-			mAudioPhase[index] = std::fmod(mAudioPhase[index] + audioStep, 1.0f);
+
+			mAudioPhase[index] += audioStep;
+			mAudioPhase[index] -= static_cast<int>(mAudioPhase[index] );
 		}
 	} else { mAudioPhase[index] = 0.0f; }
 
-	mAudio.pushAudioData(index, samplesBuffer);
+	mAudio[index].pushAudioData(samplesBuffer.get(), samplesTotal);
 }
 
 /*==================================================================*/

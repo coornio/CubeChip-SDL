@@ -42,18 +42,18 @@ void BYTEPUSHER_STANDARD::instructionLoop() noexcept {
 }
 
 void BYTEPUSHER_STANDARD::renderAudioData() {
+	//using SampleFormat = typename decltype(mAudio)::format;
+
 	const auto samplesOffset{ mMemoryBank.data() + (readData<2>(6) << 8) };
-	std::vector<s16> samplesBuffer(cAudioLength);
+	auto samplesBuffer{ ::allocate<s16>(cAudioLength).as_value().release() };
 
 	std::transform(EXEC_POLICY(unseq)
-		samplesOffset,
-		samplesOffset + cAudioLength,
-		samplesBuffer.data(),
-		[](const u8 sample) noexcept
+		samplesOffset, samplesOffset + cAudioLength, samplesBuffer.get(),
+		[](const auto sample) noexcept
 			{ return static_cast<s16>(sample << 8); }
 	);
 
-	mAudio.pushAudioData(STREAM::CHANN0, samplesBuffer);
+	mAudio[STREAM::CHANN0].pushAudioData(samplesBuffer.get(), cAudioLength);
 }
 
 void BYTEPUSHER_STANDARD::renderVideoData() {

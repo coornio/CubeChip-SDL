@@ -16,14 +16,17 @@
 
 /*==================================================================*/
 
-Chip8_CoreInterface::Chip8_CoreInterface() noexcept
-	: mAudio{ AUDIOFORMAT::S16, 1, 48'000, STREAM::COUNT }
-{
+Chip8_CoreInterface::Chip8_CoreInterface() noexcept {
 	if (const auto* path{ HDM->addSystemDir("savestate", "CHIP8") })
 		{ sSavestatePath = *path / HDM->getFileSHA1(); }
 
 	if (const auto* path{ HDM->addSystemDir("permaRegs", "CHIP8") })
 		{ sPermaRegsPath = *path / HDM->getFileSHA1(); }
+
+	mAudio.addAudioStream(STREAM::CHANN0, AUDIOFORMAT::S16, 1, 48'000);
+	mAudio.addAudioStream(STREAM::CHANN1, AUDIOFORMAT::S16, 1, 48'000);
+	mAudio.addAudioStream(STREAM::CHANN2, AUDIOFORMAT::S16, 1, 48'000);
+	mAudio.addAudioStream(STREAM::CHANN3, AUDIOFORMAT::S16, 1, 48'000);
 
 	mAudio.resumeStreams();
 	loadPresetBinds();
@@ -228,21 +231,28 @@ void Chip8_CoreInterface::startAudioAtChannel(u32 index, s32 duration, s32 tone)
 	mAudioTimer[index] = static_cast<u8>(duration);
 	mPhaseStep[index] = (sTonalOffset + (tone ? tone
 		: 8 * (((mCurrentPC >> 1) + mStackTop + 1) & 0x3E)
-	)) / mAudio.getFrequency();
+	)) / mAudio[index].getFreq();
 }
 
 void Chip8_CoreInterface::pushSquareTone(u32 index) noexcept {
-	std::vector<s16> samplesBuffer \
-		(static_cast<ust>(mAudio.getSampleRate(getSystemFramerate())));
+	const auto samplesTotal{ mAudio[index].getNextBufferSize(getSystemFramerate()) };
+	auto samplesBuffer{ ::allocate<s16>(samplesTotal).as_value().release() };
 
 	if (mAudioTimer[index]) {
-		for (auto& audioSample : samplesBuffer) {
-			audioSample        = static_cast<s16>(mAudioPhase[index] > 0.5f ? 4096 : -4096);
-			mAudioPhase[index] = std::fmod(mAudioPhase[index] + mPhaseStep[index], 1.0f);
-		}
+		std::for_each_n(EXEC_POLICY(unseq)
+			samplesBuffer.get(), samplesTotal,
+			[start = samplesBuffer.get(), phase = mAudioPhase[index], step = mPhaseStep[index]] \
+			(auto& audioSample) noexcept {
+				const auto val{ step * (&audioSample - start) + phase };
+				const bool mask{ val - static_cast<int>(val) >= 0.5f };
+				::assign_cast(audioSample, mask * 8192 - 4096);
+			}
+		);
+		mAudioPhase[index] += mPhaseStep[index] * samplesTotal;
+		mAudioPhase[index] -= static_cast<int>(mAudioPhase[index]);
 	} else { mAudioPhase[index] = 0.0f; }
 
-	mAudio.pushAudioData(index, samplesBuffer);
+	mAudio[index].pushAudioData(samplesBuffer.get(), samplesTotal);
 }
 
 void Chip8_CoreInterface::instructionError(u32 HI, u32 LO) {

@@ -57,7 +57,6 @@ struct SimpleKeyMapping {
 class HomeDirManager;
 class BasicVideoSpec;
 class BasicAudioSpec;
-class AudioSpecBlock;
 
 class BasicKeyboard;
 class FrameLimiter;
