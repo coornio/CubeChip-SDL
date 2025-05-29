@@ -4,12 +4,13 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include "XOCHIP.hpp"
+#ifdef ENABLE_XOCHIP
+
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/BasicAudioSpec.hpp"
 #include "../../../Assistants/Well512.hpp"
 #include "../../CoreRegistry.hpp"
-
-#include "XOCHIP.hpp"
 
 REGISTER_CORE(XOCHIP, ".xo8")
 
@@ -586,7 +587,7 @@ void XOCHIP::scrollDisplayRT() {
 	#pragma region C instruction branch
 
 	void XOCHIP::instruction_CxNN(s32 X, s32 NN) noexcept {
-		mRegisterV[X] = RNG->next<u8>() & NN;
+		::assign_cast(mRegisterV[X], RNG->next() & NN);
 	}
 
 	#pragma endregion
@@ -699,7 +700,7 @@ void XOCHIP::scrollDisplayRT() {
 		mPlanarMask = N;
 	}
 	void XOCHIP::instruction_Fx07(s32 X) noexcept {
-		mRegisterV[X] = static_cast<u8>(mDelayTimer);
+		::assign_cast(mRegisterV[X], mDelayTimer);
 	}
 	void XOCHIP::instruction_Fx0A(s32 X) noexcept {
 		triggerInterrupt(Interrupt::INPUT);
@@ -729,16 +730,14 @@ void XOCHIP::scrollDisplayRT() {
 		mAudioPitch = mRegisterV[X];
 	}
 	void XOCHIP::instruction_FN55(s32 N) noexcept {
-		for (auto idx{ 0 }; idx <= N; ++idx)
-			{ writeMemoryI(mRegisterV[idx], idx); }
-		if (!Quirk.idxRegNoInc) [[likely]]
-			{ mRegisterI = (mRegisterI + N + 1) & 0xFFFF; }
+		SUGGEST_VECTORIZABLE_LOOP
+		for (auto idx{ 0 }; idx <= N; ++idx) { writeMemoryI(mRegisterV[idx], idx); }
+		mRegisterI = !Quirk.idxRegNoInc ? (mRegisterI + N + 1) & 0xFFFF : mRegisterI;
 	}
 	void XOCHIP::instruction_FN65(s32 N) noexcept {
-		for (auto idx{ 0 }; idx <= N; ++idx)
-			{ mRegisterV[idx] = readMemoryI(idx); }
-		if (!Quirk.idxRegNoInc) [[likely]]
-			{ mRegisterI = (mRegisterI + N + 1) & 0xFFFF; }
+		SUGGEST_VECTORIZABLE_LOOP
+		for (auto idx{ 0 }; idx <= N; ++idx) { mRegisterV[idx] = readMemoryI(idx); }
+		mRegisterI = !Quirk.idxRegNoInc ? (mRegisterI + N + 1) & 0xFFFF : mRegisterI;
 	}
 	void XOCHIP::instruction_FN75(s32 N) noexcept {
 		setPermaRegs(N + 1);
@@ -749,3 +748,6 @@ void XOCHIP::scrollDisplayRT() {
 
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
+
+	
+#endif

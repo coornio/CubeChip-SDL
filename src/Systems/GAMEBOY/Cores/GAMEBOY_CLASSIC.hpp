@@ -5,6 +5,8 @@
 */
 
 #pragma once
+#define ENABLE_GAMEBOY_CLASSIC
+#ifdef ENABLE_GAMEBOY_CLASSIC
 
 #include "../GameBoy_CoreInterface.hpp"
 #include "../../../Assistants/BasicLogger.hpp"
@@ -332,3 +334,5 @@ public:
 	s32 getMaxDisplayW() const noexcept override { return cScreenSizeX; }
 	s32 getMaxDisplayH() const noexcept override { return cScreenSizeY; }
 };
+
+#endif

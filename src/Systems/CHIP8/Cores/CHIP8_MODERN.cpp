@@ -4,12 +4,13 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include "CHIP8_MODERN.hpp"
+#ifdef ENABLE_CHIP8_MODERN
+
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/BasicAudioSpec.hpp"
 #include "../../../Assistants/Well512.hpp"
 #include "../../CoreRegistry.hpp"
-
-#include "CHIP8_MODERN.hpp"
 
 REGISTER_CORE(CHIP8_MODERN, ".ch8")
 
@@ -280,7 +281,7 @@ void CHIP8_MODERN::renderVideoData() {
 	#pragma region 6 instruction branch
 
 	void CHIP8_MODERN::instruction_6xNN(s32 X, s32 NN) noexcept {
-		mRegisterV[X] = static_cast<u8>(NN);
+		::assign_cast(mRegisterV[X], NN);
 	}
 
 	#pragma endregion
@@ -290,7 +291,7 @@ void CHIP8_MODERN::renderVideoData() {
 	#pragma region 7 instruction branch
 
 	void CHIP8_MODERN::instruction_7xNN(s32 X, s32 NN) noexcept {
-		mRegisterV[X] += static_cast<u8>(NN);
+		::assign_cast(mRegisterV[X], mRegisterV[X] + NN);
 	}
 
 	#pragma endregion
@@ -376,7 +377,7 @@ void CHIP8_MODERN::renderVideoData() {
 	#pragma region C instruction branch
 
 	void CHIP8_MODERN::instruction_CxNN(s32 X, s32 NN) noexcept {
-		mRegisterV[X] = RNG->next<u8>() & NN;
+		::assign_cast(mRegisterV[X], RNG->next() & NN);
 	}
 
 	#pragma endregion
@@ -473,7 +474,7 @@ void CHIP8_MODERN::renderVideoData() {
 	#pragma region F instruction branch
 
 	void CHIP8_MODERN::instruction_Fx07(s32 X) noexcept {
-		mRegisterV[X] = static_cast<u8>(mDelayTimer);
+		::assign_cast(mRegisterV[X], mDelayTimer);
 	}
 	void CHIP8_MODERN::instruction_Fx0A(s32 X) noexcept {
 		triggerInterrupt(Interrupt::INPUT);
@@ -497,17 +498,20 @@ void CHIP8_MODERN::renderVideoData() {
 		writeMemoryI(mRegisterV[X]      % 10, 2);
 	}
 	void CHIP8_MODERN::instruction_FN55(s32 N) noexcept {
-		for (auto idx{ 0 }; idx <= N; ++idx)
-			{ writeMemoryI(mRegisterV[idx], idx); }
-		if (!Quirk.idxRegNoInc) [[likely]]
-			{ mRegisterI = (mRegisterI + N + 1) & 0xFFF; }
+		SUGGEST_VECTORIZABLE_LOOP
+		for (auto idx{ 0 }; idx <= N; ++idx) { writeMemoryI(mRegisterV[idx], idx); }
+		//mRegisterI = !Quirk.idxRegNoInc ? (mRegisterI + N + 1) & 0xFFF : mRegisterI;
+		if (!Quirk.idxRegNoInc) [[likely]] { mRegisterI = (mRegisterI + N + 1) & 0xFFF; }
 	}
 	void CHIP8_MODERN::instruction_FN65(s32 N) noexcept {
-		for (auto idx{ 0 }; idx <= N; ++idx)
-			{ mRegisterV[idx] = readMemoryI(idx); }
-		if (!Quirk.idxRegNoInc) [[likely]]
-			{ mRegisterI = (mRegisterI + N + 1) & 0xFFF; }
+		SUGGEST_VECTORIZABLE_LOOP
+		for (auto idx{ 0 }; idx <= N; ++idx) { mRegisterV[idx] = readMemoryI(idx); }
+		//mRegisterI = !Quirk.idxRegNoInc ? (mRegisterI + N + 1) & 0xFFF : mRegisterI;
+		if (!Quirk.idxRegNoInc) [[likely]] { mRegisterI = (mRegisterI + N + 1) & 0xFFF; }
 	}
 
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
+
+	
+#endif

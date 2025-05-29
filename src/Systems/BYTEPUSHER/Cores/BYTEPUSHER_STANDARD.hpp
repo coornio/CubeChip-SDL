@@ -5,6 +5,8 @@
 */
 
 #pragma once
+#define ENABLE_BYTEPUSHER_STANDARD
+#ifdef ENABLE_BYTEPUSHER_STANDARD
 
 #include "../BytePusher_CoreInterface.hpp"
 
@@ -58,3 +60,5 @@ public:
 	s32 getMaxDisplayW() const noexcept override { return cScreenSizeX; }
 	s32 getMaxDisplayH() const noexcept override { return cScreenSizeY; }
 };
+
+#endif

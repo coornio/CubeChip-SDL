@@ -4,12 +4,13 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include "CHIP8X.hpp"
+#ifdef ENABLE_CHIP8X
+
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/BasicAudioSpec.hpp"
 #include "../../../Assistants/Well512.hpp"
 #include "../../CoreRegistry.hpp"
-
-#include "CHIP8X.hpp"
 
 REGISTER_CORE(CHIP8X, ".c8x")
 
@@ -340,7 +341,7 @@ void CHIP8X::drawHiresColor(s32 X, s32 Y, s32 idx, s32 N) noexcept {
 	void CHIP8X::instruction_5xy1(s32 X, s32 Y) noexcept {
 		const auto lenX{ (mRegisterV[X] & 0x70) + (mRegisterV[Y] & 0x70) };
 		const auto lenY{ (mRegisterV[X] + mRegisterV[Y]) & 0x7 };
-		mRegisterV[X] = static_cast<u8>(lenX | lenY);
+		::assign_cast(mRegisterV[X], lenX | lenY);
 	}
 
 	#pragma endregion
@@ -350,7 +351,7 @@ void CHIP8X::drawHiresColor(s32 X, s32 Y, s32 idx, s32 N) noexcept {
 	#pragma region 6 instruction branch
 
 	void CHIP8X::instruction_6xNN(s32 X, s32 NN) noexcept {
-		mRegisterV[X] = static_cast<u8>(NN);
+		::assign_cast(mRegisterV[X], NN);
 	}
 
 	#pragma endregion
@@ -360,7 +361,7 @@ void CHIP8X::drawHiresColor(s32 X, s32 Y, s32 idx, s32 N) noexcept {
 	#pragma region 7 instruction branch
 
 	void CHIP8X::instruction_7xNN(s32 X, s32 NN) noexcept {
-		mRegisterV[X] += static_cast<u8>(NN);
+		::assign_cast(mRegisterV[X], mRegisterV[X] + NN);
 	}
 
 	#pragma endregion
@@ -450,7 +451,7 @@ void CHIP8X::drawHiresColor(s32 X, s32 Y, s32 idx, s32 N) noexcept {
 	#pragma region C instruction branch
 
 	void CHIP8X::instruction_CxNN(s32 X, s32 NN) noexcept {
-		mRegisterV[X] = RNG->next<u8>() & NN;
+		::assign_cast(mRegisterV[X], RNG->next() & NN);
 	}
 
 	#pragma endregion
@@ -552,7 +553,7 @@ void CHIP8X::drawHiresColor(s32 X, s32 Y, s32 idx, s32 N) noexcept {
 	#pragma region F instruction branch
 
 	void CHIP8X::instruction_Fx07(s32 X) noexcept {
-		mRegisterV[X] = static_cast<u8>(mDelayTimer);
+		::assign_cast(mRegisterV[X], mDelayTimer);
 	}
 	void CHIP8X::instruction_Fx0A(s32 X) noexcept {
 		triggerInterrupt(Interrupt::INPUT);
@@ -562,7 +563,7 @@ void CHIP8X::drawHiresColor(s32 X, s32 Y, s32 idx, s32 N) noexcept {
 		mDelayTimer = mRegisterV[X];
 	}
 	void CHIP8X::instruction_Fx18(s32 X) noexcept {
-		mAudioTimer[STREAM::UNIQUE] = static_cast<u8>(mRegisterV[X] + (mRegisterV[X] == 1));
+		::assign_cast(mAudioTimer[STREAM::UNIQUE], mRegisterV[X] + (mRegisterV[X] == 1));
 	}
 	void CHIP8X::instruction_Fx1E(s32 X) noexcept {
 		mRegisterI = (mRegisterI + mRegisterV[X]) & 0xFFF;
@@ -576,16 +577,14 @@ void CHIP8X::drawHiresColor(s32 X, s32 Y, s32 idx, s32 N) noexcept {
 		writeMemoryI(mRegisterV[X]      % 10, 2);
 	}
 	void CHIP8X::instruction_FN55(s32 N) noexcept {
-		for (auto idx{ 0 }; idx <= N; ++idx)
-			{ writeMemoryI(mRegisterV[idx], idx); }
-		if (!Quirk.idxRegNoInc) [[likely]]
-			{ mRegisterI = (mRegisterI + N + 1) & 0xFFF; }
+		SUGGEST_VECTORIZABLE_LOOP
+		for (auto idx{ 0 }; idx <= N; ++idx) { writeMemoryI(mRegisterV[idx], idx); }
+		mRegisterI = !Quirk.idxRegNoInc ? (mRegisterI + N + 1) & 0xFFF : mRegisterI;
 	}
 	void CHIP8X::instruction_FN65(s32 N) noexcept {
-		for (auto idx{ 0 }; idx <= N; ++idx)
-			{ mRegisterV[idx] = readMemoryI(idx); }
-		if (!Quirk.idxRegNoInc) [[likely]]
-			{ mRegisterI = (mRegisterI + N + 1) & 0xFFF; }
+		SUGGEST_VECTORIZABLE_LOOP
+		for (auto idx{ 0 }; idx <= N; ++idx) { mRegisterV[idx] = readMemoryI(idx); }
+		mRegisterI = !Quirk.idxRegNoInc ? (mRegisterI + N + 1) & 0xFFF : mRegisterI;
 	}
 	void CHIP8X::instruction_FxF8(s32 X) noexcept {
 		setBuzzerPitch(mRegisterV[X]);
@@ -596,3 +595,5 @@ void CHIP8X::drawHiresColor(s32 X, s32 Y, s32 idx, s32 N) noexcept {
 
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
+
+#endif

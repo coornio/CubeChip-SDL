@@ -4,12 +4,13 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include "SCHIP_MODERN.hpp"
+#ifdef ENABLE_SCHIP_MODERN
+
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/BasicAudioSpec.hpp"
 #include "../../../Assistants/Well512.hpp"
 #include "../../CoreRegistry.hpp"
-
-#include "SCHIP_MODERN.hpp"
 
 REGISTER_CORE(SCHIP_MODERN, ".sc8")
 
@@ -465,7 +466,7 @@ void SCHIP_MODERN::scrollDisplayRT() {
 	#pragma region C instruction branch
 
 	void SCHIP_MODERN::instruction_CxNN(s32 X, s32 NN) noexcept {
-		mRegisterV[X] = RNG->next<u8>() & NN;
+		::assign_cast(mRegisterV[X], RNG->next() & NN);
 	}
 
 	#pragma endregion
@@ -566,7 +567,7 @@ void SCHIP_MODERN::scrollDisplayRT() {
 	#pragma region F instruction branch
 
 	void SCHIP_MODERN::instruction_Fx07(s32 X) noexcept {
-		mRegisterV[X] = static_cast<u8>(mDelayTimer);
+		::assign_cast(mRegisterV[X], mDelayTimer);
 	}
 	void SCHIP_MODERN::instruction_Fx0A(s32 X) noexcept {
 		triggerInterrupt(Interrupt::INPUT);
@@ -593,16 +594,14 @@ void SCHIP_MODERN::scrollDisplayRT() {
 		writeMemoryI(mRegisterV[X]      % 10, 2);
 	}
 	void SCHIP_MODERN::instruction_FN55(s32 N) noexcept {
-		for (auto idx{ 0 }; idx <= N; ++idx)
-			{ writeMemoryI(mRegisterV[idx], idx); }
-		if (!Quirk.idxRegNoInc) [[likely]]
-			{ mRegisterI = (mRegisterI + N + 1) & 0xFFF; }
+		SUGGEST_VECTORIZABLE_LOOP
+		for (auto idx{ 0 }; idx <= N; ++idx) { writeMemoryI(mRegisterV[idx], idx); }
+		mRegisterI = !Quirk.idxRegNoInc ? (mRegisterI + N + 1) & 0xFFF : mRegisterI;
 	}
 	void SCHIP_MODERN::instruction_FN65(s32 N) noexcept {
-		for (auto idx{ 0 }; idx <= N; ++idx)
-			{ mRegisterV[idx] = readMemoryI(idx); }
-		if (!Quirk.idxRegNoInc) [[likely]]
-			{ mRegisterI = (mRegisterI + N + 1) & 0xFFF; }
+		SUGGEST_VECTORIZABLE_LOOP
+		for (auto idx{ 0 }; idx <= N; ++idx) { mRegisterV[idx] = readMemoryI(idx); }
+		mRegisterI = !Quirk.idxRegNoInc ? (mRegisterI + N + 1) & 0xFFF : mRegisterI;
 	}
 	void SCHIP_MODERN::instruction_FN75(s32 N) noexcept {
 		setPermaRegs(N + 1);
@@ -613,3 +612,5 @@ void SCHIP_MODERN::scrollDisplayRT() {
 
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
+
+#endif

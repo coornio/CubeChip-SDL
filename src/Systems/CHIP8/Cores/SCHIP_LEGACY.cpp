@@ -4,12 +4,13 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include "SCHIP_LEGACY.hpp"
+#ifdef ENABLE_SCHIP_LEGACY
+
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/BasicAudioSpec.hpp"
 #include "../../../Assistants/Well512.hpp"
 #include "../../CoreRegistry.hpp"
-
-#include "SCHIP_LEGACY.hpp"
 
 REGISTER_CORE(SCHIP_LEGACY, ".sc8")
 
@@ -354,7 +355,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 	#pragma region 6 instruction branch
 
 	void SCHIP_LEGACY::instruction_6xNN(s32 X, s32 NN) noexcept {
-		mRegisterV[X] = static_cast<u8>(NN);
+		::assign_cast(mRegisterV[X], NN);
 	}
 
 	#pragma endregion
@@ -364,7 +365,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 	#pragma region 7 instruction branch
 
 	void SCHIP_LEGACY::instruction_7xNN(s32 X, s32 NN) noexcept {
-		mRegisterV[X] += static_cast<u8>(NN);
+		::assign_cast(mRegisterV[X], mRegisterV[X] + NN);
 	}
 
 	#pragma endregion
@@ -448,7 +449,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 	#pragma region C instruction branch
 
 	void SCHIP_LEGACY::instruction_CxNN(s32 X, s32 NN) noexcept {
-		mRegisterV[X] = RNG->next<u8>() & NN;
+		::assign_cast(mRegisterV[X], RNG->next() & NN);
 	}
 
 	#pragma endregion
@@ -541,7 +542,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 					if (offsetY == cDisplayResH - 1) { break; }
 				}
 			}
-			mRegisterV[0xF] = static_cast<u8>(collisions);
+			::assign_cast(mRegisterV[0xF], collisions);
 		}
 		else {
 			const auto offsetX{ 16 - 2 * (mRegisterV[X] & 0x07) };
@@ -561,7 +562,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 
 				if (offsetY == cDisplayResH - 2) { break; }
 			}
-			mRegisterV[0xF] = static_cast<u8>(collisions != 0);
+			::assign_cast(mRegisterV[0xF], collisions != 0);
 		}
 	}
 
@@ -585,7 +586,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 	#pragma region F instruction branch
 
 	void SCHIP_LEGACY::instruction_Fx07(s32 X) noexcept {
-		mRegisterV[X] = static_cast<u8>(mDelayTimer);
+		::assign_cast(mRegisterV[X], mDelayTimer);
 	}
 	void SCHIP_LEGACY::instruction_Fx0A(s32 X) noexcept {
 		triggerInterrupt(Interrupt::INPUT);
@@ -612,16 +613,14 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 		writeMemoryI(mRegisterV[X]      % 10, 2);
 	}
 	void SCHIP_LEGACY::instruction_FN55(s32 N) noexcept {
-		for (auto idx{ 0 }; idx <= N; ++idx)
-			{ writeMemoryI(mRegisterV[idx], idx); }
-		if (Quirk.idxRegMinus) [[unlikely]]
-			{ mRegisterI = (mRegisterI + N) & 0xFFF; }
+		SUGGEST_VECTORIZABLE_LOOP
+		for (auto idx{ 0 }; idx <= N; ++idx) { writeMemoryI(mRegisterV[idx], idx); }
+		mRegisterI = Quirk.idxRegMinus ? (mRegisterI + N) & 0xFFF : mRegisterI;
 	}
 	void SCHIP_LEGACY::instruction_FN65(s32 N) noexcept {
-		for (auto idx{ 0 }; idx <= N; ++idx)
-			{ mRegisterV[idx] = readMemoryI(idx); }
-		if (Quirk.idxRegMinus) [[unlikely]]
-			{ mRegisterI = (mRegisterI + N) & 0xFFF; }
+		SUGGEST_VECTORIZABLE_LOOP
+		for (auto idx{ 0 }; idx <= N; ++idx) { mRegisterV[idx] = readMemoryI(idx); }
+		mRegisterI = Quirk.idxRegMinus ? (mRegisterI + N) & 0xFFF : mRegisterI;
 	}
 	void SCHIP_LEGACY::instruction_FN75(s32 N) noexcept {
 		setPermaRegs(std::min(N, 7) + 1);
@@ -632,3 +631,5 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
+	
+#endif

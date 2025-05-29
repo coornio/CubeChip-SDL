@@ -4,12 +4,13 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include "GAMEBOY_CLASSIC.hpp"
+#ifdef ENABLE_GAMEBOY_CLASSIC
+
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/BasicAudioSpec.hpp"
 #include "../../../Assistants/Well512.hpp"
 #include "../../CoreRegistry.hpp"
-
-#include "GAMEBOY_CLASSIC.hpp"
 
 REGISTER_CORE(GAMEBOY_CLASSIC, ".gb")
 
@@ -39,3 +40,5 @@ void GAMEBOY_CLASSIC::renderAudioData() {
 void GAMEBOY_CLASSIC::renderVideoData() {
 	
 }
+
+#endif

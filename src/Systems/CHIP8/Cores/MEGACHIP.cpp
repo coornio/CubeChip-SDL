@@ -4,12 +4,13 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include "MEGACHIP.hpp"
+#ifdef ENABLE_MEGACHIP
+
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/BasicAudioSpec.hpp"
 #include "../../../Assistants/Well512.hpp"
 #include "../../CoreRegistry.hpp"
-
-#include "MEGACHIP.hpp"
 
 REGISTER_CORE(MEGACHIP, ".mc8")
 
@@ -696,7 +697,7 @@ void MEGACHIP::scrollBuffersRT() {
 	#pragma region 6 instruction branch
 
 	void MEGACHIP::instruction_6xNN(s32 X, s32 NN) noexcept {
-		mRegisterV[X] = static_cast<u8>(NN);
+		::assign_cast(mRegisterV[X], NN);
 	}
 
 	#pragma endregion
@@ -706,7 +707,7 @@ void MEGACHIP::scrollBuffersRT() {
 	#pragma region 7 instruction branch
 
 	void MEGACHIP::instruction_7xNN(s32 X, s32 NN) noexcept {
-		mRegisterV[X] += static_cast<u8>(NN);
+		::assign_cast(mRegisterV[X], mRegisterV[X] + NN);
 	}
 
 	#pragma endregion
@@ -790,7 +791,7 @@ void MEGACHIP::scrollBuffersRT() {
 	#pragma region C instruction branch
 
 	void MEGACHIP::instruction_CxNN(s32 X, s32 NN) noexcept {
-		mRegisterV[X] = RNG->next<u8>() & NN;
+		::assign_cast(mRegisterV[X], RNG->next() & NN);
 	}
 
 	#pragma endregion
@@ -947,7 +948,7 @@ void MEGACHIP::scrollBuffersRT() {
 						if (offsetY == 0x3F) { break; }
 					}
 				}
-				mRegisterV[0xF] = static_cast<u8>(collisions);
+				::assign_cast(mRegisterV[0xF], collisions);
 			}
 			else {
 				const auto offsetX{ 16 - 2 * (mRegisterV[X] & 0x07) };
@@ -966,7 +967,7 @@ void MEGACHIP::scrollBuffersRT() {
 					);
 					if (offsetY == 0x3E) { break; }
 				}
-				mRegisterV[0xF] = static_cast<u8>(collisions != 0);
+				::assign_cast(mRegisterV[0xF], collisions != 0);
 			}
 		}
 	}
@@ -991,7 +992,7 @@ void MEGACHIP::scrollBuffersRT() {
 	#pragma region F instruction branch
 
 	void MEGACHIP::instruction_Fx07(s32 X) noexcept {
-		mRegisterV[X] = static_cast<u8>(mDelayTimer);
+		::assign_cast(mRegisterV[X], mDelayTimer);
 	}
 	void MEGACHIP::instruction_Fx0A(s32 X) noexcept {
 		triggerInterrupt(Interrupt::INPUT);
@@ -1036,3 +1037,5 @@ void MEGACHIP::scrollBuffersRT() {
 
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
+
+#endif

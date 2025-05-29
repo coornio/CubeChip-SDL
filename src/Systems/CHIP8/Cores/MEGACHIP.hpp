@@ -5,6 +5,8 @@
 */
 
 #pragma once
+#define ENABLE_MEGACHIP
+#ifdef ENABLE_MEGACHIP
 
 #include "../../../Assistants/Map2D.hpp"
 
@@ -88,7 +90,7 @@ class MEGACHIP final : public Chip8_CoreInterface {
 	void writeMemoryI(u32 value, u32 pos) noexcept {
 		const auto index{ mRegisterI + pos };
 		if (index < cTotalMemory) [[likely]]
-			{ mMemoryBank[index] = value & 0xFF; }
+			{ ::assign_cast(mMemoryBank[index], value); }
 	}
 
 	auto readMemory(u32 pos) const noexcept {
@@ -364,3 +366,5 @@ private:
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 };
+
+#endif

@@ -5,9 +5,10 @@
 */
 
 #pragma once
+#define ENABLE_CHIP8_MODERN
+#ifdef ENABLE_CHIP8_MODERN
 
 #include "../Chip8_CoreInterface.hpp"
-#include "../../../Assistants/Map2D.hpp"
 
 /*==================================================================*/
 
@@ -33,8 +34,8 @@ private:
 
 	void writeMemoryI(u32 value, u32 pos) noexcept {
 		const auto index{ mRegisterI + pos };
-		if (!(index & cTotalMemory)) [[likely]]
-			{ ::assign_cast(mMemoryBank[index], value); }
+		const auto valid{ index < cTotalMemory ? index : cTotalMemory + cSafezoneOOB };
+		::assign_cast(mMemoryBank[valid], value);
 	}
 
 	auto readMemoryI(u32 pos) const noexcept {
@@ -245,3 +246,5 @@ private:
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 };
+
+#endif

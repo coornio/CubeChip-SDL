@@ -4,11 +4,12 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include "BYTEPUSHER_STANDARD.hpp"
+#ifdef ENABLE_BYTEPUSHER_STANDARD
+
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/BasicAudioSpec.hpp"
 #include "../../CoreRegistry.hpp"
-
-#include "BYTEPUSHER_STANDARD.hpp"
 
 REGISTER_CORE(BYTEPUSHER_STANDARD, ".BytePusher")
 
@@ -60,3 +61,5 @@ void BYTEPUSHER_STANDARD::renderVideoData() {
 	BVS->displayBuffer.write(mMemoryBank.data() + (readData<1>(5) << 16), cScreenSizeX * cScreenSizeY,
 		[](u32 pixel) noexcept { return cBitsColor[pixel]; });
 }
+
+#endif

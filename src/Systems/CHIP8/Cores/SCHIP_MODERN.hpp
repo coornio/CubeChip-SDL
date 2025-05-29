@@ -5,9 +5,10 @@
 */
 
 #pragma once
+#define ENABLE_SCHIP_MODERN
+#ifdef ENABLE_SCHIP_MODERN
 
 #include "../../../Assistants/Map2D.hpp"
-
 #include "../Chip8_CoreInterface.hpp"
 
 /*==================================================================*/
@@ -37,8 +38,8 @@ class SCHIP_MODERN final : public Chip8_CoreInterface {
 
 	void writeMemoryI(u32 value, u32 pos) noexcept {
 		const auto index{ mRegisterI + pos };
-		if (!(index & cTotalMemory)) [[likely]]
-			{ ::assign_cast(mMemoryBank[index], value); }
+		const auto valid{ index < cTotalMemory ? index : cTotalMemory + cSafezoneOOB };
+		::assign_cast(mMemoryBank[valid], value);
 	}
 
 	auto readMemoryI(u32 pos) const noexcept {
@@ -273,3 +274,5 @@ private:
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
 };
+
+#endif
