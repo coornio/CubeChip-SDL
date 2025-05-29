@@ -175,7 +175,7 @@ public:
 		const auto minRows{ std::min(rows, lenY()) };
 
 		auto pCopy{ ::allocate<T>(rows * cols).as_value().release() };
-		if (!pCopy) { return; }
+		if (!pCopy) { return *this; }
 		
 		for (size_type row{ 0u }; row < minRows; ++row) {
 			const auto srcIdx{ pData.get() + row * lenX() };
