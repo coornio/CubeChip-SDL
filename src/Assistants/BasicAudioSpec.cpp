@@ -4,23 +4,22 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include "BasicAudioSpec.hpp"
-
 #include <algorithm>
+
+#include "BasicAudioSpec.hpp"
+#include "SettingWrapper.hpp"
 
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_messagebox.h>
 
 /*==================================================================*/
-	#pragma region BasicAudioSpec Singleton Class
 
 BasicAudioSpec::BasicAudioSpec(const Settings& settings) noexcept {
 	mSuccessful = SDL_InitSubSystem(SDL_INIT_AUDIO);
 	if (!mSuccessful) {
 		SDL_ShowSimpleMessageBox(
 			SDL_MESSAGEBOX_ERROR, "Failed to init Audio Subsystem!",
-			SDL_GetError(), nullptr
-		);
+			SDL_GetError(), nullptr);
 		return;
 	}
 
@@ -28,22 +27,45 @@ BasicAudioSpec::BasicAudioSpec(const Settings& settings) noexcept {
 	isMuted(settings.muted);
 }
 
-BasicAudioSpec::~BasicAudioSpec() noexcept {
-	SDL_QuitSubSystem(SDL_INIT_AUDIO);
+BasicAudioSpec::~BasicAudioSpec() noexcept
+	{ SDL_QuitSubSystem(SDL_INIT_AUDIO); }
+
+/*==================================================================*/
+
+SettingsMap BasicAudioSpec::Settings::map() noexcept {
+	return {
+		makeSetting("Audio.Volume", &volume),
+		makeSetting("Audio.Muted",  &muted),
+	};
 }
 
-void BasicAudioSpec::setGlobalGain(float gain) noexcept {
-	mGlobalGain.store(std::clamp(gain, 0.0f, 1.0f), mo::relaxed);
+auto BasicAudioSpec::exportSettings() const noexcept -> Settings {
+	Settings out;
+
+	out.volume = mGlobalGain.load(std::memory_order_relaxed);
+	out.muted = mIsMuted.load(std::memory_order_relaxed);
+
+	return out;
 }
 
-void BasicAudioSpec::addGlobalGain(float gain) noexcept {
-	mGlobalGain.store(std::clamp(getGlobalGain() + gain, 0.0f, 1.0f), mo::relaxed);
-}
+/*==================================================================*/
 
-void BasicAudioSpec::addGlobalGain(signed gain) noexcept {
-	static constexpr float minF{ 1.0f / 255.0f };
-	mGlobalGain.store(std::clamp(getGlobalGain() + gain * minF, 0.0f, 1.0f), mo::relaxed);
-}
+bool BasicAudioSpec::isMuted()           noexcept
+	{ return mIsMuted.load(std::memory_order_relaxed); }
 
-	#pragma endregion
-/*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
+void BasicAudioSpec::isMuted(bool state) noexcept
+	{ mIsMuted.store(state, std::memory_order_relaxed); }
+
+void BasicAudioSpec::toggleMuted()       noexcept
+	{ mIsMuted.store(isMuted(), std::memory_order_relaxed); }
+
+/*==================================================================*/
+
+float BasicAudioSpec::getGlobalGain() noexcept
+	{ return mGlobalGain.load(std::memory_order_relaxed); }
+
+void BasicAudioSpec::setGlobalGain(float gain) noexcept
+	{ mGlobalGain.store(std::clamp(gain, 0.0f, 1.0f), std::memory_order_relaxed); }
+
+void BasicAudioSpec::addGlobalGain(float gain) noexcept
+	{ setGlobalGain(getGlobalGain() + gain); }

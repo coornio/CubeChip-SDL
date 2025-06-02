@@ -15,17 +15,17 @@
 /*==================================================================*/
 
 class CHIP8X final : public Chip8_CoreInterface {
-	static constexpr u32 cTotalMemory{ KiB(16) };
+	static constexpr u64 cTotalMemory{ KiB(16) };
 	static constexpr u32 cSafezoneOOB{    32 };
 	static constexpr u32 cGameLoadPos{   768 };
 	static constexpr u32 cStartOffset{   768 };
 	static constexpr f32 cRefreshRate{ 61.0f };
 
-	static constexpr s32 cResSizeMult{     8 };
-	static constexpr s32 cScreenSizeX{    64 };
-	static constexpr s32 cScreenSizeY{    32 };
-	static constexpr s32 cInstSpeedHi{    30 };
-	static constexpr s32 cInstSpeedLo{    15 };
+	static constexpr s32 cResSizeMult{  8 };
+	static constexpr s32 cScreenSizeX{ 64 };
+	static constexpr s32 cScreenSizeY{ 32 };
+	static constexpr s32 cInstSpeedHi{ 30 };
+	static constexpr s32 cInstSpeedLo{ 15 };
 
 	static constexpr u32 cMaxDisplayW{ 64 };
 	static constexpr u32 cMaxDisplayH{ 32 };

@@ -8,11 +8,9 @@
 
 #include <atomic>
 
-#include "Typedefs.hpp"
 #include "SettingWrapper.hpp"
 
 /*==================================================================*/
-	#pragma region BasicAudioSpec Singleton Class
 
 class BasicAudioSpec final {
 	static inline std::atomic<float> mGlobalGain{};
@@ -24,23 +22,11 @@ public:
 		float volume{ 0.75f };
 		bool  muted{ false };
 
-		SettingsMap map() noexcept {
-			return {
-				makeSetting("Audio.Volume", &volume),
-				makeSetting("Audio.Muted",  &muted),
-			};
-		}
+		SettingsMap map() noexcept;
 	};
 
 	[[nodiscard]]
-	auto exportSettings() const noexcept {
-		Settings out;
-
-		out.volume = mGlobalGain.load(mo::relaxed);
-		out.muted  = mIsMuted.load(mo::relaxed);
-
-		return out;
-	}
+	auto exportSettings() const noexcept -> Settings;
 
 private:
 	BasicAudioSpec(const Settings& settings) noexcept;
@@ -56,17 +42,11 @@ public:
 
 	static bool isSuccessful() noexcept { return mSuccessful; }
 
-	static bool isMuted()           noexcept { return mIsMuted.load(mo::relaxed); }
-	static void isMuted(bool state) noexcept { mIsMuted.store(state, mo::relaxed); }
-	static void toggleMuted()       noexcept { mIsMuted.store(isMuted(), mo::relaxed); }
+	static bool isMuted()           noexcept;
+	static void isMuted(bool state) noexcept;
+	static void toggleMuted()       noexcept;
 
-	static auto getGlobalGain()     noexcept { return mGlobalGain.load(mo::relaxed); }
-	static auto getGlobalGainByte() noexcept { return static_cast<signed>(getGlobalGain() * 255.0f); }
-
-	static void setGlobalGain(float  gain) noexcept;
-	static void addGlobalGain(float  gain) noexcept;
-	static void addGlobalGain(signed gain) noexcept;
+	static float getGlobalGain()           noexcept;
+	static void  setGlobalGain(float gain) noexcept;
+	static void  addGlobalGain(float gain) noexcept;
 };
-
-	#pragma endregion
-/*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/

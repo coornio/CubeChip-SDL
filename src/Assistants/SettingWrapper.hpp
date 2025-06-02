@@ -27,14 +27,12 @@ using SettingVar = PtrVariant<
 >;
 
 template <typename T, typename Variant, std::size_t... I>
-consteval bool is_invocable_over_variant_(std::index_sequence<I...>) {
-	return (std::invocable<T, std::variant_alternative_t<I, Variant>> && ...);
-}
+consteval bool is_invocable_over_variant_(std::index_sequence<I...>) noexcept
+	{ return (std::invocable<T, std::variant_alternative_t<I, Variant>> && ...); }
 
 template<typename T, typename Variant>
-concept SettingVisitor = is_invocable_over_variant_<T, Variant>(
-	std::make_index_sequence<std::variant_size_v<Variant>>{}
-);
+concept SettingVisitor = is_invocable_over_variant_<T, Variant> \
+	(std::make_index_sequence<std::variant_size_v<Variant>>{});
 
 static_assert(SettingVisitor<decltype([](auto*) {}), SettingVar>, "Visitor type mismatch!");
 
@@ -69,26 +67,22 @@ public:
 		}, mSettingPtr);
 	}
 
-	void visit(SettingVisitor<SettingVar> auto&& visitor) {
-		std::visit(std::forward<decltype(visitor)>(visitor), mSettingPtr);
-	}
+	void visit(SettingVisitor<SettingVar> auto&& visitor)
+		{ std::visit(std::forward<decltype(visitor)>(visitor), mSettingPtr); }
 
-	void visit(SettingVisitor<SettingVar> auto&& visitor) const {
-		std::visit(std::forward<decltype(visitor)>(visitor), mSettingPtr);
-	}
+	void visit(SettingVisitor<SettingVar> auto&& visitor) const
+		{ std::visit(std::forward<decltype(visitor)>(visitor), mSettingPtr); }
 };
 
 /*==================================================================*/
 
-using SettingsMap = std::unordered_map<Str, SettingWrapper>;
+using SettingsMap = std::unordered_map<std::string, SettingWrapper>;
 
 template<typename T, typename Variant>
-concept VariantCompatible = requires {
-	Variant(std::in_place_type<T>);
-};
+concept VariantCompatible = requires
+	{ Variant(std::in_place_type<T>); };
 
 template <typename T>
 	requires (VariantCompatible<T*, SettingVar>)
-inline auto makeSetting(const Str& key, T* const ptr) noexcept {
-	return std::pair{ key, SettingWrapper{ ptr } };
-}
+inline auto makeSetting(const std::string& key, T* const ptr) noexcept
+	{ return std::pair{ key, SettingWrapper{ ptr } }; }

@@ -172,10 +172,10 @@ void FrontendHost::checkForHotkeys() {
 	Input.updateStates();
 
 	if (Input.isPressed(KEY(UP))) {
-		BAS->addGlobalGain(+15);
+		BAS->addGlobalGain(+0.0625f);
 	}
 	if (Input.isPressed(KEY(DOWN))) {
-		BAS->addGlobalGain(-15);
+		BAS->addGlobalGain(-0.0625f);
 	}
 	if (Input.isPressed(KEY(RIGHT))) {
 		BVS->rotateViewport(+1);

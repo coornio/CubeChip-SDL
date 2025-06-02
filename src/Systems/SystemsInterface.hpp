@@ -6,8 +6,6 @@
 
 #pragma once
 
-#include <SDL3/SDL_scancode.h>
-
 #include <shared_mutex>
 #include <execution>
 #include <iostream>
@@ -34,6 +32,8 @@
 #include "../Assistants/RGBA.hpp"
 
 #include "CoreRegistry.hpp"
+
+#include <SDL3/SDL_scancode.h>
 
 /*==================================================================*/
 
