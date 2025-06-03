@@ -92,12 +92,15 @@ SystemsInterface* CoreRegistry::constructCore(size_type idx) noexcept {
 
 void CoreRegistry::loadProgramDB(const Path& dbPath) noexcept {
 	static const auto defaultPath{ ::getBasePath() / Path("programDB.json") };
-
 	const auto& checkPath{ dbPath.empty() ? defaultPath : dbPath };
+
 	if (!loadJsonFromFile(checkPath, sProgramDB)) {
 		sProgramDB.clear();
 		blog.newEntry(BLOG::WARN,
-			"Failed to load Program Database: \"{}\"", checkPath.string());
+			"Failed to load ProgramDB: \"{}\"", checkPath.string());
+	} else {
+		blog.newEntry(BLOG::INFO,
+			"Successfully loaded ProgramDB: \"{}\"", checkPath.string());
 	}
 }
 

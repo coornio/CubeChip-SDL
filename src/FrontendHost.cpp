@@ -171,49 +171,33 @@ void FrontendHost::checkForHotkeys() {
 	static BasicKeyboard Input;
 	Input.updateStates();
 
-	if (Input.isPressed(KEY(UP))) {
-		BAS->addGlobalGain(+0.0625f);
-	}
-	if (Input.isPressed(KEY(DOWN))) {
-		BAS->addGlobalGain(-0.0625f);
-	}
-	if (Input.isPressed(KEY(RIGHT))) {
-		BVS->rotateViewport(+1);
-	}
-	if (Input.isPressed(KEY(LEFT))) {
-		BVS->rotateViewport(-1);
-	}
-	if (Input.isPressed(KEY(F9))) {
-		blog.newEntry(BLOG::INFO, "Attempting to load ProgramDB!");
-		CoreRegistry::loadProgramDB();
-	}
-	if (Input.isPressed(KEY(F1))) {
-		BVS->toggleUsingScanlines();
-	}
-	if (Input.isPressed(KEY(F2))) {
-		BVS->toggleIntegerScaling();
-	}
-	if (Input.isPressed(KEY(F3))) {
-		BVS->cycleViewportScaleMode();
-	}
+	if (Input.isPressed(KEY(UP)))
+		{ BAS->addGlobalGain(+0.0625f); }
+	if (Input.isPressed(KEY(DOWN)))
+		{ BAS->addGlobalGain(-0.0625f); }
+	if (Input.isPressed(KEY(RIGHT)))
+		{ BVS->rotateViewport(+1); }
+	if (Input.isPressed(KEY(LEFT)))
+		{ BVS->rotateViewport(-1); }
+	if (Input.isPressed(KEY(F9)))
+		{ CoreRegistry::loadProgramDB(); }
+	if (Input.isPressed(KEY(F1)))
+		{ BVS->toggleUsingScanlines(); }
+	if (Input.isPressed(KEY(F2)))
+		{ BVS->toggleIntegerScaling(); }
+	if (Input.isPressed(KEY(F3)))
+		{ BVS->cycleViewportScaleMode(); }
 
 	if (mSystemCore) {
-		if (Input.isPressed(KEY(ESCAPE))) {
-			discardCore();
-			return;
-		}
-		if (Input.isPressed(KEY(BACKSPACE))) {
-			replaceCore();
-			return;
-		}
+		if (Input.isPressed(KEY(ESCAPE)))
+			{ discardCore(); return; }
+		if (Input.isPressed(KEY(BACKSPACE)))
+			{ replaceCore(); return; }
 
-		if (Input.isPressed(KEY(F11))) {
-			mShowOverlay = !mShowOverlay;
-		}
-		if (Input.isPressed(KEY(F10))) {
-			mUnlimited = !mUnlimited;
-			toggleSystemLimiter();
-		}
+		if (Input.isPressed(KEY(F11)))
+			{ mShowOverlay = !mShowOverlay; }
+		if (Input.isPressed(KEY(F10)))
+			{ mUnlimited = !mUnlimited; toggleSystemLimiter(); }
 	}
 }
 

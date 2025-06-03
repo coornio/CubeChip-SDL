@@ -134,6 +134,11 @@ auto BasicVideoSpec::getTextureSizeRect(SDL_Texture* texture) const noexcept -> 
 auto BasicVideoSpec::exportSettings() const noexcept -> BasicVideoSpec::Settings {
 	Settings out;
 
+	if (SDL_GetWindowFlags(mMainWindow) & SDL_WINDOW_MAXIMIZED) {
+		SDL_RestoreWindow(mMainWindow);
+		SDL_SyncWindow(mMainWindow);
+	}
+
 	SDL_GetWindowPosition(mMainWindow, &out.window.x, &out.window.y);
 	SDL_GetWindowSize(mMainWindow, &out.window.w, &out.window.h);
 	out.viewport.filtering = mViewportScaleMode;
