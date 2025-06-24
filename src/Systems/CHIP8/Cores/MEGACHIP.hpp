@@ -62,7 +62,7 @@ class MEGACHIP final : public Chip8_CoreInterface {
 		MULTIPLY     = 5,
 	};
 
-	u8(*intBlendAlgo)(const u8 src, const u8 dst) noexcept {};
+	u8 (*intChannelBlend)(u8 src, u8 dst) noexcept {};
 
 	void setNewBlendAlgorithm(s32 mode) noexcept;
 	void scrapAllVideoBuffers();
@@ -75,7 +75,7 @@ class MEGACHIP final : public Chip8_CoreInterface {
 	f64 mTrackPosition{};
 
 	void resetAudioTrack() noexcept;
-	void startAudioTrack(const bool repeat) noexcept;
+	void startAudioTrack(bool repeat) noexcept;
 
 	void pushByteAudio(u32 index) noexcept;
 

@@ -335,7 +335,7 @@ void MEGACHIP::renderVideoData() {
 	}
 }
 
-void MEGACHIP::prepDisplayArea(const Resolution mode) {
+void MEGACHIP::prepDisplayArea(Resolution mode) {
 	const bool wasManualRefresh{ isManualRefresh(mode == Resolution::MC) };
 	isResolutionChanged(wasManualRefresh != isManualRefresh());
 
@@ -377,62 +377,59 @@ void MEGACHIP::scrollDisplayRT() {
 
 void MEGACHIP::initializeFontColors() noexcept {
 	for (auto i{ 0 }; i < 10; ++i) {
-		const auto mult{ 1.0f - 0.045f * i };
-		const auto R{ 0xFF * mult * 1.03f };
-		const auto G{ 0xFF * mult * 1.14f };
-		const auto B{ 0xFF * mult * 1.21f };
+		//const auto mult{ 1.0f - 0.045f * i };
+		//const auto R{ 0xFF * mult * 1.03f };
+		//const auto G{ 0xFF * mult * 1.14f };
+		//const auto B{ 0xFF * mult * 1.21f };
+		//
+		//mFontColor[i] = {
+		//	static_cast<u8>(std::min(std::round(R), 255.0f)),
+		//	static_cast<u8>(std::min(std::round(G), 255.0f)),
+		//	static_cast<u8>(std::min(std::round(B), 255.0f)),
+		//};
 
-		mFontColor[i] = {
-			static_cast<u8>(std::min(std::round(R), 255.0f)),
-			static_cast<u8>(std::min(std::round(G), 255.0f)),
-			static_cast<u8>(std::min(std::round(B), 255.0f)),
+		const auto mult{ 255 - 11 * i };
+		
+		mFontColor[i] = RGBA{
+			EzMaths::fixedMul8(0xFF, u8(std::min(mult * 264, 255))),
+			EzMaths::fixedMul8(0xFF, u8(std::min(mult * 291, 255))),
+			EzMaths::fixedMul8(0xFF, u8(std::min(mult * 309, 255))),
 		};
 	}
 }
 
-RGBA MEGACHIP::blendPixel(const RGBA src, const RGBA dst) const noexcept {
-	const auto alpha{ intByteMult(src.A, mTexture.opacity) };
+RGBA MEGACHIP::blendPixel(RGBA src, RGBA dst) const noexcept {
+	if (auto alpha{ EzMaths::fixedMul8(src.A, u8(mTexture.opacity)) }) [[likely]] {
+		RGBA blend{
+			intChannelBlend(src.R, dst.R),
+			intChannelBlend(src.G, dst.G),
+			intChannelBlend(src.B, dst.B)
+		};
 
-	switch (alpha) {
-		[[unlikely]]
-		case 0x00u:
-			return dst;
-
-		[[likely]]
-		case 0xFFu:
-			return RGBA(
-				intBlendAlgo(src.R, dst.R),
-				intBlendAlgo(src.G, dst.G),
-				intBlendAlgo(src.B, dst.B)
-			);
-
-		[[unlikely]]
-		default: {
-			const auto dW{ ~alpha & 0xFFu };
-			return RGBA(
-				intByteMult(dst.R, dW) + intByteMult(intBlendAlgo(src.R, dst.R), alpha),
-				intByteMult(dst.G, dW) + intByteMult(intBlendAlgo(src.G, dst.G), alpha),
-				intByteMult(dst.B, dW) + intByteMult(intBlendAlgo(src.B, dst.B), alpha)
-			);
+		if (alpha != 0xFFu) [[likely]] {
+			return RGBA::lerp(dst, blend, alpha);
+		} else {
+			return blend;
 		}
 	}
+	return dst;
 }
 
 void MEGACHIP::setNewBlendAlgorithm(s32 mode) noexcept {
 	switch (mode) {
 		case BlendMode::LINEAR_DODGE:
-			intBlendAlgo = [](const u8 src, const u8 dst)
-				noexcept { return static_cast<u8>(std::min(src + dst, 0xFF)); };
+			intChannelBlend = [](u8 src, u8 dst)
+				noexcept { return u8(std::min(src + dst, 0xFF)); };
 			break;
 
 		case BlendMode::MULTIPLY:
-			intBlendAlgo = [](const u8 src, const u8 dst)
-				noexcept { return intByteMult(src, dst); };
+			intChannelBlend = [](u8 src, u8 dst)
+				noexcept { return EzMaths::fixedMul8(src, dst); };
 			break;
 
 		default:
 		case BlendMode::ALPHA_BLEND:
-			intBlendAlgo = [](const u8 src, const u8)
+			intChannelBlend = [](u8 src, u8)
 				noexcept { return src; };
 			break;
 	}
@@ -455,9 +452,8 @@ void MEGACHIP::blendAndFlushBuffers() const {
 	BVS->displayBuffer.write(
 		mForegroundBuffer,
 		mBackgroundBuffer,
-		[this](const RGBA src, const RGBA dst) noexcept {
-			return blendPixel(src, dst);
-		}
+		[this](RGBA src, RGBA dst) noexcept
+			{ return blendPixel(src, dst); }
 	);
 }
 
@@ -466,7 +462,7 @@ void MEGACHIP::resetAudioTrack() noexcept {
 	mTrackStartIdx = mTrackTotalLen = 0;
 }
 
-void MEGACHIP::startAudioTrack(const bool repeat) noexcept {
+void MEGACHIP::startAudioTrack(bool repeat) noexcept {
 	mTrackTotalLen = readMemoryI(2) << 16
 				   | readMemoryI(3) <<  8
 				   | readMemoryI(4);

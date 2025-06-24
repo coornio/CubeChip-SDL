@@ -46,10 +46,15 @@ struct CoreDetails {
 	ProgramTester   testProgram{};
 	FileExtList     fileExtensions{};
 
+	Str coreName{};
+	Str coreDesc{};
+
 	void clear() noexcept {
 		constructCore = nullptr;
 		testProgram   = nullptr;
 		fileExtensions.clear();
+		coreName.clear();
+		coreDesc.clear();
 	}
 };
 

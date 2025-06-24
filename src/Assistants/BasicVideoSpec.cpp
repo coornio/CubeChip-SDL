@@ -20,28 +20,18 @@
 
 #include "FrontendInterface.hpp"
 #include "BasicVideoSpec.hpp"
-#include "RGBA.hpp"
+#include "ColorOps.hpp"
 
 #include <SDL3/SDL.h>
 
 /*==================================================================*/
 
 auto BasicVideoSpec::Rect::frect() const noexcept -> SDL_FRect {
-	return SDL_FRect{
-		static_cast<f32>(0),
-		static_cast<f32>(0),
-		static_cast<f32>(W),
-		static_cast<f32>(H)
-	};
+	return SDL_FRect{ 0.0f, 0.0f, f32(W), f32(H) };
 }
 
 auto BasicVideoSpec::Viewport::frect() const noexcept -> SDL_FRect {
-	return SDL_FRect{
-		static_cast<f32>(ppad),
-		static_cast<f32>(ppad),
-		static_cast<f32>(rect.W * mult),
-		static_cast<f32>(rect.H * mult)
-	};
+	return SDL_FRect{ f32(ppad), f32(ppad), f32(rect.W * mult), f32(rect.H * mult) };
 }
 
 /*==================================================================*/
@@ -131,7 +121,7 @@ auto BasicVideoSpec::getTextureSizeRect(SDL_Texture* texture) const noexcept -> 
 	};
 }
 
-auto BasicVideoSpec::exportSettings() const noexcept -> BasicVideoSpec::Settings {
+auto BasicVideoSpec::exportSettings() const noexcept -> Settings {
 	Settings out;
 
 	if (SDL_GetWindowFlags(mMainWindow) & SDL_WINDOW_MAXIMIZED) {

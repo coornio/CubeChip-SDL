@@ -172,6 +172,9 @@
     <ClCompile Include="src\Assistants\BasicInput.cpp">
       <Filter>Source Files\Assistants</Filter>
     </ClCompile>
+    <ClCompile Include="src\Assistants\Millis.cpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Assistants\BasicAudioSpec.hpp">
@@ -270,7 +273,7 @@
     <ClInclude Include="src\Assistants\Misc.hpp">
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
-    <ClInclude Include="src\Assistants\RGBA.hpp">
+    <ClInclude Include="src\Assistants\ColorOps.hpp">
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
     <ClInclude Include="src\Assistants\AtomicSharedProxy.hpp">
@@ -331,6 +334,9 @@
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
     <ClInclude Include="src\Assistants\FriendlyUnique.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\Millis.hpp">
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
   </ItemGroup>

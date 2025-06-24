@@ -43,6 +43,7 @@ add_executable(${PROJECT_NAME}
   src/Assistants/FrontendInterface.cpp
   src/Assistants/Well512.cpp
   src/Assistants/BasicInput.cpp
+  src/Assistants/Millis.cpp
   src/Assistants/SHA1.cpp
 
   src/Systems/SystemsInterface.cpp

@@ -16,6 +16,8 @@
 #include "../Libraries/imgui/imgui_impl_sdl3.h"
 #include "../Libraries/imgui/imgui_impl_sdlrenderer3.h"
 
+#include <SDL3/SDL.h>
+
 /*==================================================================*/
 
 namespace ImGui {
@@ -203,7 +205,15 @@ void FrontendInterface::PrepareViewport(
 	if (ImGui::BeginMainMenuBar()) {
 		if (ImGui::BeginMenu("File")) {
 			if (ImGui::MenuItem("Open...")) {
-
+				//SDL_ShowOpenFileDialog(
+				//	SDL_DialogFileCallback callback,
+				//	void* userdata,
+				//	SDL_Window* window,
+				//	const SDL_DialogFileFilter* filters,
+				//	int nfilters,
+				//	const char* default_location,
+				//	bool allow_many
+				//);
 			}
 			ImGui::EndMenu();
 		}

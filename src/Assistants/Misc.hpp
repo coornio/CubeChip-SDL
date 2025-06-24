@@ -32,11 +32,6 @@ inline constexpr void assign_cast(Dst& dst, Src&& src) noexcept
 
 /*==================================================================*/
 
-inline constexpr auto intByteMult(u32 color1, u32 color2) noexcept
-	{ return static_cast<u8>(((color1 * (color2 | color2 << 8)) + 0x8080) >> 16); }
-
-/*==================================================================*/
-
 inline constexpr bool simplePathValidityCheck(StrV path) noexcept {
 #ifdef _WIN32
 	constexpr StrV illegal{ R"(<>:"/\|?*)" };
@@ -59,3 +54,6 @@ Expected<T, E> makeExpected(T&& value, E&& error) {
 	if (!error) { return std::forward<T>(value); }
 	else { return makeUnexpected<E>(std::forward<E>(error)); }
 }
+
+
+/*==================================================================*/
