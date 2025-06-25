@@ -34,9 +34,10 @@ class SCHIP_LEGACY final : public Chip8_CoreInterface {
 	std::array<u8, cTotalMemory + cSafezoneOOB>
 		mMemoryBank{};
 
-	void writeMemoryI(u32 value, u32 pos) noexcept {
+	template <std::integral T>
+	void writeMemoryI(T value, u32 pos) noexcept {
 		const auto index{ mRegisterI + pos };
-		const auto valid{ index < cTotalMemory ? index : cTotalMemory + cSafezoneOOB };
+		const auto valid{ index < cTotalMemory ? index : cTotalMemory + cSafezoneOOB - 1 };
 		::assign_cast(mMemoryBank[valid], value);
 	}
 

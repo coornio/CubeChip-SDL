@@ -719,9 +719,14 @@ void XOCHIP::scrollDisplayRT() {
 		mRegisterI = (mRegisterV[X] & 0xF) * 10 + 80;
 	}
 	void XOCHIP::instruction_Fx33(s32 X) noexcept {
-		writeMemoryI(mRegisterV[X] / 100,     0);
-		writeMemoryI(mRegisterV[X] / 10 % 10, 1);
-		writeMemoryI(mRegisterV[X]      % 10, 2);
+		const auto N__{ mRegisterV[X] * 0x51EB851Full >> 37 };
+		const auto _NN{ mRegisterV[X] - N__ * 100 };
+		const auto _N_{ _NN * 0xCCCDull >> 19 };
+		const auto __N{ _NN - _N_ * 10 };
+
+		writeMemoryI(N__, 0);
+		writeMemoryI(_N_, 1);
+		writeMemoryI(__N, 2);
 	}
 	void XOCHIP::instruction_Fx3A(s32 X) noexcept {
 		mAudioPitch = mRegisterV[X];

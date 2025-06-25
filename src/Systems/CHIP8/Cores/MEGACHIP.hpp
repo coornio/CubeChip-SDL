@@ -87,7 +87,8 @@ class MEGACHIP final : public Chip8_CoreInterface {
 			{ ::assign_cast(mMemoryBank[pos], value); }
 	}
 
-	void writeMemoryI(u32 value, u32 pos) noexcept {
+	template <std::integral T>
+	void writeMemoryI(T value, u32 pos) noexcept {
 		const auto index{ mRegisterI + pos };
 		if (index < cTotalMemory) [[likely]]
 			{ ::assign_cast(mMemoryBank[index], value); }
