@@ -17,8 +17,7 @@ REGISTER_CORE(CHIP8X, ".c8x")
 /*==================================================================*/
 
 CHIP8X::CHIP8X() {
-	std::fill(EXEC_POLICY(unseq)
-		mMemoryBank.end() - cSafezoneOOB, mMemoryBank.end(), u8{ 0xFF });
+	::fill_n(mMemoryBank, cTotalMemory, cSafezoneOOB, 0xFF);
 
 	copyGameToMemory(mMemoryBank.data() + cGameLoadPos);
 	copyFontToMemory(mMemoryBank.data(), 0x50);
@@ -279,7 +278,7 @@ void CHIP8X::drawHiresColor(s32 X, s32 Y, s32 idx, s32 N) noexcept {
 
 	void CHIP8X::instruction_00E0() noexcept {
 		triggerInterrupt(Interrupt::FRAME);
-		initialize(mDisplayBuffer);
+		::fill(mDisplayBuffer);
 	}
 	void CHIP8X::instruction_00EE() noexcept {
 		mCurrentPC = mStackBank[--mStackTop & 0xF];
@@ -580,11 +579,13 @@ void CHIP8X::drawHiresColor(s32 X, s32 Y, s32 idx, s32 N) noexcept {
 		SUGGEST_VECTORIZABLE_LOOP
 		for (auto idx{ 0 }; idx <= N; ++idx) { writeMemoryI(mRegisterV[idx], idx); }
 		mRegisterI = !Quirk.idxRegNoInc ? (mRegisterI + N + 1) & 0xFFF : mRegisterI;
+		//if (!Quirk.idxRegNoInc) [[likely]] { mRegisterI = (mRegisterI + N + 1) & 0xFFF; }
 	}
 	void CHIP8X::instruction_FN65(s32 N) noexcept {
 		SUGGEST_VECTORIZABLE_LOOP
 		for (auto idx{ 0 }; idx <= N; ++idx) { mRegisterV[idx] = readMemoryI(idx); }
 		mRegisterI = !Quirk.idxRegNoInc ? (mRegisterI + N + 1) & 0xFFF : mRegisterI;
+		//if (!Quirk.idxRegNoInc) [[likely]] { mRegisterI = (mRegisterI + N + 1) & 0xFFF; }
 	}
 	void CHIP8X::instruction_FxF8(s32 X) noexcept {
 		setBuzzerPitch(mRegisterV[X]);

@@ -19,10 +19,7 @@ REGISTER_CORE(SCHIP_MODERN, ".sc8")
 SCHIP_MODERN::SCHIP_MODERN()
 	: mDisplayBuffer{ {cScreenSizeX, cScreenSizeY} }
 {
-	std::fill(EXEC_POLICY(unseq)
-		mMemoryBank.end() - cSafezoneOOB,
-		mMemoryBank.end(), u8{ 0xFF }
-	);
+	::fill_n(mMemoryBank, cTotalMemory, cSafezoneOOB, 0xFF);
 
 	copyGameToMemory(mMemoryBank.data() + cGameLoadPos);
 	copyFontToMemory(mMemoryBank.data(), 0xF0);
@@ -597,11 +594,13 @@ void SCHIP_MODERN::scrollDisplayRT() {
 		SUGGEST_VECTORIZABLE_LOOP
 		for (auto idx{ 0 }; idx <= N; ++idx) { writeMemoryI(mRegisterV[idx], idx); }
 		mRegisterI = !Quirk.idxRegNoInc ? (mRegisterI + N + 1) & 0xFFF : mRegisterI;
+		//if (!Quirk.idxRegNoInc) [[likely]] { mRegisterI = (mRegisterI + N + 1) & 0xFFF; }
 	}
 	void SCHIP_MODERN::instruction_FN65(s32 N) noexcept {
 		SUGGEST_VECTORIZABLE_LOOP
 		for (auto idx{ 0 }; idx <= N; ++idx) { mRegisterV[idx] = readMemoryI(idx); }
 		mRegisterI = !Quirk.idxRegNoInc ? (mRegisterI + N + 1) & 0xFFF : mRegisterI;
+		//if (!Quirk.idxRegNoInc) [[likely]] { mRegisterI = (mRegisterI + N + 1) & 0xFFF; }
 	}
 	void SCHIP_MODERN::instruction_FN75(s32 N) noexcept {
 		setPermaRegs(N + 1);

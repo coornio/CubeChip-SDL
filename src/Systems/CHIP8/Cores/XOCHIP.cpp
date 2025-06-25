@@ -26,10 +26,7 @@ XOCHIP::XOCHIP()
 {
 	Quirk.wrapSprite = true;
 
-	std::fill(EXEC_POLICY(unseq)
-		mMemoryBank.end() - cSafezoneOOB,
-		mMemoryBank.end(), u8{ 0xFF }
-	);
+	::fill_n(mMemoryBank, cTotalMemory, cSafezoneOOB, 0xFF);
 
 	copyGameToMemory(mMemoryBank.data() + cGameLoadPos);
 	copyFontToMemory(mMemoryBank.data(), 0x50);
@@ -733,11 +730,13 @@ void XOCHIP::scrollDisplayRT() {
 		SUGGEST_VECTORIZABLE_LOOP
 		for (auto idx{ 0 }; idx <= N; ++idx) { writeMemoryI(mRegisterV[idx], idx); }
 		mRegisterI = !Quirk.idxRegNoInc ? (mRegisterI + N + 1) & 0xFFFF : mRegisterI;
+		//if (!Quirk.idxRegNoInc) [[likely]] { mRegisterI = (mRegisterI + N + 1) & 0xFFFF; }
 	}
 	void XOCHIP::instruction_FN65(s32 N) noexcept {
 		SUGGEST_VECTORIZABLE_LOOP
 		for (auto idx{ 0 }; idx <= N; ++idx) { mRegisterV[idx] = readMemoryI(idx); }
 		mRegisterI = !Quirk.idxRegNoInc ? (mRegisterI + N + 1) & 0xFFFF : mRegisterI;
+		//if (!Quirk.idxRegNoInc) [[likely]] { mRegisterI = (mRegisterI + N + 1) & 0xFFFF; }
 	}
 	void XOCHIP::instruction_FN75(s32 N) noexcept {
 		setPermaRegs(N + 1);

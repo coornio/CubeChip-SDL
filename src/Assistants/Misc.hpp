@@ -11,11 +11,41 @@
 
 /*==================================================================*/
 
-template <IsContiguousContainer Object>
-	requires (!std::is_rvalue_reference_v<Object>)
-inline void initialize(Object& array) noexcept {
+template <IsContiguousContainer Object, typename V = ValueType<Object>>
+	requires (!std::is_rvalue_reference_v<Object> && std::convertible_to<V, ValueType<Object>>)
+inline void fill(Object& array, V val = {}) noexcept {
 	std::fill(EXEC_POLICY(unseq)
-		std::begin(array), std::end(array), typename Object::value_type{});
+		std::begin(array), std::end(array),
+		static_cast<ValueType<Object>>(val));
+}
+
+template <IsContiguousContainer Object, typename V = ValueType<Object>>
+	requires (!std::is_rvalue_reference_v<Object> && std::convertible_to<V, ValueType<Object>>)
+inline void fill_n(Object& array, size_type offset = 0, size_type count = 0, V val = {}) noexcept {
+	if (offset < std::size(array)) {
+		std::fill_n(EXEC_POLICY(unseq)
+			std::data(array) + offset, count ? count : std::size(array) - offset,
+			static_cast<ValueType<Object>>(val));
+	}
+}
+
+template <IsContiguousContainer Object, typename Generator>
+	requires (!std::is_rvalue_reference_v<Object> && std::invocable<Generator>)
+inline void generate(Object& array, Generator&& lambda) noexcept {
+	std::generate(EXEC_POLICY(unseq)
+		std::begin(array), std::end(array),
+		std::forward<Generator>(lambda));
+}
+
+template <IsContiguousContainer Object, typename Generator>
+	requires (!std::is_rvalue_reference_v<Object> && std::invocable<Generator>)
+inline void generate_n(Object& array, size_type offset, size_type count, Generator&& lambda) noexcept {
+	if (offset < std::size(array)) {
+		std::generate_n(EXEC_POLICY(unseq)
+			std::data(array) + offset,
+			count ? count : std::size(array) - offset,
+			std::forward<Generator>(lambda));
+	}
 }
 
 /*==================================================================*/

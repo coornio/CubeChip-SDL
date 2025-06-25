@@ -17,8 +17,7 @@ REGISTER_CORE(CHIP8_MODERN, ".ch8")
 /*==================================================================*/
 
 CHIP8_MODERN::CHIP8_MODERN() {
-	std::fill(EXEC_POLICY(unseq)
-		mMemoryBank.end() - cSafezoneOOB, mMemoryBank.end(), u8{ 0xFF });
+	::fill_n(mMemoryBank, cTotalMemory, cSafezoneOOB, 0xFF);
 
 	copyGameToMemory(mMemoryBank.data() + cGameLoadPos);
 	copyFontToMemory(mMemoryBank.data(), 0x50);
@@ -217,7 +216,7 @@ void CHIP8_MODERN::renderVideoData() {
 	void CHIP8_MODERN::instruction_00E0() noexcept {
 		if (Quirk.waitVblank) [[unlikely]]
 			{ triggerInterrupt(Interrupt::FRAME); }
-		::initialize(mDisplayBuffer);
+		::fill(mDisplayBuffer);
 	}
 	void CHIP8_MODERN::instruction_00EE() noexcept {
 		mCurrentPC = mStackBank[--mStackTop & 0xF];
@@ -493,9 +492,14 @@ void CHIP8_MODERN::renderVideoData() {
 		mRegisterI = (mRegisterV[X] & 0xF) * 5;
 	}
 	void CHIP8_MODERN::instruction_Fx33(s32 X) noexcept {
-		writeMemoryI(mRegisterV[X] / 100,     0);
-		writeMemoryI(mRegisterV[X] / 10 % 10, 1);
-		writeMemoryI(mRegisterV[X]      % 10, 2);
+		const auto N__{ mRegisterV[X] * 0x51EB851Full >> 37 };
+		const auto _NN{ mRegisterV[X] - N__ * 100 };
+		const auto _N_{ _NN * 0xCCCDull >> 19 };
+		const auto __N{ _NN - _N_ * 10 };
+
+		writeMemoryI(N__, 0);
+		writeMemoryI(_N_, 1);
+		writeMemoryI(__N, 2);
 	}
 	void CHIP8_MODERN::instruction_FN55(s32 N) noexcept {
 		SUGGEST_VECTORIZABLE_LOOP

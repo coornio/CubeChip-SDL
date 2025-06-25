@@ -19,11 +19,8 @@ REGISTER_CORE(SCHIP_LEGACY, ".sc8")
 SCHIP_LEGACY::SCHIP_LEGACY()
 	: mDisplayBuffer{ {cDisplayResW, cDisplayResH} }
 {
-	std::generate(EXEC_POLICY(unseq)
-		mMemoryBank.begin(), mMemoryBank.end() - cSafezoneOOB, []() { return RNG->next<u8>(); });
-
-	std::fill(EXEC_POLICY(unseq)
-		mMemoryBank.end() - cSafezoneOOB, mMemoryBank.end(), u8{ 0xFF });
+	::generate_n(mMemoryBank, 0, cTotalMemory, []() { return RNG->next<u8>(); });
+	::fill_n(mMemoryBank, cTotalMemory, cSafezoneOOB, 0xFF);
 
 	copyGameToMemory(mMemoryBank.data() + cGameLoadPos);
 	copyFontToMemory(mMemoryBank.data(), 0xB4);
@@ -616,11 +613,13 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 		SUGGEST_VECTORIZABLE_LOOP
 		for (auto idx{ 0 }; idx <= N; ++idx) { writeMemoryI(mRegisterV[idx], idx); }
 		mRegisterI = Quirk.idxRegMinus ? (mRegisterI + N) & 0xFFF : mRegisterI;
+		//if (Quirk.idxRegMinus) [[likely]] { mRegisterI = (mRegisterI + N) & 0xFFF; }
 	}
 	void SCHIP_LEGACY::instruction_FN65(s32 N) noexcept {
 		SUGGEST_VECTORIZABLE_LOOP
 		for (auto idx{ 0 }; idx <= N; ++idx) { mRegisterV[idx] = readMemoryI(idx); }
 		mRegisterI = Quirk.idxRegMinus ? (mRegisterI + N) & 0xFFF : mRegisterI;
+		//if (Quirk.idxRegMinus) [[likely]] { mRegisterI = (mRegisterI + N) & 0xFFF; }
 	}
 	void SCHIP_LEGACY::instruction_FN75(s32 N) noexcept {
 		setPermaRegs(std::min(N, 7) + 1);

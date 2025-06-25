@@ -44,7 +44,7 @@ BasicVideoSpec::BasicVideoSpec(const Settings& settings) noexcept {
 		return;
 	}
 
-	mViewportScaleMode = (settings.viewport.filtering < 0) ? 0 : settings.viewport.filtering % 3;
+	mViewportScaleMode = settings.viewport.filtering < 0 ? 0 : settings.viewport.filtering % 3;
 
 	mIntegerScaling    = settings.viewport.int_scale;
 	mUsingScanlines    = settings.viewport.scanlines;
@@ -75,11 +75,13 @@ BasicVideoSpec::BasicVideoSpec(const Settings& settings) noexcept {
 
 	SDL_Rect deco{};
 
-	if (SDL_Unique dummy{ SDL_CreateWindow(
+	if (SDL_Unique<SDL_Window> dummy{ SDL_CreateWindow(
 		nullptr, 64, 64, SDL_WINDOW_UTILITY | SDL_WINDOW_HIDDEN
 	) }) {
+		#ifndef __APPLE__
 		constexpr auto away{ std::numeric_limits<int>::min() };
 		SDL_SetWindowPosition(dummy, away, away);
+		#endif
 		SDL_ShowWindow(dummy);
 		SDL_SyncWindow(dummy);
 		SDL_RenderPresent(mMainRenderer);
@@ -172,7 +174,7 @@ void BasicVideoSpec::normalizeRectToDisplay(SDL_Rect& rect, SDL_Rect& deco, bool
 	bool rectOverlap{};
 	
 	// 1: fetch all eligible display IDs
-	SDL_Unique displays{ SDL_GetDisplays(&numDisplays) };
+	SDL_Unique<SDL_DisplayID> displays{ SDL_GetDisplays(&numDisplays) };
 	if (!displays || numDisplays <= 0) [[unlikely]]
 		{ rect = Settings::defaults; return; }
 
