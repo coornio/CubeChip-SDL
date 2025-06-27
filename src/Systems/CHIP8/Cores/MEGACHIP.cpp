@@ -481,27 +481,29 @@ void MEGACHIP::startAudioTrack(bool repeat) noexcept {
 }
 
 void MEGACHIP::pushByteAudio(u32 index) noexcept {
-	const auto samplesTotal{ mAudio[index].getNextBufferSize(cRefreshRate) };
-	auto samplesBuffer{ ::allocate<s16>(samplesTotal).as_value().release() };
+	if (auto* stream{ mAudio.at(index) }) {
+		const auto samplesTotal{ stream->getNextBufferSize(cRefreshRate) };
+		auto samplesBuffer{ ::allocate<s16>(samplesTotal).as_value().release() };
 
-	if (mTrackTotalLen) {
-		for (auto& audioSample : std::span(samplesBuffer.get(), samplesTotal)) {
-			::assign_cast(audioSample, (readMemory(
-				mTrackStartIdx + static_cast<u32>(mTrackPosition)
-			) - 128) << 8);
+		if (mTrackTotalLen) {
+			for (auto& audioSample : std::span(samplesBuffer.get(), samplesTotal)) {
+				::assign_cast(audioSample, (readMemory(
+					mTrackStartIdx + static_cast<u32>(mTrackPosition)
+				) - 128) << 8);
 
-			if ((mTrackPosition += mTrackStepping) >= std::abs(mTrackTotalLen)) {
-				if (mTrackTotalLen < 0) {
-					mTrackPosition += mTrackTotalLen;
-				} else {
-					resetAudioTrack();
-					break;
+				if ((mTrackPosition += mTrackStepping) >= std::abs(mTrackTotalLen)) {
+					if (mTrackTotalLen < 0) {
+						mTrackPosition += mTrackTotalLen;
+					} else {
+						resetAudioTrack();
+						break;
+					}
 				}
 			}
 		}
-	}
 
-	mAudio[index].pushAudioData(samplesBuffer.get(), samplesTotal);
+		stream->pushAudioData(samplesBuffer.get(), samplesTotal);
+	}
 }
 
 void MEGACHIP::scrollBuffersUP(s32 N) {
@@ -837,7 +839,7 @@ void MEGACHIP::scrollBuffersRT() {
 			auto& pixelLO{ mDisplayBuffer[0](offsetX, originY + 1) };
 
 			if (DATA >> (WIDTH - 1 - B) & 0x1) {
-				if (pixelHI & 0x8) { collided = true; }
+				collided |= !!(pixelHI & 0x8);
 				pixelLO = pixelHI ^= 0x8;
 			} else {
 				pixelLO = pixelHI;

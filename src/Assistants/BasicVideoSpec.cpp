@@ -244,18 +244,18 @@ void BasicVideoSpec::resetMainWindow() {
 	SDL_ShowWindow(mMainWindow);
 	//SDL_SyncWindow(mMainWindow);
 
-	mCurViewport = { 640, 480, 1, 0 };
+	mCurViewport = { Settings::defaults.w, Settings::defaults.h, 1, 0 };
 	mViewportRotation = 0;
 
 	mSystemTexture.reset();
 	mWindowTexture.reset();
 }
 
-void BasicVideoSpec::setViewportAlpha(u32 alpha) {
-	mTextureAlpha.store(static_cast<u8>(alpha), mo::release);
+void BasicVideoSpec::setViewportAlpha(u32 alpha) noexcept {
+	mTextureAlpha.store(u8(alpha), mo::release);
 }
 
-void BasicVideoSpec::setViewportSizes(s32 W, s32 H, s32 mult, s32 ppad) {
+void BasicVideoSpec::setViewportSizes(s32 W, s32 H, s32 mult, s32 ppad) noexcept {
 	mNewViewport.store(Viewport::pack(W, H, mult, ppad), mo::release);
 }
 

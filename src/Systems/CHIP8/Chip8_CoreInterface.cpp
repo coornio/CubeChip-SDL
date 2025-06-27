@@ -225,34 +225,38 @@ void Chip8_CoreInterface::startAudio(s32 duration, s32 tone) noexcept {
 	if (duration) { ++index %= STREAM::COUNT; }
 }
 
-void Chip8_CoreInterface::startAudioAtChannel(u32 index, s32 duration, s32 tone) noexcept {
+void Chip8_CoreInterface::startAudioAtChannel(s32 index, s32 duration, s32 tone) noexcept {
 	if (index >= STREAM::COUNT) { return; }
 
-	mAudioTimer[index] = static_cast<u8>(duration);
-	mPhaseStep[index] = (sTonalOffset + (tone ? tone
-		: 8 * (((mCurrentPC >> 1) + mStackTop + 1) & 0x3E)
-	)) / mAudio[index].getFreq();
+	::assign_cast(mAudioTimer[index], duration);
+	if (auto* stream{ mAudio.at(index) }) {
+		mPhaseStep[index] = (sTonalOffset + (tone ? tone : 8 * (
+			((mCurrentPC >> 1) + mStackTop + 1) & 0x3E
+		))) / stream->getFreq();
+	}
 }
 
-void Chip8_CoreInterface::pushSquareTone(u32 index) noexcept {
-	const auto samplesTotal{ mAudio[index].getNextBufferSize(getSystemFramerate()) };
-	auto samplesBuffer{ ::allocate<s16>(samplesTotal).as_value().release() };
+void Chip8_CoreInterface::pushSquareTone(s32 index) noexcept {
+	if (auto* stream{ mAudio.at(index) }) {
+		const auto samplesTotal{ stream->getNextBufferSize(getSystemFramerate()) };
+		auto samplesBuffer{ ::allocate<s16>(samplesTotal).as_value().release() };
 
-	if (mAudioTimer[index]) {
-		std::for_each_n(EXEC_POLICY(unseq)
-			samplesBuffer.get(), samplesTotal,
-			[start = samplesBuffer.get(), phase = mAudioPhase[index], step = mPhaseStep[index]] \
-			(auto& audioSample) noexcept {
-				const auto val{ step * (&audioSample - start) + phase };
-				const bool mask{ val - static_cast<int>(val) >= 0.5f };
-				::assign_cast(audioSample, mask * 8192 - 4096);
-			}
-		);
-		mAudioPhase[index] += mPhaseStep[index] * samplesTotal;
-		mAudioPhase[index] -= static_cast<int>(mAudioPhase[index]);
-	} else { mAudioPhase[index] = 0.0f; }
+		if (mAudioTimer[index]) {
+			std::for_each_n(EXEC_POLICY(unseq)
+				samplesBuffer.get(), samplesTotal,
+				[start = samplesBuffer.get(), phase = mAudioPhase[index], step = mPhaseStep[index]] \
+				(auto& audioSample) noexcept {
+					const auto val{ step * (&audioSample - start) + phase };
+					const bool mask{ val - static_cast<int>(val) >= 0.5f };
+					::assign_cast(audioSample, mask * 8192 - 4096);
+				}
+			);
+			mAudioPhase[index] += mPhaseStep[index] * samplesTotal;
+			mAudioPhase[index] -= static_cast<int>(mAudioPhase[index]);
+		} else { mAudioPhase[index] = 0.0f; }
 
-	mAudio[index].pushAudioData(samplesBuffer.get(), samplesTotal);
+		stream->pushAudioData(samplesBuffer.get(), samplesTotal);
+	}
 }
 
 void Chip8_CoreInterface::instructionError(u32 HI, u32 LO) {

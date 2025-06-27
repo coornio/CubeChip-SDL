@@ -15,7 +15,12 @@
 class BasicAudioSpec final {
 	static inline std::atomic<float> mGlobalGain{};
 	static inline std::atomic<bool>  mIsMuted{};
-	static inline bool mSuccessful{ true };
+
+public:
+	enum STATUS : bool { NORMAL, NO_AUDIO };
+
+private:
+	static inline STATUS mStatus{ STATUS::NORMAL };
 
 public:
 	struct Settings {
@@ -37,10 +42,10 @@ private:
 public:
 	static auto* initialize(const Settings& settings) noexcept {
 		static BasicAudioSpec self(settings);
-		return mSuccessful ? &self : nullptr;
+		return &self;
 	}
 
-	static bool isSuccessful() noexcept { return mSuccessful; }
+	static bool getStatus() noexcept { return mStatus; }
 
 	static bool isMuted()           noexcept;
 	static void isMuted(bool state) noexcept;
@@ -49,4 +54,7 @@ public:
 	static float getGlobalGain()           noexcept;
 	static void  setGlobalGain(float gain) noexcept;
 	static void  addGlobalGain(float gain) noexcept;
+
+	static int getPlaybackDeviceCount() noexcept;
+	static int getRecordingDeviceCount() noexcept;
 };

@@ -69,14 +69,12 @@ bool AudioSpecBlock::addAudioStream(
 		device ? device : SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK
 		, &spec, nullptr, nullptr) };
 
-	if (ptr) {
-		if (audioStreams.contains(streamKey)) {
-			audioStreams.at(streamKey) =
-				Stream{ ptr, spec.format, spec.freq, spec.channels };
-		} else {
-			audioStreams.emplace(streamKey,
-				Stream{ ptr, spec.format, spec.freq, spec.channels });
-		}
+	if (audioStreams.contains(streamKey)) {
+		audioStreams.at(streamKey) =
+			Stream(ptr, spec.format, spec.freq, spec.channels);
+	} else {
+		audioStreams.emplace(streamKey,
+			Stream(ptr, spec.format, spec.freq, spec.channels));
 	}
 
 	return ptr != nullptr;

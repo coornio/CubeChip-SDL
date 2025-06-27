@@ -116,7 +116,8 @@ bool FrontendHost::initApplication(
 	);
 
 	BAS = BasicAudioSpec::initialize(BAS_settings);
-	if (!BAS) { return false; }
+	if (BAS->getStatus() == BasicAudioSpec::STATUS::NO_AUDIO)
+		{ blog.newEntry(BLOG::WARN, "Audio Subsystem is not available!"); }
 
 	BVS = BasicVideoSpec::initialize(BVS_settings);
 	if (!BVS) { return false; }

@@ -32,9 +32,10 @@ struct SDL_AudioStream;
 template <> struct SDL_Deleter<SDL_AudioStream>
 	{ void operator()(SDL_AudioStream*) const noexcept; };
 
-using SDL_DisplayID = unsigned;
-template <> struct SDL_Deleter<SDL_DisplayID>
-	{ void operator()(SDL_DisplayID*) const noexcept; };
+using SDL_DisplayID     = unsigned;
+using SDL_AudioDeviceID = unsigned;
+template <> struct SDL_Deleter<unsigned>
+	{ void operator()(unsigned*) const noexcept; };
 
 template <> struct SDL_Deleter<char>
 	{ void operator()(char*) const noexcept; };

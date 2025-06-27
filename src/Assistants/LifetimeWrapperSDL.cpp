@@ -14,6 +14,6 @@ void SDL_Deleter<SDL_Window>     ::operator()(SDL_Window*      ptr) const noexce
 void SDL_Deleter<SDL_Renderer>   ::operator()(SDL_Renderer*    ptr) const noexcept { if (ptr) { SDL_DestroyRenderer(ptr); } }
 void SDL_Deleter<SDL_Texture>    ::operator()(SDL_Texture*     ptr) const noexcept { if (ptr) { SDL_DestroyTexture(ptr); } }
 void SDL_Deleter<SDL_AudioStream>::operator()(SDL_AudioStream* ptr) const noexcept { if (ptr) { SDL_DestroyAudioStream(ptr); } }
-void SDL_Deleter<SDL_DisplayID>  ::operator()(SDL_DisplayID*   ptr) const noexcept { if (ptr) { SDL_free(ptr); } }
+void SDL_Deleter<unsigned>       ::operator()(unsigned*        ptr) const noexcept { if (ptr) { SDL_free(ptr); } }
 void SDL_Deleter<char>           ::operator()(char*            ptr) const noexcept { if (ptr) { SDL_free(ptr); } }
 void SDL_Deleter<const char>     ::operator()(const char*      ptr) const noexcept { if (ptr) { SDL_free(const_cast<char*>(ptr)); } }

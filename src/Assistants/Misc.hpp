@@ -29,16 +29,16 @@ inline void fill_n(Object& array, size_type offset = 0, size_type count = 0, V v
 	}
 }
 
-template <IsContiguousContainer Object, typename Generator>
-	requires (!std::is_rvalue_reference_v<Object> && std::invocable<Generator>)
+template <IsContiguousContainer Object, std::invocable Generator>
+	requires (!std::is_rvalue_reference_v<Object>)
 inline void generate(Object& array, Generator&& lambda) noexcept {
 	std::generate(EXEC_POLICY(unseq)
 		std::begin(array), std::end(array),
 		std::forward<Generator>(lambda));
 }
 
-template <IsContiguousContainer Object, typename Generator>
-	requires (!std::is_rvalue_reference_v<Object> && std::invocable<Generator>)
+template <IsContiguousContainer Object, std::invocable Generator>
+	requires (!std::is_rvalue_reference_v<Object>)
 inline void generate_n(Object& array, size_type offset, size_type count, Generator&& lambda) noexcept {
 	if (offset < std::size(array)) {
 		std::generate_n(EXEC_POLICY(unseq)

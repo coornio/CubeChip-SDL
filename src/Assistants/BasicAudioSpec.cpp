@@ -8,6 +8,7 @@
 
 #include "BasicAudioSpec.hpp"
 #include "SettingWrapper.hpp"
+#include "LifetimeWrapperSDL.hpp"
 
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_messagebox.h>
@@ -15,13 +16,8 @@
 /*==================================================================*/
 
 BasicAudioSpec::BasicAudioSpec(const Settings& settings) noexcept {
-	mSuccessful = SDL_InitSubSystem(SDL_INIT_AUDIO);
-	if (!mSuccessful) {
-		SDL_ShowSimpleMessageBox(
-			SDL_MESSAGEBOX_ERROR, "Failed to init Audio Subsystem!",
-			SDL_GetError(), nullptr);
-		return;
-	}
+	mStatus = SDL_InitSubSystem(SDL_INIT_AUDIO)
+		? mStatus : STATUS::NO_AUDIO;
 
 	setGlobalGain(settings.volume);
 	isMuted(settings.muted);
@@ -69,3 +65,21 @@ void BasicAudioSpec::setGlobalGain(float gain) noexcept
 
 void BasicAudioSpec::addGlobalGain(float gain) noexcept
 	{ setGlobalGain(getGlobalGain() + gain); }
+
+int BasicAudioSpec::getPlaybackDeviceCount() noexcept {
+	auto deviceCount{ 0 };
+	if (mStatus == STATUS::NORMAL) {
+		SDL_Unique<SDL_AudioDeviceID> devices
+			{ SDL_GetAudioPlaybackDevices(&deviceCount) };
+	}
+	return deviceCount;
+}
+
+int BasicAudioSpec::getRecordingDeviceCount() noexcept {
+	auto deviceCount{ 0 };
+	if (mStatus == STATUS::NORMAL) {
+		SDL_Unique<SDL_AudioDeviceID> devices
+			{ SDL_GetAudioRecordingDevices(&deviceCount) };
+	}
+	return deviceCount;
+}

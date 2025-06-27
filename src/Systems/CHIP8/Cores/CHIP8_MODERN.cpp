@@ -395,8 +395,9 @@ void CHIP8_MODERN::renderVideoData() {
 			case 0b10000000:
 				if (Quirk.wrapSprite) { X %= cScreenSizeX; }
 				if (X < cScreenSizeX) {
-					if (!((mDisplayBuffer[Y * cScreenSizeX + X] ^= 0x8) & 0x8))
-						{ mRegisterV[0xF] = 1; }
+					//if (!((mDisplayBuffer[Y * cScreenSizeX + X] ^= 0x8) & 0x8))
+					//	{ mRegisterV[0xF] = 1; }
+					mRegisterV[0xF] |= ((mDisplayBuffer[Y * cScreenSizeX + X] ^= 0x8) & 0x8) == 0;
 				}
 				return;
 
@@ -407,8 +408,9 @@ void CHIP8_MODERN::renderVideoData() {
 
 				for (auto B{ 0 }; B < 8; ++B, ++X %= cScreenSizeX) {
 					if (DATA & 0x80 >> B) {
-						if (!((mDisplayBuffer[Y * cScreenSizeX + X] ^= 0x8) & 0x8))
-							{ mRegisterV[0xF] = 1; }
+						//if (!((mDisplayBuffer[Y * cScreenSizeX + X] ^= 0x8) & 0x8))
+						//	{ mRegisterV[0xF] = 1; }
+						mRegisterV[0xF] |= ((mDisplayBuffer[Y * cScreenSizeX + X] ^= 0x8) & 0x8) == 0;
 					}
 					if (!Quirk.wrapSprite && X == cScreenSizeX - 1) { return; }
 				}
@@ -504,14 +506,14 @@ void CHIP8_MODERN::renderVideoData() {
 	void CHIP8_MODERN::instruction_FN55(s32 N) noexcept {
 		SUGGEST_VECTORIZABLE_LOOP
 		for (auto idx{ 0 }; idx <= N; ++idx) { writeMemoryI(mRegisterV[idx], idx); }
-		//mRegisterI = !Quirk.idxRegNoInc ? (mRegisterI + N + 1) & 0xFFF : mRegisterI;
-		if (!Quirk.idxRegNoInc) [[likely]] { mRegisterI = (mRegisterI + N + 1) & 0xFFF; }
+		mRegisterI = !Quirk.idxRegNoInc ? (mRegisterI + N + 1) & 0xFFF : mRegisterI;
+		//if (!Quirk.idxRegNoInc) [[likely]] { mRegisterI = (mRegisterI + N + 1) & 0xFFF; }
 	}
 	void CHIP8_MODERN::instruction_FN65(s32 N) noexcept {
 		SUGGEST_VECTORIZABLE_LOOP
 		for (auto idx{ 0 }; idx <= N; ++idx) { mRegisterV[idx] = readMemoryI(idx); }
-		//mRegisterI = !Quirk.idxRegNoInc ? (mRegisterI + N + 1) & 0xFFF : mRegisterI;
-		if (!Quirk.idxRegNoInc) [[likely]] { mRegisterI = (mRegisterI + N + 1) & 0xFFF; }
+		mRegisterI = !Quirk.idxRegNoInc ? (mRegisterI + N + 1) & 0xFFF : mRegisterI;
+		//if (!Quirk.idxRegNoInc) [[likely]] { mRegisterI = (mRegisterI + N + 1) & 0xFFF; }
 	}
 
 	#pragma endregion

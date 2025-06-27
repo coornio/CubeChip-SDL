@@ -43,8 +43,6 @@ void BYTEPUSHER_STANDARD::instructionLoop() noexcept {
 }
 
 void BYTEPUSHER_STANDARD::renderAudioData() {
-	//using SampleFormat = typename decltype(mAudio)::format;
-
 	const auto samplesOffset{ mMemoryBank.data() + (readData<2>(6) << 8) };
 	auto samplesBuffer{ ::allocate<s16>(cAudioLength).as_value().release() };
 

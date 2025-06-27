@@ -63,18 +63,18 @@ public:
 		}
 
 		static constexpr auto pack(s32 W, s32 H, s32 mult, s32 ppad) noexcept {
-			return ((static_cast<u32>(W)     & 0xFFFu) << 00u) |
-				   ((static_cast<u32>(H)     & 0xFFFu) << 12u) |
-				   ((static_cast<u32>(mult)  & 0xFu)   << 24u) |
-				   ((static_cast<u32>(ppad)  & 0xFu)   << 28u);
+			return ((u32(W)     & 0xFFFu) << 00u) |
+				   ((u32(H)     & 0xFFFu) << 12u) |
+				   ((u32(mult)  & 0xFu)   << 24u) |
+				   ((u32(ppad)  & 0xFu)   << 28u);
 		}
 
 		static constexpr auto unpack(u32 packed) noexcept {
 			return Viewport{
-				static_cast<s32>((packed >> 00u) & 0xFFFu),
-				static_cast<s32>((packed >> 12u) & 0xFFFu),
-				static_cast<s32>((packed >> 24u) & 0xFu),
-				static_cast<s32>((packed >> 28u) & 0xFu)
+				s32((packed >> 00u) & 0xFFFu),
+				s32((packed >> 12u) & 0xFFFu),
+				s32((packed >> 24u) & 0xFu),
+				s32((packed >> 28u) & 0xFu)
 			};
 		}
 
@@ -213,7 +213,7 @@ private:
 	void renderViewport();
 
 public:
-	void setViewportAlpha(u32 alpha);
+	void setViewportAlpha(u32 alpha) noexcept;
 
 	/**
 	 * @brief Sets various parameters to shape, scale, and pad the system's Viewport. Thread-safe.
@@ -225,7 +225,7 @@ public:
 	 * to draw scanlines over the Viewport. Capped at -16..16.
 	 * @return Boolean if successful.
 	 */
-	void setViewportSizes(s32 W, s32 H, s32 mult = 0, s32 ppad = 0);
+	void setViewportSizes(s32 W, s32 H, s32 mult = 0, s32 ppad = 0) noexcept;
 	auto getViewportSizes() const noexcept -> Viewport;
 
 public:

@@ -43,8 +43,7 @@ class AudioSpecBlock {
 			signed format, signed freq, signed channels
 		) noexcept;
 
-		auto getSpec() const noexcept -> SDL_AudioSpec;
-
+		auto getSpec()     const noexcept -> SDL_AudioSpec;
 		auto getFormat()   const noexcept { return format; }
 		auto getFreq()     const noexcept { return freq; }
 		auto getChannels() const noexcept { return channels; }
@@ -101,15 +100,6 @@ class AudioSpecBlock {
 	std::unordered_map<signed, Stream> audioStreams{};
 
 public:
-	//using format = std::conditional_t<
-	//	T == SDL_AUDIO_U8, u8, std::conditional_t<
-	//	T == SDL_AUDIO_S8, s8, std::conditional_t<
-	//	(T == SDL_AUDIO_S16LE || T == SDL_AUDIO_S16BE), s16, std::conditional_t<
-	//	(T == SDL_AUDIO_S32LE || T == SDL_AUDIO_S32BE), s32, std::conditional_t<
-	//	(T == SDL_AUDIO_F32LE || T == SDL_AUDIO_F32BE), f32, void // fallback (should never reach)
-	//>>>>>;
-
-public:
 	AudioSpecBlock() noexcept = default;
 	~AudioSpecBlock() noexcept;
 
@@ -131,7 +121,7 @@ public:
 
 	[[nodiscard]]
 	Stream* at(signed key) noexcept {
-		return audioStreams.contains(key)
-			? &audioStreams.at(key) : nullptr;
+		auto it{ audioStreams.find(key) };
+		return it != audioStreams.end() ? &it->second : nullptr;
 	}
 };

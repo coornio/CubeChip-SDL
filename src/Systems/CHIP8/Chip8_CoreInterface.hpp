@@ -13,7 +13,7 @@
 class Chip8_CoreInterface : public SystemsInterface {
 	
 protected:
-	enum STREAM {
+	enum STREAM : unsigned {
 		CHANN0, CHANN1, CHANN2, CHANN3, COUNT,
 		BUZZER = CHANN3,
 		UNIQUE = CHANN0,
@@ -126,8 +126,8 @@ protected:
 		mAudioTimer{};
 
 	void startAudio(s32 duration, s32 tone = 0) noexcept;
-	void startAudioAtChannel(u32 index, s32 duration, s32 tone = 0) noexcept;
-	void pushSquareTone(u32 index) noexcept;
+	void startAudioAtChannel(s32 index, s32 duration, s32 tone = 0) noexcept;
+	void pushSquareTone(s32 index) noexcept;
 
 	u32 mDelayTimer{};
 	u32 mKeyPitch{};

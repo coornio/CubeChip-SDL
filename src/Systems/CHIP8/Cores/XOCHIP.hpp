@@ -67,7 +67,7 @@ private:
 
 	auto NNNN() const noexcept { return mMemoryBank[mCurrentPC] << 8 | mMemoryBank[mCurrentPC + 1]; }
 
-	void pushPatternTone(u32 index) noexcept;
+	void pushPatternTone(s32 index) noexcept;
 
 public:
 	XOCHIP();

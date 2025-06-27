@@ -82,7 +82,8 @@ class MEGACHIP final : public Chip8_CoreInterface {
 	std::array<u8, cTotalMemory + cSafezoneOOB>
 		mMemoryBank{};
 
-	void writeMemory(u32 value, u32 pos) noexcept {
+	template <std::integral T>
+	void writeMemory(T value, u32 pos) noexcept {
 		if (pos < cTotalMemory) [[likely]]
 			{ ::assign_cast(mMemoryBank[pos], value); }
 	}
@@ -95,12 +96,12 @@ class MEGACHIP final : public Chip8_CoreInterface {
 	}
 
 	auto readMemory(u32 pos) const noexcept {
-		return pos >= cTotalMemory ? u8{ 0xFF } : mMemoryBank[pos];
+		return pos >= cTotalMemory ? u8(0xFF) : mMemoryBank[pos];
 	}
 
 	auto readMemoryI(u32 pos) const noexcept {
 		const auto index{ mRegisterI + pos };
-		return pos >= cTotalMemory ? u8{ 0xFF } : mMemoryBank[index];
+		return pos >= cTotalMemory ? u8(0xFF) : mMemoryBank[index];
 	}
 
 /*==================================================================*/
