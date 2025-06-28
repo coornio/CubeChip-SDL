@@ -7,13 +7,32 @@
 #pragma once
 
 #include <type_traits>
+#include <iterator>
 #include <concepts>
 
-template<class T>
-concept integral = std::is_integral_v<T>;
+/*==================================================================*/
 
-template<class T>
-concept arithmetic = std::is_arithmetic_v<T>;
+template <typename T>
+using ValueType = typename T::value_type;
 
-template<class T>
-concept ar_pointer = std::is_pointer_v<T> && std::is_arithmetic_v<std::remove_pointer_t<T>>;
+template <typename T, typename U>
+concept SameValueSizes = (sizeof(ValueType<T>) == sizeof(ValueType<U>));
+
+template <typename T, typename U>
+concept SameValueTypes = std::same_as<ValueType<T>, ValueType<U>>;
+
+template <typename T, typename U>
+concept MatchingValueType = std::same_as<std::remove_cv_t<T>, std::remove_cv_t<typename U::value_type>>;
+
+template<typename T>
+concept IsPlainOldData = std::is_trivial_v<T> && std::is_standard_layout_v<T>;
+
+template <typename T>
+concept IsContiguousContainer = requires(const T& c) {
+	typename T::value_type;
+	requires std::same_as<
+		std::remove_cv_t<typename T::value_type>,
+		std::remove_cv_t<std::remove_pointer_t<decltype(std::data(c))>>
+	>;
+	{ std::size(c) } -> std::convertible_to<std::size_t>;
+};

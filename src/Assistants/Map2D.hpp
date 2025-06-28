@@ -6,1447 +6,182 @@
 
 #pragma once
 
-#include "Concepts.hpp"
+#include "RangeIterator.hpp"
+#include "Aligned.hpp"
 
 #include <span>
+#include <array>
 #include <cmath>
 #include <cassert>
-#include <cstddef>
-#include <cstdint>
 #include <memory>
 #include <algorithm>
-#include <execution>
-#include <vector>
-#include <stdexcept>
 #include <utility>
 
-#pragma region MapRow Class
-template<typename T> requires arithmetic<T> || ar_pointer<T>
-class MapRow : public std::vector<T> {
-	using std::vector<T>::vector;
-	using paramU = std::size_t;
+/*==================================================================*/
 
-public:
-	#pragma region operator +=
-	constexpr MapRow& operator+=(
-		const MapRow& other
-	) requires arithmetic<T> {
-		const auto len{ std::min(this->size(), other.size()) };
-		for (paramU i{ 0 }; i < len; ++i) {
-			(*this)[i] += other[i];
-		}
-		return *this;
-	}
-	constexpr MapRow& operator+=(
-		const arithmetic auto& value
-	) requires arithmetic<T> {
-		for (T& elem : *this) {
-			elem += value;
-		}
-		return *this;
-	}
-	#pragma endregion
-	#pragma region operator -=
-	constexpr MapRow& operator-=(
-		const MapRow& other
-	) requires arithmetic<T> {
-		const auto len{ std::min(this->size(), other.size()) };
-		for (paramU i{ 0 }; i < len; ++i) {
-			(*this)[i] += other[i];
-		}
-		return *this;
-	}
-	constexpr MapRow& operator-=(
-		const arithmetic auto& value
-	) requires arithmetic<T> {
-		for (T& elem : *this) {
-			elem -= value;
-		}
-		return *this;
-	}
-	#pragma endregion
-	#pragma region operator *=
-	constexpr MapRow& operator*=(
-		const MapRow& other
-	) requires arithmetic<T> {
-		const auto len{ std::min(this->size(), other.size()) };
-		for (paramU i{ 0 }; i < len; ++i) {
-			(*this)[i] *= other[i];
-		}
-		return *this;
-	}
-	constexpr MapRow& operator*=(
-		const arithmetic auto& value
-	) requires arithmetic<T> {
-		for (T& elem : *this) {
-			elem *= value;
-		}
-		return *this;
-	}
-	#pragma endregion
-	#pragma region operator /=
-	constexpr MapRow& operator/=(
-		const MapRow& other
-	) requires arithmetic<T> {
-		const auto len{ std::min(this->size(), other.size()) };
-		for (paramU i{ 0 }; i < len; ++i) {
-			if (other[i] == 0) {
-				throw std::domain_error("division by zero");
-			} else {
-				(*this)[i] /= other[i];
-			}
-		}
-		return *this;
-	}
-	constexpr MapRow& operator/=(
-		const arithmetic auto& value
-	) requires arithmetic<T> {
-		for (T& elem : *this) {
-			if (value == 0) {
-				throw std::domain_error("division by zero");
-			} else {
-				elem /= value;
-			}
-		}
-		return *this;
-	}
-	#pragma endregion
-	#pragma region operator %=
-	constexpr MapRow& operator%=(
-		const MapRow& other
-	) requires arithmetic<T> {
-		const auto len{ std::min(this->size(), other.size()) };
-		for (paramU i{ 0 }; i < len; ++i) {
-			if (other[i] == 0) {
-				throw std::domain_error("division by zero");
-			} else {
-				(*this)[i] = std::fmod((*this)[i], other[i]);
-			}
-		}
-		return *this;
-	}
-	constexpr MapRow& operator%=(
-		const arithmetic auto& value
-		) requires arithmetic<T> {
-		for (T& elem : *this) {
-			if (value == 0) {
-				throw std::domain_error("division by zero");
-			} else {
-				elem = std::fmod(elem, value);
-			}
-		}
-		return *this;
-	}
-	#pragma endregion
-
-	#pragma region operator &=
-	constexpr MapRow& operator&=(
-		const MapRow& other
-	) requires integral<T> {
-		const auto len{ std::min(this->size(), other.size()) };
-		for (paramU i{ 0 }; i < len; ++i) {
-			(*this)[i] &= other[i];
-		}
-		return *this;
-	}
-	constexpr MapRow operator&=(
-		const integral auto& value
-	) requires integral<T> {
-		for (T& elem : *this) {
-			elem &= value;
-		}
-		return *this;
-	}
-	#pragma endregion
-	#pragma region operator |=
-	constexpr MapRow& operator|=(
-		const MapRow& other
-	) requires integral<T> {
-		const auto len{ std::min(this->size(), other.size()) };
-		for (paramU i{ 0 }; i < len; ++i) {
-			(*this)[i] |= other[i];
-		}
-		return *this;
-	}
-	constexpr MapRow& operator|=(
-		const integral auto& value
-	) requires integral<T> {
-		for (T& elem : *this) {
-			elem |= value;
-		}
-		return *this;
-	}
-	#pragma endregion
-	#pragma region operator ^=
-	constexpr MapRow& operator^=(
-		const MapRow& other
-	) requires integral<T> {
-		const auto len{ std::min(this->size(), other.size()) };
-		for (paramU i{ 0 }; i < len; ++i) {
-			(*this)[i] ^= other[i];
-		}
-		return *this;
-	}
-	constexpr MapRow& operator^=(
-		const integral auto& value
-	) requires integral<T> {
-		for (T& elem : *this) {
-			elem ^= value;
-		}
-		return *this;
-	}
-	#pragma endregion
-	#pragma region operator <<=
-	constexpr MapRow& operator<<=(
-		const MapRow& other
-	) requires integral<T> {
-		const auto len{ std::min(this->size(), other.size()) };
-		for (paramU i{ 0 }; i < len; ++i) {
-			(*this)[i] <<= other[i];
-		}
-		return *this;
-	}
-	constexpr MapRow& operator<<=(
-		const integral auto& value
-	) requires integral<T> {
-		for (T& elem : *this) {
-			elem <<= value;
-		}
-		return *this;
-	}
-	#pragma endregion
-	#pragma region operator >>=
-	constexpr MapRow& operator>>=(
-		const MapRow& other
-	) requires integral<T> {
-		const auto len{ std::min(this->size(), other.size()) };
-		for (paramU i{ 0 }; i < len; ++i) {
-			(*this)[i] >>= other[i];
-		}
-		return *this;
-	}
-	constexpr MapRow& operator>>=(
-		const integral auto& value
-	) requires integral<T> {
-		for (T& elem : *this) {
-			elem >>= value;
-		}
-		return *this;
-	}
-	#pragma endregion
-	
-	#pragma region operator +
-	constexpr MapRow operator+(
-		const MapRow& other
-	) const requires arithmetic<T> {
-		auto temp{ *this };
-		const auto len{ std::min(temp.size(), other.size()) };
-		for (paramU i{ 0 }; i < len; ++i) {
-			temp[i] += other[i];
-		}
-		return temp;
-	}
-	constexpr MapRow operator+(
-		const arithmetic auto& value
-	) const requires arithmetic<T> {
-		auto temp{ *this };
-		for (T& elem : temp) {
-			elem += value;
-		}
-		return temp;
-	}
-	#pragma endregion
-	#pragma region operator -
-	constexpr MapRow operator-(
-		const MapRow& other
-	) const requires arithmetic<T> {
-		auto temp{ *this };
-		const auto len{ std::min(temp.size(), other.size()) };
-		for (paramU i{ 0 }; i < len; ++i) {
-			temp[i] -= other[i];
-		}
-		return temp;
-	}
-	constexpr MapRow operator-(
-		const arithmetic auto& value
-	) const requires arithmetic<T> {
-		auto temp{ *this };
-		for (T& elem : temp) {
-			elem -= value;
-		}
-		return temp;
-	}
-	#pragma endregion
-	#pragma region operator *
-	constexpr MapRow operator*(
-		const MapRow& other
-	) const requires arithmetic<T> {
-		auto temp{ *this };
-		const auto len{ std::min(temp.size(), other.size()) };
-		for (paramU i{ 0 }; i < len; ++i) {
-			temp[i] *= other[i];
-		}
-		return temp;
-	}
-	constexpr MapRow operator*(
-		const arithmetic auto& value
-	) const requires arithmetic<T> {
-		auto temp{ *this };
-		for (T& elem : temp) {
-			elem *= value;
-		}
-		return temp;
-	}
-	#pragma endregion
-	#pragma region operator /
-	constexpr MapRow operator/(
-		const MapRow& other
-	) const requires arithmetic<T> {
-		auto temp{ *this };
-		const auto len{ std::min(temp.size(), other.size()) };
-		for (paramU i{ 0 }; i < len; ++i) {
-			if (other[i] == 0) {
-				throw std::domain_error("division by zero");
-			} else {
-				temp[i] /= other[i];
-			}
-		}
-		return temp;
-	}
-	constexpr MapRow operator/(
-		const arithmetic auto& value
-	) const requires arithmetic<T> {
-		auto temp{ *this };
-		for (T& elem : temp) {
-			if (value == 0) {
-				throw std::domain_error("division by zero");
-			} else {
-				elem /= value;
-			}
-		}
-		return temp;
-	}
-	#pragma endregion
-	#pragma region operator %
-	constexpr MapRow operator%(
-		const MapRow& other
-	) const requires arithmetic<T> {
-		auto temp{ *this };
-		const auto len{ std::min(temp.size(), other.size()) };
-		for (paramU i{ 0 }; i < len; ++i) {
-			if (other[i] == 0) {
-				throw std::domain_error("division by zero");
-			} else {
-				temp[i] /= std::fmod(temp[i], other[i]);
-			}
-		}
-		return temp;
-	}
-	constexpr MapRow operator%(
-		const arithmetic auto& value
-	) const requires arithmetic<T> {
-		auto temp{ *this };
-		for (T& elem : temp) {
-			if (value == 0) {
-				throw std::domain_error("division by zero");
-			} else {
-				elem = std::fmod(elem, value);
-			}
-		}
-		return temp;
-	}
-	#pragma endregion
-	
-	#pragma region operator &
-	constexpr MapRow operator&(
-		const MapRow& other
-	) const requires integral<T> {
-		auto temp{ *this };
-		const auto len{ std::min(temp.size(), other.size()) };
-		for (paramU i{ 0 }; i < len; ++i) {
-			temp[i] &= other[i];
-		}
-		return temp;
-	}
-	constexpr MapRow operator&(
-		const integral auto& value
-	) const requires integral<T> {
-		auto temp{ *this };
-		for (T& elem : temp) {
-			elem &= value;
-		}
-		return temp;
-	}
-	#pragma endregion
-	#pragma region operator |
-	constexpr MapRow operator|(
-		const MapRow& other
-	) const requires integral<T> {
-		auto temp{ *this };
-		const auto len{ std::min(temp.size(), other.size()) };
-		for (paramU i{ 0 }; i < len; ++i) {
-			temp[i] |= other[i];
-		}
-		return temp;
-	}
-	constexpr MapRow operator|(
-		const integral auto& value
-	) const requires integral<T> {
-		auto temp{ *this };
-		for (T& elem : temp) {
-			elem |= value;
-		}
-		return temp;
-	}
-	#pragma endregion
-	#pragma region operator ^
-	constexpr MapRow operator^(
-		const MapRow& other
-	) const requires integral<T> {
-		auto temp{ *this };
-		const auto len{ std::min(temp.size(), other.size()) };
-		for (paramU i{ 0 }; i < len; ++i) {
-			temp[i] ^= other[i];
-		}
-		return temp;
-	}
-	constexpr MapRow operator^(
-		const integral auto& value
-	) const requires integral<T> {
-		auto temp{ *this };
-		for (T& elem : temp) {
-			elem ^= value;
-		}
-		return temp;
-	}
-	#pragma endregion
-	#pragma region operator ~
-	constexpr MapRow operator~() const & requires integral<T> {
-		auto temp{ *this };
-		for (T& elem : temp) {
-			elem = ~elem;
-		}
-		return temp;
-	}
-	constexpr MapRow&& operator~() && requires integral<T> {
-		for (T& elem : *this) {
-			elem = ~elem;
-		}
-		return std::move(*this);
-	}
-	#pragma endregion
-	#pragma region operator !
-	constexpr MapRow operator!() const & requires integral<T> {
-		auto temp{ *this };
-		for (T& elem : temp) {
-			elem = !elem;
-		}
-		return temp;
-	}
-	constexpr MapRow&& operator!() && requires integral<T> {
-		for (T& elem : *this) {
-			elem = !elem;
-		}
-		return std::move(*this);
-	}
-	#pragma endregion
-};
-#pragma endregion
-
-#pragma region Map2D Class
-template<typename T> requires arithmetic<T> || ar_pointer<T>
+template <typename T>
+	requires (std::is_default_constructible_v<T>)
 class Map2D final {
-	using paramS = std::int_fast32_t;
-	using paramU = std::size_t;
-	using underT = std::remove_const_t<std::remove_pointer_t<T>>;
-
-	paramS mRows;
-	paramS mCols;
-	std::unique_ptr<T[]> pData;
+	using self = Map2D;
 
 public:
-	paramU size() const noexcept { return mRows * mCols; }
-	paramS lenX() const noexcept { return mCols; }
-	paramS lenY() const noexcept { return mRows; }
+	using element_type    = T;
+	using axis_size       = std::uint32_t;
+	using size_type       = std::size_t;
+	using difference_type = std::ptrdiff_t;
+	using value_type      = std::remove_cv_t<T>;
 
-	T& front() { return pData[0]; }
-	T& back()  { return pData[size() - 1]; }
-	T* data()  { return pData.get(); }
+	using pointer       = T*;
+	using const_pointer = const T*;
 
-	const T& front() const { return pData[0]; }
-	const T& back()  const { return pData[size() - 1]; }
-	const T* data()  const { return pData.get(); }
+	using reference       = T&;
+	using const_reference = const T&;
 
-	auto span()       { return std::span<      T>{ data(), size() }; }
-	auto span() const { return std::span<const T>{ data(), size() }; }
+	using iterator       = T*;
+	using const_iterator = const T*;
 
-public:
-	#pragma region Raw Accessors
-	auto at_raw(const paramU idx)
-	-> T& {
-		assert(idx < size() && "at_raw() index out of bounds");
-		return pData[idx];
-	}
-
-	auto at_raw(const paramU idx) const
-	-> const T& {
-		assert(idx < size() && "at_raw() index out of bounds");
-		return pData[idx];
-	}
-
-	auto at_raw(const paramU row, const paramU col)
-	-> T& {
-		assert(rowValid(row) && "at_raw() row index out of bounds");
-		assert(colValid(col) && "at_raw() col index out of bounds");
-		return pData[row * mCols + col];
-	}
-
-	auto at_raw(const paramU row, const paramU col) const
-	-> const T& {
-		assert(rowValid(row) && "at_raw() row index out of bounds");
-		assert(colValid(col) && "at_raw() col index out of bounds");
-		return pData[row * mCols + col];
-	}
-
-	auto at_wrap(const paramU row, const paramU col)
-	-> T&
-	{ return pData[(row % mRows) * mCols + (col % mCols)]; }
-
-	auto at_wrap(const paramU row, const paramU col) const
-	-> const T&
-	{ return pData[(row % mRows) * mCols + (col % mCols)]; }
-	#pragma endregion
+	using reverse_iterator       = std::reverse_iterator<iterator>;
+	using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
 private:
-	#pragma region RowProxy Class
-	class RowProxy {
-	protected:
-		T*           mBegin;
-		const paramS mLength;
-
-	public:
-		paramS size() const { return mLength; }
-
-		T& front() { return mBegin[0]; }
-		T& back()  { return mBegin[mLength - 1]; }
-		T* data()  { return mBegin; }
-
-		const T& front() const { return mBegin[0]; }
-		const T& back()  const { return mBegin[mLength - 1]; }
-		const T* data()  const { return mBegin; }
-
-		auto span()       { return std::span<      T>{ mBegin, mLength }; }
-		auto span() const { return std::span<const T>{ mBegin, mLength }; }
-
-	public:
-		#pragma region Ctor
-		explicit RowProxy(
-			T* const     begin,
-			const paramS length
-		) noexcept
-			: mBegin { begin  }
-			, mLength{ length }
-		{}
-		#pragma endregion
-
-	public:
-		#pragma region clone() :: Matrix[R]
-		/**
-		 * @brief Clones the row's data and returns a vector of it.
-		 * @return Vector of the same type.
-		 */
-		MapRow<T> clone() const requires arithmetic<T> {
-			return MapRow<T>(mBegin, mBegin + mLength);
-		}
-		#pragma endregion
-		
-		#pragma region swap() :: Matrix[R] + View[R]
-		/**
-		 * @brief Swaps the row's data with the data from another row.
-		 * @return Self reference for method chaining.
-		 */
-		RowProxy& swap(
-			RowProxy&& other
-		) noexcept {
-			if (this != &other && mLength == other.mLength) {
-				std::swap_ranges(begin(), end(), other.begin());
-			}
-			return *this;
-		}
-		#pragma endregion
-		
-		#pragma region wipeAll() :: Matrix[R]
-		/**
-		 * @brief Wipes the row's data by default initializing it.
-		 *
-		 * @return Self reference for method chaining.
-		 */
-		RowProxy& wipeAll() requires arithmetic<T> {
-			std::fill(
-				std::execution::unseq,
-				begin(), end(), T()
-			);
-			return *this;
-		}
-		#pragma endregion
-		
-		#pragma region wipe() :: Matrix[R]
-		/**
-		 * @brief Wipes the row's data in a given direction.
-		 * @return Self reference for method chaining.
-		 * 
-		 * @param[in] cols :: Total items to wipe. Directional.
-		 *
-		 * @warning The sign of the param controls the application direction.
-		 * @warning If the param exceeds row length, all row data is wiped.
-		 */
-		RowProxy& wipe(
-			const integral auto cols
-		) requires arithmetic<T> {
-			if (!colValidAbs(cols)) {
-				wipeAll();
-			} else {
-				const auto _cols{ static_cast<paramS>(cols) };
-				if (_cols) {
-					if (_cols < 0) {
-						std::fill(
-							std::execution::unseq,
-							end() + _cols, end(), T()
-						);
-					} else {
-						std::fill(
-							std::execution::unseq,
-							begin(), begin() + _cols, T()
-						);
-					}
-				}
-			}
-			return *this;
-		}
-		#pragma endregion
-		
-		#pragma region rotate() :: Matrix[R] + View[R]
-		/**
-		 * @brief Rotates the row's data in a given direction.
-		 * @return Self reference for method chaining.
-		 * 
-		 * @param[in] cols :: Total positions to rotate. Directional.
-		 *
-		 * @warning The sign of the param controls the application direction.
-		 */
-		RowProxy& rotate(
-			const integral auto cols
-		) {
-			const auto _cols{ static_cast<paramS>(cols) };
-			if (_cols) {
-				if (_cols < 0) {
-					std::rotate(
-						std::execution::unseq,
-						begin(), begin() + std::abs(_cols) % mLength, end()
-					);
-				} else {
-					std::rotate(
-						std::execution::unseq,
-						begin(), end() - std::abs(_cols) % mLength, end()
-					);
-				}
-			}
-			return *this;
-		}
-		#pragma endregion
-		
-		#pragma region shift() :: Matrix[R]
-		/**
-		 * @brief Rotates the row's data in a given direction. Combines the
-		 * functionality of rotating and wiping.
-		 * @return Self reference for method chaining.
-		 * 
-		 * @param[in] cols :: Total positions to shift. Directional.
-		 *
-		 * @warning The sign of the param controls the application direction.
-		 * @warning If the param exceeds row length, all row data is wiped.
-		 */
-		RowProxy& shift(
-			const integral auto cols
-		) requires arithmetic<T> {
-			if (colValidAbs(cols)) {
-				rotate(cols);
-			}
-			return wipe(cols);
-		}
-		#pragma endregion
-		
-		#pragma region reverse() :: Matrix[R] + View[R]
-		/**
-		 * @brief Reverses the row's data.
-		 * @return Self reference for method chaining.
-		 */
-		RowProxy& reverse() {
-			std::reverse(
-				std::execution::unseq,
-				begin(), end()
-			);
-			return *this;
-		}
-		#pragma endregion
-
-	private:
-		#pragma region Accessor Bounds Checker
-		paramS checkColBounds(const paramS col) const {
-			if (col < -mLength || col > mLength) {
-				throw std::out_of_range("proxy at() col index out of range");
-			}
-			return col + (col < 0 ? mLength : 0);
-		}
-		
-		bool colValid(const paramU idx) const noexcept {
-			return idx < static_cast<paramU>(mLength);
-		}
-		bool colValidAbs(const integral auto idx) const noexcept {
-			return std::abs(static_cast<paramS>(idx)) < mLength;
-		}
-		#pragma endregion
-
-	public:
-		#pragma region Accessors
-		/* bounds-checked accessors, reverse indexing allowed */
-
-		auto at(const integral auto col)
-		-> T&
-		{ return *(begin() + checkColBounds(static_cast<paramS>(col))); }
-
-		auto at(const integral auto col) const
-		-> const T&
-		{ return *(begin() + checkColBounds(static_cast<paramS>(col))); }
-
-		/* unsafe accessors */
-
-		auto operator[](const paramU col)
-		-> T& {
-			assert(colValid(col) && "proxy operator[] col index out of bounds");
-			return *(begin() + col);
-		}
-
-		auto operator[](const paramU col) const
-		-> const T& {
-			assert(colValid(col) && "proxy operator[] col index out of bounds");
-			return *(begin() + col);
-		}
-		#pragma endregion
-
-	public:
-		#pragma region operator =
-		RowProxy& operator=(
-			const arithmetic auto& value
-		) requires arithmetic<T> {
-			std::fill(
-				std::execution::unseq,
-				begin(), end(), static_cast<T>(value)
-			);
-			return *this;
-		}
-		RowProxy& operator=(
-			const RowProxy& other
-		) requires arithmetic<T> {
-			if (this == &other) [[unlikely]] return *this;
-			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
-			std::copy(
-				std::execution::unseq,
-				other.begin(), other.begin() + len, mBegin
-			);
-			return *this;
-		}
-		RowProxy& operator=(
-			MapRow<T>&& other
-		) requires arithmetic<T> {
-			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
-			std::move(
-				std::execution::unseq,
-				other.begin(), other.begin() + len, mBegin
-			);
-			return *this;
-		}
-		RowProxy& operator=(
-			const MapRow<T>& other
-		) requires arithmetic<T> {
-			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
-			std::copy(
-				std::execution::unseq,
-				other.begin(), other.begin() + len, mBegin
-			);
-			return *this;
-		}
-		#pragma endregion
-		
-		#pragma region operator +=
-		RowProxy& operator+=(
-			const arithmetic auto& value
-		) requires arithmetic<T> {
-			for (T& elem : *this) {
-				elem += value;
-			}
-			return *this;
-		}
-		RowProxy& operator+=(
-			const RowProxy& other
-		) requires arithmetic<T> {
-			const auto len{ std::min(other.mLength, mLength) };
-			for (paramS i{ 0 }; i < len; ++i) {
-				(*this)[i] += other[i];
-			}
-			return *this;
-		}
-		RowProxy& operator+=(
-			const MapRow<T>& other
-		) requires arithmetic<T> {
-			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
-			for (paramU i{ 0 }; i < len; ++i) {
-				(*this)[i] += other[i];
-			}
-			return *this;
-		}
-		#pragma endregion
-		#pragma region operator -=
-		RowProxy& operator-=(
-			const arithmetic auto& value
-		) requires arithmetic<T> {
-			for (T& elem : *this) {
-				elem -= value;
-			}
-			return *this;
-		}
-		RowProxy& operator-=(
-			const RowProxy& other
-		) requires arithmetic<T> {
-			const auto len{ std::min(other.mLength, mLength) };
-			for (paramS i{ 0 }; i < len; ++i) {
-				(*this)[i] -= other[i];
-			}
-			return *this;
-		}
-		RowProxy& operator-=(
-			const MapRow<T>& other
-		) requires arithmetic<T> {
-			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
-			for (paramU i{ 0 }; i < len; ++i) {
-				(*this)[i] -= other[i];
-			}
-			return *this;
-		}
-		#pragma endregion
-		#pragma region operator *=
-		RowProxy& operator*=(
-			const arithmetic auto& value
-		) requires arithmetic<T> {
-			for (T& elem : *this) {
-				elem *= value;
-			}
-			return *this;
-		}
-		RowProxy& operator*=(
-			const RowProxy& other
-		) requires arithmetic<T> {
-			const auto len{ std::min(other.mLength, mLength) };
-			for (paramS i{ 0 }; i < len; ++i) {
-				(*this)[i] *= other[i];
-			}
-			return *this;
-		}
-		RowProxy& operator*=(
-			const MapRow<T>& other
-		) requires arithmetic<T> {
-			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
-			for (paramU i{ 0 }; i < len; ++i) {
-				(*this)[i] *= other[i];
-			}
-			return *this;
-		}
-		#pragma endregion
-		#pragma region operator /=
-		RowProxy & operator/=(
-			const arithmetic auto& value
-		) requires arithmetic<T> {
-			for (T& elem : *this) {
-				if (value == 0) {
-					throw std::domain_error("division by zero");
-				} else {
-					elem /= value;
-				}
-			}
-			return *this;
-		}
-		RowProxy& operator/=(
-			const RowProxy& other
-		) requires arithmetic<T> {
-			const auto len{ std::min(other.mLength, mLength) };
-			for (paramS i{ 0 }; i < len; ++i) {
-				if (other[i] == 0) {
-					throw std::domain_error("division by zero");
-				} else {
-					(*this)[i] /= other[i];
-				}
-			}
-			return *this;
-		}
-		RowProxy& operator/=(
-			const MapRow<T>& other
-		) requires arithmetic<T> {
-			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
-			for (paramU i{ 0 }; i < len; ++i) {
-				if (other[i] == 0) {
-					throw std::domain_error("division by zero");
-				} else {
-					(*this)[i] /= other[i];
-				}
-			}
-			return *this;
-		}
-		#pragma endregion
-		#pragma region operator %=
-		RowProxy & operator%=(
-			const arithmetic auto& value
-		) requires arithmetic<T> {
-			for (T& elem : *this) {
-				if (value == 0) {
-					throw std::domain_error("division by zero");
-				} else {
-					elem = std::fmod(elem, value);
-				}
-			}
-			return *this;
-		}
-		RowProxy& operator%=(
-			const RowProxy& other
-		) requires arithmetic<T> {
-			const auto len{ std::min(other.mLength, mLength) };
-			for (paramS i{ 0 }; i < len; ++i) {
-				if (other[i] == 0) {
-					throw std::domain_error("division by zero");
-				} else {
-					(*this)[i] = std::fmod((*this)[i], other[i]);
-				}
-			}
-			return *this;
-		}
-		RowProxy& operator%=(
-			const MapRow<T>& other
-		) requires arithmetic<T> {
-			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
-			for (paramU i{ 0 }; i < len; ++i) {
-				if (other[i] == 0) {
-					throw std::domain_error("division by zero");
-				} else {
-					(*this)[i] = std::fmod((*this)[i], other[i]);
-				}
-			}
-			return *this;
-		}
-		#pragma endregion
-		
-		#pragma region operator &=
-		RowProxy& operator&=(
-			const integral auto& value
-		) requires integral<T> {
-			for (T& elem : *this) {
-				elem &= value;
-			}
-			return *this;
-		}
-		RowProxy& operator&=(
-			const RowProxy& other
-		) requires integral<T> {
-			const auto len{ std::min(other.mLength, mLength) };
-			for (paramS i{ 0 }; i < len; ++i) {
-				(*this)[i] &= other[i];
-			}
-			return *this;
-		}
-		RowProxy& operator&=(
-			const MapRow<T>& other
-		) requires integral<T> {
-			const auto len{ std::min<paramU>(other.size(), mLength) };
-			for (paramU i{ 0 }; i < len; ++i) {
-				(*this)[i] &= other[i];
-			}
-			return *this;
-		}
-		#pragma endregion
-		#pragma region operator |=
-		RowProxy& operator|=(
-			const integral auto& value
-		) requires integral<T> {
-			for (T& elem : *this) {
-				elem |= value;
-			}
-			return *this;
-		}
-		RowProxy& operator|=(
-			const RowProxy& other
-		) requires integral<T> {
-			const auto len{ std::min(other.mLength, mLength) };
-			for (paramS i{ 0 }; i < len; ++i) {
-				(*this)[i] |= other[i];
-			}
-			return *this;
-		}
-		RowProxy& operator|=(
-			const MapRow<T>& other
-		) requires integral<T> {
-			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
-			for (paramU i{ 0 }; i < len; ++i) {
-				(*this)[i] |= other[i];
-			}
-			return *this;
-		}
-		#pragma endregion
-		#pragma region operator ^=
-		RowProxy& operator^=(
-			const integral auto& value
-		) requires integral<T> {
-			for (T& elem : *this) {
-				elem ^= value;
-			}
-			return *this;
-		}
-		RowProxy& operator^=(
-			const RowProxy& other
-		) requires integral<T> {
-			const auto len{ std::min(other.mLength, mLength) };
-			for (paramS i{ 0 }; i < len; ++i) {
-				(*this)[i] ^= other[i];
-			}
-			return *this;
-		}
-		RowProxy& operator^=(
-			const MapRow<T>& other
-		) requires integral<T> {
-			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
-			for (paramU i{ 0 }; i < len; ++i) {
-				(*this)[i] ^= other[i];
-			}
-			return *this;
-		}
-		#pragma endregion
-		#pragma region operator <<=
-		RowProxy& operator<<=(
-			const integral auto& value
-		) requires integral<T> {
-			for (T& elem : *this) {
-				elem <<= value;
-			}
-			return *this;
-		}
-		RowProxy& operator<<=(
-			const RowProxy& other
-		) requires integral<T> {
-			const auto len{ std::min(other.mLength, mLength) };
-			for (paramS i{ 0 }; i < len; ++i) {
-				(*this)[i] <<= other[i];
-			}
-			return *this;
-		}
-		RowProxy& operator<<=(
-			const MapRow<T>& other
-		) requires integral<T> {
-			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
-			for (paramU i{ 0 }; i < len; ++i) {
-				(*this)[i] <<= other[i];
-			}
-			return *this;
-		}
-		#pragma endregion
-		#pragma region operator >>=
-		RowProxy& operator>>=(
-			const integral auto& value
-		) requires integral<T> {
-			for (T& elem : *this) {
-				elem >>= value;
-			}
-			return *this;
-		}
-		RowProxy& operator>>=(
-			const RowProxy& other
-		) requires integral<T> {
-			const auto len{ std::min(other.mLength, mLength) };
-			for (paramS i{ 0 }; i < len; ++i) {
-				(*this)[i] >>= other[i];
-			}
-			return *this;
-		}
-		RowProxy& operator>>=(
-			const MapRow<T>& other
-		) requires integral<T> {
-			const auto len{ std::min(other.size(), static_cast<paramU>(mLength)) };
-			for (paramU i{ 0 }; i < len; ++i) {
-				(*this)[i] >>= other[i];
-			}
-			return *this;
-		}
-		#pragma endregion
-
-	public:
-		#pragma region Iterator begin/end
-		T* begin() const noexcept { return mBegin; }
-		T* end()   const noexcept { return mBegin + mLength; }
-
-		T* rbegin() const noexcept { return end() - 1; }
-		T* rend()   const noexcept { return begin() - 1; }
-
-		const T* cbegin() const noexcept { return begin(); }
-		const T* cend()   const noexcept { return end(); }
-
-		const T* crbegin() const noexcept { return rbegin(); }
-		const T* crend()   const noexcept { return rend(); }
-		#pragma endregion
-	};
-	#pragma endregion
-
-	#pragma region RowIterator Class
-	class RowIterator final : private RowProxy {
-		using diff_t = std::ptrdiff_t;
-
-	public:
-		#pragma region Ctor
-		explicit RowIterator(
-			T* const     begin,
-			const paramS length
-		) noexcept
-			: RowProxy{ begin, length }
-		{}
-		#pragma endregion
-
-	public:
-		#pragma region Iterator Overloads
-		RowProxy& operator* () noexcept { return *this; }
-		RowProxy* operator->() noexcept { return  this; }
-
-		RowIterator& operator++() noexcept { this->mBegin += this->mLength; return *this; }
-		RowIterator& operator--() noexcept { this->mBegin -= this->mLength; return *this; }
-
-		RowIterator operator++(int) noexcept { auto tmp{ *this }; this->mBegin += this->mLength; return tmp; }
-		RowIterator operator--(int) noexcept { auto tmp{ *this }; this->mBegin -= this->mLength; return tmp; }
-		
-		RowIterator  operator+ (const diff_t rhs) const { return RowIterator(this->mBegin + rhs * this->mLength, this->mLength); }
-		RowIterator  operator- (const diff_t rhs) const { return RowIterator(this->mBegin - rhs * this->mLength, this->mLength); }
-		
-		RowIterator& operator+=(const diff_t rhs) { this->mBegin += rhs * this->mLength; return *this; }
-		RowIterator& operator-=(const diff_t rhs) { this->mBegin -= rhs * this->mLength; return *this; }
-
-		friend RowIterator operator+(const diff_t lhs, const RowIterator& rhs) { return rhs + lhs; }
-		friend RowIterator operator-(const diff_t lhs, const RowIterator& rhs) { return rhs - lhs; }
-
-		diff_t operator-(const RowIterator& other) const { return this->mBegin - other.mBegin; }
-
-		bool operator==(const RowIterator& other) const noexcept { return this->mBegin == other.mBegin; }
-		bool operator!=(const RowIterator& other) const noexcept { return this->mBegin != other.mBegin; }
-		bool operator< (const RowIterator& other) const noexcept { return this->mBegin <  other.mBegin; }
-		bool operator> (const RowIterator& other) const noexcept { return this->mBegin >  other.mBegin; }
-		bool operator<=(const RowIterator& other) const noexcept { return this->mBegin <= other.mBegin; }
-		bool operator>=(const RowIterator& other) const noexcept { return this->mBegin >= other.mBegin; }
-
-		RowProxy& operator[](const diff_t rhs) const { return *(this->mBegin + rhs * this->mLength); }
-		#pragma endregion
-	};
-	#pragma endregion
+	axis_size mCols;
+	axis_size mRows;
+	AlignedUnique<T> pData;
 
 public:
-	#pragma region Trivial Ctor
-	Map2D() : Map2D{ 1, 1 } {}
+	constexpr size_type size()       const noexcept { return mRows * mCols; }
+	constexpr size_type size_bytes() const noexcept { return size() * sizeof(value_type); }
+	constexpr bool      empty()      const noexcept { return size() == 0; }
+	constexpr auto      span()       const noexcept { return std::span(data(), size()); }
 
-	Map2D(const paramS rows, const paramS cols)
-		: mRows{ std::max(1, std::abs(rows)) }
-		, mCols{ std::max(1, std::abs(cols)) }
-		, pData{ std::make_unique<T[]>(mRows * mCols) }
-	{}
-	Map2D(const paramU rows, const paramU cols)
-		: mRows{ static_cast<paramS>(rows) }
-		, mCols{ static_cast<paramS>(cols) }
-		, pData{ std::make_unique<T[]>(mRows * mCols) }
+	constexpr size_type lenX() const noexcept { return mCols; }
+	constexpr size_type lenY() const noexcept { return mRows; }
+
+	constexpr pointer   data()  { return pData.get(); }
+	constexpr reference front() { return data()[0]; }
+	constexpr reference back()  { return data()[size() - 1]; }
+
+	constexpr const_pointer   data()  const { return pData.get(); }
+	constexpr const_reference front() const { return data()[0]; }
+	constexpr const_reference back()  const { return data()[size() - 1]; }
+
+	constexpr auto first(size_type count) const { return RangeProxy(data(), count); }
+	constexpr auto last (size_type count) const { return RangeProxy(data(), size() - count); }
+
+	constexpr auto makeRowIter(size_type row)  const { return RangeIterator(data() + row * lenX(), lenX()); }
+	constexpr auto makeRowProxy(size_type row) const { return *makeRowIter(row); }
+
+	constexpr auto makeIter()  const { return RangeIterator<T>(data(), lenX()); }
+	constexpr auto makeProxy() const { return *makeIter(); }
+
+	constexpr auto makeProxy2D() const { return RangeProxy2D(data(), lenX(), lenY()); }
+
+	#pragma region Trivial Ctor
+	constexpr Map2D(size_type cols = 1u, size_type rows = 1u)
+		: mCols{ std::max(1u, static_cast<axis_size>(cols)) }
+		, mRows{ std::max(1u, static_cast<axis_size>(rows)) }
+		, pData{ ::allocate<T>(size()).as_value().release() }
 	{}
 	#pragma endregion
 	
 	#pragma region Copy/Move Ctor
-	Map2D(Map2D&&) = default; // move constructor
-	Map2D(const Map2D& other) // copy constructor
-		: Map2D{
-			other.mRows,
-			other.mCols
-		}
-	{
-		std::copy(
-			std::execution::unseq,
-			other.mBegin(), other.mEnd(), mBegin()
-		);
-	}
+	constexpr Map2D(self&& other) noexcept
+		: mCols{ std::exchange(other.mCols, 0) }
+		, mRows{ std::exchange(other.mRows, 0) }
+		, pData{ std::move(other.pData) }
+	{}
+	constexpr Map2D(const self& other) // copy constructor
+		: Map2D{ other.mCols, other.mRows }
+	{}
 	#pragma endregion
 
 	#pragma region Move/Copy Assignment
-	Map2D& operator=(Map2D&&) = default;   // move assignment
-	Map2D& operator=(const Map2D& other) { // copy assignment
-		if (this != &other && size() == other.size()) {
-			std::copy(
-				std::execution::unseq,
-				other.mBegin(), other.mEnd(), mBegin()
-			);
-			mRows = other.lenY(); mCols = other.lenX();
-		}
+	constexpr self& operator=(self&& other) {
+		pData = std::move(other.pData);
+		mCols = std::exchange(other.mCols, 0);
+		mRows = std::exchange(other.mRows, 0);
 		return *this;
 	}
-	#pragma endregion
-
-private:
-	#pragma region negmod()
-	auto negmod(const integral auto lhs, const integral auto rhs) const {
-		const auto _mod{
-			static_cast<paramS>(lhs) %
-			static_cast<paramS>(rhs)
-		};
-		if (_mod < 0) {
-			return _mod + rhs;
-		} else {
-			return _mod;
+	constexpr self& operator=(const self& other) { // copy assignment
+		if (this != &other && size() == other.size()) {
+			std::copy(EXEC_POLICY(unseq)
+				other.begin(), other.end(), begin());
+			
+			mCols = other.mCols;
+			mRows = other.mRows;
 		}
+		return *this;
 	}
 	#pragma endregion
 
 public:
-	#pragma region makeView() :: Matrix
+	#pragma region linearCopy() :: C++ Array
 	/**
-	 * @brief Creates a View of the original matrix data as a matrix of const T*.
-	 *        Only the arrangement of the pointers can be modified.
-	 * @returns Const matrix of pointers to data.
-	 *
-	 * @param[in] rows,cols :: Dimensions of the new View matrix.
-	 *                         If 0, default dimensions of matrix are used.
-	 * @param[in] posY,posX :: Dimension offset to apply on original matrix.
-	 *
-	 * @warning There are no limiters in place. You can repeat a pattern if you wish.
-	 * @warning Elements in the View matrix must be dereferenced to be used.
-	 */
-	auto makeView(
-		const integral auto rows = 0,
-		const integral auto cols = 0,
-		const integral auto posY = 0,
-		const integral auto posX = 0
-	) const requires arithmetic<T> {
-		const auto _rows{ static_cast<paramS>(std::abs(rows)) };
-		const auto _cols{ static_cast<paramS>(std::abs(cols)) };
-
-		const auto nRows = !_rows ? mRows : _rows;
-		const auto nCols = !_cols ? mRows : _cols;
-
-		Map2D<const T*> obj;
-		return obj.setView(this, nRows, nCols, posY, posX);
-	}
-	#pragma endregion
-	
-	#pragma region makeView() :: View
-	/**
-	 * @brief Creates a View from the pointers of another View matrix.
-	 *        Only the arrangement of the pointers can be modified.
-	 * @returns Const matrix of pointers to data.
-	 *
-	 * @param[in] rows,cols :: Dimensions of the new View matrix.
-	 *                         If 0, default dimensions of matrix are used.
-	 * @param[in] posY,posX :: Dimension offset to apply on original matrix.
-	 *
-	 * @warning There are no limiters in place. You can repeat a pattern if you wish.
-	 * @warning Elements in the View matrix must be dereferenced to be used.
-	 */
-	auto makeView(
-		const integral auto rows = 0,
-		const integral auto cols = 0,
-		const integral auto posY = 0,
-		const integral auto posX = 0
-	) const requires ar_pointer<T> {
-		const auto _rows{ static_cast<paramS>(std::abs(rows)) };
-		const auto _cols{ static_cast<paramS>(std::abs(cols)) };
-
-		const auto nRows = !_rows ? mRows : _rows;
-		const auto nCols = !_cols ? mRows : _cols;
-
-		Map2D obj;
-		return obj.setView(this, nRows, nCols, posY, posX);
-	}
-	#pragma endregion
-	
-	#pragma region setView() :: Matrix
-	/**
-	 * @brief Reseat a View using a matrix of original data.
-	 * @returns Self reference for method chaining.
-	 *
-	 * @param[in] base*     :: Pointer to an object of matrix data.
-	 * @param[in] rows,cols :: Dimensions of the new View matrix.
-	 *                         If 0, default dimensions of matrix are used.
-	 * @param[in] posY,posX :: Dimension offset to apply on original matrix.
-	 *
-	 * @warning There are no limiters in place. You can repeat a pattern if you wish.
-	 * @warning Elements in the View matrix must be dereferenced to be used.
-	 */
-	Map2D& setView(
-		const Map2D<underT>* const base,
-		const integral auto rows = 0,
-		const integral auto cols = 0,
-		const integral auto posY = 0,
-		const integral auto posX = 0
-	) requires ar_pointer<T> {
-		const auto _rows{ static_cast<paramS>(std::abs(rows)) };
-		const auto _cols{ static_cast<paramS>(std::abs(cols)) };
-
-		mRows = !_rows ? mRows : _rows;
-		mCols = !_cols ? mRows : _cols;
-		resizeWipe(mRows, mCols);
-
-		for (paramS y{}; y < mRows; ++y) {
-			const auto offsetY{ negmod(y + posY, base->lenY()) };
-			for (paramS x{}; x < mCols; ++x) {
-				const auto offsetX{ negmod(x + posX, base->lenX()) };
-				at_raw(y, x) = &base->at_raw(offsetY, offsetX);
-			}
-		}
-		return *this;
-	}
-	#pragma endregion
-	
-	#pragma region setView() :: View
-	/**
-	 * @brief Reseat a View from the pointers of another View matrix.
-	 * @returns Self reference for method chaining.
-	 *
-	 * @param[in] base*     :: Pointer to an object of matrix data.
-	 * @param[in] rows,cols :: Dimensions of the new View matrix.
-	 *                         If 0, default dimensions of matrix are used.
-	 * @param[in] posY,posX :: Dimension offset to apply on original matrix.
-	 *
-	 * @warning There are no limiters in place. You can repeat a pattern if you wish.
-	 * @warning Elements in the View matrix must be dereferenced to be used.
-	 */
-	Map2D& setView(
-		const Map2D<const underT*>* const base,
-		const integral auto rows = 0,
-		const integral auto cols = 0,
-		const integral auto posY = 0,
-		const integral auto posX = 0
-	) requires ar_pointer<T> {
-		const auto _rows{ static_cast<paramS>(std::abs(rows)) };
-		const auto _cols{ static_cast<paramS>(std::abs(cols)) };
-
-		mRows = !_rows ? mRows : _rows;
-		mCols = !_cols ? mRows : _cols;
-		resizeWipe(mRows, mCols);
-
-		for (paramS y{}; y < mRows; ++y) {
-			const auto offsetY{ negmod(y + posY, base->lenY()) };
-			for (paramS x{}; x < mCols; ++x) {
-				const auto offsetX{ negmod(x + posX, base->lenX()) };
-				at_raw(y, x) = base->at_raw(offsetY, offsetX);
-			}
-		}
-		return *this;
-	}
-	#pragma endregion
-	
-	#pragma region copyLinear() :: Matrix
-	/**
-	 * @brief Copies data from another matrix of the same type. As much
+	 * @brief Copies data from another contiguous container. As much
 	 *        as it can fit or pull.
 	 * @returns Self reference for method chaining.
 	 * 
-	 * @param[in] other :: Matrix object to copy from.
+	 * @param[in] other :: Contiguous container to copy from.
 	 */
-	Map2D& copyLinear(
-		const Map2D& other
-	) requires arithmetic<T> {
-		const auto _len{ std::min(size(), other.size())};
-		std::copy_n(
-			std::execution::unseq,
-			other.mBegin(), _len, mBegin()
-		);
+	template <IsContiguousContainer Object>
+	constexpr self& linearCopy(const Object& other) {
+		std::copy_n(EXEC_POLICY(unseq)
+			std::begin(other), std::min(size(), std::size(other)), begin());
 		return *this;
 	}
 	#pragma endregion
 	
-	#pragma region copyLinear() :: C-style Array
+	#pragma region linearCopy() :: C-style Array
 	/**
 	 * @brief Copies data from array pointer of the same type. As much
 	 *        as it can fit or pull.
 	 * @returns Self reference for method chaining.
 	 *
 	 * @param[in] other :: Pointer to array of data.
-	 * @param[in] size  :: Amount of elements to copy.
+	 * @param[in] size  :: Amount of elements to copy (optional).
 	 * 
 	 * @warning Cannot check if target array has sufficient data.
 	 */
-	Map2D& copyLinear(
-		const T* const other,
-		const integral auto len
-	) requires arithmetic<T> {
-		const auto _len{ static_cast<paramU>(std::abs(len)) };
-		std::copy_n(
-			std::execution::unseq,
-			other, std::min(_len, size()), mBegin()
-		);
+	template <size_type N>
+	constexpr self& linearCopy(T(&other)[N], size_type len = N) {
+		std::copy_n(EXEC_POLICY(unseq)
+			other, std::min(len, size()), begin());
 		return *this;
 	}
 	#pragma endregion
 	
-	#pragma region resize() :: Matrix (Arithmetic)
+	#pragma region resize()
 	/**
-	 * @brief Resizes the matrix to new dimensions. Can either copy
-	 *        existing data or wipe it.
+	 * @brief Resizes the matrix to new dimensions. Defaults to resizeDirty()
 	 * @return Self reference for method chaining.
 	 * 
-	 * @param[in] choice :: FALSE to clear data, TRUE to copy it instead.
 	 * @param[in] rows   :: Total rows of the new matrix.    (min: 1)
 	 * @param[in] cols   :: Total columns of the new matrix. (min: 1)
 	 * 
 	 * @warning A 'rows'/'cols' of 0 will default to current size.
 	 */
-	Map2D& resize(
-		const bool choice_copy,
-		const integral auto rows,
-		const integral auto cols
-	) requires arithmetic<T> {
-		auto nRows{ static_cast<paramS>(std::abs(rows)) };
-		auto nCols{ static_cast<paramS>(std::abs(cols)) };
-
-		if (!nRows) nRows = mRows;
-		if (!nCols) nCols = mCols;
-
-		if (nRows == mRows && nCols == mCols) {
-			if (choice_copy) {
-				return *this;
-			} else {
-				return wipeAll();
-			}
+	constexpr self& resize(size_type rows, size_type cols) {
+		if (cols == lenX() && rows == lenY()) {
+			return *this;
 		} else {
-			if (choice_copy) {
-				return resizeCopy(nRows, nCols);
-			} else {
-				return resizeWipe(nRows, nCols);
-			}
+			return resizeDirty(cols, rows);
 		}
 	}
 	#pragma endregion
 
-private:
-	#pragma region resizeCopy()
-	Map2D& resizeCopy(
-		const paramS rows,
-		const paramS cols
-	) {
-		const auto minRows{ std::min(rows, mRows) };
-		const auto minCols{ std::min(cols, mCols) };
+	#pragma region resizeDirty()
+	constexpr self& resizeDirty(size_type cols, size_type rows) {
+		const auto minCols{ std::min(cols, lenX()) };
+		const auto minRows{ std::min(rows, lenY()) };
 
-		auto pCopy{ std::make_unique<T[]>(rows * cols) };
-
-		for (auto row{ 0 }; row < minRows; ++row) {
-			const auto srcIdx{ pData.get() + row * mCols };
+		auto pCopy{ ::allocate<T>(rows * cols).as_value().release() };
+		if (!pCopy) { return *this; }
+		
+		for (size_type row{ 0u }; row < minRows; ++row) {
+			const auto srcIdx{ pData.get() + row * lenX() };
 			const auto dstIdx{ pCopy.get() + row * cols };
-			std::move(
-				std::execution::unseq,
-				srcIdx, srcIdx + minCols, dstIdx
-			);
+			std::move(EXEC_POLICY(unseq)
+				srcIdx, srcIdx + minCols, dstIdx);
 		}
 
 		mRows = rows;
@@ -1457,78 +192,76 @@ private:
 	}
 	#pragma endregion
 	
-	#pragma region resizeWipe()
-	Map2D& resizeWipe(
-		const paramS rows,
-		const paramS cols
-	) {
-		mRows = rows;
-		mCols = cols;
+	#pragma region resizeClean()
+	constexpr self& resizeClean(size_type cols, size_type rows) {
+		mCols = static_cast<axis_size>(cols);
+		mRows = static_cast<axis_size>(rows);
 
-		pData = std::make_unique<T[]>(size());
+		pData.reset();
+		pData = ::allocate<T>(size()).as_value().release();
 		return *this;
 	}
 	#pragma endregion
 
 public:
-	#pragma region wipeAll() :: Matrix (Arithmetic)
+	#pragma region initialize()
 	/**
-	 * @brief Wipes all of the matrix's data.
+	 * @brief Initialize all of the matrix's data.
 	 * @return Self reference for method chaining.
 	 */
-	Map2D& wipeAll() requires arithmetic<T> {
-		std::fill(
-			std::execution::unseq,
-			mBegin(), mEnd(), T()
-		);
+	constexpr self& initialize(T value = T{}) {
+		std::fill(EXEC_POLICY(unseq)
+			begin(), end(), value);
 		return *this;
 	}
 	#pragma endregion
-	
-	#pragma region wipe() :: Matrix (Arithmetic)
+
+public:
+	#pragma region initialize()
 	/**
-	 * @brief Wipes the matrix's data in a given direction.
+	 * @brief Initializes the matrix's data in a given direction.
 	 * @return Self reference for method chaining.
 	 *
-	 * @param[in] rows :: Total rows to wipe. Directional.
-	 * @param[in] cols :: Total columns to wipe. Directional.
+	 * @param[in] rows :: Total rows to initialize. Directional.
+	 * @param[in] cols :: Total columns to initialize. Directional.
 	 *
 	 * @warning The sign of the params control the application direction.
-	 * @warning If the params exceed row/column length, all row data is wiped.
+	 * @warning If the params exceed row/column length, all row data is initialized.
 	 */
-	Map2D& wipe(
-		const integral auto rows,
-		const integral auto cols
-	) requires arithmetic<T> {
-		if (!rowValidAbs(rows) || !colValidAbs(cols)) {
-			wipeAll();
-		} else {
-			const auto _rows{ static_cast<paramS>(rows) };
-			const auto _cols{ static_cast<paramS>(cols) };
-			if (_rows) {
-				if (_rows < 0) {
-					std::fill(
-						std::execution::unseq,
-						mEnd() + _rows * mCols, mEnd(), T()
-					);
-				} else {
-					std::fill(
-						std::execution::unseq,
-						mBegin(), mBegin() + _rows * mCols, T()
-					);
+	constexpr self& initialize(difference_type cols, difference_type rows, T value = T{}) {
+		if (const auto shift{ 0ull + std::abs(cols) }; shift) {
+			if (cols < 0) {
+				if (shift >= lenX()) { return initialize(value); }
+				for (size_type row{ 0u }; row < lenY(); ++row) {
+					const auto offset{ end() - row * lenX() };
+					std::fill(EXEC_POLICY(unseq)
+						offset - shift, offset, value);
+				}
+			} else {
+				if (shift >= lenX()) { return initialize(value); }
+				for (size_type row{ 0u }; row < lenY(); ++row) {
+					const auto offset{ begin() + row * lenX() };
+					std::fill(EXEC_POLICY(unseq)
+						offset, offset + shift, value);
 				}
 			}
-			if (_cols) {
-				for (auto& row : *this) {
-					row.wipe(_cols);
-				}
+		}
+		if (const auto shift{ 0ull + std::abs(rows) }; shift) {
+			if (rows < 0) {
+				if (shift >= lenY()) { return initialize(value); }
+				std::fill(EXEC_POLICY(unseq)
+					end() - shift * lenX(), end(), value);
+			} else {
+				if (shift >= lenY()) { return initialize(value); }
+				std::fill(EXEC_POLICY(unseq)
+					begin(), begin() + shift * lenX(), value);
 			}
 		}
 		return *this;
 	}
 	#pragma endregion
 	
-	#pragma region rotate() :: Matrix + View
+	#pragma region rotate()
 	/**
 	 * @brief Rotates the matrix's data in a given direction.
 	 * @return Self reference for method chaining.
@@ -1538,35 +271,36 @@ public:
 	 *
 	 * @warning The sign of the params control the application direction.
 	 */
-	Map2D& rotate(
-		const integral auto rows,
-		const integral auto cols
-	) {
-		const auto _rows{ static_cast<paramS>(rows) };
-		const auto _cols{ static_cast<paramS>(cols) };
-		if (_rows % mRows) {
-			if (_rows < 0) {
-				std::rotate(
-					std::execution::unseq,
-					mBegin(), mBegin() - _rows * mCols, mEnd()
-				);
+	constexpr self& rotate(difference_type cols, difference_type rows) {
+		if (const auto shift{ 0ull + std::abs(cols) % lenX() }; shift) {
+			if (cols < 0) {
+				for (size_type row{ 0u }; row < lenY(); ++row) {
+					const auto offset{ begin() + row * lenX() };
+					std::rotate(EXEC_POLICY(unseq)
+						offset, offset + shift, offset + lenX());
+				}
 			} else {
-				std::rotate(
-					std::execution::unseq,
-					mBegin(), mEnd() - _rows * mCols, mEnd()
-				);
+				for (size_type row{ 0u }; row < lenY(); ++row) {
+					const auto offset{ begin() + row * lenX() };
+					std::rotate(EXEC_POLICY(unseq)
+						offset, offset + lenX() - shift, offset + lenX());
+				}
 			}
 		}
-		if (_cols % mCols) {
-			for (auto& row : *this) {
-				row.rotate(_cols);
+		if (const auto shift{ 0ull + std::abs(rows) % lenY() * lenX() }; shift) {
+			if (rows < 0) {
+				std::rotate(EXEC_POLICY(unseq)
+					begin(), begin() + shift, end());
+			} else {
+				std::rotate(EXEC_POLICY(unseq)
+					begin(), end() - shift, end());
 			}
 		}
 		return *this;
 	}
 	#pragma endregion
 	
-	#pragma region shift() :: Matrix (Arithmetic)
+	#pragma region shift()
 	/**
 	 * @brief Shifts the matrix's data in a given direction. Combines the
 	 *        functionality of rotating and wiping.
@@ -1578,73 +312,69 @@ public:
 	 * @warning The sign of the params control the application direction.
 	 * @warning If the params exceed row/column length, all row data is wiped.
 	 */
-	Map2D& shift(
-		const integral auto rows,
-		const integral auto cols
-	) requires arithmetic<T> {
-		if (rowValidAbs(rows) && colValidAbs(cols)) {
-			rotate(rows, cols);
-		}
-		return wipe(rows, cols);
+	constexpr self& shift(difference_type cols, difference_type rows, T value = T{}) {
+		return rotate(cols, rows).initialize(cols, rows, value);
 	}
 	#pragma endregion
 	
-	#pragma region reverse() :: Matrix + View
+	#pragma region reverse()
 	/**
 	 * @brief Reverses the matrix's data.
 	 * @return Self reference for method chaining.
 	 */
-	Map2D& reverse() {
-		std::reverse(
-			std::execution::unseq,
-			mBegin(), mEnd()
-		);
+	constexpr self& reverse() {
+		std::reverse(EXEC_POLICY(unseq)
+			begin(), end());
 		return *this;
 	}
 	#pragma endregion
 	
-	#pragma region reverseY() :: Matrix + View
+	#pragma region flipY()
 	/**
 	 * @brief Reverses the matrix's data in row order.
 	 * @return Self reference for method chaining.
 	 */
-	Map2D& reverseY() {
-		for (auto row{ 0 }; row < mRows / 2; ++row) {
-			(*this)[row].swap((*this)[mRows - row - 1]);
-		}
-		return *this;
-	}
-	#pragma endregion
-	
-	#pragma region reverseX() :: Matrix + View
-	/**
-	 * @brief Reverses the matrix's data in column order.
-	 * @return Self reference for method chaining.
-	 */
-	Map2D& reverseX() {
-		for (auto& row : *this) {
-			std::reverse(
-				std::execution::unseq,
-				row.begin(), row.end()
+	constexpr self& flipY() {
+		const auto iterations{ lenY() >> 1 };
+		for (size_type row{ 0u }; row < iterations; ++row) {
+			const auto offset{ lenX() * row };
+			std::swap_ranges(EXEC_POLICY(unseq)
+				begin() + offset,
+				begin() + offset + lenX(),
+				end()   - offset - lenX()
 			);
 		}
 		return *this;
 	}
 	#pragma endregion
 	
-	#pragma region transpose() :: Matrix + View
+	#pragma region flipX()
+	/**
+	 * @brief Reverses the matrix's data in column order.
+	 * @return Self reference for method chaining.
+	 */
+	constexpr self& flipX() {
+		for (size_type row{ 0u }; row < lenY(); ++row) {
+			const auto offset{ begin() + lenX() * row };
+			std::reverse(EXEC_POLICY(unseq)
+				offset, offset + lenX());
+		}
+		return *this;
+	}
+	#pragma endregion
+	
+	#pragma region transpose()
 	/**
 	 * @brief Transposes the matrix's data. Works with rectangular dimensions.
 	 * @return Self reference for method chaining.
 	 */
-	Map2D& transpose() {
-		if (mRows > 1 || mCols > 1) {
-			for (paramU a{ 1 }, b{ 1 }; a < size() - 1; b = ++a) {
-				do {
-					b = (b % mRows) * mCols + (b / mRows);
-				} while (b < a);
+	constexpr self& transpose() {
+		if (size() > 1) {
+			for (size_type a{ 1u }, b{ 1u }; a < size() - 1u; b = ++a) {
+				do { b = (b % lenY()) * lenX() + (b / lenY()); }
+					while (b < a);
 
-				if (b != a) std::iter_swap(mBegin() + a, mBegin() + b);
+				if (b != a) std::iter_swap(begin() + a, begin() + b);
 			}
 		}
 		std::swap(mRows, mCols);
@@ -1652,121 +382,447 @@ public:
 	}
 	#pragma endregion
 
-private:
-	#pragma region Accessor Bounds Checkers
-	paramS checkRowBounds(const paramS row) const {
-		if (row < -mRows || row >= mRows) {
-			throw std::out_of_range("at() row index out of range");
-		}
-		return row + (row < 0 ? mRows : 0);
+public:
+	constexpr reference at(size_type idx) {
+		if (idx >= size()) { throw std::out_of_range("Map2D.at() index out of range"); }
+		return data()[idx];
 	}
-	paramS checkColBounds(const paramS col) const {
-		if (col < -mCols || col >= mCols) {
-			throw std::out_of_range("at() col index out of range");
-		}
-		return col + (col < 0 ? mCols : 0);
+	constexpr reference at(size_type col, size_type row) {
+		if (col >= lenX()) { throw std::out_of_range("Map2D.at() col out of range"); }
+		if (row >= lenY()) { throw std::out_of_range("Map2D.at() row out of range"); }
+		return data()[row * lenX() + col];
 	}
 
-	bool rowValid(const paramU idx) const noexcept {
-		return idx < static_cast<paramU>(mRows);
+	constexpr const_reference at(size_type idx) const {
+		if (idx >= size()) { throw std::out_of_range("Map2D.at() index out of range"); }
+		return data()[idx];
 	}
-	bool colValid(const paramU idx) const noexcept {
-		return idx < static_cast<paramU>(mCols);
+	constexpr const_reference at(size_type col, size_type row) const {
+		if (col >= lenX()) { throw std::out_of_range("Map2D.at() col out of range"); }
+		if (row >= lenY()) { throw std::out_of_range("Map2D.at() row out of range"); }
+		return data()[row * lenX() + col];
 	}
-	bool rowValidAbs(const integral auto idx) const noexcept {
-		return std::abs(static_cast<paramS>(idx)) < mRows;
+
+	constexpr reference operator()(size_type idx) {
+		assert(idx < size() && "Map2D.operator() index out of bounds");
+		return data()[idx];
 	}
-	bool colValidAbs(const integral auto idx) const noexcept {
-		return std::abs(static_cast<paramS>(idx)) < mCols;
+	constexpr reference operator[](size_type idx) {
+		assert(idx < size() && "Map2D.operator[] index out of bounds");
+		return data()[idx];
 	}
-	#pragma endregion
+
+	constexpr const_reference operator()(size_type idx) const {
+		assert(idx < size() && "Map2D.operator() index out of bounds");
+		return data()[idx];
+	}
+	constexpr const_reference operator[](size_type idx) const {
+		assert(idx < size() && "Map2D.operator[] index out of bounds");
+		return data()[idx];
+	}
+	
+	constexpr reference operator()(size_type col, size_type row) {
+		assert(col < lenX() && "Map2D.operator() col out of bounds");
+		assert(row < lenY() && "Map2D.operator() row out of bounds");
+		return data()[row * lenX() + col];
+	}
+	#ifndef _MSC_VER
+	constexpr reference operator[](size_type col, size_type row) {
+		assert(col < lenX() && "Map2D.operator[] col out of bounds");
+		assert(row < lenY() && "Map2D.operator[] row out of bounds");
+		return data()[row * lenX() + col];
+	}
+	#endif
+
+	constexpr const_reference operator()(size_type col, size_type row) const {
+		assert(col < lenX() && "Map2D.operator() col out of bounds");
+		assert(row < lenY() && "Map2D.operator() row out of bounds");
+		return data()[row * lenX() + col];
+	}
+	#ifndef _MSC_VER
+	constexpr const_reference operator[](size_type col, size_type row) const {
+		assert(col < lenX() && "Map2D.operator[] col out of bounds");
+		assert(row < lenY() && "Map2D.operator[] row out of bounds");
+		return data()[row * lenX() + col];
+	}
+	#endif
 
 public:
-	#pragma region Accessors
-	/* bounds-checked accessors, reverse indexing allowed */
+	constexpr iterator begin() noexcept { return data(); }
+	constexpr iterator end()   noexcept { return data() + size(); }
+	constexpr reverse_iterator rbegin() noexcept { return std::make_reverse_iterator(end()); }
+	constexpr reverse_iterator rend()   noexcept { return std::make_reverse_iterator(begin()); }
 
-	auto at(const integral auto row, const integral auto col)
-	-> T&
-	{ return at_raw(checkRowBounds(static_cast<paramS>(row)), checkColBounds(static_cast<paramS>(col))); }
+	constexpr const_iterator begin() const noexcept { return data(); }
+	constexpr const_iterator end()   const noexcept { return data() + size(); }
+	constexpr const_reverse_iterator rbegin() const noexcept { return std::make_reverse_iterator(end()); }
+	constexpr const_reverse_iterator rend()   const noexcept { return std::make_reverse_iterator(begin()); }
 
-	auto at(const integral auto row, const integral auto col) const
-	-> const T&
-	{ return at_raw(checkRowBounds(static_cast<paramS>(row)), checkColBounds(static_cast<paramS>(col))); }
-
-	auto at(const integral auto row)
-	-> RowProxy
-	{ return RowProxy(mBegin() + checkRowBounds(static_cast<paramS>(row)) * mCols, mCols); }
-
-	auto at(const integral auto row) const
-	-> const RowProxy
-	{ return RowProxy(mBegin() + checkRowBounds(static_cast<paramS>(row)) * mCols, mCols); }
-
-	/* unsafe accessors */
-
-	auto operator() (const paramU row, const paramU col)
-	-> T& {
-		assert(rowValid(row) && "operator() row index out of bounds");
-		assert(colValid(col) && "operator() col index out of bounds");
-		return at_raw(row, col);
-	}
-
-	auto operator() (const paramU row, const paramU col) const
-	-> const T& {
-		assert(rowValid(row) && "operator() row index out of bounds");
-		assert(colValid(col) && "operator() col index out of bounds");
-		return at_raw(row, col);
-	}
-
-	auto operator[] (const paramU row)
-	-> RowProxy {
-		assert(rowValid(row) && "operator[] row index out of bounds");
-		return RowProxy(mBegin() + row * mCols, mCols);
-	}
-
-	auto operator[] (const paramU row) const
-	-> const RowProxy {
-		assert(rowValid(row) && "operator[] row index out of bounds");
-		return RowProxy(mBegin() + row * mCols, mCols);
-	}
-	#pragma endregion
-
-private:
-	#pragma region Raw Iterators (private)
-	T* mBegin()  const noexcept { return pData.get(); }
-	T* mEnd()    const noexcept { return pData.get() + size(); }
-
-	T* mBeginR() const noexcept { return mEnd() - 1; }
-	T* mEndR()   const noexcept { return mBegin() - 1; }
-	#pragma endregion
-
-public:
-	#pragma region Raw Iterators (public)
-	T* raw_begin() const noexcept { return mBegin(); }
-	T* raw_end()   const noexcept { return mEnd(); }
-
-	T* raw_rbegin() const noexcept { return mBeginR(); }
-	T* raw_rend()   const noexcept { return mEndR(); }
-
-	const T* raw_cbegin() const noexcept { return raw_begin(); }
-	const T* raw_cend()   const noexcept { return raw_end(); }
-
-	const T* raw_crbegin() const noexcept { return raw_rbegin(); }
-	const T* raw_crend()   const noexcept { return raw_rend(); }
-	#pragma endregion
-
-public:
-	#pragma region RowIterator Iterators
-	RowIterator begin() const noexcept { return RowIterator(mBegin(), mCols); }
-	RowIterator end()   const noexcept { return RowIterator(mEnd(), mCols); }
-
-	RowIterator rbegin() const noexcept { return RowIterator(mBeginR(), mCols); }
-	RowIterator rend()   const noexcept { return RowIterator(mEndR(), mCols); }
-
-	const RowIterator cbegin() const noexcept { return begin(); }
-	const RowIterator cend()   const noexcept { return end(); }
-
-	const RowIterator crbegin() const noexcept { return rbegin(); }
-	const RowIterator crend()   const noexcept { return rend(); }
-	#pragma endregion
+	constexpr const_iterator cbegin() const noexcept { return begin(); }
+	constexpr const_iterator cend()   const noexcept { return end(); }
+	constexpr const_reverse_iterator crbegin() const noexcept { return std::make_reverse_iterator(cend()); }
+	constexpr const_reverse_iterator crend()   const noexcept { return std::make_reverse_iterator(cbegin()); }
 };
-#pragma endregion
+
+/*==================================================================*/
+
+template <typename T, std::size_t X, std::size_t Y>
+	requires (std::is_default_constructible_v<T>)
+class FixedMap2D final {
+	static_assert(X* Y >= 1, "Map2D must have X and Y of at least 1.");
+	using self = FixedMap2D;
+	using self_flip = FixedMap2D<T, Y, X>;
+
+public:
+	using element_type = T;
+	using size_type = std::size_t;
+	using difference_type = std::ptrdiff_t;
+	using value_type = std::remove_cv_t<T>;
+
+	using pointer = T*;
+	using const_pointer = const T*;
+
+	using reference = T&;
+	using const_reference = const T&;
+
+	using iterator = T*;
+	using const_iterator = const T*;
+
+	using reverse_iterator = std::reverse_iterator<iterator>;
+	using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+
+private:
+	alignas(HDIS) std::array<T, X* Y> pData{};
+
+public:
+	constexpr size_type size()       const noexcept { return X * Y; }
+	constexpr size_type size_bytes() const noexcept { return size() * sizeof(value_type); }
+	constexpr bool      empty()      const noexcept { return size() == 0; }
+	constexpr auto      span()       const noexcept { return std::span(data(), size()); }
+
+	constexpr size_type lenX() const noexcept { return X; }
+	constexpr size_type lenY() const noexcept { return Y; }
+
+	constexpr pointer   data() { return pData.data(); }
+	constexpr reference front() { return data()[0]; }
+	constexpr reference back() { return data()[size() - 1]; }
+
+	constexpr const_pointer   data()  const { return pData.data(); }
+	constexpr const_reference front() const { return data()[0]; }
+	constexpr const_reference back()  const { return data()[size() - 1]; }
+
+	constexpr auto first(size_type count) const { return RangeProxy(data(), count); }
+	constexpr auto last(size_type count) const { return RangeProxy(data(), size() - count); }
+
+	constexpr auto makeRowIter(size_type row)  const { return RangeIterator(data() + row * lenX(), lenX()); }
+	constexpr auto makeRowProxy(size_type row) const { return *makeRowIter(row); }
+
+	constexpr auto makeIter()  const { return RangeIterator<T>(data(), lenX()); }
+	constexpr auto makeProxy() const { return *makeIter(); }
+
+	constexpr auto makeProxy2D() const { return RangeProxy2D(data(), lenX(), lenY()); }
+
+	#pragma region Trivial Ctor
+	constexpr FixedMap2D() noexcept = default;
+	#pragma endregion
+
+	#pragma region Copy/Move Ctor
+	constexpr FixedMap2D(self&&) = default;
+	constexpr FixedMap2D(self_flip&& other) {
+		std::move(EXEC_POLICY(unseq)
+			other.begin(), other.end(), begin());
+	} // flipped
+	constexpr FixedMap2D(const self& other) {
+		std::copy(EXEC_POLICY(unseq)
+			other.begin(), other.end(), begin());
+	}
+	constexpr FixedMap2D(const self_flip& other) { // flipped
+		std::copy(EXEC_POLICY(unseq)
+			other.begin(), other.end(), begin());
+	}
+	#pragma endregion
+
+	#pragma region Move/Copy Assignment
+	constexpr self& operator=(self&&) = default;
+	constexpr self& operator=(self_flip&& other) {
+		std::move(EXEC_POLICY(unseq)
+			other.begin(), other.end(), begin());
+		return *this;
+	} // flipped
+	constexpr self& operator=(const self& other) {
+		if (this == &other) { return *this; }
+		std::copy(EXEC_POLICY(unseq)
+			other.begin(), other.end(), begin());
+		return *this;
+	}
+	constexpr self& operator=(const self_flip& other) { // flipped 
+		std::copy(EXEC_POLICY(unseq)
+			other.begin(), other.end(), begin());
+		return *this;
+	}
+	#pragma endregion
+
+public:
+	#pragma region linearCopy() :: C++ Array
+	/**
+	 * @brief Copies data from another contiguous container. As much
+	 *        as it can fit or pull.
+	 * @returns Self reference for method chaining.
+	 *
+	 * @param[in] other :: Contiguous container to copy from.
+	 */
+	template <IsContiguousContainer Object>
+	constexpr self& linearCopy(const Object& other) {
+		std::copy_n(EXEC_POLICY(unseq)
+			std::begin(other), std::min(size(), std::size(other)), begin());
+		return *this;
+	}
+	#pragma endregion
+
+	#pragma region linearCopy() :: C-style Array
+	/**
+	 * @brief Copies data from array pointer of the same type. As much
+	 *        as it can fit or pull.
+	 * @returns Self reference for method chaining.
+	 *
+	 * @param[in] other :: Pointer to array of data.
+	 * @param[in] size  :: Amount of elements to copy (optional).
+	 *
+	 * @warning Cannot check if target array has sufficient data.
+	 */
+	template <size_type N>
+	constexpr self& linearCopy(T(&other)[N], size_type len = N) {
+		std::copy_n(EXEC_POLICY(unseq)
+			other, std::min(len, size()), begin());
+		return *this;
+	}
+	#pragma endregion
+
+public:
+	#pragma region initialize()
+	/**
+	 * @brief Initialize all of the matrix's data.
+	 * @return Self reference for method chaining.
+	 */
+	constexpr self& initialize(T value = T{}) {
+		std::fill(EXEC_POLICY(unseq)
+			begin(), end(), value);
+		return *this;
+	}
+	#pragma endregion
+
+public:
+	#pragma region initialize()
+	/**
+	 * @brief Initializes the matrix's data in a given direction.
+	 * @return Self reference for method chaining.
+	 *
+	 * @param[in] rows :: Total rows to initialize. Directional.
+	 * @param[in] cols :: Total columns to initialize. Directional.
+	 *
+	 * @warning The sign of the params control the application direction.
+	 * @warning If the params exceed row/column length, all row data is initialized.
+	 */
+	constexpr self& initialize(difference_type cols, difference_type rows, T value = T{}) {
+		if (const auto shift{ 0ull + std::abs(cols) }; shift) {
+			if (cols < 0) {
+				if (shift >= lenX()) { return initialize(value); }
+				for (size_type row{ 0u }; row < lenY(); ++row) {
+					const auto offset{ end() - row * lenX() };
+					std::fill(EXEC_POLICY(unseq)
+						offset - shift, offset, value);
+				}
+			} else {
+				if (shift >= lenX()) { return initialize(value); }
+				for (size_type row{ 0u }; row < lenY(); ++row) {
+					const auto offset{ begin() + row * lenX() };
+					std::fill(EXEC_POLICY(unseq)
+						offset, offset + shift, value);
+				}
+			}
+		}
+		if (const auto shift{ 0ull + std::abs(rows) }; shift) {
+			if (rows < 0) {
+				if (shift >= lenY()) { return initialize(value); }
+				std::fill(EXEC_POLICY(unseq)
+					end() - shift * lenX(), end(), value);
+			} else {
+				if (shift >= lenY()) { return initialize(value); }
+				std::fill(EXEC_POLICY(unseq)
+					begin(), begin() + shift * lenX(), value);
+			}
+		}
+		return *this;
+	}
+	#pragma endregion
+
+	#pragma region rotate()
+	/**
+	 * @brief Rotates the matrix's data in a given direction.
+	 * @return Self reference for method chaining.
+	 *
+	 * @param[in] rows :: Total rows to rotate. Directional.
+	 * @param[in] cols :: Total columns to rotate. Directional.
+	 *
+	 * @warning The sign of the params control the application direction.
+	 */
+	constexpr self& rotate(difference_type cols, difference_type rows) {
+		if (const auto shift{ 0ull + std::abs(cols) % lenX() }; shift) {
+			if (cols < 0) {
+				for (size_type row{ 0u }; row < lenY(); ++row) {
+					const auto offset{ begin() + row * lenX() };
+					std::rotate(EXEC_POLICY(unseq)
+						offset, offset + shift, offset + lenX());
+				}
+			} else {
+				for (size_type row{ 0u }; row < lenY(); ++row) {
+					const auto offset{ begin() + row * lenX() };
+					std::rotate(EXEC_POLICY(unseq)
+						offset, offset + lenX() - shift, offset + lenX());
+				}
+			}
+		}
+		if (const auto shift{ 0ull + std::abs(rows) % lenY() * lenX() }; shift) {
+			if (rows < 0) {
+				std::rotate(EXEC_POLICY(unseq)
+					begin(), begin() + shift, end());
+			} else {
+				std::rotate(EXEC_POLICY(unseq)
+					begin(), end() - shift, end());
+			}
+		}
+		return *this;
+	}
+	#pragma endregion
+
+	#pragma region shift()
+	/**
+	 * @brief Shifts the matrix's data in a given direction. Combines the
+	 *        functionality of rotating and wiping.
+	 * @return Self reference for method chaining.
+	 *
+	 * @param[in] rows :: Total rows to shift. Directional.
+	 * @param[in] cols :: Total columns to shift. Directional.
+	 *
+	 * @warning The sign of the params control the application direction.
+	 * @warning If the params exceed row/column length, all row data is wiped.
+	 */
+	constexpr self& shift(difference_type cols, difference_type rows, T value = T{}) {
+		return rotate(cols, rows).initialize(cols, rows, value);
+	}
+	#pragma endregion
+
+	#pragma region reverse()
+	/**
+	 * @brief Reverses the matrix's data.
+	 * @return Self reference for method chaining.
+	 */
+	constexpr self& reverse() {
+		std::reverse(EXEC_POLICY(unseq)
+			begin(), end());
+		return *this;
+	}
+	#pragma endregion
+
+	#pragma region flipY()
+	/**
+	 * @brief Reverses the matrix's data in row order.
+	 * @return Self reference for method chaining.
+	 */
+	constexpr self& flipY() {
+		const auto iterations{ lenY() >> 1 };
+		for (size_type row{ 0u }; row < iterations; ++row) {
+			const auto offset{ lenX() * row };
+			std::swap_ranges(EXEC_POLICY(unseq)
+				begin() + offset,
+				begin() + offset + lenX(),
+				end() - offset - lenX()
+			);
+		}
+		return *this;
+	}
+	#pragma endregion
+
+	#pragma region flipX()
+	/**
+	 * @brief Reverses the matrix's data in column order.
+	 * @return Self reference for method chaining.
+	 */
+	constexpr self& flipX() {
+		for (size_type row{ 0u }; row < lenY(); ++row) {
+			const auto offset{ begin() + lenX() * row };
+			std::reverse(EXEC_POLICY(unseq)
+				offset, offset + lenX());
+		}
+		return *this;
+	}
+	#pragma endregion
+
+	#pragma region transpose()
+	/**
+	 * @brief Transposes the matrix's data. Works with rectangular dimensions.
+	 * @return A copy of the transposed data.
+	 */
+	constexpr self_flip transpose() {
+		self_flip other;
+
+		std::for_each(EXEC_POLICY(unseq)
+			other.begin(), other.end(),
+			[this, begin = other.data()](T& value) noexcept {
+				const auto i{ &value - begin };
+				value = (*this)[i % Y, i / Y];
+			});
+
+		return other;
+	}
+	#pragma endregion
+
+public:
+	constexpr reference at(size_type idx) const {
+		if (idx >= size()) { throw std::out_of_range("Map2D.at() index out of range"); }
+		return data()[idx];
+	}
+	constexpr reference at(size_type col, size_type row) const {
+		if (col >= lenX()) { throw std::out_of_range("Map2D.at() col out of range"); }
+		if (row >= lenY()) { throw std::out_of_range("Map2D.at() row out of range"); }
+		return data()[row * lenX() + col];
+	}
+
+	constexpr reference operator()(size_type idx) const {
+		assert(idx < size() && "Map2D.operator() index out of bounds");
+		return data()[idx];
+	}
+	constexpr reference operator[](size_type idx) const {
+		assert(idx < size() && "Map2D.operator[] index out of bounds");
+		return data()[idx];
+	}
+
+	constexpr reference operator()(size_type col, size_type row) const {
+		assert(col < lenX() && "Map2D.operator[] col out of bounds");
+		assert(row < lenY() && "Map2D.operator[] row out of bounds");
+		return data()[row * lenX() + col];
+	}
+	#ifndef _MSC_VER
+	constexpr reference operator[](size_type col, size_type row) const {
+		assert(col < lenX() && "Map2D.operator[] col out of bounds");
+		assert(row < lenY() && "Map2D.operator[] row out of bounds");
+		return data()[row * lenX() + col];
+	}
+	#endif
+
+public:
+	constexpr iterator begin() noexcept { return data(); }
+	constexpr iterator end()   noexcept { return data() + size(); }
+	constexpr reverse_iterator rbegin() noexcept { return std::make_reverse_iterator(end()); }
+	constexpr reverse_iterator rend()   noexcept { return std::make_reverse_iterator(begin()); }
+
+	constexpr const_iterator begin() const noexcept { return data(); }
+	constexpr const_iterator end()   const noexcept { return data() + size(); }
+	constexpr const_reverse_iterator rbegin() const noexcept { return std::make_reverse_iterator(end()); }
+	constexpr const_reverse_iterator rend()   const noexcept { return std::make_reverse_iterator(begin()); }
+
+	constexpr const_iterator cbegin() const noexcept { return begin(); }
+	constexpr const_iterator cend()   const noexcept { return end(); }
+	constexpr const_reverse_iterator crbegin() const noexcept { return std::make_reverse_iterator(cend()); }
+	constexpr const_reverse_iterator crend()   const noexcept { return std::make_reverse_iterator(cbegin()); }
+};

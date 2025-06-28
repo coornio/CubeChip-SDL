@@ -1,9 +1,8 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 project(CubeChip)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -26,20 +25,35 @@ if(NOT SDL3_FOUND)
   set_property(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/_deps/sdl-src" PROPERTY EXCLUDE_FROM_ALL TRUE)
 endif()
 
-add_executable(CubeChip
+add_subdirectory(src/Libraries)
+
+add_executable(${PROJECT_NAME}
   src/Assistants/BasicLogger.cpp
-  src/Assistants/BasicInput.cpp
   src/Assistants/HomeDirManager.cpp
   src/Assistants/BasicVideoSpec.cpp
   src/Assistants/BasicAudioSpec.cpp
+  src/Assistants/AudioSpecBlock.cpp
+  src/Assistants/DefaultConfig.cpp
   src/Assistants/FrameLimiter.cpp
+  src/Assistants/AttachConsole.cpp
+  src/Assistants/PathGetters.cpp
+#  src/Assistants/Unused/ShutdownSignal.cpp
+  src/Assistants/ThreadAffinity.cpp
+  src/Assistants/LifetimeWrapperSDL.cpp
+  src/Assistants/FrontendInterface.cpp
+  src/Assistants/Well512.cpp
+  src/Assistants/BasicInput.cpp
+  src/Assistants/Millis.cpp
   src/Assistants/SHA1.cpp
 
-  src/Systems/EmuInterface.cpp
-  src/Systems/GameFileChecker.cpp
+  src/Systems/SystemsInterface.cpp
+  src/Systems/CoreRegistry.cpp
 
   src/Systems/BYTEPUSHER/BytePusher_CoreInterface.cpp
   src/Systems/BYTEPUSHER/Cores/BYTEPUSHER_STANDARD.cpp
+
+  src/Systems/GAMEBOY/GameBoy_CoreInterface.cpp
+  src/Systems/GAMEBOY/Cores/GAMEBOY_CLASSIC.cpp
 
   src/Systems/CHIP8/Chip8_CoreInterface.cpp
   src/Systems/CHIP8/Cores/CHIP8_MODERN.cpp
@@ -47,19 +61,32 @@ add_executable(CubeChip
   src/Systems/CHIP8/Cores/SCHIP_LEGACY.cpp
   src/Systems/CHIP8/Cores/XOCHIP.cpp
   src/Systems/CHIP8/Cores/MEGACHIP.cpp
+  src/Systems/CHIP8/Cores/CHIP8X.cpp
 
-  src/EmuHost.cpp
+  src/FrontendHost.cpp
   src/CubeChip.cpp
 )
-target_include_directories(CubeChip PRIVATE src)
-target_link_libraries(CubeChip PRIVATE SDL3::SDL3-shared)
+
+target_include_directories(${PROJECT_NAME} PRIVATE src)
+
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    SDL3::SDL3-shared
+    imgui
+    atomic_queue
+)
 
 if(WIN32)
-    target_link_libraries(CubeChip PRIVATE Dwmapi)
+    if (CMAKE_SYSTEM_VERSION VERSION_LESS "10.0.22000.0")
+        message(WARNING "Windows SDK version is lower than 22000. Some features may be disabled.")
+        add_definitions(-DOLD_WINDOWS_SDK)
+    endif()
+    target_link_libraries(${PROJECT_NAME} PRIVATE "Dwmapi.lib")
+else()
+    target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_23)
 endif()
 
 if(MSVC)
-  target_compile_options(CubeChip PRIVATE /W4 /std:c++latest)
+  target_compile_options(${PROJECT_NAME} PRIVATE /W4 /std:c++latest /utf-8)
 else()
-  target_compile_options(CubeChip PRIVATE -Wall -Wextra --std=c++23)
+  target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra --std=c++23)
 endif()

@@ -4,27 +4,24 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include "../../../Assistants/HomeDirManager.hpp"
+#include "BYTEPUSHER_STANDARD.hpp"
+#ifdef ENABLE_BYTEPUSHER_STANDARD
+
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/BasicAudioSpec.hpp"
-#include "../../../Assistants/Well512.hpp"
+#include "../../CoreRegistry.hpp"
 
-#include "BYTEPUSHER_STANDARD.hpp"
+REGISTER_CORE(BYTEPUSHER_STANDARD, ".BytePusher")
 
 /*==================================================================*/
 
 BYTEPUSHER_STANDARD::BYTEPUSHER_STANDARD() {
-	if (getSystemState() != EmuState::FAILED) {
-		copyGameToMemory(mMemoryBank.data());
+	copyGameToMemory(mMemoryBank.data());
 
-		BVS->setBackColor(cBitsColor[0]);
-		BVS->setFrameColor(cBitsColor[0], cBitsColor[0]);
-		BVS->createTexture(cScreenSizeX, cScreenSizeY);
-		BVS->setAspectRatio(cScreenSizeX, cScreenSizeY, -2);
+	setDisplayBorderColor(cBitsColor[0]);
 
-		mActiveCPF = 0x10000;
-		mFramerate = cRefreshRate;
-	}
+	setViewportSizes(true, cScreenSizeX, cScreenSizeY, cResSizeMult, 2);
+	setSystemFramerate(cRefreshRate);
 }
 
 /*==================================================================*/
@@ -36,31 +33,31 @@ void BYTEPUSHER_STANDARD::instructionLoop() noexcept {
 	mMemoryBank[0] = static_cast<u8>(inputStates >> 0x8);
 	mMemoryBank[1] = static_cast<u8>(inputStates & 0xFF);
 	
-	for (auto cycleCount{ 0 }; cycleCount < mActiveCPF; ++cycleCount) {
+	auto cycleCount{ 0 };
+	for (; cycleCount < 0x10000; ++cycleCount) {
 		mMemoryBank[readData<3>(progPointer + 3)] =
 		mMemoryBank[readData<3>(progPointer + 0)];
 		progPointer = readData<3>(progPointer + 6);
 	}
-	mTotalCycles += mActiveCPF;
+	mElapsedCycles += cycleCount;
 }
 
 void BYTEPUSHER_STANDARD::renderAudioData() {
-	const std::span<u8, cAudioLength>
-		samplesOffset{ mMemoryBank.data() + (readData<2>(6) << 8), cAudioLength };
+	const auto samplesOffset{ mMemoryBank.data() + (readData<2>(6) << 8) };
+	auto samplesBuffer{ ::allocate<s16>(cAudioLength).as_value().release() };
 
-	std::vector<s8> samplesBuffer \
-		(samplesOffset.begin(), samplesOffset.end());
+	std::transform(EXEC_POLICY(unseq)
+		samplesOffset, samplesOffset + cAudioLength, samplesBuffer.get(),
+		[](const auto sample) noexcept
+			{ return static_cast<s16>(sample << 8); }
+	);
 
-	ASB->pushAudioData<s8>(samplesBuffer);
+	mAudio[STREAM::CHANN0].pushAudioData(samplesBuffer.get(), cAudioLength);
 }
 
 void BYTEPUSHER_STANDARD::renderVideoData() {
-	const std::span<u8, cScreenSizeT>
-		displayBuffer{ mMemoryBank.data() + (readData<1>(5) << 16), cScreenSizeT };
-
-	BVS->modifyTexture<u8>(displayBuffer,
-		[](const u32 pixel) noexcept {
-			return 0xFF000000 | cBitsColor[pixel];
-		}
-	);
+	BVS->displayBuffer.write(mMemoryBank.data() + (readData<1>(5) << 16), cScreenSizeX * cScreenSizeY,
+		[](u32 pixel) noexcept { return cBitsColor[pixel]; });
 }
+
+#endif

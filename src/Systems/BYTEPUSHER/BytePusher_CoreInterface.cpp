@@ -4,6 +4,7 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include "../../Assistants/FrameLimiter.hpp"
 #include "../../Assistants/BasicInput.hpp"
 #include "../../Assistants/HomeDirManager.hpp"
 #include "../../Assistants/BasicAudioSpec.hpp"
@@ -12,28 +13,27 @@
 
 /*==================================================================*/
 
-fsPath* BytePusher_CoreInterface::sSavestatePath{};
+BytePusher_CoreInterface::BytePusher_CoreInterface() noexcept {
+	if (const auto* path{ HDM->addSystemDir("savestate", "BYTEPUSHER") })
+		{ sSavestatePath = *path / HDM->getFileSHA1(); }
 
-BytePusher_CoreInterface::BytePusher_CoreInterface() noexcept
-	: ASB{ std::make_unique<AudioSpecBlock>(SDL_AUDIO_S8, 1, 15'360) }
-{
-	sSavestatePath = HDM->addSystemDir("savestate", "BYTEPUSHER");
-	if (!sSavestatePath) { addCoreState(EmuState::FAILED); }
-
+	mAudio.addAudioStream(STREAM::CHANN0, AUDIOFORMAT::S16, 1, 15'360);
+	mAudio.resumeStreams();
 	loadPresetBinds();
 }
 
-BytePusher_CoreInterface::~BytePusher_CoreInterface() noexcept {}
-
 /*==================================================================*/
 
-void BytePusher_CoreInterface::processFrame() {
-	if (isSystemStopped()) { return; }
-	else [[likely]] { ++mTotalFrames; }
+void BytePusher_CoreInterface::mainSystemLoop() {
+	if (Pacer->checkTime()) {
+		if (!isSystemRunning())
+			[[unlikely]] { return; }
 
-	instructionLoop();
-	renderAudioData();
-	renderVideoData();
+		instructionLoop();
+		renderAudioData();
+		renderVideoData();
+		pushOverlayData();
+	}
 }
 
 void BytePusher_CoreInterface::loadPresetBinds() {
@@ -45,18 +45,16 @@ void BytePusher_CoreInterface::loadPresetBinds() {
 		{0xA, KEY(Z), _}, {0x0, KEY(X), _}, {0xB, KEY(C), _}, {0xF, KEY(V), _},
 	};
 
-	loadCustomBinds(defaultKeyMappings);
-}
-
-void BytePusher_CoreInterface::loadCustomBinds(std::span<const SimpleKeyMapping> binds) {
-	mCustomBinds.assign(binds.begin(), binds.end());
+	loadCustomBinds(std::span(defaultKeyMappings));
 }
 
 u32  BytePusher_CoreInterface::getKeyStates() const {
 	auto keyStates{ 0u };
 
+	Input->updateStates();
+
 	for (const auto& mapping : mCustomBinds) {
-		if (binput::kb.areAnyHeld(mapping.key, mapping.alt)) {
+		if (Input->areAnyHeld(mapping.key, mapping.alt)) {
 			keyStates |= 1u << mapping.idx;
 		}
 	}
@@ -65,8 +63,7 @@ u32  BytePusher_CoreInterface::getKeyStates() const {
 }
 
 void BytePusher_CoreInterface::copyGameToMemory(u8* dest) noexcept {
-	std::copy_n(
-		std::execution::unseq,
+	std::copy_n(EXEC_POLICY(unseq)
 		HDM->getFileData(),
 		HDM->getFileSize(),
 		dest

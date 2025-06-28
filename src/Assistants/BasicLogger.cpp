@@ -4,56 +4,81 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include <iostream>
-#include <sstream>
-#include <fstream>
+#include <utility>
 
 #include "BasicLogger.hpp"
+#include "SimpleFileIO.hpp"
+
+#include <SDL3/SDL_messagebox.h>
 
 /*==================================================================*/
 	#pragma region BasicLogger Singleton Class
 
-bool BasicLogger::initLogFile(
-	const std::string&           filename,
-	const std::filesystem::path& directory
-) noexcept {
+bool BasicLogger::initLogFile(const Str& filename, const Path& directory) noexcept {
 	if (filename.empty() || directory.empty()) {
-		std::cerr << ":: ERROR :: " << "Log file name/path is invalid!" << std::endl;
-		return true;
+		newEntry(BLOG::ERROR, "Log file name/path cannot be blank!");
+		return false;
 	}
 
 	const auto newPath{ directory / filename };
-	std::error_code error;
+	const auto tmpPath{ directory / (filename + ".tmp") };
 
-	if (std::filesystem::exists(newPath, error)) {
-		if (!std::filesystem::remove_all(newPath, error) || error) {
-			std::cerr << ":: ERROR :: " << "Unable to remove previous log file!" << std::endl;
-			return true;
-		}
+	if (std::ofstream logFile{ tmpPath })
+		{ logFile.close(); }
+	else {
+		newEntry(BLOG::ERROR,
+			"Unable to create new Log file: \"{}\"", tmpPath.string());
+		return false;
+	}
+
+	const auto fileRename{ fs::rename(tmpPath, newPath) };
+	if (!fileRename) {
+		newEntry(BLOG::ERROR,
+			"Unable to replace old Log file: \"{}\" [{}]",
+			newPath.string(), fileRename.error().message());
+		return false;
 	}
 
 	mLogPath.assign(newPath);
-	return false;
+	return true;
 }
 
 /*==================================================================*/
 
-void BasicLogger::newEntry(const BLOG type, const std::string& message) noexcept {
-	static std::size_t lineCount;
+StrV BasicLogger::getSeverity(BLOG type) const noexcept {
+	switch (type) {
+		case BLOG::INFO:
+			return "INFO";
 
-	std::ostringstream output;
-	output << ++lineCount << " :: " << getSeverity(type) << " :: " << message;
+		case BLOG::WARN:
+			return "WARN";
 
-	std::cout << output.str() << std::endl;
+		case BLOG::ERROR:
+			return "ERROR";
 
-	if (!mLogPath.empty()) {
+		case BLOG::CRIT:
+			return "CRIT";
+
+		case BLOG::DEBUG:
+			return "DEBUG";
+
+		default:
+			return "OTHER";
+	}
+}
+
+void BasicLogger::writeEntry(BLOG type, const Str& message) {
+	auto output{ fmt::format("{} :: {}", getSeverity(type), message) };
+
+	mLogBuffer.push(output);
+	if (mLogPath.empty()) { fmt::println("{}", output); }
+	else {
 		std::ofstream logFile(mLogPath, std::ios::app);
-		if (!logFile) {
-			std::cerr << ":: ERROR :: " << "Unable to open log file: " << mLogPath << std::endl;
-			mLogPath.clear();
-			return;
-		} else {
-			logFile << output.str() << std::endl;
+		if (logFile) { logFile << output << std::endl; }
+		else {
+			newEntry(BLOG::ERROR, "Unable to write to Log file: \"{}\"",
+				std::move(mLogPath).string());
+			fmt::println(stderr, "{}", output);
 		}
 	}
 }

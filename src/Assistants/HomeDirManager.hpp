@@ -6,59 +6,94 @@
 
 #pragma once
 
-#include <string>
+#include <span>
 #include <vector>
+#include <algorithm>
 
 #include "Typedefs.hpp"
+#include "SettingWrapper.hpp"
+
+#define TOML_EXCEPTIONS 0
+#include "../Libraries/toml++/toml.hpp"
 
 /*==================================================================*/
 	#pragma region HomeDirManager Singleton Class
 
 class HomeDirManager final {
-	HomeDirManager(const char* const org, const char* const app) noexcept;
-	~HomeDirManager() noexcept = default;
+	HomeDirManager(
+		StrV overrideHome, StrV configName,
+		bool forcePortable, StrV org, StrV app,
+		bool& initError
+	) noexcept;
 	HomeDirManager(const HomeDirManager&) = delete;
 	HomeDirManager& operator=(const HomeDirManager&) = delete;
 
-	using GameValidator = bool (*)(const std::size_t, const std::string&, const std::string&);
+	using GameValidator = bool (*)(
+		const char* fileData,
+		const ust   fileSize,
+		const Str&  fileExts,
+		const Str&  fileSHA1
+	) noexcept;
 
-	fsPath      mFilePath{};
-	std::string mFileSHA1{};
+	Path mFilePath{};
+	Str  mFileSHA1{};
 
 	std::vector<char>
 		mFileData{};
 
-	std::vector<fsPath>
+	std::vector<Path>
 		mDirectories{};
 
 	GameValidator checkGame{};
 
-	static bool& errorState() noexcept {
-		static bool errorEncountered{};
-		return errorEncountered;
-	}
+	inline static toml::table sMainAppConfig{};
+
+private:
+	Str  sHomePath{};
+	Str  sConfPath{};
+
+	static void triggerCriticalError(const char* error) noexcept;
+	static bool isLocationWritable(const char* path) noexcept;
+	bool setHomePath(StrV override, bool portable, StrV org, StrV app) noexcept;
 
 public:
-	static auto* create(const char* const org, const char* const app) noexcept {
-		static HomeDirManager self(org, app);
-		return errorState() ? nullptr : &self;
+	void parseMainAppConfig() const noexcept;
+
+	template <typename... Maps>
+		requires (std::same_as<Maps, SettingsMap> && ...)
+	void parseMainAppConfig(const Maps&... maps) const noexcept {
+		(insertIntoMainAppConfig(maps), ...);
+		parseMainAppConfig();
+		(updateFromMainAppConfig(maps), ...);
 	}
 
-	static void setErrorState(const bool state) noexcept { errorState() = state; }
-	static bool getErrorState()                 noexcept { return errorState();  }
+	void writeMainAppConfig() const noexcept;
 
-	static void showErrorBox(const char* const, const char* const) noexcept;
+	template <typename... Maps>
+		requires (std::same_as<Maps, SettingsMap> && ...)
+	void writeMainAppConfig(const Maps&... maps) const noexcept {
+		(insertIntoMainAppConfig(maps), ...);
+		writeMainAppConfig();
+	}
 
-	fsPath* addSystemDir(
-		const fsPath& sub,
-		const fsPath& sys = {}
+private:
+	void insertIntoMainAppConfig(const SettingsMap& map) const noexcept;
+	void updateFromMainAppConfig(const SettingsMap& map) const noexcept;
+
+public:
+	static HomeDirManager* initialize(
+		StrV overrideHome, StrV configName,
+		bool forcePortable, StrV org, StrV app
 	) noexcept;
+
+	const Path* addSystemDir(const Path& sub, const Path& sys = Path{}) noexcept;
 
 	auto getFullPath() const noexcept { return mFilePath; }
 	auto getFilePath() const noexcept { return mFilePath.string(); }
 	auto getFileName() const noexcept { return mFilePath.filename().string(); }
 	auto getFileStem() const noexcept { return mFilePath.stem().string(); }
 	auto getFileExts() const noexcept { return mFilePath.extension().string(); }
+	auto getFileSpan() const noexcept { return std::span{ mFileData }; }
 	auto getFileSize() const noexcept { return mFileData.size(); }
 	auto getFileData() const noexcept { return mFileData.data(); }
 	auto getFileSHA1() const noexcept { return mFileSHA1; }
@@ -66,7 +101,7 @@ public:
 	void setValidator(GameValidator func) noexcept { checkGame = func; }
 
 	void clearCachedFileData() noexcept;
-	bool validateGameFile(const fsPath) noexcept;
+	bool validateGameFile(const Path& gamePath) noexcept;
 };
 
 	#pragma endregion

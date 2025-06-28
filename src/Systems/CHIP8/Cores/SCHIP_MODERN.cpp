@@ -4,32 +4,32 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include "SCHIP_MODERN.hpp"
+#ifdef ENABLE_SCHIP_MODERN
+
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/BasicAudioSpec.hpp"
 #include "../../../Assistants/Well512.hpp"
+#include "../../CoreRegistry.hpp"
 
-#include "SCHIP_MODERN.hpp"
+REGISTER_CORE(SCHIP_MODERN, ".sc8")
 
 /*==================================================================*/
 
 SCHIP_MODERN::SCHIP_MODERN()
-	: mDisplayBuffer{ {cScreenSizeY, cScreenSizeX} }
+	: mDisplayBuffer{ {cScreenSizeX, cScreenSizeY} }
 {
-	if (getCoreState() != EmuState::FAILED) {
+	::fill_n(mMemoryBank, cTotalMemory, cSafezoneOOB, 0xFF);
 
-		copyGameToMemory(mMemoryBank.data(), cGameLoadPos);
-		copyFontToMemory(mMemoryBank.data(), 0x0, 0xF0);
+	copyGameToMemory(mMemoryBank.data() + cGameLoadPos);
+	copyFontToMemory(mMemoryBank.data(), 0xF0);
 
-		setDisplayResolution(cScreenSizeX, cScreenSizeY);
+	setDisplayResolution(cScreenSizeX, cScreenSizeY);
+	setViewportSizes(true, cScreenSizeX, cScreenSizeY, cResSizeMult, 2);
+	setSystemFramerate(cRefreshRate);
 
-		BVS->setBackColor(sBitColors[0]);
-		BVS->createTexture(cScreenSizeX, cScreenSizeY);
-		BVS->setAspectRatio(cScreenSizeX * cResSizeMult, cScreenSizeY * cResSizeMult, +2);
-
-		mCurrentPC = cStartOffset;
-		mFramerate = cRefreshRate;
-		mActiveCPF = cInstSpeedLo;
-	}
+	mCurrentPC = cStartOffset;
+	mTargetCPF = cInstSpeedLo;
 }
 
 /*==================================================================*/
@@ -37,7 +37,7 @@ SCHIP_MODERN::SCHIP_MODERN()
 void SCHIP_MODERN::instructionLoop() noexcept {
 
 	auto cycleCount{ 0 };
-	for (; cycleCount < mActiveCPF; ++cycleCount) {
+	for (; cycleCount < mTargetCPF; ++cycleCount) {
 		const auto HI{ mMemoryBank[mCurrentPC + 0u] };
 		const auto LO{ mMemoryBank[mCurrentPC + 1u] };
 		nextInstruction();
@@ -210,82 +210,69 @@ void SCHIP_MODERN::instructionLoop() noexcept {
 				break;
 		}
 	}
-	mTotalCycles += cycleCount;
+	mElapsedCycles += cycleCount;
 }
 
 void SCHIP_MODERN::renderAudioData() {
-	std::vector<s8> samplesBuffer \
-		(static_cast<usz>(ASB->getSampleRate(cRefreshRate)));
+	pushSquareTone(STREAM::CHANN0);
+	pushSquareTone(STREAM::CHANN1);
+	pushSquareTone(STREAM::CHANN2);
+	pushSquareTone(STREAM::BUZZER);
 
-	static f32 wavePhase{};
-
-	if (mSoundTimer) {
-		for (auto& sample : samplesBuffer) {
-			sample = static_cast<s8>(wavePhase > 0.5f ? 16 : -16);
-			wavePhase = std::fmod(wavePhase + mBuzzerTone, 1.0f);
-		}
-		BVS->setFrameColor(sBitColors[0], sBitColors[1]);
-	} else {
-		wavePhase = 0.0f;
-		BVS->setFrameColor(sBitColors[0], sBitColors[0]);
-	}
-
-	ASB->pushAudioData<s8>(samplesBuffer);
+	setDisplayBorderColor(sBitColors[!!std::accumulate(mAudioTimer.begin(), mAudioTimer.end(), 0)]);
 }
 
 void SCHIP_MODERN::renderVideoData() {
-	BVS->modifyTexture<u8>(mDisplayBuffer[0].span(), isPixelTrailing()
-		? [](const u32 pixel) noexcept {
+	BVS->displayBuffer.write(mDisplayBuffer[0], isUsingPixelTrails()
+		? [](u32 pixel) noexcept {
 			static constexpr u32 layer[4]{ 0xFF, 0xE7, 0x6F, 0x37 };
 			const auto opacity{ layer[std::countl_zero(pixel) & 0x3] };
-			return opacity << 24 | sBitColors[pixel != 0];
+			return opacity | sBitColors[pixel != 0];
 		}
-		: [](const u32 pixel) noexcept {
-			return 0xFF000000 | sBitColors[pixel >> 3];
+		: [](u32 pixel) noexcept {
+			return 0xFF | sBitColors[pixel >> 3];
 		}
 	);
 
-	std::transform(
-		std::execution::unseq,
-		mDisplayBuffer[0].raw_begin(),
-		mDisplayBuffer[0].raw_end(),
-		mDisplayBuffer[0].raw_begin(),
-		[](const u32 pixel) noexcept {
-			return static_cast<u8>(
-				(pixel & 0x8) | (pixel >> 1)
-			);
-		}
+	setViewportSizes(isResolutionChanged(false), mDisplayW, mDisplayH,
+		isLargerDisplay() ? cResSizeMult / 2 : cResSizeMult, 2);
+
+	std::for_each(EXEC_POLICY(unseq)
+		mDisplayBuffer[0].begin(),
+		mDisplayBuffer[0].end(),
+		[](auto& pixel) noexcept
+			{ ::assign_cast(pixel, (pixel & 0x8) | (pixel >> 1)); }
 	);
 }
 
 void SCHIP_MODERN::prepDisplayArea(const Resolution mode) {
-	isDisplayLarger(mode != Resolution::LO);
+	const bool wasLargerDisplay{ isLargerDisplay(mode != Resolution::LO) };
+	isResolutionChanged(wasLargerDisplay != isLargerDisplay());
 
-	const auto W{ isDisplayLarger() ? 128 : 64 };
-	const auto H{ isDisplayLarger() ?  64 : 32 };
+	const auto W{ isLargerDisplay() ? cScreenSizeX * 2 : cScreenSizeX };
+	const auto H{ isLargerDisplay() ? cScreenSizeY * 2 : cScreenSizeY };
 
-	BVS->createTexture(W, H);
 	setDisplayResolution(W, H);
 	
-	mDisplayBuffer[0].resize(false, H, W);
+	mDisplayBuffer[0].resizeClean(W, H);
 };
 
 /*==================================================================*/
 
-void SCHIP_MODERN::scrollDisplayDN(const s32 N) {
-	mDisplayBuffer[0].shift(+N, 0);
+void SCHIP_MODERN::scrollDisplayDN(s32 N) {
+	mDisplayBuffer[0].shift(0, +N);
 }
 void SCHIP_MODERN::scrollDisplayLT() {
-	mDisplayBuffer[0].shift(0, -4);
+	mDisplayBuffer[0].shift(-4, 0);
 }
 void SCHIP_MODERN::scrollDisplayRT() {
-	mDisplayBuffer[0].shift(0, +4);
+	mDisplayBuffer[0].shift(+4, 0);
 }
 
 /*==================================================================*/
 	#pragma region 0 instruction branch
 
-	void SCHIP_MODERN::instruction_00CN(const s32 N) noexcept {
+	void SCHIP_MODERN::instruction_00CN(s32 N) noexcept {
 		if (Quirk.waitScroll) [[unlikely]]
 			{ triggerInterrupt(Interrupt::FRAME); }
 		if (N) { scrollDisplayDN(N); }
@@ -293,7 +280,7 @@ void SCHIP_MODERN::scrollDisplayRT() {
 	void SCHIP_MODERN::instruction_00E0() noexcept {
 		if (Quirk.waitVblank) [[unlikely]]
 			{ triggerInterrupt(Interrupt::FRAME); }
-		mDisplayBuffer[0].wipeAll();
+		mDisplayBuffer[0].initialize();
 	}
 	void SCHIP_MODERN::instruction_00EE() noexcept {
 		mCurrentPC = mStackBank[--mStackTop & 0xF];
@@ -328,7 +315,7 @@ void SCHIP_MODERN::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 1 instruction branch
 
-	void SCHIP_MODERN::instruction_1NNN(const s32 NNN) noexcept {
+	void SCHIP_MODERN::instruction_1NNN(s32 NNN) noexcept {
 		performProgJump(NNN);
 	}
 
@@ -338,7 +325,7 @@ void SCHIP_MODERN::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 2 instruction branch
 
-	void SCHIP_MODERN::instruction_2NNN(const s32 NNN) noexcept {
+	void SCHIP_MODERN::instruction_2NNN(s32 NNN) noexcept {
 		mStackBank[mStackTop++ & 0xF] = mCurrentPC;
 		performProgJump(NNN);
 	}
@@ -349,7 +336,7 @@ void SCHIP_MODERN::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 3 instruction branch
 
-	void SCHIP_MODERN::instruction_3xNN(const s32 X, const s32 NN) noexcept {
+	void SCHIP_MODERN::instruction_3xNN(s32 X, s32 NN) noexcept {
 		if (mRegisterV[X] == NN) { skipInstruction(); }
 	}
 
@@ -359,7 +346,7 @@ void SCHIP_MODERN::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 4 instruction branch
 
-	void SCHIP_MODERN::instruction_4xNN(const s32 X, const s32 NN) noexcept {
+	void SCHIP_MODERN::instruction_4xNN(s32 X, s32 NN) noexcept {
 		if (mRegisterV[X] != NN) { skipInstruction(); }
 	}
 
@@ -369,7 +356,7 @@ void SCHIP_MODERN::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 5 instruction branch
 
-	void SCHIP_MODERN::instruction_5xy0(const s32 X, const s32 Y) noexcept {
+	void SCHIP_MODERN::instruction_5xy0(s32 X, s32 Y) noexcept {
 		if (mRegisterV[X] == mRegisterV[Y]) { skipInstruction(); }
 	}
 
@@ -379,7 +366,7 @@ void SCHIP_MODERN::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 6 instruction branch
 
-	void SCHIP_MODERN::instruction_6xNN(const s32 X, const s32 NN) noexcept {
+	void SCHIP_MODERN::instruction_6xNN(s32 X, s32 NN) noexcept {
 		mRegisterV[X] = static_cast<u8>(NN);
 	}
 
@@ -389,7 +376,7 @@ void SCHIP_MODERN::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 7 instruction branch
 
-	void SCHIP_MODERN::instruction_7xNN(const s32 X, const s32 NN) noexcept {
+	void SCHIP_MODERN::instruction_7xNN(s32 X, s32 NN) noexcept {
 		mRegisterV[X] += static_cast<u8>(NN);
 	}
 
@@ -399,44 +386,44 @@ void SCHIP_MODERN::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 8 instruction branch
 
-	void SCHIP_MODERN::instruction_8xy0(const s32 X, const s32 Y) noexcept {
+	void SCHIP_MODERN::instruction_8xy0(s32 X, s32 Y) noexcept {
 		mRegisterV[X] = mRegisterV[Y];
 	}
-	void SCHIP_MODERN::instruction_8xy1(const s32 X, const s32 Y) noexcept {
+	void SCHIP_MODERN::instruction_8xy1(s32 X, s32 Y) noexcept {
 		mRegisterV[X] |= mRegisterV[Y];
 	}
-	void SCHIP_MODERN::instruction_8xy2(const s32 X, const s32 Y) noexcept {
+	void SCHIP_MODERN::instruction_8xy2(s32 X, s32 Y) noexcept {
 		mRegisterV[X] &= mRegisterV[Y];
 	}
-	void SCHIP_MODERN::instruction_8xy3(const s32 X, const s32 Y) noexcept {
+	void SCHIP_MODERN::instruction_8xy3(s32 X, s32 Y) noexcept {
 		mRegisterV[X] ^= mRegisterV[Y];
 	}
-	void SCHIP_MODERN::instruction_8xy4(const s32 X, const s32 Y) noexcept {
+	void SCHIP_MODERN::instruction_8xy4(s32 X, s32 Y) noexcept {
 		const auto sum{ mRegisterV[X] + mRegisterV[Y] };
-		mRegisterV[X]   = static_cast<u8>(sum);
-		mRegisterV[0xF] = static_cast<u8>(sum >> 8);
+		::assign_cast(mRegisterV[X], sum);
+		::assign_cast(mRegisterV[0xF], sum >> 8);
 	}
-	void SCHIP_MODERN::instruction_8xy5(const s32 X, const s32 Y) noexcept {
+	void SCHIP_MODERN::instruction_8xy5(s32 X, s32 Y) noexcept {
 		const bool nborrow{ mRegisterV[X] >= mRegisterV[Y] };
-		mRegisterV[X]   = static_cast<u8>(mRegisterV[X] - mRegisterV[Y]);
-		mRegisterV[0xF] = static_cast<u8>(nborrow);
+		::assign_cast(mRegisterV[X], mRegisterV[X] - mRegisterV[Y]);
+		::assign_cast(mRegisterV[0xF], nborrow);
 	}
-	void SCHIP_MODERN::instruction_8xy7(const s32 X, const s32 Y) noexcept {
+	void SCHIP_MODERN::instruction_8xy7(s32 X, s32 Y) noexcept {
 		const bool nborrow{ mRegisterV[Y] >= mRegisterV[X] };
-		mRegisterV[X]   = static_cast<u8>(mRegisterV[Y] - mRegisterV[X]);
-		mRegisterV[0xF] = static_cast<u8>(nborrow);
+		::assign_cast(mRegisterV[X], mRegisterV[Y] - mRegisterV[X]);
+		::assign_cast(mRegisterV[0xF], nborrow);
 	}
-	void SCHIP_MODERN::instruction_8xy6(const s32 X, const s32 Y) noexcept {
+	void SCHIP_MODERN::instruction_8xy6(s32 X, s32 Y) noexcept {
 		if (!Quirk.shiftVX) { mRegisterV[X] = mRegisterV[Y]; }
 		const bool lsb{ (mRegisterV[X] & 1) == 1 };
-		mRegisterV[X]   = static_cast<u8>(mRegisterV[X] >> 1);
-		mRegisterV[0xF] = static_cast<u8>(lsb);
+		::assign_cast(mRegisterV[X], mRegisterV[X] >> 1);
+		::assign_cast(mRegisterV[0xF], lsb);
 	}
-	void SCHIP_MODERN::instruction_8xyE(const s32 X, const s32 Y) noexcept {
+	void SCHIP_MODERN::instruction_8xyE(s32 X, s32 Y) noexcept {
 		if (!Quirk.shiftVX) { mRegisterV[X] = mRegisterV[Y]; }
 		const bool msb{ (mRegisterV[X] >> 7) == 1 };
-		mRegisterV[X]   = static_cast<u8>(mRegisterV[X] << 1);
-		mRegisterV[0xF] = static_cast<u8>(msb);
+		::assign_cast(mRegisterV[X], mRegisterV[X] << 1);
+		::assign_cast(mRegisterV[0xF], msb);
 	}
 
 	#pragma endregion
@@ -445,7 +432,7 @@ void SCHIP_MODERN::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region 9 instruction branch
 
-	void SCHIP_MODERN::instruction_9xy0(const s32 X, const s32 Y) noexcept {
+	void SCHIP_MODERN::instruction_9xy0(s32 X, s32 Y) noexcept {
 		if (mRegisterV[X] != mRegisterV[Y]) { skipInstruction(); }
 	}
 
@@ -455,7 +442,7 @@ void SCHIP_MODERN::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region A instruction branch
 
-	void SCHIP_MODERN::instruction_ANNN(const s32 NNN) noexcept {
+	void SCHIP_MODERN::instruction_ANNN(s32 NNN) noexcept {
 		mRegisterI = NNN & 0xFFF;
 	}
 
@@ -465,7 +452,7 @@ void SCHIP_MODERN::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region B instruction branch
 
-	void SCHIP_MODERN::instruction_BNNN(const s32 NNN) noexcept {
+	void SCHIP_MODERN::instruction_BNNN(s32 NNN) noexcept {
 		performProgJump(NNN + mRegisterV[0]);
 	}
 
@@ -475,8 +462,8 @@ void SCHIP_MODERN::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region C instruction branch
 
-	void SCHIP_MODERN::instruction_CxNN(const s32 X, const s32 NN) noexcept {
-		mRegisterV[X] = Wrand->get<u8>() & NN;
+	void SCHIP_MODERN::instruction_CxNN(s32 X, s32 NN) noexcept {
+		::assign_cast(mRegisterV[X], RNG->next() & NN);
 	}
 
 	#pragma endregion
@@ -487,7 +474,7 @@ void SCHIP_MODERN::scrollDisplayRT() {
 
 	void SCHIP_MODERN::drawByte(
 		s32 X, s32 Y,
-		const u32 DATA
+		u32 DATA
 	) noexcept {
 		switch (DATA) {
 			[[unlikely]]
@@ -498,7 +485,7 @@ void SCHIP_MODERN::scrollDisplayRT() {
 			case 0b10000000:
 				if (Quirk.wrapSprite) { X &= mDisplayWb; }
 				if (X < mDisplayW) {
-					if (!((mDisplayBuffer[0].at_raw(Y, X) ^= 0x8) & 0x8))
+					if (!((mDisplayBuffer[0](X, Y) ^= 0x8) & 0x8))
 						{ mRegisterV[0xF] = 1; }
 				}
 				return;
@@ -510,7 +497,7 @@ void SCHIP_MODERN::scrollDisplayRT() {
 
 				for (auto B{ 0 }; B < 8; ++B, ++X &= mDisplayWb) {
 					if (DATA & 0x80 >> B) {
-						if (!((mDisplayBuffer[0].at_raw(Y, X) ^= 0x8) & 0x8))
+						if (!((mDisplayBuffer[0](X, Y) ^= 0x8) & 0x8))
 							{ mRegisterV[0xF] = 1; }
 					}
 					if (!Quirk.wrapSprite && X == mDisplayWb) { return; }
@@ -519,7 +506,7 @@ void SCHIP_MODERN::scrollDisplayRT() {
 		}
 	}
 
-	void SCHIP_MODERN::instruction_DxyN(const s32 X, const s32 Y, const s32 N) noexcept {
+	void SCHIP_MODERN::instruction_DxyN(s32 X, s32 Y, s32 N) noexcept {
 		if (Quirk.waitVblank) [[unlikely]]
 			{ triggerInterrupt(Interrupt::FRAME); }
 
@@ -563,10 +550,10 @@ void SCHIP_MODERN::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region E instruction branch
 
-	void SCHIP_MODERN::instruction_Ex9E(const s32 X) noexcept {
+	void SCHIP_MODERN::instruction_Ex9E(s32 X) noexcept {
 		if (keyHeld_P1(mRegisterV[X])) { skipInstruction(); }
 	}
-	void SCHIP_MODERN::instruction_ExA1(const s32 X) noexcept {
+	void SCHIP_MODERN::instruction_ExA1(s32 X) noexcept {
 		if (!keyHeld_P1(mRegisterV[X])) { skipInstruction(); }
 	}
 
@@ -576,54 +563,58 @@ void SCHIP_MODERN::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region F instruction branch
 
-	void SCHIP_MODERN::instruction_Fx07(const s32 X) noexcept {
-		mRegisterV[X] = static_cast<u8>(mDelayTimer);
+	void SCHIP_MODERN::instruction_Fx07(s32 X) noexcept {
+		::assign_cast(mRegisterV[X], mDelayTimer);
 	}
-	void SCHIP_MODERN::instruction_Fx0A(const s32 X) noexcept {
+	void SCHIP_MODERN::instruction_Fx0A(s32 X) noexcept {
 		triggerInterrupt(Interrupt::INPUT);
 		mInputReg = &mRegisterV[X];
 	}
-	void SCHIP_MODERN::instruction_Fx15(const s32 X) noexcept {
-		mDelayTimer = static_cast<u8>(mRegisterV[X]);
+	void SCHIP_MODERN::instruction_Fx15(s32 X) noexcept {
+		mDelayTimer = mRegisterV[X];
 	}
-	void SCHIP_MODERN::instruction_Fx18(const s32 X) noexcept {
-		mBuzzerTone = calcBuzzerTone();
-		mSoundTimer = mRegisterV[X] + (mRegisterV[X] == 1);
+	void SCHIP_MODERN::instruction_Fx18(s32 X) noexcept {
+		startAudio(mRegisterV[X] + (mRegisterV[X] == 1));
 	}
-	void SCHIP_MODERN::instruction_Fx1E(const s32 X) noexcept {
-		mRegisterI = mRegisterI + mRegisterV[X] & 0xFFF;
+	void SCHIP_MODERN::instruction_Fx1E(s32 X) noexcept {
+		mRegisterI = (mRegisterI + mRegisterV[X]) & 0xFFF;
 	}
-	void SCHIP_MODERN::instruction_Fx29(const s32 X) noexcept {
+	void SCHIP_MODERN::instruction_Fx29(s32 X) noexcept {
 		mRegisterI = (mRegisterV[X] & 0xF) * 5;
 	}
-	void SCHIP_MODERN::instruction_Fx30(const s32 X) noexcept {
+	void SCHIP_MODERN::instruction_Fx30(s32 X) noexcept {
 		mRegisterI = (mRegisterV[X] & 0xF) * 10 + 80;
 	}
-	void SCHIP_MODERN::instruction_Fx33(const s32 X) noexcept {
-		writeMemoryI(mRegisterV[X] / 100,     0);
-		writeMemoryI(mRegisterV[X] / 10 % 10, 1);
-		writeMemoryI(mRegisterV[X]      % 10, 2);
+	void SCHIP_MODERN::instruction_Fx33(s32 X) noexcept {
+		const auto N__{ mRegisterV[X] * 0x51EB851Full >> 37 };
+		const auto _NN{ mRegisterV[X] - N__ * 100 };
+		const auto _N_{ _NN * 0xCCCDull >> 19 };
+		const auto __N{ _NN - _N_ * 10 };
+
+		writeMemoryI(N__, 0);
+		writeMemoryI(_N_, 1);
+		writeMemoryI(__N, 2);
 	}
-	void SCHIP_MODERN::instruction_FN55(const s32 N) noexcept {
-		for (auto idx{ 0 }; idx <= N; ++idx)
-			{ writeMemoryI(mRegisterV[idx], idx); }
-		if (!Quirk.idxRegNoInc) [[likely]]
-			{ mRegisterI = mRegisterI + N + 1 & 0xFFF; }
+	void SCHIP_MODERN::instruction_FN55(s32 N) noexcept {
+		SUGGEST_VECTORIZABLE_LOOP
+		for (auto idx{ 0 }; idx <= N; ++idx) { writeMemoryI(mRegisterV[idx], idx); }
+		mRegisterI = !Quirk.idxRegNoInc ? (mRegisterI + N + 1) & 0xFFF : mRegisterI;
+		//if (!Quirk.idxRegNoInc) [[likely]] { mRegisterI = (mRegisterI + N + 1) & 0xFFF; }
 	}
-	void SCHIP_MODERN::instruction_FN65(const s32 N) noexcept {
-		for (auto idx{ 0 }; idx <= N; ++idx)
-			{ mRegisterV[idx] = readMemoryI(idx); }
-		if (!Quirk.idxRegNoInc) [[likely]]
-			{ mRegisterI = mRegisterI + N + 1 & 0xFFF; }
+	void SCHIP_MODERN::instruction_FN65(s32 N) noexcept {
+		SUGGEST_VECTORIZABLE_LOOP
+		for (auto idx{ 0 }; idx <= N; ++idx) { mRegisterV[idx] = readMemoryI(idx); }
+		mRegisterI = !Quirk.idxRegNoInc ? (mRegisterI + N + 1) & 0xFFF : mRegisterI;
+		//if (!Quirk.idxRegNoInc) [[likely]] { mRegisterI = (mRegisterI + N + 1) & 0xFFF; }
 	}
-	void SCHIP_MODERN::instruction_FN75(const s32 N) noexcept {
-		if (setPermaRegs(N + 1)) [[unlikely]]
-			{ triggerCritError("Error :: Failed writing persistent registers!"); }
+	void SCHIP_MODERN::instruction_FN75(s32 N) noexcept {
+		setPermaRegs(N + 1);
 	}
-	void SCHIP_MODERN::instruction_FN85(const s32 N) noexcept {
-		if (getPermaRegs(N + 1)) [[unlikely]]
-			{ triggerCritError("Error :: Failed reading persistent registers!"); }
+	void SCHIP_MODERN::instruction_FN85(s32 N) noexcept {
+		getPermaRegs(N + 1);
 	}
 
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
+
+#endif

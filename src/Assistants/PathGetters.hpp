@@ -6,17 +6,11 @@
 
 #pragma once
 
-#include <SDL3/SDL_filesystem.h>
+/*==================================================================*/
 
-inline auto getHomePath(
-	const char* const org = nullptr,
-	const char* const app = nullptr
-) noexcept {
-	static const char* const homePath{ SDL_GetPrefPath(org, app) };
-	return homePath;
-}
+const char* getHomePath(
+	const char* org = nullptr,
+	const char* app = nullptr
+) noexcept;
 
-inline auto getBasePath() noexcept {
-	static const char* const homePath{ SDL_GetBasePath() };
-	return homePath;
-}
+const char* getBasePath() noexcept;

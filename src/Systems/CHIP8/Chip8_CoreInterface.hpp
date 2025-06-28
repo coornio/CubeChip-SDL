@@ -6,17 +6,24 @@
 
 #pragma once
 
-#include "../EmuInterface.hpp"
+#include "../SystemsInterface.hpp"
 
 /*==================================================================*/
 
-class Chip8_CoreInterface : public EmuInterface {
-
+class Chip8_CoreInterface : public SystemsInterface {
+	
 protected:
-	static fsPath* sPermaRegsPath;
-	static fsPath* sSavestatePath;
+	enum STREAM : unsigned {
+		CHANN0, CHANN1, CHANN2, CHANN3, COUNT,
+		BUZZER = CHANN3,
+		UNIQUE = CHANN0,
+	};
 
-	std::unique_ptr<AudioSpecBlock> ASB;
+	static inline Path sPermaRegsPath{};
+	static inline Path sSavestatePath{};
+	static inline f32  sTonalOffset{ 160.0f };
+
+	AudioSpecBlock mAudio;
 
 	std::vector<SimpleKeyMapping> mCustomBinds;
 
@@ -30,12 +37,17 @@ private:
 	u32  mKeysLoop{}; // bitfield of keys repeating input on Fx0A
 
 protected:
-	void loadPresetBinds();
-	void loadCustomBinds(std::span<const SimpleKeyMapping> binds);
-
 	void updateKeyStates();
+	void loadPresetBinds();
 
-	bool keyPressed(u8* returnKey, u32 tickCount) noexcept;
+	template <IsContiguousContainer T> requires
+		(SameValueTypes<T, decltype(mCustomBinds)>)
+	void loadCustomBinds(const T& binds) {
+		mCustomBinds.assign(std::begin(binds), std::end(binds));
+		mKeysPrev = mKeysCurr = mKeysLock = 0;
+	}
+
+	bool keyPressed(u8* returnKey) noexcept;
 	bool keyHeld_P1(u32 keyIndex) const noexcept;
 	bool keyHeld_P2(u32 keyIndex) const noexcept;
 
@@ -53,11 +65,10 @@ protected:
 	} Quirk;
 
 	struct PlatformTraits final {
-		u32  mCoreState{ EmuState::NORMAL };
-		bool mDisplayLarger{};
-		bool mManualRefresh{};
-		bool mPixelTrailing{};
-		bool mBuzzerEnabled{};
+		bool largerDisplay{};
+		bool manualRefresh{};
+		bool usingPixelTrails{};
+		bool resolutionChanged{};
 	} Trait;
 
 	enum class Interrupt {
@@ -72,81 +83,88 @@ protected:
 
 	enum class Resolution {
 		ERROR,
-		HI, // 128 x  64 - 2:1
-		LO, //  64 x  32 - 2:1
-		TP, //  64 x  64 - 2:1
-		FP, //  64 x 128 - 2:1
-		MC, // 256 x 192 - 4:3
+		HI, // 128 x  64 (display ratio 2:1)
+		LO, //  64 x  32 (display ratio 2:1)
+		TP, //  64 x  64 (display ratio 2:1)
+		FP, //  64 x 128 (display ratio 2:1)
+		MC, // 256 x 192 (display ratio 4:3)
 	};
 
 /*==================================================================*/
 
-	void addCoreState(const EmuState state) noexcept { Trait.mCoreState |=  state; }
-	void subCoreState(const EmuState state) noexcept { Trait.mCoreState &= ~state; }
-	void xorCoreState(const EmuState state) noexcept { Trait.mCoreState ^=  state; }
-
-	void setCoreState(const EmuState state) noexcept { Trait.mCoreState = state; }
-	auto getCoreState()               const noexcept { return Trait.mCoreState;  }
-
-	bool isSystemStopped() const noexcept override { return getCoreState() || getSystemState(); }
-	bool isCoreStopped()   const noexcept override { return getCoreState(); }
-
-	bool isDisplayLarger() const noexcept { return Trait.mDisplayLarger; }
-	bool isManualRefresh() const noexcept { return Trait.mManualRefresh; }
-	bool isPixelTrailing() const noexcept { return Trait.mPixelTrailing; }
-	bool isBuzzerEnabled() const noexcept { return Trait.mBuzzerEnabled; }
-	void isDisplayLarger(const bool state) noexcept { Trait.mDisplayLarger = state; }
-	void isManualRefresh(const bool state) noexcept { Trait.mManualRefresh = state; }
-	void isPixelTrailing(const bool state) noexcept { Trait.mPixelTrailing = state; }
-	void isBuzzerEnabled(const bool state) noexcept { Trait.mBuzzerEnabled = state; }
+	bool isLargerDisplay()     const noexcept { return Trait.largerDisplay; }
+	bool isManualRefresh()     const noexcept { return Trait.manualRefresh; }
+	bool isUsingPixelTrails()  const noexcept { return Trait.usingPixelTrails; }
+	bool isResolutionChanged() const noexcept { return Trait.resolutionChanged; }
+	bool isLargerDisplay    (bool state) noexcept { return std::exchange(Trait.largerDisplay, state);     }
+	bool isManualRefresh    (bool state) noexcept { return std::exchange(Trait.manualRefresh, state);     }
+	bool isUsingPixelTrails (bool state) noexcept { return std::exchange(Trait.usingPixelTrails, state);  }
+	bool isResolutionChanged(bool state) noexcept { return std::exchange(Trait.resolutionChanged, state); }
 
 /*==================================================================*/
-
-	u64 mTotalCycles{};
-	u32 mTotalFrames{};
-
-	s32 mActiveCPF{};
-	f32 mFramerate{};
 
 	Interrupt mInterrupt{};
 
 	s32 mDisplayW{},  mDisplayH{};
 	s32 mDisplayWb{}, mDisplayHb{};
 
-	void setDisplayResolution(const s32 W, const s32 H) noexcept {
+	void setDisplayResolution(s32 W, s32 H) noexcept {
 		mDisplayW = W; mDisplayWb = W - 1;
 		mDisplayH = H; mDisplayHb = H - 1;
 	}
 
-	f32 mBuzzerTone{};
-	u32 mPlanarMask{ 0x1 };
-
 	u32 mCurrentPC{};
 	u32 mRegisterI{};
 
+	std::array<f32, STREAM::COUNT>
+		mPhaseStep{};
+
+	std::array<f32, STREAM::COUNT>
+		mAudioPhase{};
+
+	std::array<u8,  STREAM::COUNT>
+		mAudioTimer{};
+
+	void startAudio(s32 duration, s32 tone = 0) noexcept;
+	void startAudioAtChannel(s32 index, s32 duration, s32 tone = 0) noexcept;
+	void pushSquareTone(s32 index) noexcept;
+
 	u32 mDelayTimer{};
-	u32 mSoundTimer{};
+	u32 mKeyPitch{};
 
 	u32 mStackTop{};
 	u8* mInputReg{};
 
-	u8  mRegisterV[16]{};
-	u32 mStackBank[16]{};
+	inline static
+	std::array<u8, 16>
+		sPermRegsV{};
+
+	std::array<u8, 16>
+		mRegisterV{};
+
+	std::array<u32, 16>
+		mStackBank{};
 
 /*==================================================================*/
 
-	std::string formatOpcode(const u32 OP) const;
-	void instructionError(const u32 HI, const u32 LO);
+	void instructionError(u32 HI, u32 LO);
 
-	void triggerInterrupt(const Interrupt type) noexcept;
-	void triggerCritError(const std::string& msg) noexcept;
+	void triggerInterrupt(Interrupt type) noexcept;
 
-	bool setPermaRegs(const s32 X) noexcept;
-	bool getPermaRegs(const s32 X) noexcept;
+private:
+	bool checkRegularFile(const Path& filePath) const noexcept;
+	bool newPermaRegsFile(const Path& filePath) const noexcept;
 
-	void copyGameToMemory(u8* dest, const u32 offset) noexcept;
-	void copyFontToMemory(u8* dest, const u32 offset, const usz size) noexcept;
-	void copyColorsToCore(u32* dest, const usz size) noexcept;
+	void setFilePermaRegs(u32 X) noexcept;
+	void getFilePermaRegs(u32 X) noexcept;
+
+protected:
+	void setPermaRegs(u32 X) noexcept;
+	void getPermaRegs(u32 X) noexcept;
+
+	void copyGameToMemory(void* dest) noexcept;
+	void copyFontToMemory(void* dest, ust size) noexcept;
+	void copyColorsToCore(void* dest) noexcept;
 
 	virtual void handlePreFrameInterrupt() noexcept;
 	virtual void handleEndFrameInterrupt() noexcept;
@@ -156,53 +174,22 @@ protected:
 
 	virtual void nextInstruction() noexcept;
 	virtual void skipInstruction() noexcept;
-	virtual void performProgJump(const u32 next) noexcept;
-	virtual void prepDisplayArea(const Resolution mode) = 0;
+	virtual void performProgJump(u32 next) noexcept;
+	virtual void prepDisplayArea(Resolution mode) = 0;
 
 	virtual void renderAudioData() = 0;
 	virtual void renderVideoData() = 0;
 
-	f32  calcBuzzerTone() const noexcept;
+protected:
+	Chip8_CoreInterface() noexcept;
 
 public:
-	Chip8_CoreInterface() noexcept;
-	~Chip8_CoreInterface() noexcept override;
+	void mainSystemLoop() override;
 
-	void processFrame() override;
-
-	u32 getTotalFrames() const noexcept override { return mTotalFrames; }
-	u64 getTotalCycles() const noexcept override { return mTotalCycles; }
-
-	s32 getCPF()       const noexcept override { return mActiveCPF; }
-	f32 getFramerate() const noexcept override { return mFramerate; }
-
-	s32 changeCPF(const s32 delta) noexcept override {
-		if (stateRunning() && !stateWaiting()) {
-			mActiveCPF += mActiveCPF > 0
-				? delta : -delta;
-		}
-		return mActiveCPF;
-	}
-
-	bool stateRunning() const noexcept { return (
-		mInterrupt != Interrupt::FINAL &&
-		mInterrupt != Interrupt::ERROR
-	); }
-	bool stateStopped() const noexcept { return (
-		mInterrupt == Interrupt::FINAL ||
-		mInterrupt == Interrupt::ERROR
-	); }
-	bool stateWaitKey() const noexcept { return (
-		mInterrupt == Interrupt::INPUT
-	); }
-	bool stateWaiting() const noexcept { return (
-		mInterrupt == Interrupt::SOUND ||
-		mInterrupt == Interrupt::DELAY ||
-		mInterrupt == Interrupt::INPUT
-	); }
+	Str* makeOverlayData() override;
+	void pushOverlayData() override;
 
 protected:
-	static           std::array<u8, 240> sFontsData;
 	static constexpr std::array<u8, 240> cFontsData{ {
 		0x60, 0xA0, 0xA0, 0xA0, 0xC0, // 0
 		0x40, 0xC0, 0x40, 0x40, 0xE0, // 1
@@ -239,19 +226,21 @@ protected:
 		0xFE, 0x62, 0x60, 0x64, 0x7C, 0x64, 0x60, 0x62, 0xFE, 0x00, // E
 		0xFE, 0x66, 0x62, 0x64, 0x7C, 0x64, 0x60, 0x60, 0xF0, 0x00, // F
 	} };
-	static           std::array<u32, 16> sBitColors;
-	static constexpr std::array<u32, 16> cBitColors{ { // 0-1 monochrome, 0-15 palette color
-		0x0C1218, 0xE4DCD4, 0x8C8884, 0x403C38,
-		0xD82010, 0x40D020, 0x1040D0, 0xE0C818,
-		0x501010, 0x105010, 0x50B0C0, 0xF08010,
-		0xE06090, 0xE0F090, 0xB050F0, 0x704020,
-	} };
+	static inline std::array<u8, 240> sFontsData{ cFontsData };
 
-	static constexpr std::array<u32,  8> cForeColor{ { // CHIP-8X foreground colors
-		0x000000, 0xEE1111, 0x1111EE, 0xEE11EE,
-		0x11EE11, 0xEEEE11, 0x11EEEE, 0xEEEEEE,
+	static constexpr std::array<RGBA, 16> cBitColors{ { // 0-1 monochrome, 0-15 palette color
+		0x0C121800, 0xE4DCD400, 0x8C888400, 0x403C3800,
+		0xD8201000, 0x40D02000, 0x1040D000, 0xE0C81800,
+		0x50101000, 0x10501000, 0x50B0C000, 0xF0801000,
+		0xE0609000, 0xE0F09000, 0xB050F000, 0x70402000,
 	} };
-	static constexpr std::array<u32,  4> cBackColor{ { // CHIP-8X background colors
-		0x111133, 0x111111, 0x113311, 0x331111,
+	static inline std::array<RGBA, 16> sBitColors{ cBitColors };
+
+	static constexpr std::array<RGBA,  8> cForeColor{ { // CHIP-8X foreground colors
+		0x00000000, 0xEE111100, 0x1111EE00, 0xEE11EE00,
+		0x11EE1100, 0xEEEE1100, 0x11EEEE00, 0xEEEEEE00,
+	} };
+	static constexpr std::array<RGBA,  4> cBackColor{ { // CHIP-8X background colors
+		0x11113300, 0x11111100, 0x11331100, 0x33111100,
 	} };
 };

@@ -6,51 +6,54 @@
 
 #pragma once
 
-#include <string>
-#include <filesystem>
+#include "Typedefs.hpp"
+#include "SimpleRingBuffer.hpp"
 
 /*==================================================================*/
 
-enum class BLOG { INFO, WARN, ERROR, DEBUG };
+enum class BLOG {
+	INFO,  // Events that are innocuous and informational.
+	WARN,  // Events that are unexpected and warrant attention.
+	ERROR, // Events that resulted in a predictable/recoverable error.
+	CRIT,  // Events that resulted in unrecoverable failure.
+	DEBUG, // Events meant for debugging purposes.
+};
 
 /*==================================================================*/
 	#pragma region BasicLogger Singleton Class
 
 class BasicLogger final {
-	BasicLogger() = default;
+	SimpleRingBuffer<Str, 512>
+		mLogBuffer;
+
+	Path mLogPath{};
+
+	BasicLogger() noexcept = default;
 	BasicLogger(const BasicLogger&) = delete;
 	BasicLogger& operator=(const BasicLogger&) = delete;
 
-	std::filesystem::path mLogPath{};
-
-	std::string_view getSeverity(BLOG type) const noexcept {
-		switch (type) {
-			case BLOG::INFO:
-				return "INFO";
-
-			case BLOG::WARN:
-				return "WARN";
-
-			case BLOG::ERROR:
-				return "ERROR";
-
-			case BLOG::DEBUG:
-				return "DEBUG";
-
-			default:
-				return "OTHER";
-		}
-	}
+	StrV getSeverity(BLOG type) const noexcept;
 
 public:
-	static auto* create() noexcept {
+	static auto* initialize() noexcept {
 		static BasicLogger self;
 		return &self;
 	}
 
-	bool initLogFile(const std::string&, const std::filesystem::path&) noexcept;
+	bool initLogFile(const Str& filename, const Path& directory) noexcept;
 
-	void newEntry(const BLOG type, const std::string&) noexcept;
+private:
+	void writeEntry(BLOG type, const Str& message);
+
+public:
+	template <typename... Args>
+	void newEntry(BLOG type, const Str& message, Args&&... args) {
+		if constexpr (sizeof...(Args) == 0) {
+			writeEntry(type, message);
+		} else {
+			writeEntry(type, fmt::vformat(message, fmt::make_format_args(args...)));
+		}
+	}
 };
 
 	#pragma endregion

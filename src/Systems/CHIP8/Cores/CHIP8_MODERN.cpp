@@ -4,30 +4,30 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include "CHIP8_MODERN.hpp"
+#ifdef ENABLE_CHIP8_MODERN
+
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/BasicAudioSpec.hpp"
 #include "../../../Assistants/Well512.hpp"
+#include "../../CoreRegistry.hpp"
 
-#include "CHIP8_MODERN.hpp"
+REGISTER_CORE(CHIP8_MODERN, ".ch8")
 
 /*==================================================================*/
 
 CHIP8_MODERN::CHIP8_MODERN() {
-	if (getCoreState() != EmuState::FAILED) {
+	::fill_n(mMemoryBank, cTotalMemory, cSafezoneOOB, 0xFF);
 
-		copyGameToMemory(mMemoryBank.data(), cGameLoadPos);
-		copyFontToMemory(mMemoryBank.data(), 0x0, 0x50);
+	copyGameToMemory(mMemoryBank.data() + cGameLoadPos);
+	copyFontToMemory(mMemoryBank.data(), 0x50);
 
-		setDisplayResolution(cScreenSizeX, cScreenSizeY);
+	setDisplayResolution(cScreenSizeX, cScreenSizeY);
+	setViewportSizes(true, cScreenSizeX, cScreenSizeY, cResSizeMult, 2);
+	setSystemFramerate(cRefreshRate);
 
-		BVS->setBackColor(sBitColors[0]);
-		BVS->createTexture(cScreenSizeX, cScreenSizeY);
-		BVS->setAspectRatio(cScreenSizeX * cResSizeMult, cScreenSizeY * cResSizeMult, +2);
-
-		mCurrentPC = cStartOffset;
-		mFramerate = cRefreshRate;
-		mActiveCPF = Quirk.waitVblank ? cInstSpeedHi : cInstSpeedLo;
-	}
+	mCurrentPC = cStartOffset;
+	mTargetCPF = Quirk.waitVblank ? cInstSpeedHi : cInstSpeedLo;
 }
 
 /*==================================================================*/
@@ -35,7 +35,7 @@ CHIP8_MODERN::CHIP8_MODERN() {
 void CHIP8_MODERN::instructionLoop() noexcept {
 
 	auto cycleCount{ 0 };
-	for (; cycleCount < mActiveCPF; ++cycleCount) {
+	for (; cycleCount < mTargetCPF; ++cycleCount) {
 		const auto HI{ mMemoryBank[mCurrentPC + 0u] };
 		const auto LO{ mMemoryBank[mCurrentPC + 1u] };
 		nextInstruction();
@@ -178,51 +178,35 @@ void CHIP8_MODERN::instructionLoop() noexcept {
 				break;
 		}
 	}
-	mTotalCycles += cycleCount;
+	mElapsedCycles += cycleCount;
 }
 
 void CHIP8_MODERN::renderAudioData() {
-	std::vector<s8> samplesBuffer \
-		(static_cast<usz>(ASB->getSampleRate(cRefreshRate)));
+	pushSquareTone(STREAM::CHANN0);
+	pushSquareTone(STREAM::CHANN1);
+	pushSquareTone(STREAM::CHANN2);
+	pushSquareTone(STREAM::BUZZER);
 
-	static f32 wavePhase{};
-
-	if (mSoundTimer) {
-		for (auto& sample : samplesBuffer) {
-			sample    = static_cast<s8>(wavePhase > 0.5f ? 16 : -16);
-			wavePhase = std::fmod(wavePhase + mBuzzerTone, 1.0f);
-		}
-		BVS->setFrameColor(sBitColors[0], sBitColors[1]);
-	} else {
-		wavePhase = 0.0f;
-		BVS->setFrameColor(sBitColors[0], sBitColors[0]);
-	}
-
-	ASB->pushAudioData<s8>(samplesBuffer);
+	setDisplayBorderColor(sBitColors[!!std::accumulate(mAudioTimer.begin(), mAudioTimer.end(), 0)]);
 }
 
 void CHIP8_MODERN::renderVideoData() {
-	BVS->modifyTexture<u8>(mDisplayBuffer, isPixelTrailing()
-		? [](const u32 pixel) noexcept {
+	BVS->displayBuffer.write(mDisplayBuffer, isUsingPixelTrails()
+		? [](u32 pixel) noexcept {
 			static constexpr u32 layer[4]{ 0xFF, 0xE7, 0x6F, 0x37 };
 			const auto opacity{ layer[std::countl_zero(pixel) & 0x3] };
-			return opacity << 24 | sBitColors[pixel != 0];
+			return opacity | sBitColors[pixel != 0];
 		}
-		: [](const u32 pixel) noexcept {
-			return 0xFF000000 | sBitColors[pixel >> 3];
+		: [](u32 pixel) noexcept {
+			return 0xFF | sBitColors[pixel >> 3];
 		}
 	);
 
-	std::transform(
-		std::execution::unseq,
+	std::for_each(EXEC_POLICY(unseq)
 		mDisplayBuffer.begin(),
 		mDisplayBuffer.end(),
-		mDisplayBuffer.begin(),
-		[](const u32 pixel) noexcept {
-			return static_cast<u8>(
-				(pixel & 0x8) | (pixel >> 1)
-			);
-		}
+		[](auto& pixel) noexcept
+			{ ::assign_cast(pixel, (pixel & 0x8) | (pixel >> 1)); }
 	);
 }
 
@@ -232,12 +216,7 @@ void CHIP8_MODERN::renderVideoData() {
 	void CHIP8_MODERN::instruction_00E0() noexcept {
 		if (Quirk.waitVblank) [[unlikely]]
 			{ triggerInterrupt(Interrupt::FRAME); }
-		std::fill(
-			std::execution::unseq,
-			mDisplayBuffer.begin(),
-			mDisplayBuffer.end(),
-			u8()
-		);
+		::fill(mDisplayBuffer);
 	}
 	void CHIP8_MODERN::instruction_00EE() noexcept {
 		mCurrentPC = mStackBank[--mStackTop & 0xF];
@@ -249,7 +228,7 @@ void CHIP8_MODERN::renderVideoData() {
 /*==================================================================*/
 	#pragma region 1 instruction branch
 
-	void CHIP8_MODERN::instruction_1NNN(const s32 NNN) noexcept {
+	void CHIP8_MODERN::instruction_1NNN(s32 NNN) noexcept {
 		performProgJump(NNN);
 	}
 
@@ -259,7 +238,7 @@ void CHIP8_MODERN::renderVideoData() {
 /*==================================================================*/
 	#pragma region 2 instruction branch
 
-	void CHIP8_MODERN::instruction_2NNN(const s32 NNN) noexcept {
+	void CHIP8_MODERN::instruction_2NNN(s32 NNN) noexcept {
 		mStackBank[mStackTop++ & 0xF] = mCurrentPC;
 		performProgJump(NNN);
 	}
@@ -270,7 +249,7 @@ void CHIP8_MODERN::renderVideoData() {
 /*==================================================================*/
 	#pragma region 3 instruction branch
 
-	void CHIP8_MODERN::instruction_3xNN(const s32 X, const s32 NN) noexcept {
+	void CHIP8_MODERN::instruction_3xNN(s32 X, s32 NN) noexcept {
 		if (mRegisterV[X] == NN) { skipInstruction(); }
 	}
 
@@ -280,7 +259,7 @@ void CHIP8_MODERN::renderVideoData() {
 /*==================================================================*/
 	#pragma region 4 instruction branch
 
-	void CHIP8_MODERN::instruction_4xNN(const s32 X, const s32 NN) noexcept {
+	void CHIP8_MODERN::instruction_4xNN(s32 X, s32 NN) noexcept {
 		if (mRegisterV[X] != NN) { skipInstruction(); }
 	}
 
@@ -290,7 +269,7 @@ void CHIP8_MODERN::renderVideoData() {
 /*==================================================================*/
 	#pragma region 5 instruction branch
 
-	void CHIP8_MODERN::instruction_5xy0(const s32 X, const s32 Y) noexcept {
+	void CHIP8_MODERN::instruction_5xy0(s32 X, s32 Y) noexcept {
 		if (mRegisterV[X] == mRegisterV[Y]) { skipInstruction(); }
 	}
 
@@ -300,8 +279,8 @@ void CHIP8_MODERN::renderVideoData() {
 /*==================================================================*/
 	#pragma region 6 instruction branch
 
-	void CHIP8_MODERN::instruction_6xNN(const s32 X, const s32 NN) noexcept {
-		mRegisterV[X] = static_cast<u8>(NN);
+	void CHIP8_MODERN::instruction_6xNN(s32 X, s32 NN) noexcept {
+		::assign_cast(mRegisterV[X], NN);
 	}
 
 	#pragma endregion
@@ -310,8 +289,8 @@ void CHIP8_MODERN::renderVideoData() {
 /*==================================================================*/
 	#pragma region 7 instruction branch
 
-	void CHIP8_MODERN::instruction_7xNN(const s32 X, const s32 NN) noexcept {
-		mRegisterV[X] += static_cast<u8>(NN);
+	void CHIP8_MODERN::instruction_7xNN(s32 X, s32 NN) noexcept {
+		::assign_cast(mRegisterV[X], mRegisterV[X] + NN);
 	}
 
 	#pragma endregion
@@ -320,44 +299,44 @@ void CHIP8_MODERN::renderVideoData() {
 /*==================================================================*/
 	#pragma region 8 instruction branch
 
-	void CHIP8_MODERN::instruction_8xy0(const s32 X, const s32 Y) noexcept {
+	void CHIP8_MODERN::instruction_8xy0(s32 X, s32 Y) noexcept {
 		mRegisterV[X] = mRegisterV[Y];
 	}
-	void CHIP8_MODERN::instruction_8xy1(const s32 X, const s32 Y) noexcept {
+	void CHIP8_MODERN::instruction_8xy1(s32 X, s32 Y) noexcept {
 		mRegisterV[X] |= mRegisterV[Y];
 	}
-	void CHIP8_MODERN::instruction_8xy2(const s32 X, const s32 Y) noexcept {
+	void CHIP8_MODERN::instruction_8xy2(s32 X, s32 Y) noexcept {
 		mRegisterV[X] &= mRegisterV[Y];
 	}
-	void CHIP8_MODERN::instruction_8xy3(const s32 X, const s32 Y) noexcept {
+	void CHIP8_MODERN::instruction_8xy3(s32 X, s32 Y) noexcept {
 		mRegisterV[X] ^= mRegisterV[Y];
 	}
-	void CHIP8_MODERN::instruction_8xy4(const s32 X, const s32 Y) noexcept {
+	void CHIP8_MODERN::instruction_8xy4(s32 X, s32 Y) noexcept {
 		const auto sum{ mRegisterV[X] + mRegisterV[Y] };
-		mRegisterV[X]   = static_cast<u8>(sum);
-		mRegisterV[0xF] = static_cast<u8>(sum >> 8);
+		::assign_cast(mRegisterV[X], sum);
+		::assign_cast(mRegisterV[0xF], sum >> 8);
 	}
-	void CHIP8_MODERN::instruction_8xy5(const s32 X, const s32 Y) noexcept {
+	void CHIP8_MODERN::instruction_8xy5(s32 X, s32 Y) noexcept {
 		const bool nborrow{ mRegisterV[X] >= mRegisterV[Y] };
-		mRegisterV[X]   = static_cast<u8>(mRegisterV[X] - mRegisterV[Y]);
-		mRegisterV[0xF] = static_cast<u8>(nborrow);
+		::assign_cast(mRegisterV[X], mRegisterV[X] - mRegisterV[Y]);
+		::assign_cast(mRegisterV[0xF], nborrow);
 	}
-	void CHIP8_MODERN::instruction_8xy7(const s32 X, const s32 Y) noexcept {
+	void CHIP8_MODERN::instruction_8xy7(s32 X, s32 Y) noexcept {
 		const bool nborrow{ mRegisterV[Y] >= mRegisterV[X] };
-		mRegisterV[X]   = static_cast<u8>(mRegisterV[Y] - mRegisterV[X]);
-		mRegisterV[0xF] = static_cast<u8>(nborrow);
+		::assign_cast(mRegisterV[X], mRegisterV[Y] - mRegisterV[X]);
+		::assign_cast(mRegisterV[0xF], nborrow);
 	}
-	void CHIP8_MODERN::instruction_8xy6(const s32 X, const s32 Y) noexcept {
+	void CHIP8_MODERN::instruction_8xy6(s32 X, s32 Y) noexcept {
 		if (!Quirk.shiftVX) { mRegisterV[X] = mRegisterV[Y]; }
 		const bool lsb{ (mRegisterV[X] & 1) == 1 };
-		mRegisterV[X]   = static_cast<u8>(mRegisterV[X] >> 1);
-		mRegisterV[0xF] = static_cast<u8>(lsb);
+		::assign_cast(mRegisterV[X], mRegisterV[X] >> 1);
+		::assign_cast(mRegisterV[0xF], lsb);
 	}
-	void CHIP8_MODERN::instruction_8xyE(const s32 X, const s32 Y) noexcept {
+	void CHIP8_MODERN::instruction_8xyE(s32 X, s32 Y) noexcept {
 		if (!Quirk.shiftVX) { mRegisterV[X] = mRegisterV[Y]; }
 		const bool msb{ (mRegisterV[X] >> 7) == 1 };
-		mRegisterV[X]   = static_cast<u8>(mRegisterV[X] << 1);
-		mRegisterV[0xF] = static_cast<u8>(msb);
+		::assign_cast(mRegisterV[X], mRegisterV[X] << 1);
+		::assign_cast(mRegisterV[0xF], msb);
 	}
 
 	#pragma endregion
@@ -366,7 +345,7 @@ void CHIP8_MODERN::renderVideoData() {
 /*==================================================================*/
 	#pragma region 9 instruction branch
 
-	void CHIP8_MODERN::instruction_9xy0(const s32 X, const s32 Y) noexcept {
+	void CHIP8_MODERN::instruction_9xy0(s32 X, s32 Y) noexcept {
 		if (mRegisterV[X] != mRegisterV[Y]) { skipInstruction(); }
 	}
 
@@ -376,7 +355,7 @@ void CHIP8_MODERN::renderVideoData() {
 /*==================================================================*/
 	#pragma region A instruction branch
 
-	void CHIP8_MODERN::instruction_ANNN(const s32 NNN) noexcept {
+	void CHIP8_MODERN::instruction_ANNN(s32 NNN) noexcept {
 		mRegisterI = NNN & 0xFFF;
 	}
 
@@ -386,7 +365,7 @@ void CHIP8_MODERN::renderVideoData() {
 /*==================================================================*/
 	#pragma region B instruction branch
 
-	void CHIP8_MODERN::instruction_BNNN(const s32 NNN) noexcept {
+	void CHIP8_MODERN::instruction_BNNN(s32 NNN) noexcept {
 		performProgJump(NNN + mRegisterV[0]);
 	}
 
@@ -396,8 +375,8 @@ void CHIP8_MODERN::renderVideoData() {
 /*==================================================================*/
 	#pragma region C instruction branch
 
-	void CHIP8_MODERN::instruction_CxNN(const s32 X, const s32 NN) noexcept {
-		mRegisterV[X] = Wrand->get<u8>() & NN;
+	void CHIP8_MODERN::instruction_CxNN(s32 X, s32 NN) noexcept {
+		::assign_cast(mRegisterV[X], RNG->next() & NN);
 	}
 
 	#pragma endregion
@@ -406,7 +385,7 @@ void CHIP8_MODERN::renderVideoData() {
 /*==================================================================*/
 	#pragma region D instruction branch
 
-	void CHIP8_MODERN::drawByte(s32 X, s32 Y, const u32 DATA) noexcept {
+	void CHIP8_MODERN::drawByte(s32 X, s32 Y, u32 DATA) noexcept {
 		switch (DATA) {
 			[[unlikely]]
 			case 0b00000000:
@@ -414,35 +393,37 @@ void CHIP8_MODERN::renderVideoData() {
 
 			[[likely]]
 			case 0b10000000:
-				if (Quirk.wrapSprite) { X &= mDisplayWb; }
-				if (X < mDisplayW) {
-					if (!((mDisplayBuffer[Y * mDisplayW + X] ^= 0x8) & 0x8))
-						{ mRegisterV[0xF] = 1; }
+				if (Quirk.wrapSprite) { X %= cScreenSizeX; }
+				if (X < cScreenSizeX) {
+					//if (!((mDisplayBuffer[Y * cScreenSizeX + X] ^= 0x8) & 0x8))
+					//	{ mRegisterV[0xF] = 1; }
+					mRegisterV[0xF] |= ((mDisplayBuffer[Y * cScreenSizeX + X] ^= 0x8) & 0x8) == 0;
 				}
 				return;
 
 			[[unlikely]]
 			default:
-				if (Quirk.wrapSprite) { X &= mDisplayWb; }
-				else if (X >= mDisplayW) { return; }
+				if (Quirk.wrapSprite) { X %= cScreenSizeX; }
+				else if (X >= cScreenSizeX) { return; }
 
-				for (auto B{ 0 }; B < 8; ++B, ++X &= mDisplayWb) {
+				for (auto B{ 0 }; B < 8; ++B, ++X %= cScreenSizeX) {
 					if (DATA & 0x80 >> B) {
-						if (!((mDisplayBuffer[Y * mDisplayW + X] ^= 0x8) & 0x8))
-							{ mRegisterV[0xF] = 1; }
+						//if (!((mDisplayBuffer[Y * cScreenSizeX + X] ^= 0x8) & 0x8))
+						//	{ mRegisterV[0xF] = 1; }
+						mRegisterV[0xF] |= ((mDisplayBuffer[Y * cScreenSizeX + X] ^= 0x8) & 0x8) == 0;
 					}
-					if (!Quirk.wrapSprite && X == mDisplayWb) { return; }
+					if (!Quirk.wrapSprite && X == cScreenSizeX - 1) { return; }
 				}
 				return;
 		}
 	}
 
-	void CHIP8_MODERN::instruction_DxyN(const s32 X, const s32 Y, const s32 N) noexcept {
+	void CHIP8_MODERN::instruction_DxyN(s32 X, s32 Y, s32 N) noexcept {
 		if (Quirk.waitVblank) [[unlikely]]
 			{ triggerInterrupt(Interrupt::FRAME); }
 
-		auto pX{ mRegisterV[X] & mDisplayWb };
-		auto pY{ mRegisterV[Y] & mDisplayHb };
+		auto pX{ mRegisterV[X] % cScreenSizeX };
+		auto pY{ mRegisterV[Y] % cScreenSizeY };
 
 		mRegisterV[0xF] = 0;
 
@@ -454,21 +435,21 @@ void CHIP8_MODERN::renderVideoData() {
 
 			[[unlikely]]
 			case 0:
-				for (auto H{ 0 }, I{ 0 }; H < 16; ++H, I += 2, ++pY &= mDisplayHb)
+				for (auto H{ 0 }, I{ 0 }; H < 16; ++H, I += 2, ++pY %= cScreenSizeY)
 				{
 					drawByte(pX + 0, pY, readMemoryI(I + 0));
 					drawByte(pX + 8, pY, readMemoryI(I + 1));
 					
-					if (!Quirk.wrapSprite && pY == mDisplayHb) { break; }
+					if (!Quirk.wrapSprite && pY == cScreenSizeY - 1) { break; }
 				}
 				break;
 
 			[[unlikely]]
 			default:
-				for (auto H{ 0 }; H < N; ++H, ++pY &= mDisplayHb)
+				for (auto H{ 0 }; H < N; ++H, ++pY %= cScreenSizeY)
 				{
 					drawByte(pX, pY, readMemoryI(H));
-					if (!Quirk.wrapSprite && pY == mDisplayHb) { break; }
+					if (!Quirk.wrapSprite && pY == cScreenSizeY - 1) { break; }
 				}
 				break;
 		}
@@ -480,10 +461,10 @@ void CHIP8_MODERN::renderVideoData() {
 /*==================================================================*/
 	#pragma region E instruction branch
 
-	void CHIP8_MODERN::instruction_Ex9E(const s32 X) noexcept {
+	void CHIP8_MODERN::instruction_Ex9E(s32 X) noexcept {
 		if (keyHeld_P1(mRegisterV[X])) { skipInstruction(); }
 	}
-	void CHIP8_MODERN::instruction_ExA1(const s32 X) noexcept {
+	void CHIP8_MODERN::instruction_ExA1(s32 X) noexcept {
 		if (!keyHeld_P1(mRegisterV[X])) { skipInstruction(); }
 	}
 
@@ -493,43 +474,50 @@ void CHIP8_MODERN::renderVideoData() {
 /*==================================================================*/
 	#pragma region F instruction branch
 
-	void CHIP8_MODERN::instruction_Fx07(const s32 X) noexcept {
-		mRegisterV[X] = static_cast<u8>(mDelayTimer);
+	void CHIP8_MODERN::instruction_Fx07(s32 X) noexcept {
+		::assign_cast(mRegisterV[X], mDelayTimer);
 	}
-	void CHIP8_MODERN::instruction_Fx0A(const s32 X) noexcept {
+	void CHIP8_MODERN::instruction_Fx0A(s32 X) noexcept {
 		triggerInterrupt(Interrupt::INPUT);
 		mInputReg = &mRegisterV[X];
 	}
-	void CHIP8_MODERN::instruction_Fx15(const s32 X) noexcept {
-		mDelayTimer = static_cast<u8>(mRegisterV[X]);
+	void CHIP8_MODERN::instruction_Fx15(s32 X) noexcept {
+		mDelayTimer = mRegisterV[X];
 	}
-	void CHIP8_MODERN::instruction_Fx18(const s32 X) noexcept {
-		mBuzzerTone = calcBuzzerTone();
-		mSoundTimer = mRegisterV[X] + (mRegisterV[X] == 1);
+	void CHIP8_MODERN::instruction_Fx18(s32 X) noexcept {
+		startAudio(mRegisterV[X] + (mRegisterV[X] == 1));
 	}
-	void CHIP8_MODERN::instruction_Fx1E(const s32 X) noexcept {
-		mRegisterI = mRegisterI + mRegisterV[X] & 0xFFF;
+	void CHIP8_MODERN::instruction_Fx1E(s32 X) noexcept {
+		mRegisterI = (mRegisterI + mRegisterV[X]) & 0xFFF;
 	}
-	void CHIP8_MODERN::instruction_Fx29(const s32 X) noexcept {
+	void CHIP8_MODERN::instruction_Fx29(s32 X) noexcept {
 		mRegisterI = (mRegisterV[X] & 0xF) * 5;
 	}
-	void CHIP8_MODERN::instruction_Fx33(const s32 X) noexcept {
-		writeMemoryI(mRegisterV[X] / 100,     0);
-		writeMemoryI(mRegisterV[X] / 10 % 10, 1);
-		writeMemoryI(mRegisterV[X]      % 10, 2);
+	void CHIP8_MODERN::instruction_Fx33(s32 X) noexcept {
+		const auto N__{ mRegisterV[X] * 0x51EB851Full >> 37 };
+		const auto _NN{ mRegisterV[X] - N__ * 100 };
+		const auto _N_{ _NN * 0xCCCDull >> 19 };
+		const auto __N{ _NN - _N_ * 10 };
+
+		writeMemoryI(N__, 0);
+		writeMemoryI(_N_, 1);
+		writeMemoryI(__N, 2);
 	}
-	void CHIP8_MODERN::instruction_FN55(const s32 N) noexcept {
-		for (auto idx{ 0 }; idx <= N; ++idx)
-			{ writeMemoryI(mRegisterV[idx], idx); }
-		if (!Quirk.idxRegNoInc) [[likely]]
-			{ mRegisterI = mRegisterI + N + 1 & 0xFFF; }
+	void CHIP8_MODERN::instruction_FN55(s32 N) noexcept {
+		SUGGEST_VECTORIZABLE_LOOP
+		for (auto idx{ 0 }; idx <= N; ++idx) { writeMemoryI(mRegisterV[idx], idx); }
+		mRegisterI = !Quirk.idxRegNoInc ? (mRegisterI + N + 1) & 0xFFF : mRegisterI;
+		//if (!Quirk.idxRegNoInc) [[likely]] { mRegisterI = (mRegisterI + N + 1) & 0xFFF; }
 	}
-	void CHIP8_MODERN::instruction_FN65(const s32 N) noexcept {
-		for (auto idx{ 0 }; idx <= N; ++idx)
-			{ mRegisterV[idx] = readMemoryI(idx); }
-		if (!Quirk.idxRegNoInc) [[likely]]
-			{ mRegisterI = mRegisterI + N + 1 & 0xFFF; }
+	void CHIP8_MODERN::instruction_FN65(s32 N) noexcept {
+		SUGGEST_VECTORIZABLE_LOOP
+		for (auto idx{ 0 }; idx <= N; ++idx) { mRegisterV[idx] = readMemoryI(idx); }
+		mRegisterI = !Quirk.idxRegNoInc ? (mRegisterI + N + 1) & 0xFFF : mRegisterI;
+		//if (!Quirk.idxRegNoInc) [[likely]] { mRegisterI = (mRegisterI + N + 1) & 0xFFF; }
 	}
 
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
+
+	
+#endif

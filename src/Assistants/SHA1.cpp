@@ -11,39 +11,20 @@
 
 #include <bit>
 #include <fstream>
-#include <sstream>
 #include <iomanip>
 #include <utility>
 
-static constexpr std::size_t BLOCK_INTS  { 16 }; // number of 32-bit integers per SHA1 block
-static constexpr std::size_t BLOCK_BYTES { BLOCK_INTS * 4 };
+/*==================================================================*/
 
-inline static void reset(
-	std::uint32_t  digest[],
-	std::string&   buffer,
-	std::uint64_t& transforms
-) {
-	// SHA1 initialization constants 
-	digest[0] = 0x67452301;
-	digest[1] = 0xEFCDAB89;
-	digest[2] = 0x98BADCFE;
-	digest[3] = 0x10325476;
-	digest[4] = 0xC3D2E1F0;
+static constexpr ust BLOCK_INTS  { 16 }; // number of 32-bit integers per SHA1 block
+static constexpr ust BLOCK_BYTES { BLOCK_INTS * 4 };
 
-	// reset counters
-	buffer.clear();
-	transforms = 0;
-}
-
-inline static std::uint32_t blk(
-	const std::uint32_t block[BLOCK_INTS],
-	const std::size_t   i
-) {
+inline static u32 blk(u32* block, ust i) {
 	return std::rotl(
-		block[i + 13 & 15] ^
-		block[i +  8 & 15] ^
-		block[i +  2 & 15] ^
-		block[i          ], 1);
+		block[(i + 0xD) & 0xF] ^
+		block[(i + 0x8) & 0xF] ^
+		block[(i + 0x2) & 0xF] ^
+		block[(i + 0x0) & 0xF], 1);
 }
 
 /*------------------------------------------------------------------*/
@@ -51,26 +32,18 @@ inline static std::uint32_t blk(
 /*------------------------------------------------------------------*/
 
 inline static void R0(
-	const std::uint32_t  block[BLOCK_INTS],
-	const std::uint32_t  v,
-		  std::uint32_t& w,
-	const std::uint32_t  x,
-	const std::uint32_t  y,
-		  std::uint32_t& z,
-	const std::size_t    i
+	u32* block,
+	u32 v, u32& w, u32 x,
+	u32 y, u32& z, ust i
 ) {
 	z += ((w & (x ^ y)) ^ y) + block[i] + 0x5A827999 + std::rotl(v, 5);
 	w  = std::rotl(w, 30);
 }
 
 inline static void R1(
-		  std::uint32_t  block[BLOCK_INTS],
-	const std::uint32_t  v,
-		  std::uint32_t& w,
-	const std::uint32_t  x,
-	const std::uint32_t  y,
-		  std::uint32_t& z,
-	const std::size_t    i
+	u32* block,
+	u32 v, u32& w, u32 x,
+	u32 y, u32& z, ust i
 ) {
 	block[i] = blk(block, i);
 	z += ((w & (x ^ y)) ^ y) + block[i] + 0x5A827999 + std::rotl(v, 5);
@@ -78,13 +51,9 @@ inline static void R1(
 }
 
 inline static void R2(
-		  std::uint32_t  block[BLOCK_INTS],
-	const std::uint32_t  v,
-		  std::uint32_t& w,
-	const std::uint32_t  x,
-	const std::uint32_t  y,
-		  std::uint32_t& z,
-	const std::size_t    i
+	u32* block,
+	u32 v, u32& w, u32 x,
+	u32 y, u32& z, ust i
 ) {
 	block[i] = blk(block, i);
 	z += (w ^ x ^ y) + block[i] + 0x6ED9EBA1 + std::rotl(v, 5);
@@ -92,13 +61,9 @@ inline static void R2(
 }
 
 inline static void R3(
-		  std::uint32_t  block[BLOCK_INTS],
-	const std::uint32_t  v,
-		  std::uint32_t& w,
-	const std::uint32_t  x,
-	const std::uint32_t  y,
-		  std::uint32_t& z,
-	const std::size_t    i
+	u32* block,
+	u32 v, u32& w, u32 x,
+	u32 y, u32& z, ust i
 ) {
 	block[i] = blk(block, i);
 	z += (((w | x) & y) | (w & x)) + block[i] + 0x8F1BBCDC + std::rotl(v, 5);
@@ -106,13 +71,9 @@ inline static void R3(
 }
 
 inline static void R4(
-		  std::uint32_t  block[BLOCK_INTS],
-	const std::uint32_t  v,
-		  std::uint32_t& w,
-	const std::uint32_t  x,
-	const std::uint32_t  y,
-		  std::uint32_t& z,
-	const std::size_t    i
+	u32* block,
+	u32 v, u32& w, u32 x,
+	u32 y, u32& z, ust i
 ) {
 	block[i] = blk(block, i);
 	z += (w ^ x ^ y) + block[i] + 0xCA62C1D6 + std::rotl(v, 5);
@@ -120,20 +81,16 @@ inline static void R4(
 }
 
 /*------------------------------------------------------------------*/
-/*  Hash a single 512-bit block - this is the core of the algorithm */
+/*  SHA1 class member functions										*/
 /*------------------------------------------------------------------*/
 
-inline static void transform(
-	std::uint32_t  digest[],
-	std::uint32_t  block[BLOCK_INTS],
-	std::uint64_t& transforms
-) {
+void SHA1::transform(u32* block) {
 	// copy digest[] to working vars
-	std::uint32_t a{ digest[0] };
-	std::uint32_t b{ digest[1] };
-	std::uint32_t c{ digest[2] };
-	std::uint32_t d{ digest[3] };
-	std::uint32_t e{ digest[4] };
+	auto a{ digest[0] };
+	auto b{ digest[1] };
+	auto c{ digest[2] };
+	auto d{ digest[3] };
+	auto e{ digest[4] };
 
 	// 4 rounds of 20 operations each, loop unrolled
 	R0(block, a, b, c, d, e,  0); R0(block, e, a, b, c, d,  1); R0(block, d, e, a, b, c,  2); R0(block, c, d, e, a, b,  3);
@@ -165,31 +122,32 @@ inline static void transform(
 	digest[4] += e;
 
 	// count the number of transformations
-	transforms++;
+	++transforms;
 }
 
-inline static void buffer_to_block(
-	const std::string&  buffer,
-		  std::uint32_t block[BLOCK_INTS]
-) {
-	// convert the std::string (byte buffer) to a std::uint32_t array (MSB)
-	for (std::size_t i{ 0 }; i < BLOCK_INTS; ++i) {
-		block[i] = (buffer[4 * i + 3] & 0xFFu)
-				 | (buffer[4 * i + 2] & 0xFFu) <<  8u
-				 | (buffer[4 * i + 1] & 0xFFu) << 16u
-				 | (buffer[4 * i + 0] & 0xFFu) << 24u;
+// Hash a single 512-bit block
+void SHA1::buffer_to_block(u32* block) {
+	// convert the string (byte buffer) to a u32 array (MSB)
+	for (ust i{ 0 }; i < BLOCK_INTS; ++i) {
+		block[i] = (buffer[4 * i + 3] & 0xFF)
+				 | (buffer[4 * i + 2] & 0xFF) <<  8
+				 | (buffer[4 * i + 1] & 0xFF) << 16
+				 | (buffer[4 * i + 0] & 0xFF) << 24;
 	}
 }
 
-/*------------------------------------------------------------------*/
-/*  SHA1 class member functions									 */
-/*------------------------------------------------------------------*/
+void SHA1::reset() noexcept {
+	digest[0] = 0x67452301;
+	digest[1] = 0xEFCDAB89;
+	digest[2] = 0x98BADCFE;
+	digest[3] = 0x10325476;
+	digest[4] = 0xC3D2E1F0;
 
-inline SHA1::SHA1() {
-	reset(digest, buffer, transforms);
+	buffer.clear();
+	transforms = 0;
 }
 
-void SHA1::update(const std::string& s) {
+void SHA1::update(const Str& s) {
 	std::istringstream is(s);
 	update(is);
 }
@@ -200,81 +158,78 @@ void SHA1::update(std::istream& is) {
 		const auto chunksize{ BLOCK_BYTES - buffer.size() };
 		is.read(sbuf, static_cast<std::streamsize>(chunksize));
 
-		buffer.append(sbuf, static_cast<std::size_t>(is.gcount()));
+		buffer.append(sbuf, static_cast<ust>(is.gcount()));
 		if (buffer.size() != BLOCK_BYTES) { return; }
 
-		std::uint32_t block[BLOCK_INTS]{};
-		buffer_to_block(buffer, block);
-		transform(digest, block, transforms);
+		u32 block[BLOCK_INTS]{};
+		buffer_to_block(block);
+		transform(block);
 		buffer.clear();
 	}
 }
 
-void SHA1::update(std::span<const char> data) {
-	std::size_t offset{};
+void SHA1::update(const char* data, ust size) {
+	ust offset{};
 
-	while (offset < data.size()) {
-		const auto chunksize{ std::min(BLOCK_BYTES - buffer.size(), data.size() - offset) };
+	while (offset < size) {
+		const auto chunksize{ std::min(BLOCK_BYTES - buffer.size(), size - offset) };
 
-		buffer.append(data.data() + offset, chunksize);
+		buffer.append(data + offset, chunksize);
 		offset += chunksize;
 
-		// If buffer is full, process the block
 		if (buffer.size() == BLOCK_BYTES) {
-			std::uint32_t block[BLOCK_INTS]{};
-			buffer_to_block(buffer, block);
-			transform(digest, block, transforms);
+			u32 block[BLOCK_INTS]{};
+			buffer_to_block(block);
+			transform(block);
 			buffer.clear();
 		}
 	}
 }
 
-std::string SHA1::final() {
+Str SHA1::final() {
 	// total number of hashed bits
-	const std::uint64_t total_bits{ (transforms * BLOCK_BYTES + buffer.size()) * 8 };
+	const u64 total_bits{ (transforms * BLOCK_BYTES + buffer.size()) * 8 };
 
 	// add padding
 	buffer += static_cast<char>(0x80);
-	const std::size_t orig_size{ buffer.size() };
+	const ust orig_size{ buffer.size() };
 	while (buffer.size() < BLOCK_BYTES)
-		buffer += static_cast<char>(0x00);
+		{ buffer += static_cast<char>(0x00); }
 
-	std::uint32_t block[BLOCK_INTS]{};
-	buffer_to_block(buffer, block);
+	u32 block[BLOCK_INTS]{};
+	buffer_to_block(block);
 
 	if (orig_size > BLOCK_BYTES - 8) {
-		transform(digest, block, transforms);
-		for (std::size_t i{ 0 }; i < BLOCK_INTS - 2; ++i)
-			block[i] = 0;
+		transform(block);
+		for (ust i{ 0 }; i < BLOCK_INTS - 2; ++i)
+			{ block[i] = 0; }
 	}
 
-	// append total_bits, split this std::uint64_t into two std::uint32_t
-	block[BLOCK_INTS - 1] = static_cast<std::uint32_t>(total_bits);
-	block[BLOCK_INTS - 2] = static_cast<std::uint32_t>(total_bits >> 32);
-	transform(digest, block, transforms);
+	// append total_bits, split this u64 into two u32
+	block[BLOCK_INTS - 1] = total_bits       & 0xFFFFFFFF;
+	block[BLOCK_INTS - 2] = total_bits >> 32 & 0xFFFFFFFF;
+	transform(block);
 
-	// hex std::string
 	std::ostringstream result;
-	for (std::size_t i{ 0 }; i < 5; ++i) {
-		result << std::hex << std::setfill('0') << std::setw(8);
-		result << digest[i];
+	for (auto chunk : digest) {
+		result << std::hex << std::setfill('0')
+			   << std::setw(8) << chunk;
 	}
 
-	// reset everything for next run
-	reset(digest, buffer, transforms);
+	reset();
 
 	return result.str();
 }
 
-std::string SHA1::from_file(const std::filesystem::path& filePath) {
+Str SHA1::from_file(const Path& filePath) {
 	std::ifstream stream(filePath, std::ios::binary);
 	SHA1 checksum;
 	checksum.update(stream);
 	return checksum.final();
 }
 
-std::string SHA1::from_span(const std::span<const char> fileData) {
+Str SHA1::from_data(const char* data, ust size) {
 	SHA1 checksum;
-	checksum.update(fileData);
+	checksum.update(data, size);
 	return checksum.final();
 }

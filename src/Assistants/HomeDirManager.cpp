@@ -4,75 +4,170 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include <fstream>
-#include <execution>
-
 #include "HomeDirManager.hpp"
 
-#include "../Assistants/SHA1.hpp"
-#include "../Assistants/PathGetters.hpp"
-#include "../Assistants/BasicLogger.hpp"
+#include "Misc.hpp"
+#include "SHA1.hpp"
+#include "SimpleFileIO.hpp"
+#include "BasicLogger.hpp"
+#include "DefaultConfig.hpp"
+#include "PathGetters.hpp"
 
 #include <SDL3/SDL_messagebox.h>
 
 /*==================================================================*/
-
-[[maybe_unused]]
-static auto getFileModTime(const fsPath& filePath) noexcept {
-	std::error_code error;
-	return std::filesystem::last_write_time(filePath, error);
-}
-
-[[maybe_unused]]
-static auto getFileSize(const fsPath& filePath) noexcept {
-	std::error_code error;
-	return std::filesystem::file_size(filePath, error);
-}
-
-/*==================================================================*/
 	#pragma region HomeDirManager Class
 
-HomeDirManager::HomeDirManager(const char* const org, const char* const app) noexcept {
-	if (!getHomePath(org, app)) {
-		showErrorBox("Filesystem Error", "Unable to get home directory!");
+HomeDirManager::HomeDirManager(
+	StrV overrideHome, StrV configName,
+	bool forcePortable, StrV org, StrV app,
+	bool& initError
+) noexcept {
+	if (!setHomePath(overrideHome, forcePortable, org, app))
+		{ initError = true; return; }
+
+	blog.initLogFile("program.log", sHomePath);
+
+	if (configName.empty()) { configName = "settings.toml"; }
+	sConfPath = (Path{ sHomePath } / configName).string();
+}
+
+void HomeDirManager::triggerCriticalError(const char* error) noexcept {
+	blog.newEntry(BLOG::CRIT, error);
+	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING,
+		"Critical Initialization Error", error, nullptr);
+}
+
+bool HomeDirManager::isLocationWritable(const char* path) noexcept {
+	if (!path) { return false; }
+	const auto file{ Path{ path } / "__DELETE_ME__" };
+	std::ofstream test{ file };
+
+	if (test.is_open()) {
+		test.close();
+		const auto result{ fs::remove(file) };
+		return result && result.value();
 	} else {
-		blog.initLogFile("program.log", getHomePath());
+		return false;
 	}
 }
 
-void HomeDirManager::showErrorBox(const char* const title, const char* const message) noexcept {
-	setErrorState(true);
-	SDL_ShowSimpleMessageBox(
-		SDL_MESSAGEBOX_ERROR, title,
-		message, nullptr
-	);
+bool HomeDirManager::setHomePath(StrV overrideHome, bool forcePortable, StrV org, StrV app) noexcept {
+	if (!overrideHome.empty()) {
+		if (isLocationWritable(overrideHome.data())) {
+			blog.newEntry(BLOG::INFO, "Home path override successful!");
+			sHomePath = overrideHome;
+			return true;
+		} else {
+			triggerCriticalError("Home path override failure: cannot write to location!");
+			return false;
+		}
+	}
+
+	if (forcePortable) {
+		if (isLocationWritable(::getBasePath())) {
+			blog.newEntry(BLOG::INFO, "Forced portable mode successful!");
+			sHomePath = ::getBasePath();
+			return true;
+		} else {
+			triggerCriticalError("Forced portable mode failure: cannot write to location!");
+			return false;
+		}
+	}
+
+	if (::getBasePath()) {
+		const auto fileExists{ fs::exists(Path{ ::getBasePath() } / "portable.txt") };
+		if (fileExists && fileExists.value()) {
+			if (isLocationWritable(::getBasePath())) {
+				sHomePath = ::getBasePath();
+				return true;
+			} else {
+				blog.newEntry(BLOG::ERROR,
+					"Portable mode: cannot write to location, falling back to Home path!");
+			}
+		}
+	}
+
+	if (isLocationWritable(::getHomePath(
+		org.empty() ? nullptr : org.data(),
+		app.empty() ? nullptr : app.data()
+	))) {
+		sHomePath = ::getHomePath();
+		return true;
+	} else {
+		triggerCriticalError("Failed to determine Home path: cannot write to location!");
+		return false;
+	}
 }
 
-fsPath* HomeDirManager::addSystemDir(const fsPath& sub, const fsPath& sys) noexcept {
+void HomeDirManager::parseMainAppConfig() const noexcept {
+	if (const auto result{ config::parseFromFile(sConfPath.c_str()) }) {
+		config::safeTableUpdate(sMainAppConfig, result.table());
+		blog.newEntry(BLOG::INFO,
+			"[TOML] App Config found, previous settings loaded!");
+	} else {
+		blog.newEntry(BLOG::WARN,
+			"[TOML] App Config failed to prase! [{}]", result.error().description());
+	}
+}
+
+void HomeDirManager::writeMainAppConfig() const noexcept {
+	if (const auto result{ config::writeToFile(sMainAppConfig, sConfPath.c_str()) }) {
+		blog.newEntry(BLOG::INFO,
+			"[TOML] App Config written to file successfully!");
+	} else {
+		blog.newEntry(BLOG::ERROR,
+			"[TOML] Failed to write App Config, runtime settings lost! [{}]", result.error().message());
+	}
+}
+
+void HomeDirManager::insertIntoMainAppConfig(const SettingsMap& map) const noexcept {
+	for (auto const& pair : map) {
+		const auto& key{ pair.first };
+		const auto& ref{ pair.second };
+		ref.visit([&](auto* ptr) { config::set(sMainAppConfig, key, *ptr); });
+	}
+}
+
+void HomeDirManager::updateFromMainAppConfig(const SettingsMap& map) const noexcept {
+	for (auto const& pair : map) {
+		const auto& key{ pair.first };
+		const auto& ref{ pair.second };
+		ref.visit([&](auto* ptr) { config::get(sMainAppConfig, key, *ptr); });
+	}
+}
+
+HomeDirManager* HomeDirManager::initialize(
+	StrV overridePath, StrV configName,
+	bool forcePortable, StrV org, StrV app
+) noexcept {
+	static bool initError{};
+	static HomeDirManager self(overridePath, configName, forcePortable, org, app, initError);
+	return initError ? nullptr : &self;
+}
+
+const Path* HomeDirManager::addSystemDir(const Path& sub, const Path& sys) noexcept {
 	if (sub.empty()) { return nullptr; }
 	
-	const fsPath newDir{ getHomePath() / sys / sub };
+	const auto newDirPath{ sHomePath / sys / sub };
 
-	auto it = std::find_if(
-		std::execution::unseq,
+	const auto it{ std::find_if(EXEC_POLICY(unseq)
 		mDirectories.begin(), mDirectories.end(),
-		[&newDir](const fsPath& dirEntry) {
-			return dirEntry == newDir;
-		}
-	);
+		[&newDirPath](const Path& dirEntry) noexcept
+			{ return dirEntry == newDirPath; }
+	) };
 
-	if (it != mDirectories.end()) { return &(*it); }
+	if (it != mDirectories.end())
+		{ return &(*it); }
 
-	std::error_code error;
-
-	std::filesystem::create_directories(newDir, error);
-	if (!std::filesystem::exists(newDir, error) || error) {
-		showErrorBox("Filesystem Error", (newDir.string() + "\nUnable to create subdirectories!").c_str());
+	if (const auto dirCreated{ fs::create_directories(newDirPath) }) {
+		mDirectories.push_back(newDirPath);
+		return &mDirectories.back();
+	} else {
+		blog.newEntry(BLOG::ERROR, "Unable to create directory: \"{}\" [{}]",
+			newDirPath.string(), dirCreated.error().message());
 		return nullptr;
 	}
-
-	mDirectories.push_back(newDir);
-	return &mDirectories.back();
 }
 
 void HomeDirManager::clearCachedFileData() noexcept {
@@ -81,53 +176,56 @@ void HomeDirManager::clearCachedFileData() noexcept {
 	mFileData.resize(0);
 }
 
-bool HomeDirManager::validateGameFile(const fsPath gamePath) noexcept {
-	if (gamePath.empty()) { return false; }
-	namespace fs = std::filesystem;
-	std::error_code error;
-
-	blog.newEntry(BLOG::INFO, "Attempting to access file: " + gamePath.string());
-
-	if (!fs::exists(gamePath, error) || error) {
-		blog.newEntry(BLOG::WARN, "Unable to locate path!" + error.message());
+bool HomeDirManager::validateGameFile(const Path& gamePath) noexcept {
+	const auto fileExists{ fs::is_regular_file(gamePath) };
+	if (!fileExists) {
+		blog.newEntry(BLOG::WARN, "Path is ineligible: \"{}\" [{}]",
+			gamePath.string(), fileExists.error().message());
+		return false;
+	}
+	if (!fileExists.value()) {
+		blog.newEntry(BLOG::WARN, "{}: \"{}\"",
+			"Path is not a regular file", gamePath.string());
 		return false;
 	}
 
-	if (!fs::is_regular_file(gamePath, error) || error) {
-		blog.newEntry(BLOG::WARN, "Provided path is not to a file!");
+	const auto fileSize{ fs::file_size(gamePath) };
+	if (!fileSize) {
+		blog.newEntry(BLOG::WARN, "Path is ineligible: \"{}\" [{}]",
+			gamePath.string(), fileExists.error().message());
 		return false;
 	}
-
-	const auto tempTime{ getFileModTime(gamePath) };
-
-	std::ifstream ifs(gamePath, std::ios::binary);
-	mFileData.assign(std::istreambuf_iterator(ifs), {});
-
-	if (tempTime != getFileModTime(gamePath)) {
-		blog.newEntry(BLOG::WARN, "File was modified while reading!");
-		return false;
-	}
-
-	if (!getFileSize()) {
+	if (fileSize.value() == 0) {
 		blog.newEntry(BLOG::WARN, "File must not be empty!");
 		return false;
 	}
+	if (fileSize.value() >= MiB(32)) {
+		blog.newEntry(BLOG::WARN, "File is too large!");
+		return false;
+	}
 
-	const auto tempSHA1{ SHA1::from_span(mFileData) };
-	const bool gameApproved{ checkGame(getFileSize(), gamePath.extension().string(), tempSHA1)};
+	auto fileData{ ::readFileData(gamePath) };
+	if (!fileData) {
+		blog.newEntry(BLOG::WARN, "Path is ineligible: \"{}\" [{}]",
+			gamePath.string(), fileData.error().message());
+		return false;
+	} else {
+		mFileData = std::move(fileData.value());
+	}
 
-	if (gameApproved) {
+	const auto tempSHA1{ SHA1::from_data(getFileData(), getFileSize()) };
+	blog.newEntry(BLOG::INFO, "File SHA1: {}", tempSHA1);
+
+	if (checkGame(
+		getFileData(), getFileSize(),
+		gamePath.extension().string(), tempSHA1
+	)) {
 		mFilePath = gamePath;
 		mFileSHA1 = tempSHA1;
-	}
-
-	if (gameApproved) {
-		blog.newEntry(BLOG::INFO, "File is a valid game!");
+		return true;
 	} else {
-		blog.newEntry(BLOG::INFO, "File is not a valid game!");
+		return false;
 	}
-
-	return gameApproved;
 }
 
 	#pragma endregion

@@ -4,36 +4,33 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include "BasicInput.hpp"
 #include <algorithm>
-#include <execution>
-#include <utility>
+
+#include "BasicInput.hpp"
 
 /*==================================================================*/
-	#pragma region BasicKeyboard Singleton Class
 
-void BasicKeyboard::updateCopy() {
-	std::copy_n(
-		std::execution::par_unseq,
-		SDL_GetKeyboardState(nullptr),
-		static_cast<Sint32>(SDL_SCANCODE_COUNT),
-		oldState.data()
-	);
-}
-
-	#pragma endregion
-/*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
+#ifdef __APPLE__
+	#define EXEC_POLICY(policy)
+#else
+	#include <execution>
+	#define EXEC_POLICY(policy) std::execution::policy,
+#endif
 
 /*==================================================================*/
-	#pragma region BasicMouse Singleton Class
 
-void BasicMouse::updateCopy() {
-	const auto oldX{ posX };
-	const auto oldY{ posY };
-	oldState = SDL_GetMouseState(&posX, &posY);
-	relX = posX - oldX;
-	relY = posY - oldY;
+void BasicKeyboard::updateStates() noexcept {
+	std::copy_n(EXEC_POLICY(unseq)
+		mCurState, TOTALKEYS, mOldState);
+
+	std::copy_n(EXEC_POLICY(unseq)
+		SDL_GetKeyboardState(nullptr), TOTALKEYS, mCurState);
 }
 
-	#pragma endregion
-/*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
+void BasicMouse::updateStates() noexcept {
+	mOldState = mCurState;
+
+	const auto oldX{ mPosX }, oldY{ mPosY };
+	mCurState = SDL_GetMouseState(&mPosX, &mPosY);
+	mRelX = mPosX - oldX; mRelY = mPosY - oldY;
+}

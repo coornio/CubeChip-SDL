@@ -4,117 +4,144 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include <SDL3/SDL.h>
+#include "Assistants/BasicLogger.hpp"
+#include "Assistants/ThreadAffinity.hpp"
+#include "Assistants/AttachConsole.hpp"
+
+#include "Libraries/cxxopts/cxxopts.hpp"
+
+#include "FrontendHost.hpp"
+
+#ifdef _WIN32
+	#pragma warning(push)
+	#pragma warning(disable : 5039)
+		#include <mbctype.h>
+	#pragma warning(pop)
+	#define NOMINMAX
+	#include <windows.h>
+#endif
 
 #define SDL_MAIN_USE_CALLBACKS
 #include <SDL3/SDL_main.h>
+#include <SDL3/SDL_hints.h>
+#include <SDL3/SDL_version.h>
 
-#if 0
-#include <windows.h>
-#include <shellapi.h>
+/*==================================================================*/
+
+BasicLogger& blog{ *BasicLogger::initialize() };
+
+/*==================================================================*/
+
+SDL_AppResult SDL_AppInit(void **Host, int argc, char *argv[]) {
+	static_assert(std::endian::native == std::endian::little,
+		"Only little-endian systems are supported!");
+
+#ifdef _WIN32
+	_setmbcp(CP_UTF8);
+	setlocale(LC_CTYPE, ".UTF-8");
+	SetConsoleOutputCP(CP_UTF8);
+	SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
 #endif
 
-#include "Assistants/BasicLogger.hpp"
-#include "Assistants/BasicInput.hpp"
-#include "Assistants/HomeDirManager.hpp"
-#include "Assistants/BasicVideoSpec.hpp"
-#include "Assistants/BasicAudioSpec.hpp"
+	SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1");
+	SDL_SetHint(SDL_HINT_APP_NAME, AppName);
+	SDL_SetAppMetadata(AppName, AppVer, nullptr);
 
-#include "EmuHost.hpp"
+	cxxopts::Options options(AppName, "Cross-platform multi-system emulator");
 
-/*==================================================================*/
+	options.add_options("Runtime")
+		("program",  "Forces the application to load a program on startup.",
+			cxxopts::value<Str>())
+		("headless", "Forces the application to run without a graphical user interface.",
+			cxxopts::value<bool>()->default_value("false"));
 
-BasicLogger&         blog{   *BasicLogger::create() };
-BasicKeyboard& binput::kb{ *BasicKeyboard::create() };
-BasicMouse&    binput::mb{    *BasicMouse::create() };
+	options.add_options("Configuration")
+		("homedir",  "Forces application to use a different home directory to read/write files.",
+			cxxopts::value<Str>())
+		("config",   "Forces application to use a different config file to load/save settings, relative to the home directory.",
+			cxxopts::value<Str>())
+		("portable", "Force application to operate in portable mode, setting the home directory to the executable's location. Overriden by --home.",
+			cxxopts::value<bool>()->default_value("false"));
 
-/*==================================================================*/
+	options.add_options("General")
+		("debug",   "Print application SDL debuf info.")
+		("version", "Print application version info.")
+		("help",    "List application options.");
 
-SDL_AppResult SDL_AppInit(void **Host, int argc, char* argv[]) {
+	options.parse_positional({ "program" });
+	options.positional_help("program_file");
 
-//             VS               OTHER
-#if !defined(NDEBUG) || defined(DEBUG)
-	{
-		printf("SDL3 test dated: 15/9/2024 (dmy)\n");
-		const auto compiled{ SDL_VERSION };  /* hardcoded number from SDL headers */
-		const auto linked{ SDL_GetVersion() };  /* reported by linked SDL library */
+	auto result{ options.parse(argc, argv) };
 
-		printf("Compiled with SDL version: %d.%d.%d\n",
+	if (result.count("debug")) {
+		Console::Attach();
+		fmt::println("SDL3 dev version tested: 23/03/25 (dd/mm/yy)");
+
+		const auto compiled{ SDL_VERSION }; /* hardcoded number from SDL headers */
+		const auto linked{ SDL_GetVersion() }; /* reported by linked SDL library */
+
+		fmt::println("Compiled with SDL version: {}.{}.{}",
 			SDL_VERSIONNUM_MAJOR(compiled),
 			SDL_VERSIONNUM_MINOR(compiled),
-			SDL_VERSIONNUM_MICRO(compiled)
-		);
-		printf("Linked with SDL version: %d.%d.%d\n",
+			SDL_VERSIONNUM_MICRO(compiled));
+		fmt::println("Linked with SDL version: {}.{}.{}",
 			SDL_VERSIONNUM_MAJOR(linked),
 			SDL_VERSIONNUM_MINOR(linked),
-			SDL_VERSIONNUM_MICRO(linked)
-		);
+			SDL_VERSIONNUM_MICRO(linked));
+
+		return SDL_APP_SUCCESS;
 	}
-#endif
 
-#ifdef SDL_PLATFORM_WIN32
-	SDL_SetHint(SDL_HINT_RENDER_DRIVER, "direct3d");
-	SDL_SetHint(SDL_HINT_WINDOWS_RAW_KEYBOARD, "0");
-#endif
-	SDL_SetHint(SDL_HINT_APP_NAME, "CubeChip");
+	if (result.count("version")) {
+		Console::Attach();
+		fmt::println("{} compiled on: {}", AppName, AppVer);
 
-	if (EmuHost::assignComponents(
-		HomeDirManager::create(nullptr, "CubeChip"),
-		BasicVideoSpec::create(),
-		BasicAudioSpec::create()
+		return SDL_APP_SUCCESS;
+	}
+
+	if (result.count("help")) {
+		Console::Attach();
+		fmt::println("{}", options.help({ "Runtime", "Configuration", "General" }));
+
+		return SDL_APP_SUCCESS;
+	}
+
+	if (!FrontendHost::initApplication(
+		result.count("homedir")  ? result["homedir"].as<Str>() : ""s,
+		result.count("config")   ? result["config"] .as<Str>() : ""s,
+		result.count("portable") ? true : false, "", AppName
 	)) { return SDL_APP_FAILURE; }
 
-#if 0
-	setlocale(LC_CTYPE, "");
-	LPWSTR* wargv{}; int wargc{};
-	wargv = CommandLineToArgvW(GetCommandLineW(), &wargc);
-	if (!wargv) { return SDL_APP_FAILURE; }
+	*Host = FrontendHost::initialize(result.count("program") ? result["program"].as<Str>() : ""s);
 
-	*Host = &EmuHost::create(wargc <= 1 ? L"" : wargv[1]);
-	LocalFree(wargv);
-#else
-	*Host = EmuHost::create(argc <= 1 ? "" : argv[1]);
-#endif
-	return SDL_APP_CONTINUE;
-}
-
-/*==================================================================*/
-
-SDL_AppResult SDL_AppIterate(void* pHost) {
-	auto& Host{ *static_cast<EmuHost*>(pHost) };
-	const std::lock_guard lock{ Host.Mutex };
-
-	Host.processFrame();
+	thread_affinity::set_affinity(0b11ull);
 
 	return SDL_APP_CONTINUE;
 }
 
 /*==================================================================*/
 
-SDL_AppResult SDL_AppEvent(void* pHost, SDL_Event* Event) {
-	auto& Host{ *static_cast<EmuHost*>(pHost) };
-	const std::lock_guard lock{ Host.Mutex };
+SDL_AppResult SDL_AppIterate(void *pHost) {
+	auto Host{ static_cast<FrontendHost*>(pHost) };
 
-	switch (Event->type) {
-		case SDL_EVENT_QUIT:
-			return SDL_APP_SUCCESS;
+	Host->processFrame();
 
-		case SDL_EVENT_DROP_FILE:
-			Host.loadGameFile(Event->drop.data);
-			break;
+	return SDL_APP_CONTINUE;
+}
 
-		case SDL_EVENT_WINDOW_MINIMIZED:
-			Host.pauseSystem(true);
-			break;
+/*==================================================================*/
 
-		case SDL_EVENT_WINDOW_RESTORED:
-			Host.pauseSystem(false);
-			break;
+SDL_AppResult SDL_AppEvent(void *pHost, SDL_Event *event) {
+	auto Host{ static_cast<FrontendHost*>(pHost) };
+
+	return static_cast<SDL_AppResult>(Host->processEvents(event));
+}
+
+/*==================================================================*/
+
+void SDL_AppQuit(void *pHost, SDL_AppResult) {
+	if (pHost) {
+		auto Host{ static_cast<FrontendHost*>(pHost) };
+		Host->quitApplication();
 	}
-
-	return SDL_APP_CONTINUE;
 }
-
-/*==================================================================*/
-
-void SDL_AppQuit(void*) {}

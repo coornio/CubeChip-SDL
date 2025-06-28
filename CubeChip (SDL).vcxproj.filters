@@ -5,21 +5,8 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
     <Filter Include="Source Files\Assistants">
       <UniqueIdentifier>{89a55c14-1a9b-486e-9b28-16af4d258b1c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\_nlohmann">
-      <UniqueIdentifier>{55d4d668-6f28-4b99-9a19-8f349a95197e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="to_be_removed">
-      <UniqueIdentifier>{5efef33a-fd49-4994-9c98-d0080b4b7d89}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="to_be_removed\InstructionSets">
-      <UniqueIdentifier>{f124b1ff-b297-4745-ade8-c28e4686f1c8}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\Systems">
       <UniqueIdentifier>{6fc556f9-a527-48ce-9095-97e687e85301}</UniqueIdentifier>
@@ -36,18 +23,48 @@
     <Filter Include="Source Files\Systems\CHIP8\Cores">
       <UniqueIdentifier>{a31d04cb-4539-415a-9bab-f85e2fb0f2b7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Systems\GAMEBOY">
+      <UniqueIdentifier>{00a2d494-a57a-4ba3-9210-3d04cb91f4e5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Systems\GAMEBOY\Cores">
+      <UniqueIdentifier>{5b33560e-ded9-4795-ba66-939d71046c56}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Libraries">
+      <UniqueIdentifier>{ba9c82b3-4138-4002-bf89-bee6dce42725}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Libraries\imgui">
+      <UniqueIdentifier>{bc3d3585-b3eb-4e49-92cf-2b87106000b5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Libraries\atomic_queue">
+      <UniqueIdentifier>{6826200b-1cb7-4cbd-87ec-1184edda6c27}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Libraries\nlohmann">
+      <UniqueIdentifier>{7306d220-21ca-4515-83a6-f47988b1312a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Libraries\tartanllama">
+      <UniqueIdentifier>{d4c3c012-936f-4201-aaae-bbe93c281c0b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Libraries\fmt">
+      <UniqueIdentifier>{e68069d2-a9f7-44e5-866a-9d5724cc7230}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Libraries\jthread">
+      <UniqueIdentifier>{af2d6bf9-49dd-44a5-afc1-48dce1c3e632}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Libraries\toml++">
+      <UniqueIdentifier>{df4f07ae-f914-4edc-922c-84664ba284b1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Libraries\cxxopts">
+      <UniqueIdentifier>{42f46bcb-6584-4cee-9502-e00bfec53b8a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\CubeChip.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\EmuHost.cpp">
+    <ClCompile Include="src\FrontendHost.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Assistants\BasicAudioSpec.cpp">
-      <Filter>Source Files\Assistants</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Assistants\BasicInput.cpp">
       <Filter>Source Files\Assistants</Filter>
     </ClCompile>
     <ClCompile Include="src\Assistants\BasicLogger.cpp">
@@ -65,10 +82,10 @@
     <ClCompile Include="src\Assistants\SHA1.cpp">
       <Filter>Source Files\Assistants</Filter>
     </ClCompile>
-    <ClCompile Include="src\Systems\EmuInterface.cpp">
+    <ClCompile Include="src\Systems\SystemsInterface.cpp">
       <Filter>Source Files\Systems</Filter>
     </ClCompile>
-    <ClCompile Include="src\Systems\GameFileChecker.cpp">
+    <ClCompile Include="src\Systems\CoreRegistry.cpp">
       <Filter>Source Files\Systems</Filter>
     </ClCompile>
     <ClCompile Include="src\Systems\CHIP8\Chip8_CoreInterface.cpp">
@@ -95,14 +112,71 @@
     <ClCompile Include="src\Systems\CHIP8\Cores\MEGACHIP.cpp">
       <Filter>Source Files\Systems\CHIP8\Cores</Filter>
     </ClCompile>
+    <ClCompile Include="src\Systems\GAMEBOY\GameBoy_CoreInterface.cpp">
+      <Filter>Source Files\Systems\GAMEBOY</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Systems\GAMEBOY\Cores\GAMEBOY_CLASSIC.cpp">
+      <Filter>Source Files\Systems\GAMEBOY\Cores</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Systems\CHIP8\Cores\CHIP8X.cpp">
+      <Filter>Source Files\Systems\CHIP8\Cores</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Libraries\imgui\imgui.cpp">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Libraries\imgui\imgui_demo.cpp">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Libraries\imgui\imgui_draw.cpp">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Libraries\imgui\imgui_impl_sdl3.cpp">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Libraries\imgui\imgui_impl_sdlrenderer3.cpp">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Libraries\imgui\imgui_stdlib.cpp">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Libraries\imgui\imgui_tables.cpp">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Libraries\imgui\imgui_widgets.cpp">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Assistants\DefaultConfig.cpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Assistants\AttachConsole.cpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Assistants\ThreadAffinity.cpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Assistants\PathGetters.cpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Assistants\Well512.cpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Assistants\FrontendInterface.cpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Assistants\LifetimeWrapperSDL.cpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Assistants\AudioSpecBlock.cpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Assistants\BasicInput.cpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Assistants\Millis.cpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\_nlohmann\json_fwd.hpp">
-      <Filter>Header Files\_nlohmann</Filter>
-    </ClInclude>
-    <ClInclude Include="src\_nlohmann\json.hpp">
-      <Filter>Header Files\_nlohmann</Filter>
-    </ClInclude>
     <ClInclude Include="src\Assistants\BasicAudioSpec.hpp">
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
@@ -113,9 +187,6 @@
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
     <ClInclude Include="src\Assistants\BasicVideoSpec.hpp">
-      <Filter>Source Files\Assistants</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Assistants\BytePun.hpp">
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
     <ClInclude Include="src\Assistants\Concepts.hpp">
@@ -142,13 +213,13 @@
     <ClInclude Include="src\Assistants\HomeDirManager.hpp">
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
-    <ClInclude Include="src\EmuHost.hpp">
+    <ClInclude Include="src\FrontendHost.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Systems\EmuInterface.hpp">
+    <ClInclude Include="src\Systems\SystemsInterface.hpp">
       <Filter>Source Files\Systems</Filter>
     </ClInclude>
-    <ClInclude Include="src\Systems\GameFileChecker.hpp">
+    <ClInclude Include="src\Systems\CoreRegistry.hpp">
       <Filter>Source Files\Systems</Filter>
     </ClInclude>
     <ClInclude Include="src\Systems\CHIP8\Chip8_CoreInterface.hpp">
@@ -178,5 +249,101 @@
     <ClInclude Include="src\Systems\CHIP8\Cores\MEGACHIP.hpp">
       <Filter>Source Files\Systems\CHIP8\Cores</Filter>
     </ClInclude>
+    <ClInclude Include="src\Systems\GAMEBOY\GameBoy_CoreInterface.hpp">
+      <Filter>Source Files\Systems\GAMEBOY</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\GAMEBOY\Cores\GAMEBOY_CLASSIC.hpp">
+      <Filter>Source Files\Systems\GAMEBOY\Cores</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\SimpleFileIO.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\LifetimeWrapperSDL.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\TripleBuffer.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\Aligned.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\CHIP8\Cores\CHIP8X.hpp">
+      <Filter>Source Files\Systems\CHIP8\Cores</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\Misc.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\ColorOps.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\AtomicSharedProxy.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\imgui\imconfig.h">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\imgui\imgui.h">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\imgui\imgui_impl_sdl3.h">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\imgui\imgui_impl_sdlrenderer3.h">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\imgui\imgui_internal.h">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\imgui\imgui_stdlib.h">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\imgui\imstb_rectpack.h">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\imgui\imstb_textedit.h">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\imgui\imstb_truetype.h">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\ThreadAffinity.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\DefaultConfig.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\jthread\jthread.hpp">
+      <Filter>Source Files\Libraries\jthread</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\jthread\stop_token.hpp">
+      <Filter>Source Files\Libraries\jthread</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\SettingWrapper.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\AttachConsole.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\SimpleRingBuffer.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\FrontendInterface.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\AudioSpecBlock.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\FriendlyUnique.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\Millis.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="src\Libraries\imgui\debuggers\imgui.natvis" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\Libraries\imgui\debuggers\imgui.natstepfilter" />
   </ItemGroup>
 </Project>
