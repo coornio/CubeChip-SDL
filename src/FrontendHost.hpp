@@ -50,7 +50,7 @@ class FrontendHost final {
 
 public:
 	static inline HomeDirManager* HDM{};
-	static inline BasicAudioSpec* BAS{};
+	static inline GlobalAudioBase* BAS{};
 	static inline BasicVideoSpec* BVS{};
 
 private:
