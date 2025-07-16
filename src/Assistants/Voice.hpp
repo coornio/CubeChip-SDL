@@ -22,12 +22,17 @@ constexpr inline float transientFall(unsigned iter, float step = 0.01f) noexcept
 
 /*==================================================================*/
 
-struct alignas(4) TransienceGain {
+struct TransienceGain {
 	using u32 = std::uint32_t;
 
-	bool intro{};
-	bool outro{};
-	bool fallback{ true };
+	bool intro : 1;
+	bool outro : 1;
+	bool fallback : 1;
+
+	constexpr TransienceGain() noexcept : fallback{ true } {}
+	constexpr TransienceGain(bool intro, bool outro, bool fallback) noexcept
+		: intro{ intro }, outro{ outro }, fallback{ fallback }
+	{}
 
 	constexpr auto calculate(u32 sample_idx) const noexcept {
 		return  intro ? ::transientGain(sample_idx) :
@@ -138,7 +143,7 @@ struct GeneratorBundle {
 
 	template <IsContiguousContainerOf<float> T>
 	constexpr void run(T& buffer, Stream* stream) const noexcept {
-		functor(std::data(buffer), std::size(buffer), voice, stream);
+		functor(std::data(buffer), unsigned(std::size(buffer)), voice, stream);
 	}
 };
 

@@ -68,7 +68,7 @@ void AudioDevice::resumeStreams() noexcept {
 
 AudioDevice::Stream::Stream(
 	SDL_AudioStream* ptr,
-	signed format, signed freq, signed channels
+	unsigned format, unsigned freq, unsigned channels
 ) noexcept
 	: ptr     { ptr      }
 	, format  { format   }
@@ -77,7 +77,7 @@ AudioDevice::Stream::Stream(
 {}
 
 auto AudioDevice::Stream::getSpec() const noexcept -> SDL_AudioSpec {
-	return { SDL_AudioFormat(format), freq, channels };
+	return { SDL_AudioFormat(format), signed(freq), signed(channels) };
 }
 
 bool AudioDevice::Stream::isPaused() const noexcept {

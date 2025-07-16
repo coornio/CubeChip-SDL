@@ -338,7 +338,7 @@ void XOCHIP::makePatternWave(f32* data, u32 size, Voice* voice, Stream*) noexcep
 			const auto bitStep{ s32(voice->peekPhase(i) * 128.0f) };
 			const auto bitMask{ 1 << (0x7 ^ (bitStep & 0x7)) };
 			::assign_cast_add(data[i], \
-				((mPattern[bitStep >> 3] & bitMask) ? 1.0f : -1.0f) * gain);
+				(mPattern[bitStep >> 3] & bitMask) ? gain : -gain);
 		} else break;
 	}
 	voice->stepPhase(size);

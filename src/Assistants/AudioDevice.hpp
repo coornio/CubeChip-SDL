@@ -24,14 +24,14 @@ class AudioDevice {
 public:
 	class Stream {
 		SDL_Unique<SDL_AudioStream> ptr;
-		signed format{}; signed freq{};
-		signed channels{};
+		unsigned format{}; unsigned freq{};
+		unsigned channels{};
 		unsigned long long accumulator{};
 
 	public:
 		Stream(
 			SDL_AudioStream* ptr,
-			signed format, signed freq, signed channels
+			unsigned format, unsigned freq, unsigned channels
 		) noexcept;
 
 		auto getSpec()     const noexcept -> SDL_AudioSpec;

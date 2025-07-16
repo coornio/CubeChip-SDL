@@ -65,12 +65,12 @@ class Well512;
 /*==================================================================*/
 
 class SystemsInterface {
-	Atom<u32> mGlobalState{ EmuState::NORMAL };
+
 	Thread mCoreThread;
-
 	Str mOverlayDataBuffer{};
-	AtomSharedPtr<Str> mOverlayData;
 
+	AtomSharedPtr<Str> mOverlayData;
+	
 protected:
 	Str* getOverlayDataBuffer() noexcept
 		{ return &mOverlayDataBuffer; }
@@ -91,8 +91,9 @@ protected:
 	std::unique_ptr<BasicKeyboard> Input;
 
 	u64 mElapsedCycles{};
-	Atom<f32> mTargetFPS{};
 	s32 mTargetCPF{};
+	Atom<f32> mTargetFPS{};
+	Atom<u32> mGlobalState{ EmuState::NORMAL };
 
 protected:
 	SystemsInterface() noexcept;

@@ -456,7 +456,7 @@ void MEGACHIP::blendAndFlushBuffers() const {
 		mBackgroundBuffer,
 		[this](RGBA src, RGBA dst) noexcept {
 			return blendPixel(src, dst, \
-				mBlendFunc, mTexture.opacity);
+				mBlendFunc, u8(mTexture.opacity));
 		}
 	);
 }
@@ -880,11 +880,11 @@ void MEGACHIP::scrollBuffersRT() {
 			for (auto rowN{ 0 }, offsetY{ originY }; rowN < mTexture.H; ++rowN)
 			{
 				if (Quirk.wrapSprite && offsetY >= mDisplay.H) { continue; }
-				auto I = mRegisterI + rowN * mTexture.W;
+				const auto offsetI = rowN * mTexture.W;
 
-				for (auto colN{ 0 }, offsetX{ originX }; colN < mTexture.W; ++colN, ++I)
+				for (auto colN{ 0 }, offsetX{ originX }; colN < mTexture.W; ++colN)
 				{
-					if (const auto sourceColorIdx{ readMemory(I) })
+					if (const auto sourceColorIdx{ readMemoryI(offsetI + colN) })
 					{
 						auto& collideCoord{ mCollisionMap(offsetX, offsetY) };
 						auto& backbufCoord{ mBackgroundBuffer(offsetX, offsetY) };
@@ -894,7 +894,7 @@ void MEGACHIP::scrollBuffersRT() {
 
 						collideCoord = sourceColorIdx;
 						backbufCoord = blendPixel(mColorPalette(sourceColorIdx), \
-							backbufCoord, mBlendFunc, mTexture.opacity);
+							backbufCoord, mBlendFunc, u8(mTexture.opacity));
 					}
 					if (!Quirk.wrapSprite && offsetX == (mDisplay.W - 1)) { break; }
 					else { ++offsetX &= (mDisplay.W - 1); }

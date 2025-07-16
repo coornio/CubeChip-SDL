@@ -23,8 +23,6 @@ protected:
 	static inline thread_local Path sSavestatePath{};
 	static constexpr f32 sTonalOffset{ 160.0f };
 
-	AudioDevice mAudioDevice;
-
 	std::vector<SimpleKeyMapping> mCustomBinds;
 
 private:
@@ -123,7 +121,21 @@ protected:
 
 	u32 mStackTop{};
 
+	inline static
+	std::array<u8, 16>
+		sPermRegsV{};
+
+	std::array<u8, 16>
+		mRegisterV{};
+
 	alignas(64)
+	std::array<u32, 16>
+		mStackBank{};
+
+/*==================================================================*/
+
+	AudioDevice mAudioDevice;
+
 	std::array<Voice, VOICE::COUNT>
 		mVoices{};
 
@@ -135,17 +147,6 @@ protected:
 
 	void mixAudioData(VoiceGenerators processors) noexcept;
 	static void makePulseWave(f32* data, u32 size, Voice* voice, Stream* stream) noexcept;
-
-	inline static
-	std::array<u8, 16>
-		sPermRegsV{};
-
-	std::array<u8, 16>
-		mRegisterV{};
-
-	alignas(64)
-	std::array<u32, 16>
-		mStackBank{};
 
 /*==================================================================*/
 
