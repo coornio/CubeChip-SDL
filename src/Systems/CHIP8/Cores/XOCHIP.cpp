@@ -8,7 +8,7 @@
 #ifdef ENABLE_XOCHIP
 
 #include "../../../Assistants/BasicVideoSpec.hpp"
-#include "../../../Assistants/BasicAudioSpec.hpp"
+#include "../../../Assistants/GlobalAudioBase.hpp"
 #include "../../../Assistants/Well512.hpp"
 #include "../../CoreRegistry.hpp"
 
@@ -32,15 +32,17 @@ XOCHIP::XOCHIP()
 	copyFontToMemory(mMemoryBank.data(), 0x50);
 	copyColorsToCore(mBitColors.data());
 
-	setDisplayResolution(cScreenSizeX, cScreenSizeY);
+	mDisplay.set(cScreenSizeX, cScreenSizeY);
 	setViewportSizes(true, cScreenSizeX, cScreenSizeY, cResSizeMult, 2);
 	setSystemFramerate(cRefreshRate);
 
+	setPatternPitch(64);
+
+	mVoices[VOICE::UNIQUE].userdata = &mAudioTimers[VOICE::UNIQUE];
+	mVoices[VOICE::BUZZER].userdata = &mAudioTimers[VOICE::BUZZER];
+
 	mCurrentPC = cStartOffset;
 	mTargetCPF = cInstSpeedLo;
-
-	mAudio[STREAM::CHANN1].pause();
-	mAudio[STREAM::CHANN2].pause();
 }
 
 /*==================================================================*/
@@ -259,14 +261,16 @@ void XOCHIP::instructionLoop() noexcept {
 }
 
 void XOCHIP::renderAudioData() {
-	pushPatternTone(STREAM::UNIQUE);
-	pushSquareTone(STREAM::BUZZER);
+	mixAudioData({
+		{ makePatternWave, &mVoices[VOICE::UNIQUE] },
+		{ makePulseWave,   &mVoices[VOICE::BUZZER] },
+	});
 
-	setDisplayBorderColor(mBitColors[!!mAudioTimer[STREAM::BUZZER]]);
+	setDisplayBorderColor(mBitColors[!!mAudioTimers[VOICE::BUZZER].get()]);
 }
 
 void XOCHIP::renderVideoData() {
-	std::vector<u8> textureBuffer(mDisplayW * mDisplayH);
+	std::vector<u8> textureBuffer(mDisplay.pixels());
 
 	std::for_each(EXEC_POLICY(unseq)
 		textureBuffer.begin(),
@@ -284,11 +288,11 @@ void XOCHIP::renderVideoData() {
 
 	BVS->displayBuffer.write(textureBuffer,
 		[pBitColors = mBitColors.data()](u32 pixel) noexcept {
-			return static_cast<u32>(0xFF | pBitColors[pixel]);
+			return u32(0xFFu | pBitColors[pixel]);
 		}
 	);
 
-	setViewportSizes(isResolutionChanged(false), mDisplayW, mDisplayH,
+	setViewportSizes(isResolutionChanged(false), mDisplay.W, mDisplay.H,
 		isLargerDisplay() ? cResSizeMult / 2 : cResSizeMult, 2);
 }
 
@@ -299,7 +303,7 @@ void XOCHIP::prepDisplayArea(const Resolution mode) {
 	const auto W{ isLargerDisplay() ? cScreenSizeX * 2 : cScreenSizeX };
 	const auto H{ isLargerDisplay() ? cScreenSizeY * 2 : cScreenSizeY };
 
-	setDisplayResolution(W, H);
+	mDisplay.set(W, H);
 
 	mDisplayBuffer[0].resizeClean(W, H);
 	mDisplayBuffer[1].resizeClean(W, H);
@@ -312,33 +316,32 @@ void XOCHIP::setColorBit332(s32 bit, s32 color) noexcept {
 	static constexpr u8 map2b[]{ 0x00,             0x60,       0xA0,       0xFF };
 
 	mBitColors[bit & 0xF] = {
-		map3b[color >> 5 & 0x7], // red
-		map3b[color >> 2 & 0x7], // green
-		map2b[color      & 0x3], // blue
+		map3b[color >> 5 & 0x7], // R
+		map3b[color >> 2 & 0x7], // G
+		map2b[color      & 0x3], // B
 	};
 }
 
-void XOCHIP::pushPatternTone(s32 index) noexcept {
-	if (auto* stream{ mAudio.at(index) }) {
-		const auto samplesTotal{ mAudio[index].getNextBufferSize(cRefreshRate) };
-		auto samplesBuffer{ ::allocate<s16>(samplesTotal).as_value().release() };
-
-		if (mAudioTimer[index]) {
-			const auto audioTone{ std::pow(2.0f, (mAudioPitch - 64.0f) / 48.0f) };
-			const auto audioStep{ 31.25f / stream->getFreq() * audioTone };
-
-			for (auto& audioSample : std::span(samplesBuffer.get(), samplesTotal)) {
-				const auto bitOffset{ static_cast<s32>(std::clamp(mAudioPhase[index] * 128.0f, 0.0f, 127.0f)) };
-				const auto bytePhase{ 1 << (7 ^ (bitOffset & 7)) };
-				audioSample = (mPatternBuf[bitOffset >> 3] & bytePhase ? 0x0F : 0xF0) << 8;
-
-				mAudioPhase[index] += audioStep;
-				mAudioPhase[index] -= static_cast<int>(mAudioPhase[index]);
-			}
-		} else { mAudioPhase[index] = 0.0f; }
-
-		stream->pushAudioData(samplesBuffer.get(), samplesTotal);
+void XOCHIP::setPatternPitch(s32 pitch) noexcept {
+	if (auto* stream{ mAudioDevice.at(STREAM::MAIN) }) {
+		mVoices[VOICE::UNIQUE].setStep(std::bit_cast<f32>
+			(sPitchFreqLUT[pitch]) / stream->getFreq());
 	}
+}
+
+void XOCHIP::makePatternWave(f32* data, u32 size, Voice* voice, Stream*) noexcept {
+	if (!voice || !voice->userdata) [[unlikely]] { return; }
+	auto* timer{ static_cast<AudioTimer*>(voice->userdata) };
+
+	for (auto i{ 0u }; i < size; ++i) {
+		if (const auto gain{ voice->getLevel(i, *timer) }) {
+			const auto bitStep{ s32(voice->peekPhase(i) * 128.0f) };
+			const auto bitMask{ 1 << (0x7 ^ (bitStep & 0x7)) };
+			::assign_cast_add(data[i], \
+				((mPattern[bitStep >> 3] & bitMask) ? 1.0f : -1.0f) * gain);
+		} else break;
+	}
+	voice->stepPhase(size);
 }
 
 /*==================================================================*/
@@ -566,7 +569,7 @@ void XOCHIP::scrollDisplayRT() {
 	#pragma region A instruction branch
 
 	void XOCHIP::instruction_ANNN(s32 NNN) noexcept {
-		mRegisterI = NNN & 0xFFF;
+		::assign_cast(mRegisterI, NNN & 0xFFF);
 	}
 
 	#pragma endregion
@@ -606,8 +609,8 @@ void XOCHIP::scrollDisplayRT() {
 
 			[[unlikely]]
 			case 0b10000000:
-				if (Quirk.wrapSprite) { X &= mDisplayWb; }
-				if (X < mDisplayW) {
+				if (Quirk.wrapSprite) { X &= (mDisplay.W - 1); }
+				if (X < mDisplay.W) {
 					if (!((mDisplayBuffer[P](X, Y) ^= 1) & 1))
 						{ mRegisterV[0xF] = 1; }
 				}
@@ -615,15 +618,15 @@ void XOCHIP::scrollDisplayRT() {
 
 			[[likely]]
 			default:
-				if (Quirk.wrapSprite) { X &= mDisplayWb; }
-				else if (X >= mDisplayW) { return; }
+				if (Quirk.wrapSprite) { X &= (mDisplay.W - 1); }
+				else if (X >= mDisplay.W) { return; }
 
-				for (auto B{ 0 }; B < 8; ++B, ++X &= mDisplayWb) {
+				for (auto B{ 0 }; B < 8; ++B, ++X &= (mDisplay.W - 1)) {
 					if (DATA & 0x80 >> B) {
 						if (!((mDisplayBuffer[P](X, Y) ^= 1) & 1))
 							{ mRegisterV[0xF] = 1; }
 					}
-					if (!Quirk.wrapSprite && X == mDisplayWb) { return; }
+					if (!Quirk.wrapSprite && X == (mDisplay.W - 1)) { return; }
 				}
 				return;
 		}
@@ -635,8 +638,8 @@ void XOCHIP::scrollDisplayRT() {
 			return;
 		}
 
-		const auto pX{ mRegisterV[X] & mDisplayWb };
-		const auto pY{ mRegisterV[Y] & mDisplayHb };
+		const auto pX{ mRegisterV[X] & (mDisplay.W - 1) };
+		const auto pY{ mRegisterV[Y] & (mDisplay.H - 1) };
 
 		mRegisterV[0xF] = 0;
 
@@ -647,8 +650,8 @@ void XOCHIP::scrollDisplayRT() {
 						drawByte(pX + 0, tY, P, readMemoryI(I + tN * 2 + 0));
 						drawByte(pX + 8, tY, P, readMemoryI(I + tN * 2 + 1));
 
-						if (!Quirk.wrapSprite && tY == mDisplayHb) { break; }
-						else { ++tY &= mDisplayHb; }
+						if (!Quirk.wrapSprite && tY == (mDisplay.H - 1)) { break; }
+						else { ++tY &= (mDisplay.H - 1); }
 					}
 					I += 32;
 				}
@@ -659,8 +662,8 @@ void XOCHIP::scrollDisplayRT() {
 					for (auto tN{ 0 }, tY{ pY }; tN < N; ++tN) {
 						drawByte(pX, tY, P, readMemoryI(I + tN));
 
-						if (!Quirk.wrapSprite && tY == mDisplayHb) { break; }
-						else { ++tY &= mDisplayHb; }
+						if (!Quirk.wrapSprite && tY == (mDisplay.H - 1)) { break; }
+						else { ++tY &= (mDisplay.H - 1); }
 					}
 					I += N;
 				}
@@ -692,8 +695,9 @@ void XOCHIP::scrollDisplayRT() {
 		nextInstruction();
 	}
 	void XOCHIP::instruction_F002() noexcept {
+		SUGGEST_VECTORIZABLE_LOOP
 		for (auto idx{ 0 }; idx < 16; ++idx)
-			{ mPatternBuf[idx] = readMemoryI(idx); }
+			{ mPattern[idx] = readMemoryI(idx); }
 	}
 	void XOCHIP::instruction_FN01(s32 N) noexcept {
 		mPlanarMask = N;
@@ -709,16 +713,16 @@ void XOCHIP::scrollDisplayRT() {
 		mDelayTimer = mRegisterV[X];
 	}
 	void XOCHIP::instruction_Fx18(s32 X) noexcept {
-		startAudioAtChannel(STREAM::UNIQUE, mRegisterV[X] + (mRegisterV[X] == 1));
+		mAudioTimers[VOICE::UNIQUE].set(mRegisterV[X] + (mRegisterV[X] == 1));
 	}
 	void XOCHIP::instruction_Fx1E(s32 X) noexcept {
 		mRegisterI = (mRegisterI + mRegisterV[X]) & 0xFFFF;
 	}
 	void XOCHIP::instruction_Fx29(s32 X) noexcept {
-		mRegisterI = (mRegisterV[X] & 0xF) * 5;
+		mRegisterI = (mRegisterV[X] & 0xF) * 5 + cSmallFontOffset;
 	}
 	void XOCHIP::instruction_Fx30(s32 X) noexcept {
-		mRegisterI = (mRegisterV[X] & 0xF) * 10 + 80;
+		mRegisterI = (mRegisterV[X] & 0xF) * 10 + cLargeFontOffset;
 	}
 	void XOCHIP::instruction_Fx33(s32 X) noexcept {
 		const auto N__{ mRegisterV[X] * 0x51EB851Full >> 37 };
@@ -731,7 +735,7 @@ void XOCHIP::scrollDisplayRT() {
 		writeMemoryI(__N, 2);
 	}
 	void XOCHIP::instruction_Fx3A(s32 X) noexcept {
-		mAudioPitch = mRegisterV[X];
+		setPatternPitch(mRegisterV[X]);
 	}
 	void XOCHIP::instruction_FN55(s32 N) noexcept {
 		SUGGEST_VECTORIZABLE_LOOP

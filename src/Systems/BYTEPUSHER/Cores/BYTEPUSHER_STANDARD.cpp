@@ -8,7 +8,7 @@
 #ifdef ENABLE_BYTEPUSHER_STANDARD
 
 #include "../../../Assistants/BasicVideoSpec.hpp"
-#include "../../../Assistants/BasicAudioSpec.hpp"
+#include "../../../Assistants/GlobalAudioBase.hpp"
 #include "../../CoreRegistry.hpp"
 
 REGISTER_CORE(BYTEPUSHER_STANDARD, ".BytePusher")
@@ -22,6 +22,9 @@ BYTEPUSHER_STANDARD::BYTEPUSHER_STANDARD() {
 
 	setViewportSizes(true, cScreenSizeX, cScreenSizeY, cResSizeMult, 2);
 	setSystemFramerate(cRefreshRate);
+
+	mAudioDevice.addAudioStream(STREAM::MAIN, cRefreshRate * cAudioLength);
+	mAudioDevice.resumeStreams();
 }
 
 /*==================================================================*/
@@ -30,8 +33,8 @@ void BYTEPUSHER_STANDARD::instructionLoop() noexcept {
 	const auto inputStates{ getKeyStates() };
 	      auto progPointer{ readData<3>(2) };
 
-	mMemoryBank[0] = static_cast<u8>(inputStates >> 0x8);
-	mMemoryBank[1] = static_cast<u8>(inputStates & 0xFF);
+	::assign_cast(mMemoryBank[0], inputStates >> 0x8);
+	::assign_cast(mMemoryBank[1], inputStates & 0xFF);
 	
 	auto cycleCount{ 0 };
 	for (; cycleCount < 0x10000; ++cycleCount) {
@@ -44,15 +47,15 @@ void BYTEPUSHER_STANDARD::instructionLoop() noexcept {
 
 void BYTEPUSHER_STANDARD::renderAudioData() {
 	const auto samplesOffset{ mMemoryBank.data() + (readData<2>(6) << 8) };
-	auto samplesBuffer{ ::allocate<s16>(cAudioLength).as_value().release() };
+	auto buffer{ ::allocate<f32>(cAudioLength).as_value().release_as_container() };
 
 	std::transform(EXEC_POLICY(unseq)
-		samplesOffset, samplesOffset + cAudioLength, samplesBuffer.get(),
+		samplesOffset, samplesOffset + cAudioLength, buffer.data(),
 		[](const auto sample) noexcept
-			{ return static_cast<s16>(sample << 8); }
+			{ return s8(sample) * 0.25f * (1.0f / 127.0f); }
 	);
 
-	mAudio[STREAM::CHANN0].pushAudioData(samplesBuffer.get(), cAudioLength);
+	mAudioDevice[STREAM::MAIN].pushAudioData(buffer);
 }
 
 void BYTEPUSHER_STANDARD::renderVideoData() {

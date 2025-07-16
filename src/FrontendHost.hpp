@@ -24,7 +24,7 @@ constexpr auto* AppVer{ __DATE__ };
 /*==================================================================*/
 
 class HomeDirManager;
-class BasicAudioSpec;
+class GlobalAudioBase;
 class BasicVideoSpec;
 
 class SystemsInterface;
@@ -49,9 +49,9 @@ class FrontendHost final {
 	> mSystemCore;
 
 public:
-	static inline HomeDirManager* HDM{};
-	static inline GlobalAudioBase* BAS{};
-	static inline BasicVideoSpec* BVS{};
+	static inline HomeDirManager*  HDM{};
+	static inline GlobalAudioBase* GAB{};
+	static inline BasicVideoSpec*  BVS{};
 
 private:
 	bool mShowOverlay{};

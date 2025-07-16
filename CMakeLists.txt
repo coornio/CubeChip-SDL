@@ -30,9 +30,9 @@ add_subdirectory(src/Libraries)
 add_executable(${PROJECT_NAME}
   src/Assistants/BasicLogger.cpp
   src/Assistants/HomeDirManager.cpp
-  src/Assistants/BasicVideoSpec.cpp
-  src/Assistants/BasicAudioSpec.cpp
-  src/Assistants/AudioSpecBlock.cpp
+  src/Assistants/GlobalAudioBase.cpp
+  src/Assistants/AudioDevice.cpp
+  src/Assistants/AudioFilters.cpp
   src/Assistants/DefaultConfig.cpp
   src/Assistants/FrameLimiter.cpp
   src/Assistants/AttachConsole.cpp

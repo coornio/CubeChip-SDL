@@ -14,27 +14,18 @@
 
 /*==================================================================*/
 
-enum class AUDIOFORMAT : unsigned {
-	UNKNOWN, U8, S8,
-	S16LE, S16BE,
-	S32LE, S32BE,
-	F32LE, F32BE,
-	S16 = S16LE,
-	S32 = S32LE,
-	F32 = F32LE,
-};
-
 struct SDL_AudioSpec;
 
 /*==================================================================*/
 
-class AudioSpecBlock {
-	using self = AudioSpecBlock;
+class AudioDevice {
+	using self = AudioDevice;
 
+public:
 	class Stream {
 		SDL_Unique<SDL_AudioStream> ptr;
 		signed format{}; signed freq{};
-		signed channels{}; float gain{ 1.0f };
+		signed channels{};
 		unsigned long long accumulator{};
 
 	public:
@@ -51,10 +42,10 @@ class AudioSpecBlock {
 		bool isPaused()   const noexcept;
 		bool isPlayback() const noexcept;
 
-		double getRawSampleRate(double framerate) const noexcept;
+		float getRawSampleRate(float framerate) const noexcept;
 
 		[[nodiscard]]
-		unsigned getNextBufferSize(double framerate) noexcept;
+		unsigned getNextBufferSize(float framerate) noexcept;
 
 		void pause() noexcept;
 		void resume() noexcept;
@@ -97,18 +88,19 @@ class AudioSpecBlock {
 			{ pushRawAudio(std::data(samplesBuffer), std::size(samplesBuffer), sizeof(ValueType<T>)); }
 	};
 
-	std::unordered_map<signed, Stream> audioStreams{};
+private:
+	std::unordered_map<unsigned, Stream> audioStreams{};
 
 public:
-	AudioSpecBlock() noexcept = default;
-	~AudioSpecBlock() noexcept;
+	AudioDevice() noexcept = default;
+	~AudioDevice() noexcept;
 
-	AudioSpecBlock(const self&)  = delete;
+	AudioDevice(const self&)  = delete;
 	self& operator=(const self&) = delete;
 
 	bool addAudioStream(
-		signed streamID, AUDIOFORMAT format,
-		signed channels, signed frequency, unsigned device = 0
+		unsigned streamID,     unsigned frequency,
+		unsigned channels = 1, unsigned device = 0
 	);
 
 	unsigned getStreamCount() const noexcept;

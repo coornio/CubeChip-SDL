@@ -9,6 +9,7 @@
 #include <cmath>
 #include <cstdint>
 #include <numbers>
+#include <concepts>
 #include <algorithm>
 
 #ifndef __cpp_constexpr
@@ -23,68 +24,107 @@
 
 /*==================================================================*/
 
-class WaveForms {
-	using Millis = std::uint32_t;
+struct Phase {
 	using Type_B = std::uint8_t;
-	using Type_F = float;
+	using Type_F = double;
 
-	static constexpr Type_F calc_period(Millis p, Millis t) noexcept
-		{ return p ? Type_F(t % p) / p : 0.0f; }
+private:
+	Type_F mPhase{};
 
 public:
-	class WavePoint {
-		Type_F mPointValue{};
+	template <std::integral AnyInt>
+	constexpr Phase(AnyInt value) noexcept : mPhase{ Type_B(value) * (1.0 / 255.0) } {}
+	constexpr Phase(Type_F value) noexcept : mPhase{ value - int(value) } {}
+	constexpr Phase() noexcept = default;
 
-	public:
-		constexpr WavePoint() noexcept = default;
-		constexpr WavePoint(Type_F value)
-			: mPointValue{ std::clamp(value, -1.0f, 1.0f) }
-		{}
-
-		template <std::integral T>
-		constexpr WavePoint(T value) noexcept
-			: mPointValue{ std::clamp(value, T(0), T(255)) / 127.5f - 1.0f }
-		{}
-
-		// normalize WavePoint value to a 0..1 range and return
-		constexpr Type_F normalize() const noexcept
-			{ return static_cast<Type_F>(mPointValue * 0.5f + 0.5f); }
-
-		// normalize WavePoint value to a 0..255 range and return
-		constexpr Type_B byte_cast() const noexcept
-			{ return static_cast<Type_B>(mPointValue * 127.5f + 127.5f); }
-
-		constexpr operator Type_F() const noexcept { return mPointValue; }
-		constexpr operator Type_B() const noexcept { return byte_cast(); }
-	};
-
-	static CONSTEXPR_MATH WavePoint cos(Millis p, Millis t) noexcept
-		{ return Type_F(std::cos(std::numbers::pi * 2 * calc_period(p, t))); }
-
-	static CONSTEXPR_MATH WavePoint sin(Millis p, Millis t) noexcept
-		{ return Type_F(std::sin(std::numbers::pi * 2 * calc_period(p, t))); }
-	
-	static constexpr WavePoint square(Millis p, Millis t) noexcept
-		{ return calc_period(p, t) < 0.5f ? 1.0f : -1.0f; }
-
-	static constexpr WavePoint sawtooth(Millis p, Millis t) noexcept
-		{ return 2.0f * calc_period(p, t) - 1.0f; }
-
-	static CONSTEXPR_MATH WavePoint triangle(Millis p, Millis t) noexcept {
-		const auto phase{ calc_period(p, t) };
-		return 2.0f * std::abs(2.0f * (phase - std::floor(phase + 0.5f))) - 1.0f;
-	}
+	constexpr operator Type_F() const noexcept { return mPhase; }
 };
 
+class WaveForms {
+	using Millis = std::uint32_t;
+	using Type_B = Phase::Type_B;
+	using Type_F = Phase::Type_F;
+
+	static constexpr Type_F calc_period(Millis p, Millis t) noexcept
+		{ return p ? Type_F(t % p) / p : 0.0; }
+
+	/*==================================================================*/
+
+public:
+	class Bipolar {
+		Type_F mPhase{};
+
+	public:
+		constexpr Bipolar(Type_F value) noexcept : mPhase{ value } {}
+
+		// cast phase value to a 0..255 value and return
+		constexpr Type_B as_byte() const noexcept
+			{ return Type_B(mPhase * 127.5 + 128.0); }
+
+		// cast phase value to a 0..1 range and return
+		constexpr Type_F as_unipolar() const noexcept
+			{ return 0.5 * (mPhase + 1.0); }
+
+		constexpr operator Type_F() const noexcept { return mPhase; }
+	};
+
+	/*==================================================================*/
+
+	static CONSTEXPR_MATH Bipolar cosine(Phase phase) noexcept
+		{ return std::cos(std::numbers::pi * 2.0 * phase); }
+	static CONSTEXPR_MATH Bipolar cosine_t(Millis p, Millis t) noexcept
+		{ return cos(calc_period(p, t)); }
+	static CONSTEXPR_MATH Bipolar sine(Phase phase) noexcept
+		{ return std::sin(std::numbers::pi * 2.0 * phase); }
+	static CONSTEXPR_MATH Bipolar sine_t(Millis p, Millis t) noexcept
+		{ return sin(calc_period(p, t)); }
+
+
+	static constexpr Bipolar sawtooth(Phase phase) noexcept
+		{ return 2.0 * phase - 1.0; }
+	static constexpr Bipolar sawtooth_t(Millis p, Millis t) noexcept
+		{ return sawtooth(calc_period(p, t)); }
+	static constexpr Bipolar triangle(Phase phase) noexcept
+		{ return 4.0 * (phase >= 0.5 ? 1.0 - phase : +phase) - 1.0; }
+	static constexpr Bipolar triangle_t(Millis p, Millis t) noexcept
+		{ return triangle(calc_period(p, t)); }
+
+
+	static constexpr Bipolar pulse(Phase phase, Phase duty = 0.5) noexcept
+		{ return phase >= duty ? 1.0 : -1.0; }
+	static constexpr Bipolar pulse_t(Millis p, Millis t, Phase duty = 0.5) noexcept
+		{ return pulse(calc_period(p, t), duty); }
+	static constexpr Bipolar triangle_skew(Phase phase, Phase skew = 0.5) noexcept
+		{ return skew ? 2.0 * (phase < skew ? (phase / skew) : 1.0 - (phase - skew) / (1.0 - skew)) - 1.0 : -1.0; }
+	static constexpr Bipolar triangle_skew_t(Millis p, Millis t, Phase skew = 0.5) noexcept
+		{ return triangle_skew(calc_period(p, t), skew); }
+};
+
+/*==================================================================*/
+
 namespace EzMaths {
-	using Type_B = std::uint8_t;
-	using Weight = WaveForms::WavePoint;
+	using Type_F = Phase::Type_F;
+	using Type_B = Phase::Type_B;
+
+	class Weight {
+		Type_F mWeight{};
+
+	public:
+		template <std::integral AnyInt>
+		constexpr Weight(AnyInt value) noexcept : Weight(value * (1.0 / 255.0)) {}
+		constexpr Weight(Type_F value) noexcept : mWeight{ std::clamp(value, 0.0, 1.0) } {}
+
+		// cast phase value to a 0..255 value and return
+		constexpr Type_B as_byte() const noexcept
+			{ return Type_B((mWeight + 1.0) * 127.5); }
+
+		constexpr operator Type_F() const noexcept { return mWeight; }
+	};
 
 	// simple constexpr-enabled fmod, internally allows s32-width division
 	template <std::floating_point T>
-	inline constexpr T fmod(T x, T y) noexcept {
-		return y ? x - y * static_cast<int>(x / y) : x;
-	}
+	inline constexpr T fmod(T x, T y) noexcept
+		{ return y ? x - y * int(x / y) : x; }
 
 	template <std::floating_point T>
 	inline constexpr T round(T x) noexcept {
@@ -93,18 +133,23 @@ namespace EzMaths {
 			: T(static_cast<long long>(x - T(0.5)));
 	}
 
+	// simple constexpr-enabled tanh approximation, mostly-par up to x of 3.0
+	template <std::floating_point T>
+	inline constexpr T fast_tanh(T x) noexcept
+		{ return x * (T(27) + x * x) / (T(27) + T(9) * x * x); }
+
 	inline constexpr Type_B fixedMul8(Type_B x, Type_B y) noexcept {
 		return Type_B(((x * (y | y << 8)) + 0x8080u) >> 16);
 	}
 
 	inline constexpr Type_B fixedLerp8(Type_B x, Type_B y, Weight w) noexcept {
-		return Type_B(fixedMul8(x, 255u - w.byte_cast()) + fixedMul8(y, w.byte_cast()));
+		return Type_B(fixedMul8(x, 255u - w.as_byte()) + fixedMul8(y, w.as_byte()));
 	}
 
 	template <std::integral T>
 	inline constexpr T fixedLerpN(T x, T y, Weight w, T full_hue, T half_hue) noexcept {
 		const auto shortest{ (y - x + half_hue) % full_hue - half_hue };
-		return T((x + T(shortest * w.normalize()) + full_hue) % full_hue);
+		return T((x + T(shortest * w) + full_hue) % full_hue);
 	}
 }
 
@@ -129,7 +174,7 @@ inline CONSTEXPR_MATH RGBA  to_RGBA (OKLCH in) noexcept;
 struct alignas(4) RGBA {
 	using type_C = std::uint8_t;
 	using Packed = std::uint32_t;
-	using Weight = WaveForms::WavePoint;
+	using Weight = EzMaths::Weight;
 
 	type_C R{}, G{}, B{}, A{};
 
@@ -174,7 +219,7 @@ struct alignas(4) HSV {
 	using type_S = std::uint8_t;
 	using type_V = type_S;
 	using Packed = std::uint32_t;
-	using Weight = WaveForms::WavePoint;
+	using Weight = EzMaths::Weight;
 
 	static constexpr auto full_hue{ type_H(0x600u) };
 	static constexpr auto half_hue{ type_H(full_hue >> 1) };
@@ -206,8 +251,8 @@ struct alignas(4) HSV {
 /*==================================================================*/
 
 struct OKLAB {
-	using type_F = float;
-	using Weight = WaveForms::WavePoint;
+	using type_F = EzMaths::Type_F;
+	using Weight = EzMaths::Weight;
 
 	type_F L{}, A{}, B{};
 
@@ -217,19 +262,19 @@ struct OKLAB {
 	{}
 
 	static CONSTEXPR_MATH type_F gamma_def(type_F x) noexcept {
-		return x <= 0.0404500f ? x / 12.92f : std::pow((x + 0.055f) / 1.055f, 2.4f);
+		return x <= 0.0404500 ? x / 12.92 : std::pow((x + 0.055) / 1.055, 2.4);
 		//return std::pow(x, 2.2); // quick path
 	}
 	static CONSTEXPR_MATH type_F gamma_inv(type_F x) noexcept {
-		return x <= 0.0031308f ? x * 12.92f : 1.055f * std::pow(x, 1.0f / 2.4f) - 0.055f;
-		//return std::pow(x, 1.0f / 2.2f); // quick path
+		return x <= 0.0031308 ? x * 12.92 : 1.055 * std::pow(x, 1.0 / 2.4) - 0.055;
+		//return std::pow(x, 1.0 / 2.2); // quick path
 	}
 
 	static constexpr OKLAB lerp(OKLAB x, OKLAB y, Weight w) noexcept {
 		return OKLAB(
-			std::lerp(x.L, y.L, w.normalize()),
-			std::lerp(x.A, y.A, w.normalize()),
-			std::lerp(x.B, y.B, w.normalize()));
+			std::lerp(x.L, y.L, w),
+			std::lerp(x.A, y.A, w),
+			std::lerp(x.B, y.B, w));
 	}
 
 	static CONSTEXPR_MATH RGBA lerp(RGBA x, RGBA y, Weight w) noexcept {
@@ -252,9 +297,9 @@ struct OKLCH {
 		const auto delta{ EzMaths::fmod(y.H - x.H + \
 			std::numbers::pi * 3, std::numbers::pi * 2) - std::numbers::pi };
 		return OKLCH(
-			std::lerp(x.L, y.L, w.normalize()),
-			std::lerp(x.C, y.C, w.normalize()),
-			type_F(y.H + delta * w.normalize()));
+			std::lerp(x.L, y.L, w),
+			std::lerp(x.C, y.C, w),
+			y.H + delta * w);
 	}
 
 	static CONSTEXPR_MATH OKLAB lerp(OKLAB x, OKLAB y, Weight w) noexcept {
@@ -300,12 +345,12 @@ inline constexpr RGBA to_RGBA(HSV in) noexcept {
 	const auto valT{ RGBA::type_C((in.V * (0xFF00 - in.S * (0x100 - hueV)) + 0x7FFF) / 0xFF00) };
 
 	switch (in.H >> 8) {
-		case 0: return RGBA(in.V, valT, valP);
-		case 1: return RGBA(valQ, in.V, valP);
-		case 2: return RGBA(valP, in.V, valT);
-		case 3: return RGBA(valP, valQ, in.V);
-		case 4: return RGBA(valT, valP, in.V);
-		case 5: return RGBA(in.V, valP, valQ);
+		case 0:  return RGBA(in.V, valT, valP);
+		case 1:  return RGBA(valQ, in.V, valP);
+		case 2:  return RGBA(valP, in.V, valT);
+		case 3:  return RGBA(valP, valQ, in.V);
+		case 4:  return RGBA(valT, valP, in.V);
+		case 5:  return RGBA(in.V, valP, valQ);
 		default: return RGBA(0, 0, 0);
 	}
 }
@@ -315,14 +360,14 @@ inline CONSTEXPR_MATH OKLAB to_OKLAB(RGBA in) noexcept {
 	const auto G{ OKLAB::gamma_def(in.G / 255.0f) };
 	const auto B{ OKLAB::gamma_def(in.B / 255.0f) };
 
-	const auto L{ std::cbrt(0.4122214708f * R + 0.5363325363f * G + 0.0514459929f * B) };
-	const auto M{ std::cbrt(0.2119034982f * R + 0.6806995451f * G + 0.1073969566f * B) };
-	const auto S{ std::cbrt(0.0883024619f * R + 0.2817188376f * G + 0.6299787005f * B) };
+	const auto L{ std::cbrt(0.4122214708 * R + 0.5363325363 * G + 0.0514459929 * B) };
+	const auto M{ std::cbrt(0.2119034982 * R + 0.6806995451 * G + 0.1073969566 * B) };
+	const auto S{ std::cbrt(0.0883024619 * R + 0.2817188376 * G + 0.6299787005 * B) };
 
 	return OKLAB(
-		0.2104542553f * L + 0.7936177850f * M - 0.0040720468f * S,
-		1.9779984951f * L - 2.4285922050f * M + 0.4505937099f * S,
-		0.0259040371f * L + 0.7827717662f * M - 0.8086757660f * S
+		0.2104542553 * L + 0.7936177850 * M - 0.0040720468 * S,
+		1.9779984951 * L - 2.4285922050 * M + 0.4505937099 * S,
+		0.0259040371 * L + 0.7827717662 * M - 0.8086757660 * S
 	);
 }
 
@@ -339,18 +384,18 @@ inline CONSTEXPR_MATH OKLCH to_OKLCH(RGBA in) noexcept {
 }
 
 inline CONSTEXPR_MATH RGBA to_RGBA(OKLAB in) noexcept {
-	const auto L{ std::pow(in.L + in.A * 0.39633778f + in.B * 0.21580376f, 3.0f) };
-	const auto M{ std::pow(in.L - in.A * 0.10556113f - in.B * 0.06385417f, 3.0f) };
-	const auto S{ std::pow(in.L - in.A * 0.08948418f - in.B * 1.29148554f, 3.0f) };
+	const auto L{ std::pow(in.L + in.A * 0.39633778 + in.B * 0.21580376, 3.0) };
+	const auto M{ std::pow(in.L - in.A * 0.10556113 - in.B * 0.06385417, 3.0) };
+	const auto S{ std::pow(in.L - in.A * 0.08948418 - in.B * 1.29148554, 3.0) };
 
-	const auto R{ +4.07674f * L - 3.30771f * M + 0.23097f * S };
-	const auto G{ -1.26844f * L + 2.60976f * M - 0.34132f * S };
-	const auto B{ -0.00439f * L - 0.70342f * M + 1.70758f * S };
+	const auto R{ +4.07674 * L - 3.30771 * M + 0.23097 * S };
+	const auto G{ -1.26844 * L + 2.60976 * M - 0.34132 * S };
+	const auto B{ -0.00439 * L - 0.70342 * M + 1.70758 * S };
 	
 	return RGBA(
-		RGBA::type_C(EzMaths::round(255.0f * OKLAB::gamma_inv(R))),
-		RGBA::type_C(EzMaths::round(255.0f * OKLAB::gamma_inv(G))),
-		RGBA::type_C(EzMaths::round(255.0f * OKLAB::gamma_inv(B)))
+		RGBA::type_C(EzMaths::round(255.0 * OKLAB::gamma_inv(R))),
+		RGBA::type_C(EzMaths::round(255.0 * OKLAB::gamma_inv(G))),
+		RGBA::type_C(EzMaths::round(255.0 * OKLAB::gamma_inv(B)))
 	);
 }
 

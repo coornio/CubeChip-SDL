@@ -13,17 +13,17 @@
 class Chip8_CoreInterface : public SystemsInterface {
 	
 protected:
-	enum STREAM : unsigned {
-		CHANN0, CHANN1, CHANN2, CHANN3, COUNT,
-		BUZZER = CHANN3,
-		UNIQUE = CHANN0,
+	enum STREAM : u32 { MAIN };
+	enum VOICE : u32 {
+		ID_0, ID_1, ID_2, ID_3, COUNT,
+		BUZZER = ID_3, UNIQUE = ID_0,
 	};
 
-	static inline Path sPermaRegsPath{};
-	static inline Path sSavestatePath{};
-	static inline f32  sTonalOffset{ 160.0f };
+	static inline thread_local Path sPermaRegsPath{};
+	static inline thread_local Path sSavestatePath{};
+	static constexpr f32 sTonalOffset{ 160.0f };
 
-	AudioSpecBlock mAudio;
+	AudioDevice mAudioDevice;
 
 	std::vector<SimpleKeyMapping> mCustomBinds;
 
@@ -40,8 +40,8 @@ protected:
 	void updateKeyStates();
 	void loadPresetBinds();
 
-	template <IsContiguousContainer T> requires
-		(SameValueTypes<T, decltype(mCustomBinds)>)
+	template <IsContiguousContainer T>
+		requires (SameValueTypes<T, decltype(mCustomBinds)>)
 	void loadCustomBinds(const T& binds) {
 		mCustomBinds.assign(std::begin(binds), std::end(binds));
 		mKeysPrev = mKeysCurr = mKeysLock = 0;
@@ -77,6 +77,7 @@ protected:
 		SOUND, // wait for sound and stop
 		DELAY, // wait for delay and proceed
 		INPUT, // wait for input and proceed
+		WAIT1, // intermediate wait state towards FINAL
 		FINAL, // end state, all is well
 		ERROR, // end state, error occured
 	};
@@ -105,35 +106,35 @@ protected:
 
 	Interrupt mInterrupt{};
 
-	s32 mDisplayW{},  mDisplayH{};
-	s32 mDisplayWb{}, mDisplayHb{};
-
-	void setDisplayResolution(s32 W, s32 H) noexcept {
-		mDisplayW = W; mDisplayWb = W - 1;
-		mDisplayH = H; mDisplayHb = H - 1;
-	}
+	struct DisplayRes {
+		s32 W{}, H{};
+		constexpr s32 pixels() const noexcept { return W * H; }
+		constexpr void clear() noexcept { W = H = 0; }
+		constexpr void set(s32 w, s32 h) noexcept { W = w; H = h; }
+	} mDisplay;
 
 	u32 mCurrentPC{};
 	u32 mRegisterI{};
 
-	std::array<f32, STREAM::COUNT>
-		mPhaseStep{};
-
-	std::array<f32, STREAM::COUNT>
-		mAudioPhase{};
-
-	std::array<u8,  STREAM::COUNT>
-		mAudioTimer{};
-
-	void startAudio(s32 duration, s32 tone = 0) noexcept;
-	void startAudioAtChannel(s32 index, s32 duration, s32 tone = 0) noexcept;
-	void pushSquareTone(s32 index) noexcept;
+	u8* mInputReg{};
 
 	u32 mDelayTimer{};
-	u32 mKeyPitch{};
+	//u32 mKeyPitch{};
 
 	u32 mStackTop{};
-	u8* mInputReg{};
+
+	alignas(64)
+	std::array<Voice, VOICE::COUNT>
+		mVoices{};
+
+	std::array<AudioTimer, VOICE::COUNT>
+		mAudioTimers{};
+
+	void startVoice(s32 duration, s32 tone = 0) noexcept;
+	void startVoiceAt(u32 voice_index, u32 duration, u32 tone = 0) noexcept;
+
+	void mixAudioData(VoiceGenerators processors) noexcept;
+	static void makePulseWave(f32* data, u32 size, Voice* voice, Stream* stream) noexcept;
 
 	inline static
 	std::array<u8, 16>
@@ -142,6 +143,7 @@ protected:
 	std::array<u8, 16>
 		mRegisterV{};
 
+	alignas(64)
 	std::array<u32, 16>
 		mStackBank{};
 
@@ -163,7 +165,7 @@ protected:
 	void getPermaRegs(u32 X) noexcept;
 
 	void copyGameToMemory(void* dest) noexcept;
-	void copyFontToMemory(void* dest, ust size) noexcept;
+	void copyFontToMemory(void* dest, size_type size) noexcept;
 	void copyColorsToCore(void* dest) noexcept;
 
 	virtual void handlePreFrameInterrupt() noexcept;
@@ -190,6 +192,9 @@ public:
 	void pushOverlayData() override;
 
 protected:
+	static constexpr auto cSmallFontOffset{ 0x00 };
+	static constexpr auto cLargeFontOffset{ 0x50 };
+
 	static constexpr std::array<u8, 240> cFontsData{ {
 		0x60, 0xA0, 0xA0, 0xA0, 0xC0, // 0
 		0x40, 0xC0, 0x40, 0x40, 0xE0, // 1
@@ -226,7 +231,7 @@ protected:
 		0xFE, 0x62, 0x60, 0x64, 0x7C, 0x64, 0x60, 0x62, 0xFE, 0x00, // E
 		0xFE, 0x66, 0x62, 0x64, 0x7C, 0x64, 0x60, 0x60, 0xF0, 0x00, // F
 	} };
-	static inline std::array<u8, 240> sFontsData{ cFontsData };
+	static inline thread_local std::array<u8, 240> sFontsData{ cFontsData };
 
 	static constexpr std::array<RGBA, 16> cBitColors{ { // 0-1 monochrome, 0-15 palette color
 		0x0C121800, 0xE4DCD400, 0x8C888400, 0x403C3800,
@@ -234,7 +239,7 @@ protected:
 		0x50101000, 0x10501000, 0x50B0C000, 0xF0801000,
 		0xE0609000, 0xE0F09000, 0xB050F000, 0x70402000,
 	} };
-	static inline std::array<RGBA, 16> sBitColors{ cBitColors };
+	static inline thread_local std::array<RGBA, 16> sBitColors{ cBitColors };
 
 	static constexpr std::array<RGBA,  8> cForeColor{ { // CHIP-8X foreground colors
 		0x00000000, 0xEE111100, 0x1111EE00, 0xEE11EE00,
@@ -243,4 +248,21 @@ protected:
 	static constexpr std::array<RGBA,  4> cBackColor{ { // CHIP-8X background colors
 		0x11113300, 0x11111100, 0x11331100, 0x33111100,
 	} };
+
+	#define PX_1 0x37
+	#define PX_2 0x67
+	#define PX_3 0xE7
+	#define PX_4 0xFF
+
+	static constexpr std::array<u32, 16> cPixelOpacity{ {
+		0x00, PX_1, PX_2, PX_2,
+		PX_3, PX_3, PX_3, PX_3,
+		PX_4, PX_4, PX_4, PX_4,
+		PX_4, PX_4, PX_4, PX_4,
+	} };
+
+	#undef PX_1
+	#undef PX_2
+	#undef PX_3
+	#undef PX_4
 };

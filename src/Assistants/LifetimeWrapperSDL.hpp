@@ -34,6 +34,7 @@ template <> struct SDL_Deleter<SDL_AudioStream>
 
 using SDL_DisplayID     = unsigned;
 using SDL_AudioDeviceID = unsigned;
+using SDL_JoystickID    = unsigned;
 template <> struct SDL_Deleter<unsigned>
 	{ void operator()(unsigned*) const noexcept; };
 

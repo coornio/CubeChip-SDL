@@ -11,7 +11,7 @@
 #include "Assistants/BasicInput.hpp"
 #include "Assistants/HomeDirManager.hpp"
 #include "Assistants/BasicVideoSpec.hpp"
-#include "Assistants/BasicAudioSpec.hpp"
+#include "Assistants/GlobalAudioBase.hpp"
 #include "Assistants/DefaultConfig.hpp"
 
 #include "FrontendHost.hpp"
@@ -95,7 +95,7 @@ void FrontendHost::quitApplication() noexcept {
 	mSystemCore.reset();
 
 	HDM->writeMainAppConfig(
-		BAS->exportSettings().map(),
+		GAB->exportSettings().map(),
 		BVS->exportSettings().map()
 	);
 }
@@ -107,16 +107,16 @@ bool FrontendHost::initApplication(
 	HDM = HomeDirManager::initialize(overrideHome, configName, forcePortable, org, app);
 	if (!HDM) { return false; }
 
-	BasicAudioSpec::Settings BAS_settings;
+	GlobalAudioBase::Settings GAB_settings;
 	BasicVideoSpec::Settings BVS_settings;
 
 	HDM->parseMainAppConfig(
-		BAS_settings.map(),
+		GAB_settings.map(),
 		BVS_settings.map()
 	);
 
-	BAS = BasicAudioSpec::initialize(BAS_settings);
-	if (BAS->getStatus() == BasicAudioSpec::STATUS::NO_AUDIO)
+	GAB = GlobalAudioBase::initialize(GAB_settings);
+	if (GAB->getStatus() == GlobalAudioBase::STATUS::NO_AUDIO)
 		{ blog.newEntry(BLOG::WARN, "Audio Subsystem is not available!"); }
 
 	BVS = BasicVideoSpec::initialize(BVS_settings);
@@ -173,9 +173,9 @@ void FrontendHost::checkForHotkeys() {
 	Input.updateStates();
 
 	if (Input.isPressed(KEY(UP)))
-		{ BAS->addGlobalGain(+0.0625f); }
+		{ GAB->addGlobalGain(+0.0625f); }
 	if (Input.isPressed(KEY(DOWN)))
-		{ BAS->addGlobalGain(-0.0625f); }
+		{ GAB->addGlobalGain(-0.0625f); }
 	if (Input.isPressed(KEY(RIGHT)))
 		{ BVS->rotateViewport(+1); }
 	if (Input.isPressed(KEY(LEFT)))

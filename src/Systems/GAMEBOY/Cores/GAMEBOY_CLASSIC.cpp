@@ -8,7 +8,7 @@
 #ifdef ENABLE_GAMEBOY_CLASSIC
 
 #include "../../../Assistants/BasicVideoSpec.hpp"
-#include "../../../Assistants/BasicAudioSpec.hpp"
+#include "../../../Assistants/GlobalAudioBase.hpp"
 #include "../../../Assistants/Well512.hpp"
 #include "../../CoreRegistry.hpp"
 

@@ -8,7 +8,7 @@
 #ifdef ENABLE_SCHIP_LEGACY
 
 #include "../../../Assistants/BasicVideoSpec.hpp"
-#include "../../../Assistants/BasicAudioSpec.hpp"
+#include "../../../Assistants/GlobalAudioBase.hpp"
 #include "../../../Assistants/Well512.hpp"
 #include "../../CoreRegistry.hpp"
 
@@ -25,7 +25,7 @@ SCHIP_LEGACY::SCHIP_LEGACY()
 	copyGameToMemory(mMemoryBank.data() + cGameLoadPos);
 	copyFontToMemory(mMemoryBank.data(), 0xB4);
 
-	setDisplayResolution(cDisplayResW, cDisplayResH);
+	mDisplay.set(cDisplayResW, cDisplayResH);
 	setViewportSizes(true, cDisplayResW, cDisplayResH, cResSizeMult, 2);
 	setSystemFramerate(cRefreshRate);
 
@@ -216,23 +216,23 @@ void SCHIP_LEGACY::instructionLoop() noexcept {
 }
 
 void SCHIP_LEGACY::renderAudioData() {
-	pushSquareTone(STREAM::CHANN0);
-	pushSquareTone(STREAM::CHANN1);
-	pushSquareTone(STREAM::CHANN2);
-	pushSquareTone(STREAM::BUZZER);
+	mixAudioData({
+		{ makePulseWave, &mVoices[VOICE::ID_0] },
+		{ makePulseWave, &mVoices[VOICE::ID_1] },
+		{ makePulseWave, &mVoices[VOICE::ID_2] },
+		{ makePulseWave, &mVoices[VOICE::BUZZER] },
+	});
 
-	setDisplayBorderColor(sBitColors[!!std::accumulate(mAudioTimer.begin(), mAudioTimer.end(), 0)]);
+	setDisplayBorderColor(sBitColors[!!::accumulate(mAudioTimers)]);
 }
 
 void SCHIP_LEGACY::renderVideoData() {
 	BVS->displayBuffer.write(mDisplayBuffer[0], isUsingPixelTrails()
 		? [](u32 pixel) noexcept {
-			static constexpr u32 layer[4]{ 0xFF, 0xE7, 0x6F, 0x37 };
-			const auto opacity{ layer[std::countl_zero(pixel) & 0x3] };
-			return opacity | sBitColors[pixel != 0];
+			return cPixelOpacity[pixel] | sBitColors[pixel != 0];
 		}
 		: [](u32 pixel) noexcept {
-			return 0xFF | sBitColors[pixel >> 3];
+			return 0xFFu | sBitColors[pixel >> 3];
 		}
 	);
 
@@ -311,7 +311,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 	#pragma region 2 instruction branch
 
 	void SCHIP_LEGACY::instruction_2NNN(s32 NNN) noexcept {
-		mStackBank[mStackTop++ & 0xF] = mCurrentPC;
+		::assign_cast(mStackBank[mStackTop++ & 0xF], mCurrentPC);
 		performProgJump(NNN);
 	}
 
@@ -362,7 +362,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 	#pragma region 7 instruction branch
 
 	void SCHIP_LEGACY::instruction_7xNN(s32 X, s32 NN) noexcept {
-		::assign_cast(mRegisterV[X], mRegisterV[X] + NN);
+		::assign_cast_add(mRegisterV[X], NN);
 	}
 
 	#pragma endregion
@@ -372,16 +372,16 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 	#pragma region 8 instruction branch
 
 	void SCHIP_LEGACY::instruction_8xy0(s32 X, s32 Y) noexcept {
-		mRegisterV[X] = mRegisterV[Y];
+		::assign_cast(mRegisterV[X], mRegisterV[Y]);
 	}
 	void SCHIP_LEGACY::instruction_8xy1(s32 X, s32 Y) noexcept {
-		mRegisterV[X] |= mRegisterV[Y];
+		::assign_cast_or(mRegisterV[X], mRegisterV[Y]);
 	}
 	void SCHIP_LEGACY::instruction_8xy2(s32 X, s32 Y) noexcept {
-		mRegisterV[X] &= mRegisterV[Y];
+		::assign_cast_and(mRegisterV[X], mRegisterV[Y]);
 	}
 	void SCHIP_LEGACY::instruction_8xy3(s32 X, s32 Y) noexcept {
-		mRegisterV[X] ^= mRegisterV[Y];
+		::assign_cast_xor(mRegisterV[X], mRegisterV[Y]);
 	}
 	void SCHIP_LEGACY::instruction_8xy4(s32 X, s32 Y) noexcept {
 		const auto sum{ mRegisterV[X] + mRegisterV[Y] };
@@ -426,7 +426,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 	#pragma region A instruction branch
 
 	void SCHIP_LEGACY::instruction_ANNN(s32 NNN) noexcept {
-		mRegisterI = NNN & 0xFFF;
+		::assign_cast(mRegisterI, NNN & 0xFFF);
 	}
 
 	#pragma endregion
@@ -590,19 +590,19 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 		mInputReg = &mRegisterV[X];
 	}
 	void SCHIP_LEGACY::instruction_Fx15(s32 X) noexcept {
-		mDelayTimer = mRegisterV[X];
+		::assign_cast(mDelayTimer, mRegisterV[X]);
 	}
 	void SCHIP_LEGACY::instruction_Fx18(s32 X) noexcept {
-		startAudio(mRegisterV[X] + (mRegisterV[X] == 1));
+		startVoice(mRegisterV[X] + (mRegisterV[X] == 1));
 	}
 	void SCHIP_LEGACY::instruction_Fx1E(s32 X) noexcept {
-		mRegisterI = (mRegisterI + mRegisterV[X]) & 0xFFF;
+		::assign_cast(mRegisterI, (mRegisterI + mRegisterV[X]) & 0xFFF);
 	}
 	void SCHIP_LEGACY::instruction_Fx29(s32 X) noexcept {
-		mRegisterI = (mRegisterV[X] & 0xF) * 5;
+		::assign_cast(mRegisterI, (mRegisterV[X] & 0xF) * 5 + cSmallFontOffset);
 	}
 	void SCHIP_LEGACY::instruction_Fx30(s32 X) noexcept {
-		mRegisterI = (mRegisterV[X] & 0xF) * 10 + 80;
+		::assign_cast(mRegisterI, (mRegisterV[X] & 0xF) * 10 + cLargeFontOffset);
 	}
 	void SCHIP_LEGACY::instruction_Fx33(s32 X) noexcept {
 		const auto N__{ mRegisterV[X] * 0x51EB851Full >> 37 };

@@ -8,7 +8,7 @@
 #ifdef ENABLE_MEGACHIP
 
 #include "../../../Assistants/BasicVideoSpec.hpp"
-#include "../../../Assistants/BasicAudioSpec.hpp"
+#include "../../../Assistants/GlobalAudioBase.hpp"
 #include "../../../Assistants/Well512.hpp"
 #include "../../CoreRegistry.hpp"
 
@@ -17,7 +17,7 @@ REGISTER_CORE(MEGACHIP, ".mc8")
 /*==================================================================*/
 
 MEGACHIP::MEGACHIP()
-	: mDisplayBuffer{ { cScreenSizeX, cScreenSizeY } }
+	: mDisplayBuffer{ cScreenSizeX, cScreenSizeY }
 	, mForegroundBuffer{ cScreenMegaX, cScreenMegaY }
 	, mBackgroundBuffer{ cScreenMegaX, cScreenMegaY }
 	, mCollisionMap{ cScreenMegaX, cScreenMegaY }
@@ -30,7 +30,7 @@ MEGACHIP::MEGACHIP()
 	setSystemFramerate(cRefreshRate);
 
 	mCurrentPC = cStartOffset;
-
+	
 	prepDisplayArea(Resolution::LO);
 	setNewBlendAlgorithm(BlendMode::ALPHA_BLEND);
 	initializeFontColors();
@@ -301,31 +301,33 @@ void MEGACHIP::instructionLoop() noexcept {
 
 void MEGACHIP::renderAudioData() {
 	if (isManualRefresh()) {
-		pushByteAudio(STREAM::UNIQUE);
-		pushSquareTone(STREAM::BUZZER);
+		mixAudioData({
+			{ makeByteWave,  &mVoices[VOICE::UNIQUE] },
+			{ makePulseWave, &mVoices[VOICE::BUZZER] },
+		});
 
-		setDisplayBorderColor(sBitColors[!!mAudioTimer[STREAM::BUZZER]]);
+		setDisplayBorderColor(sBitColors[!!mAudioTimers[VOICE::BUZZER]]);
 	}
 	else {
-		pushSquareTone(STREAM::CHANN0);
-		pushSquareTone(STREAM::CHANN1);
-		pushSquareTone(STREAM::CHANN2);
-		pushSquareTone(STREAM::BUZZER);
+		mixAudioData({
+			{ makePulseWave, &mVoices[VOICE::ID_0] },
+			{ makePulseWave, &mVoices[VOICE::ID_1] },
+			{ makePulseWave, &mVoices[VOICE::ID_2] },
+			{ makePulseWave, &mVoices[VOICE::BUZZER] },
+		});
 
-		setDisplayBorderColor(sBitColors[!!std::accumulate(mAudioTimer.begin(), mAudioTimer.end(), 0)]);
+		setDisplayBorderColor(sBitColors[!!::accumulate(mAudioTimers)]);
 	}
 }
 
 void MEGACHIP::renderVideoData() {
 	if (!isManualRefresh()) {
-		BVS->displayBuffer.write(mDisplayBuffer[0], isUsingPixelTrails()
+		BVS->displayBuffer.write(mDisplayBuffer, isUsingPixelTrails()
 			? [](u32 pixel) noexcept {
-				static constexpr u32 layer[4]{ 0xFF, 0xE7, 0x6F, 0x37 };
-				const auto opacity{ layer[std::countl_zero(pixel) & 0x3] };
-				return opacity | sBitColors[pixel != 0];
+				return cPixelOpacity[pixel] | sBitColors[pixel != 0];
 			}
 			: [](u32 pixel) noexcept {
-				return 0xFF | sBitColors[pixel >> 3];
+				return 0xFFu | sBitColors[pixel >> 3];
 			}
 		);
 
@@ -340,14 +342,14 @@ void MEGACHIP::prepDisplayArea(Resolution mode) {
 	isResolutionChanged(wasManualRefresh != isManualRefresh());
 
 	if (isManualRefresh()) {
-		setDisplayResolution(cScreenMegaX, cScreenMegaY);
+		mDisplay.set(cScreenMegaX, cScreenMegaY);
 
 		Quirk.waitVblank = false;
 		mTargetCPF = cInstSpeedMC;
 	}
 	else {
 		isLargerDisplay(mode != Resolution::LO);
-		setDisplayResolution(cScreenSizeX, cScreenSizeY);
+		mDisplay.set(cScreenSizeX, cScreenSizeY);
 
 		Quirk.waitVblank = !isLargerDisplay();
 		mTargetCPF = isLargerDisplay() ? cInstSpeedLo : cInstSpeedHi;
@@ -357,20 +359,20 @@ void MEGACHIP::prepDisplayArea(Resolution mode) {
 /*==================================================================*/
 
 void MEGACHIP::skipInstruction() noexcept {
-	mCurrentPC += readMemory(mCurrentPC) == 0x1 ? 4 : 2;
+	mCurrentPC += readMemory(mCurrentPC) == 0x01 ? 4 : 2;
 }
 
 void MEGACHIP::scrollDisplayUP(s32 N) {
-	mDisplayBuffer[0].shift(0, -N);
+	mDisplayBuffer.shift(0, -N);
 }
 void MEGACHIP::scrollDisplayDN(s32 N) {
-	mDisplayBuffer[0].shift(0, +N);
+	mDisplayBuffer.shift(0, +N);
 }
 void MEGACHIP::scrollDisplayLT() {
-	mDisplayBuffer[0].shift(-4, 0);
+	mDisplayBuffer.shift(-4, 0);
 }
 void MEGACHIP::scrollDisplayRT() {
-	mDisplayBuffer[0].shift(+4, 0);
+	mDisplayBuffer.shift(+4, 0);
 }
 
 /*==================================================================*/
@@ -398,12 +400,12 @@ void MEGACHIP::initializeFontColors() noexcept {
 	}
 }
 
-RGBA MEGACHIP::blendPixel(RGBA src, RGBA dst) const noexcept {
-	if (auto alpha{ EzMaths::fixedMul8(src.A, u8(mTexture.opacity)) }) [[likely]] {
+RGBA MEGACHIP::blendPixel(RGBA src, RGBA dst, BlendFunction func, u8 opacity) noexcept {
+	if (auto alpha{ EzMaths::fixedMul8(src.A, opacity) }) [[likely]] {
 		RGBA blend{
-			intChannelBlend(src.R, dst.R),
-			intChannelBlend(src.G, dst.G),
-			intChannelBlend(src.B, dst.B)
+			func(src.R, dst.R),
+			func(src.G, dst.G),
+			func(src.B, dst.B)
 		};
 
 		if (alpha != 0xFFu) [[likely]] {
@@ -418,18 +420,18 @@ RGBA MEGACHIP::blendPixel(RGBA src, RGBA dst) const noexcept {
 void MEGACHIP::setNewBlendAlgorithm(s32 mode) noexcept {
 	switch (mode) {
 		case BlendMode::LINEAR_DODGE:
-			intChannelBlend = [](u8 src, u8 dst)
+			mBlendFunc = [](u8 src, u8 dst)
 				noexcept { return u8(std::min(src + dst, 0xFF)); };
 			break;
 
 		case BlendMode::MULTIPLY:
-			intChannelBlend = [](u8 src, u8 dst)
+			mBlendFunc = [](u8 src, u8 dst)
 				noexcept { return EzMaths::fixedMul8(src, dst); };
 			break;
 
 		default:
 		case BlendMode::ALPHA_BLEND:
-			intChannelBlend = [](u8 src, u8)
+			mBlendFunc = [](u8 src, u8)
 				noexcept { return src; };
 			break;
 	}
@@ -452,57 +454,46 @@ void MEGACHIP::blendAndFlushBuffers() const {
 	BVS->displayBuffer.write(
 		mForegroundBuffer,
 		mBackgroundBuffer,
-		[this](RGBA src, RGBA dst) noexcept
-			{ return blendPixel(src, dst); }
+		[this](RGBA src, RGBA dst) noexcept {
+			return blendPixel(src, dst, \
+				mBlendFunc, mTexture.opacity);
+		}
 	);
 }
 
-void MEGACHIP::resetAudioTrack() noexcept {
-	mTrackPosition = mTrackStepping = 0.0;
-	mTrackStartIdx = mTrackTotalLen = 0;
-}
-
 void MEGACHIP::startAudioTrack(bool repeat) noexcept {
-	mTrackTotalLen = readMemoryI(2) << 16
-				   | readMemoryI(3) <<  8
-				   | readMemoryI(4);
+	if (auto* stream{ mAudioDevice.at(STREAM::MAIN) }) {
 
-	if (!mTrackTotalLen) {
-		resetAudioTrack();
-		return;
+		mTrack.loop = repeat;
+		mTrack.data = &mMemoryBank[mRegisterI + 6];
+		mTrack.size = readMemoryI(2) << 16
+					| readMemoryI(3) <<  8
+					| readMemoryI(4);
+
+		const bool oob{ mTrack.data + mTrack.size > &mMemoryBank.back() };
+		if (!mTrack.size || oob) { mTrack.reset(); } else {
+			mVoices[VOICE::UNIQUE].setPhase(0.0).setStep(
+				(readMemoryI(0) << 8 | readMemoryI(1)) / f64(mTrack.size) / stream->getFreq()
+			).userdata = &mTrack;
+		}
 	}
-
-	mTrackStepping = readMemoryI(0) << 8 | readMemoryI(1);
-	mTrackStepping = mTrackStepping / mAudio[STREAM::UNIQUE].getFreq();
-
-	mTrackTotalLen = repeat ? -mTrackTotalLen : mTrackTotalLen;
-	mTrackPosition = 0.0;
-	mTrackStartIdx = mRegisterI + 6;
 }
 
-void MEGACHIP::pushByteAudio(u32 index) noexcept {
-	if (auto* stream{ mAudio.at(index) }) {
-		const auto samplesTotal{ stream->getNextBufferSize(cRefreshRate) };
-		auto samplesBuffer{ ::allocate<s16>(samplesTotal).as_value().release() };
+void MEGACHIP::makeByteWave(f32* data, u32 size, Voice* voice, Stream*) noexcept {
+	if (!voice || !voice->userdata) [[unlikely]] { return; }
+	if (auto* track{ static_cast<TrackData*>(voice->userdata) }) {
+		if (!track->isOn()) { return; }
 
-		if (mTrackTotalLen) {
-			for (auto& audioSample : std::span(samplesBuffer.get(), samplesTotal)) {
-				::assign_cast(audioSample, (readMemory(
-					mTrackStartIdx + static_cast<u32>(mTrackPosition)
-				) - 128) << 8);
-
-				if ((mTrackPosition += mTrackStepping) >= std::abs(mTrackTotalLen)) {
-					if (mTrackTotalLen < 0) {
-						mTrackPosition += mTrackTotalLen;
-					} else {
-						resetAudioTrack();
-						break;
-					}
-				}
+		for (auto i{ 0u }; i < size; ++i) {
+			const auto head{ voice->peekRawPhase(i) };
+			if (!track->loop && head >= 1.0f) {
+				track->reset(); return;
+			} else {
+				::assign_cast_add(data[i], (1.0f / 128) * \
+					track->pos(head));
 			}
 		}
-
-		stream->pushAudioData(samplesBuffer.get(), samplesTotal);
+		voice->stepPhase(size);
 	}
 }
 
@@ -545,7 +536,7 @@ void MEGACHIP::scrollBuffersRT() {
 		if (isManualRefresh()) {
 			flushAllVideoBuffers();
 		} else {
-			mDisplayBuffer[0].initialize();
+			mDisplayBuffer.initialize();
 		}
 	}
 	void MEGACHIP::instruction_00EE() noexcept {
@@ -580,10 +571,7 @@ void MEGACHIP::scrollBuffersRT() {
 	void MEGACHIP::instruction_0010() noexcept {
 		triggerInterrupt(Interrupt::FRAME);
 
-		mAudio[STREAM::CHANN1].resume();
-		mAudio[STREAM::CHANN2].resume();
-
-		resetAudioTrack();
+		mTrack.reset();
 		flushAllVideoBuffers();
 
 		prepDisplayArea(Resolution::LO);
@@ -591,10 +579,7 @@ void MEGACHIP::scrollBuffersRT() {
 	void MEGACHIP::instruction_0011() noexcept {
 		triggerInterrupt(Interrupt::FRAME);
 
-		mAudio[STREAM::CHANN1].pause();
-		mAudio[STREAM::CHANN2].pause();
-
-		resetAudioTrack();
+		mTrack.reset();
 		scrapAllVideoBuffers();
 
 		prepDisplayArea(Resolution::MC);
@@ -626,11 +611,11 @@ void MEGACHIP::scrollBuffersRT() {
 		startAudioTrack(N == 0);
 	}
 	void MEGACHIP::instruction_0700() noexcept {
-		resetAudioTrack();
+		mTrack.reset();
 	}
 	void MEGACHIP::instruction_080N(s32 N) noexcept {
 		static constexpr u8 opacity[]{ 0xFF, 0x3F, 0x7F, 0xBF };
-		mTexture.opacity = opacity[N > 3 ? 0 : N];
+		::assign_cast(mTexture.opacity, opacity[N > 3 ? 0 : N]);
 		setNewBlendAlgorithm(N);
 	}
 	void MEGACHIP::instruction_09NN(s32 NN) noexcept {
@@ -769,7 +754,7 @@ void MEGACHIP::scrollBuffersRT() {
 	#pragma region A instruction branch
 
 	void MEGACHIP::instruction_ANNN(s32 NNN) noexcept {
-		mRegisterI = NNN & 0xFFF;
+		::assign_cast(mRegisterI, NNN & 0xFFF);
 	}
 
 	#pragma endregion
@@ -817,7 +802,7 @@ void MEGACHIP::scrollBuffersRT() {
 			const auto offsetX{ originX + B };
 
 			if (DATA >> (WIDTH - 1 - B) & 0x1) {
-				auto& pixel{ mDisplayBuffer[0](offsetX, originY) };
+				auto& pixel{ mDisplayBuffer(offsetX, originY) };
 				if (!((pixel ^= 0x8) & 0x8)) { collided = true; }
 			}
 			if (offsetX == 0x7F) { return collided; }
@@ -835,8 +820,8 @@ void MEGACHIP::scrollBuffersRT() {
 		for (auto B{ 0 }; B < WIDTH; ++B) {
 			const auto offsetX{ originX + B };
 
-			auto& pixelHI{ mDisplayBuffer[0](offsetX, originY + 0) };
-			auto& pixelLO{ mDisplayBuffer[0](offsetX, originY + 1) };
+			auto& pixelHI{ mDisplayBuffer(offsetX, originY + 0) };
+			auto& pixelLO{ mDisplayBuffer(offsetX, originY + 1) };
 
 			if (DATA >> (WIDTH - 1 - B) & 0x1) {
 				collided |= !!(pixelHI & 0x8);
@@ -859,12 +844,12 @@ void MEGACHIP::scrollBuffersRT() {
 
 			mRegisterV[0xF] = 0;
 
-			if (!Quirk.wrapSprite && originY >= mDisplayH) { return; }
+			if (!Quirk.wrapSprite && originY >= mDisplay.H) { return; }
 			if (mRegisterI >= 0xF0) [[likely]] { goto paintTexture; }
 
 			for (auto rowN{ 0 }, offsetY{ originY }; rowN < N; ++rowN)
 			{
-				if (Quirk.wrapSprite && offsetY >= mDisplayH) { continue; }
+				if (Quirk.wrapSprite && offsetY >= mDisplay.H) { continue; }
 				const auto octoPixelBatch{ readMemoryI(rowN) };
 
 				for (auto colN{ 7 }, offsetX{ originX }; colN >= 0; --colN)
@@ -883,18 +868,18 @@ void MEGACHIP::scrollBuffersRT() {
 							backbufCoord = mFontColor[rowN];
 						}
 					}
-					if (!Quirk.wrapSprite && offsetX == mDisplayWb) { break; }
-					else { ++offsetX &= mDisplayWb; }
+					if (!Quirk.wrapSprite && offsetX == (mDisplay.W - 1)) { break; }
+					else { ++offsetX &= (mDisplay.W - 1); }
 				}
-				if (!Quirk.wrapSprite && offsetY == mDisplayWb) { break; }
-				else { ++offsetY &= mDisplayWb; }
+				if (!Quirk.wrapSprite && offsetY == (mDisplay.W - 1)) { break; }
+				else { ++offsetY &= (mDisplay.W - 1); }
 			}
 			return;
 
 		paintTexture:
 			for (auto rowN{ 0 }, offsetY{ originY }; rowN < mTexture.H; ++rowN)
 			{
-				if (Quirk.wrapSprite && offsetY >= mDisplayH) { continue; }
+				if (Quirk.wrapSprite && offsetY >= mDisplay.H) { continue; }
 				auto I = mRegisterI + rowN * mTexture.W;
 
 				for (auto colN{ 0 }, offsetX{ originX }; colN < mTexture.W; ++colN, ++I)
@@ -908,13 +893,14 @@ void MEGACHIP::scrollBuffersRT() {
 							[[unlikely]] { mRegisterV[0xF] = 1; }
 
 						collideCoord = sourceColorIdx;
-						backbufCoord = blendPixel(mColorPalette(sourceColorIdx), backbufCoord);
+						backbufCoord = blendPixel(mColorPalette(sourceColorIdx), \
+							backbufCoord, mBlendFunc, mTexture.opacity);
 					}
-					if (!Quirk.wrapSprite && offsetX == mDisplayWb) { break; }
-					else { ++offsetX &= mDisplayWb; }
+					if (!Quirk.wrapSprite && offsetX == (mDisplay.W - 1)) { break; }
+					else { ++offsetX &= (mDisplay.W - 1); }
 				}
-				if (!Quirk.wrapSprite && offsetY == mDisplayHb) { break; }
-				else { ++offsetY %= mDisplayH; }
+				if (!Quirk.wrapSprite && offsetY == (mDisplay.H - 1)) { break; }
+				else { ++offsetY %= mDisplay.H; }
 			}
 		} else {
 			if (isLargerDisplay()) {
@@ -1002,16 +988,16 @@ void MEGACHIP::scrollBuffersRT() {
 		mDelayTimer = mRegisterV[X];
 	}
 	void MEGACHIP::instruction_Fx18(s32 X) noexcept {
-		startAudio(mRegisterV[X] + (mRegisterV[X] == 1));
+		startVoice(mRegisterV[X] + (mRegisterV[X] == 1));
 	}
 	void MEGACHIP::instruction_Fx1E(s32 X) noexcept {
 		mRegisterI = mRegisterI + mRegisterV[X];
 	}
 	void MEGACHIP::instruction_Fx29(s32 X) noexcept {
-		mRegisterI = (mRegisterV[X] & 0xF) * 5;
+		mRegisterI = (mRegisterV[X] & 0xF) * 5 + cSmallFontOffset;
 	}
 	void MEGACHIP::instruction_Fx30(s32 X) noexcept {
-		mRegisterI = (mRegisterV[X] & 0xF) * 10 + 80;
+		mRegisterI = (mRegisterV[X] & 0xF) * 10 + cLargeFontOffset;
 	}
 	void MEGACHIP::instruction_Fx33(s32 X) noexcept {
 		const auto N__{ mRegisterV[X] * 0x51EB851Full >> 37 };

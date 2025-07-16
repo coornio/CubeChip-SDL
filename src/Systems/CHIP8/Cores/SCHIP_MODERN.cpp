@@ -8,7 +8,7 @@
 #ifdef ENABLE_SCHIP_MODERN
 
 #include "../../../Assistants/BasicVideoSpec.hpp"
-#include "../../../Assistants/BasicAudioSpec.hpp"
+#include "../../../Assistants/GlobalAudioBase.hpp"
 #include "../../../Assistants/Well512.hpp"
 #include "../../CoreRegistry.hpp"
 
@@ -24,7 +24,7 @@ SCHIP_MODERN::SCHIP_MODERN()
 	copyGameToMemory(mMemoryBank.data() + cGameLoadPos);
 	copyFontToMemory(mMemoryBank.data(), 0xF0);
 
-	setDisplayResolution(cScreenSizeX, cScreenSizeY);
+	mDisplay.set(cScreenSizeX, cScreenSizeY);
 	setViewportSizes(true, cScreenSizeX, cScreenSizeY, cResSizeMult, 2);
 	setSystemFramerate(cRefreshRate);
 
@@ -214,27 +214,27 @@ void SCHIP_MODERN::instructionLoop() noexcept {
 }
 
 void SCHIP_MODERN::renderAudioData() {
-	pushSquareTone(STREAM::CHANN0);
-	pushSquareTone(STREAM::CHANN1);
-	pushSquareTone(STREAM::CHANN2);
-	pushSquareTone(STREAM::BUZZER);
+	mixAudioData({
+		{ makePulseWave, &mVoices[VOICE::ID_0] },
+		{ makePulseWave, &mVoices[VOICE::ID_1] },
+		{ makePulseWave, &mVoices[VOICE::ID_2] },
+		{ makePulseWave, &mVoices[VOICE::BUZZER] },
+	});
 
-	setDisplayBorderColor(sBitColors[!!std::accumulate(mAudioTimer.begin(), mAudioTimer.end(), 0)]);
+	setDisplayBorderColor(sBitColors[!!::accumulate(mAudioTimers)]);
 }
 
 void SCHIP_MODERN::renderVideoData() {
 	BVS->displayBuffer.write(mDisplayBuffer[0], isUsingPixelTrails()
 		? [](u32 pixel) noexcept {
-			static constexpr u32 layer[4]{ 0xFF, 0xE7, 0x6F, 0x37 };
-			const auto opacity{ layer[std::countl_zero(pixel) & 0x3] };
-			return opacity | sBitColors[pixel != 0];
+			return cPixelOpacity[pixel] | sBitColors[pixel != 0];
 		}
 		: [](u32 pixel) noexcept {
-			return 0xFF | sBitColors[pixel >> 3];
+			return 0xFFu | sBitColors[pixel >> 3];
 		}
 	);
 
-	setViewportSizes(isResolutionChanged(false), mDisplayW, mDisplayH,
+	setViewportSizes(isResolutionChanged(false), mDisplay.W, mDisplay.H,
 		isLargerDisplay() ? cResSizeMult / 2 : cResSizeMult, 2);
 
 	std::for_each(EXEC_POLICY(unseq)
@@ -252,7 +252,7 @@ void SCHIP_MODERN::prepDisplayArea(const Resolution mode) {
 	const auto W{ isLargerDisplay() ? cScreenSizeX * 2 : cScreenSizeX };
 	const auto H{ isLargerDisplay() ? cScreenSizeY * 2 : cScreenSizeY };
 
-	setDisplayResolution(W, H);
+	mDisplay.set(W, H);
 	
 	mDisplayBuffer[0].resizeClean(W, H);
 };
@@ -367,7 +367,7 @@ void SCHIP_MODERN::scrollDisplayRT() {
 	#pragma region 6 instruction branch
 
 	void SCHIP_MODERN::instruction_6xNN(s32 X, s32 NN) noexcept {
-		mRegisterV[X] = static_cast<u8>(NN);
+		::assign_cast(mRegisterV[X], NN);
 	}
 
 	#pragma endregion
@@ -377,7 +377,7 @@ void SCHIP_MODERN::scrollDisplayRT() {
 	#pragma region 7 instruction branch
 
 	void SCHIP_MODERN::instruction_7xNN(s32 X, s32 NN) noexcept {
-		mRegisterV[X] += static_cast<u8>(NN);
+		::assign_cast(mRegisterV[X], mRegisterV[X] + NN);
 	}
 
 	#pragma endregion
@@ -443,7 +443,7 @@ void SCHIP_MODERN::scrollDisplayRT() {
 	#pragma region A instruction branch
 
 	void SCHIP_MODERN::instruction_ANNN(s32 NNN) noexcept {
-		mRegisterI = NNN & 0xFFF;
+		::assign_cast(mRegisterI, NNN & 0xFFF);
 	}
 
 	#pragma endregion
@@ -483,8 +483,8 @@ void SCHIP_MODERN::scrollDisplayRT() {
 
 			[[unlikely]]
 			case 0b10000000:
-				if (Quirk.wrapSprite) { X &= mDisplayWb; }
-				if (X < mDisplayW) {
+				if (Quirk.wrapSprite) { X &= (mDisplay.W - 1); }
+				if (X < mDisplay.W) {
 					if (!((mDisplayBuffer[0](X, Y) ^= 0x8) & 0x8))
 						{ mRegisterV[0xF] = 1; }
 				}
@@ -492,15 +492,15 @@ void SCHIP_MODERN::scrollDisplayRT() {
 
 			[[likely]]
 			default:
-				if (Quirk.wrapSprite) { X &= mDisplayWb; }
-				else if (X >= mDisplayW) { return; }
+				if (Quirk.wrapSprite) { X &= (mDisplay.W - 1); }
+				else if (X >= mDisplay.W) { return; }
 
-				for (auto B{ 0 }; B < 8; ++B, ++X &= mDisplayWb) {
+				for (auto B{ 0 }; B < 8; ++B, ++X &= (mDisplay.W - 1)) {
 					if (DATA & 0x80 >> B) {
 						if (!((mDisplayBuffer[0](X, Y) ^= 0x8) & 0x8))
 							{ mRegisterV[0xF] = 1; }
 					}
-					if (!Quirk.wrapSprite && X == mDisplayWb) { return; }
+					if (!Quirk.wrapSprite && X == (mDisplay.W - 1)) { return; }
 				}
 				return;
 		}
@@ -510,8 +510,8 @@ void SCHIP_MODERN::scrollDisplayRT() {
 		if (Quirk.waitVblank) [[unlikely]]
 			{ triggerInterrupt(Interrupt::FRAME); }
 
-		const auto pX{ mRegisterV[X] & mDisplayWb };
-		const auto pY{ mRegisterV[Y] & mDisplayHb };
+		const auto pX{ mRegisterV[X] & (mDisplay.W - 1) };
+		const auto pY{ mRegisterV[Y] & (mDisplay.H - 1) };
 
 		mRegisterV[0xF] = 0;
 
@@ -527,8 +527,8 @@ void SCHIP_MODERN::scrollDisplayRT() {
 				{
 					drawByte(pX + 0, tY, readMemoryI(tN + 0));
 					drawByte(pX + 8, tY, readMemoryI(tN + 1));
-					if (!Quirk.wrapSprite && tY == mDisplayHb) { break; }
-					else { tN += 2; ++tY &= mDisplayHb; }
+					if (!Quirk.wrapSprite && tY == (mDisplay.H - 1)) { break; }
+					else { tN += 2; ++tY &= (mDisplay.H - 1); }
 				}
 				break;
 
@@ -537,8 +537,8 @@ void SCHIP_MODERN::scrollDisplayRT() {
 				for (auto tN{ 0 }, tY{ pY }; tN < N;)
 				{
 					drawByte(pX, tY, readMemoryI(tN));
-					if (!Quirk.wrapSprite && tY == mDisplayHb) { break; }
-					else { tN += 1; ++tY &= mDisplayHb; }
+					if (!Quirk.wrapSprite && tY == (mDisplay.H - 1)) { break; }
+					else { tN += 1; ++tY &= (mDisplay.H - 1); }
 				}
 				break;
 		}
@@ -574,16 +574,16 @@ void SCHIP_MODERN::scrollDisplayRT() {
 		mDelayTimer = mRegisterV[X];
 	}
 	void SCHIP_MODERN::instruction_Fx18(s32 X) noexcept {
-		startAudio(mRegisterV[X] + (mRegisterV[X] == 1));
+		startVoice(mRegisterV[X] + (mRegisterV[X] == 1));
 	}
 	void SCHIP_MODERN::instruction_Fx1E(s32 X) noexcept {
 		mRegisterI = (mRegisterI + mRegisterV[X]) & 0xFFF;
 	}
 	void SCHIP_MODERN::instruction_Fx29(s32 X) noexcept {
-		mRegisterI = (mRegisterV[X] & 0xF) * 5;
+		mRegisterI = (mRegisterV[X] & 0xF) * 5 + cSmallFontOffset;
 	}
 	void SCHIP_MODERN::instruction_Fx30(s32 X) noexcept {
-		mRegisterI = (mRegisterV[X] & 0xF) * 10 + 80;
+		mRegisterI = (mRegisterV[X] & 0xF) * 10 + cLargeFontOffset;
 	}
 	void SCHIP_MODERN::instruction_Fx33(s32 X) noexcept {
 		const auto N__{ mRegisterV[X] * 0x51EB851Full >> 37 };

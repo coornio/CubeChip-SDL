@@ -7,6 +7,7 @@
 #pragma once
 
 #include <shared_mutex>
+#include <functional>
 #include <execution>
 #include <iostream>
 #include <utility>
@@ -24,11 +25,11 @@
 #include <span>
 #include <bit>
 
-#include "../Assistants/AudioSpecBlock.hpp"
+#include "../Assistants/AudioDevice.hpp"
+#include "../Assistants/Voice.hpp"
 #include "../Assistants/Typedefs.hpp"
 #include "../Assistants/Concepts.hpp"
 #include "../Assistants/Misc.hpp"
-#include "../Assistants/ColorOps.hpp"
 
 #include "CoreRegistry.hpp"
 
@@ -55,7 +56,7 @@ struct SimpleKeyMapping {
 
 class HomeDirManager;
 class BasicVideoSpec;
-class BasicAudioSpec;
+class GlobalAudioBase;
 
 class BasicKeyboard;
 class FrameLimiter;
@@ -64,6 +65,7 @@ class Well512;
 /*==================================================================*/
 
 class SystemsInterface {
+	Atom<u32> mGlobalState{ EmuState::NORMAL };
 	Thread mCoreThread;
 
 	Str mOverlayDataBuffer{};
@@ -91,9 +93,6 @@ protected:
 	u64 mElapsedCycles{};
 	Atom<f32> mTargetFPS{};
 	s32 mTargetCPF{};
-
-private:
-	Atom<u32> mGlobalState{ EmuState::NORMAL };
 
 protected:
 	SystemsInterface() noexcept;

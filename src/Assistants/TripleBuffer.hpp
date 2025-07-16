@@ -31,6 +31,15 @@
 
 /*==================================================================*/
 
+// TripleBuffer is a thread-safe buffer that allows for concurrent reading and writing
+// by using a work buffer, a swap buffer, and a read buffer. The work buffer is used
+// for writing data, the swap buffer is used to swap the work buffer with the read buffer,
+// and the read buffer is used for reading data. The swap is protected by a shared mutex
+// to ensure that only one thread can swap the buffers at a time, while allowing multiple
+// threads to read from the read buffer concurrently.
+// Access to read() or write() does not reserve the associated buffer, so there are no lock
+// or release calls required for either process, allowing single-call operations. Read fully
+// and write fully without worries. Same applies to copy().
 template <typename U>
 	requires (std::is_trivially_copyable_v<U>)
 class TripleBuffer {
@@ -62,6 +71,8 @@ public:
 	constexpr auto size() const noexcept { return mSize; }
 
 	// DO NOT CALL IF EITHER A CONSUMER OR PRODUCER IS ACTIVE!!
+	// This will reset the buffers to a new size, which will invalidate any
+	// pointers or references to the previous buffers, causing undefined behavior.
 	void resize(std::size_t buffer_size) {
 		mSize = buffer_size;
 		pWorkBuffer.reset(); pWorkBuffer = ::allocate<U>(buffer_size).as_value().release();
@@ -83,12 +94,14 @@ private:
 	}
 
 public:
+	// Copy the contents of the TripleBuffer to a new Buffer object and return it.
 	Buffer copy(std::size_t N = 0u) {
 		const auto new_count{ std::min(size(), N ? N : size()) };
 		auto temp{ ::allocate<U>(new_count).by_copy(acquireReadBuffer(), new_count).as_value() };
 		return temp.is_constructed() ? temp.release() : Buffer{};
 	}
 
+	// Copy the contents of the TripleBuffer to a given array via raw pointer.
 	template <typename T>
 		requires (sizeof(T) == sizeof(U) && std::is_trivially_copyable_v<T>)
 	void read(T* output, std::size_t N = 0) noexcept {
@@ -96,6 +109,7 @@ public:
 			acquireReadBuffer(), std::min(size(), N ? N : size()), output);
 	}
 
+	// Copy the contents of the TripleBuffer to a given contiguous container.
 	template <IsContiguousContainer T>
 		requires MatchingValueType<T, U>
 	void read(T& output) noexcept {
@@ -112,6 +126,7 @@ private:
 	}
 
 public:
+	// Write to the TripleBuffer by copying data from a raw pointer.
 	template <typename T, typename Lambda>
 	void write(const T* data, std::size_t N, Lambda&& function) {
 		std::unique_lock lock{ mSwapLock };
@@ -121,6 +136,7 @@ public:
 		commitWorkerChanges();
 	}
 
+	// Write to the TripleBuffer by copying data from a contiguous container.
 	template <IsContiguousContainer T>
 		requires (sizeof(ValueType<T>) == sizeof(U) && std::is_trivially_copyable_v<ValueType<T>>)
 	void write(const T& data) {
@@ -131,6 +147,7 @@ public:
 		commitWorkerChanges();
 	}
 
+	// Write to the TripleBuffer by applying a unary function to each element of a contiguous container.
 	template <IsContiguousContainer T, typename Lambda>
 	void write(const T& data, Lambda&& function) {
 		std::unique_lock lock{ mSwapLock };
@@ -140,6 +157,7 @@ public:
 		commitWorkerChanges();
 	}
 
+	// Write to the TripleBuffer by applying a binary function to each element from two contiguous containers.
 	template <IsContiguousContainer T, typename Lambda>
 	void write(const T& data1, const T& data2, Lambda&& function) {
 		std::unique_lock lock{ mSwapLock };

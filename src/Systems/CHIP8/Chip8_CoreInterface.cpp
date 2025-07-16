@@ -9,7 +9,7 @@
 #include "../../Assistants/BasicLogger.hpp"
 #include "../../Assistants/HomeDirManager.hpp"
 #include "../../Assistants/BasicVideoSpec.hpp"
-#include "../../Assistants/BasicAudioSpec.hpp"
+#include "../../Assistants/GlobalAudioBase.hpp"
 #include "../../Assistants/SimpleFileIO.hpp"
 
 #include "Chip8_CoreInterface.hpp"
@@ -23,12 +23,9 @@ Chip8_CoreInterface::Chip8_CoreInterface() noexcept {
 	if (const auto* path{ HDM->addSystemDir("permaRegs", "CHIP8") })
 		{ sPermaRegsPath = *path / HDM->getFileSHA1(); }
 
-	mAudio.addAudioStream(STREAM::CHANN0, AUDIOFORMAT::S16, 1, 48'000);
-	mAudio.addAudioStream(STREAM::CHANN1, AUDIOFORMAT::S16, 1, 48'000);
-	mAudio.addAudioStream(STREAM::CHANN2, AUDIOFORMAT::S16, 1, 48'000);
-	mAudio.addAudioStream(STREAM::CHANN3, AUDIOFORMAT::S16, 1, 48'000);
+	mAudioDevice.addAudioStream(STREAM::MAIN, 48'000, 1);
+	mAudioDevice.resumeStreams();
 
-	mAudio.resumeStreams();
 	loadPresetBinds();
 }
 
@@ -43,9 +40,8 @@ void Chip8_CoreInterface::updateKeyStates() {
 	mKeysCurr = 0;
 
 	for (const auto& mapping : mCustomBinds) {
-		if (Input->areAnyHeld(mapping.key, mapping.alt)) {
-			mKeysCurr |= 1 << mapping.idx;
-		}
+		if (Input->areAnyHeld(mapping.key, mapping.alt))
+			{ mKeysCurr |= 1 << mapping.idx; }
 	}
 
 	mKeysLoop &= mKeysLock &= ~(mKeysPrev ^ mKeysCurr);
@@ -66,7 +62,7 @@ void Chip8_CoreInterface::loadPresetBinds() {
 bool Chip8_CoreInterface::keyPressed(u8* returnKey) noexcept {
 	if (!std::size(mCustomBinds)) { return false; }
 
-	const auto mTickCurr{ static_cast<u32>(Pacer->getValidFrameCounter()) };
+	const auto mTickCurr{ u32(Pacer->getValidFrameCounter()) };
 	if (mTickCurr >= mTickLast + mTickSpan)
 		[[unlikely]] { mKeysPrev &= ~mKeysLoop; }
 
@@ -100,22 +96,20 @@ void Chip8_CoreInterface::handlePreFrameInterrupt() noexcept {
 	{
 		case Interrupt::FRAME:
 			mInterrupt = Interrupt::CLEAR;
-			mTargetCPF = std::abs(mTargetCPF);
+			mTargetCPF *= mTargetCPF < 0 ? -1 : 0;
 			return;
 
 		case Interrupt::SOUND:
-			if (mAudioTimer[0]) { return; }
-			if (mAudioTimer[1]) { return; }
-			if (mAudioTimer[2]) { return; }
-			if (mAudioTimer[3]) { return; }
-			mInterrupt = Interrupt::FINAL;
+			for (auto& timer : mAudioTimers)
+				{ if (timer.get()) return; }
+			mInterrupt = Interrupt::WAIT1;
 			mTargetCPF = 0;
 			return;
 
 		case Interrupt::DELAY:
 			if (!mDelayTimer) {
 				mInterrupt = Interrupt::CLEAR;
-				mTargetCPF = std::abs(mTargetCPF);
+				mTargetCPF *= mTargetCPF < 0 ? -1 : 0;
 			}
 			return;
 
@@ -130,9 +124,13 @@ void Chip8_CoreInterface::handleEndFrameInterrupt() noexcept {
 		case Interrupt::INPUT:
 			if (keyPressed(mInputReg)) {
 				mInterrupt = Interrupt::CLEAR;
-				mTargetCPF = std::abs(mTargetCPF);
-				startAudioAtChannel(STREAM::BUZZER, 2);
+				mTargetCPF *= mTargetCPF < 0 ? -1 : 0;
+				startVoiceAt(VOICE::BUZZER, 2);
 			}
+			return;
+
+		case Interrupt::WAIT1:
+			mInterrupt = Interrupt::FINAL;
 			return;
 
 		case Interrupt::ERROR:
@@ -151,11 +149,10 @@ void Chip8_CoreInterface::handleEndFrameInterrupt() noexcept {
 }
 
 void Chip8_CoreInterface::handleTimerTick() noexcept {
-	if (mDelayTimer)    { --mDelayTimer; }
-	if (mAudioTimer[0]) { --mAudioTimer[0]; }
-	if (mAudioTimer[1]) { --mAudioTimer[1]; }
-	if (mAudioTimer[2]) { --mAudioTimer[2]; }
-	if (mAudioTimer[3]) { --mAudioTimer[3]; }
+	if (mDelayTimer) { --mDelayTimer; }
+
+	for (auto& timer : mAudioTimers)
+		{ timer.dec(); }
 }
 
 void Chip8_CoreInterface::nextInstruction() noexcept {
@@ -167,12 +164,10 @@ void Chip8_CoreInterface::skipInstruction() noexcept {
 }
 
 void Chip8_CoreInterface::performProgJump(u32 next) noexcept {
-	const auto NNN{ next & 0xFFF };
-	if (mCurrentPC - 2u != NNN) [[likely]] {
-		mCurrentPC = NNN;
-	} else {
-		triggerInterrupt(Interrupt::SOUND);
-	}
+	const auto oldPC{ mCurrentPC - 2u };
+	::assign_cast(mCurrentPC, next & 0xFFFu);
+	if (mCurrentPC == oldPC) [[unlikely]]
+		{ triggerInterrupt(Interrupt::SOUND); }
 }
 
 /*==================================================================*/
@@ -219,44 +214,48 @@ void Chip8_CoreInterface::pushOverlayData() {
 
 /*==================================================================*/
 
-void Chip8_CoreInterface::startAudio(s32 duration, s32 tone) noexcept {
-	static auto index{ 0 };
-	startAudioAtChannel(index, duration, tone);
-	if (duration) { ++index %= STREAM::COUNT; }
+void Chip8_CoreInterface::startVoice(s32 duration, s32 tone) noexcept {
+	thread_local auto voice_index{ 0 };
+	startVoiceAt(voice_index, duration, tone);
+	if (duration) { ++voice_index %= VOICE::COUNT - 1; }
 }
 
-void Chip8_CoreInterface::startAudioAtChannel(s32 index, s32 duration, s32 tone) noexcept {
-	if (index >= STREAM::COUNT) { return; }
-
-	::assign_cast(mAudioTimer[index], duration);
-	if (auto* stream{ mAudio.at(index) }) {
-		mPhaseStep[index] = (sTonalOffset + (tone ? tone : 8 * (
-			((mCurrentPC >> 1) + mStackTop + 1) & 0x3E
-		))) / stream->getFreq();
+void Chip8_CoreInterface::startVoiceAt(u32 voice_index, u32 duration, u32 tone) noexcept {
+	mAudioTimers[voice_index].set(duration);
+	if (auto* stream{ mAudioDevice.at(STREAM::MAIN) }) {
+		mVoices[voice_index].setStep((sTonalOffset + (tone ? tone : 8 \
+			* (((mCurrentPC >> 1) + mStackTop + 1) & 0x3E) \
+		)) / stream->getFreq());
 	}
 }
 
-void Chip8_CoreInterface::pushSquareTone(s32 index) noexcept {
-	if (auto* stream{ mAudio.at(index) }) {
-		const auto samplesTotal{ stream->getNextBufferSize(getSystemFramerate()) };
-		auto samplesBuffer{ ::allocate<s16>(samplesTotal).as_value().release() };
+void Chip8_CoreInterface::mixAudioData(VoiceGenerators processors) noexcept {
+	if (auto* stream{ mAudioDevice.at(STREAM::MAIN) }) {
 
-		if (mAudioTimer[index]) {
-			std::for_each_n(EXEC_POLICY(unseq)
-				samplesBuffer.get(), samplesTotal,
-				[start = samplesBuffer.get(), phase = mAudioPhase[index], step = mPhaseStep[index]] \
-				(auto& audioSample) noexcept {
-					const auto val{ step * (&audioSample - start) + phase };
-					const bool mask{ val - static_cast<int>(val) >= 0.5f };
-					::assign_cast(audioSample, mask * 8192 - 4096);
-				}
-			);
-			mAudioPhase[index] += mPhaseStep[index] * samplesTotal;
-			mAudioPhase[index] -= static_cast<int>(mAudioPhase[index]);
-		} else { mAudioPhase[index] = 0.0f; }
+		auto buffer{ ::allocate<f32>(stream->getNextBufferSize(getSystemFramerate()))
+			.as_value().release_as_container() };
 
-		stream->pushAudioData(samplesBuffer.get(), samplesTotal);
+		for (auto& bundle : processors)
+			{ bundle.run(buffer, stream); }
+
+		for (auto& sample : buffer)
+			{ sample = EzMaths::fast_tanh(sample); }
+
+		stream->pushAudioData(buffer);
 	}
+}
+
+void Chip8_CoreInterface::makePulseWave(f32* data, u32 size, Voice* voice, Stream*) noexcept {
+	if (!voice || !voice->userdata) [[unlikely]] { return; }
+	auto* timer{ static_cast<AudioTimer*>(voice->userdata) };
+
+	for (auto i{ 0u }; i < size; ++i) {
+		if (const auto gain{ voice->getLevel(i, *timer) }) {
+			::assign_cast_add(data[i], \
+				WaveForms::pulse(voice->peekPhase(i)) * gain);
+		} else break;
+	}
+	voice->stepPhase(size);
 }
 
 void Chip8_CoreInterface::instructionError(u32 HI, u32 LO) {
@@ -266,7 +265,7 @@ void Chip8_CoreInterface::instructionError(u32 HI, u32 LO) {
 
 void Chip8_CoreInterface::triggerInterrupt(Interrupt type) noexcept {
 	mInterrupt = type;
-	mTargetCPF = -std::abs(mTargetCPF);
+	mTargetCPF = mTargetCPF < 0 ? mTargetCPF : -mTargetCPF;
 }
 
 /*==================================================================*/
@@ -335,7 +334,7 @@ void Chip8_CoreInterface::copyGameToMemory(void* dest) noexcept {
 	std::memcpy(dest, HDM->getFileData(), HDM->getFileSize());
 }
 
-void Chip8_CoreInterface::copyFontToMemory(void* dest, ust size) noexcept {
+void Chip8_CoreInterface::copyFontToMemory(void* dest, size_type size) noexcept {
 	std::memcpy(dest, std::data(sFontsData), size);
 }
 

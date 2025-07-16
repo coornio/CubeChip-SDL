@@ -98,6 +98,95 @@ template <Allocatable T, std::size_t N>
 AlignedMemoryBlock<T, N> allocate(std::size_t) noexcept;
 
 template <Allocatable T, std::size_t N>
+class AlignedContainer {
+	using memory_type = AlignedUnique<T, N>;
+	using self = AlignedContainer;
+
+public:
+	using element_type    = T;
+	using size_type       = std::size_t;
+	using difference_type = std::ptrdiff_t;
+	using value_type      = std::remove_cv_t<T>;
+
+	using pointer       = T*;
+	using const_pointer = const T*;
+
+	using reference       = T&;
+	using const_reference = const T&;
+
+	using iterator       = T*;
+	using const_iterator = const T*;
+
+	using reverse_iterator       = std::reverse_iterator<iterator>;
+	using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+
+private:
+	/* */ memory_type pData;
+	const size_type   mSize;
+
+public:
+	constexpr size_type size()       const noexcept { return mSize; }
+	constexpr size_type size_bytes() const noexcept { return size() * sizeof(T); }
+	constexpr bool      empty()      const noexcept { return size() == 0; }
+	constexpr auto      span()       const noexcept { return std::span(data(), size()); }
+
+	constexpr pointer   data()  { return pData.get(); }
+	constexpr reference front() { return data()[0]; }
+	constexpr reference back()  { return data()[size() - 1]; }
+
+	constexpr const_pointer   data()  const { return pData.get(); }
+	constexpr const_reference front() const { return data()[0]; }
+	constexpr const_reference back()  const { return data()[size() - 1]; }
+
+	explicit AlignedContainer(memory_type&& memory_block, size_type size) noexcept
+		: pData{ std::move(memory_block) }, mSize{ size } {}
+
+public:
+	constexpr reference at(size_type idx) {
+		if (idx >= size()) { throw std::out_of_range("AlignedContainer.at() index out of range"); }
+		return data()[idx];
+	}
+	constexpr const_reference at(size_type idx) const {
+		if (idx >= size()) { throw std::out_of_range("AlignedContainer.at() index out of range"); }
+		return data()[idx];
+	}
+
+	constexpr reference operator()(size_type idx) {
+		assert(idx < size() && "AlignedContainer.operator() index out of bounds");
+		return data()[idx];
+	}
+	constexpr reference operator[](size_type idx) {
+		assert(idx < size() && "AlignedContainer.operator[] index out of bounds");
+		return data()[idx];
+	}
+
+	constexpr const_reference operator()(size_type idx) const {
+		assert(idx < size() && "AlignedContainer.operator() index out of bounds");
+		return data()[idx];
+	}
+	constexpr const_reference operator[](size_type idx) const {
+		assert(idx < size() && "AlignedContainer.operator[] index out of bounds");
+		return data()[idx];
+	}
+
+public:
+	constexpr iterator begin() noexcept { return data(); }
+	constexpr iterator end()   noexcept { return data() + size(); }
+	constexpr reverse_iterator rbegin() noexcept { return std::make_reverse_iterator(end()); }
+	constexpr reverse_iterator rend()   noexcept { return std::make_reverse_iterator(begin()); }
+
+	constexpr const_iterator begin() const noexcept { return data(); }
+	constexpr const_iterator end()   const noexcept { return data() + size(); }
+	constexpr const_reverse_iterator rbegin() const noexcept { return std::make_reverse_iterator(end()); }
+	constexpr const_reverse_iterator rend()   const noexcept { return std::make_reverse_iterator(begin()); }
+
+	constexpr const_iterator cbegin() const noexcept { return begin(); }
+	constexpr const_iterator cend()   const noexcept { return end(); }
+	constexpr const_reverse_iterator crbegin() const noexcept { return std::make_reverse_iterator(cend()); }
+	constexpr const_reverse_iterator crend()   const noexcept { return std::make_reverse_iterator(cbegin()); }
+};
+
+template <Allocatable T, std::size_t N>
 class AlignedMemoryBlock {
 	using memory_type = AlignedUnique<T, N>;
 	using self = AlignedMemoryBlock;
@@ -134,6 +223,12 @@ public:
 
 	[[nodiscard]] memory_type release() noexcept
 		{ return has_valid_ptr() ? std::move(mAllocated) : memory_type{}; }
+
+	
+	[[nodiscard]] AlignedContainer<T, N> release_as_container() noexcept {
+		return AlignedContainer<T, N>(has_valid_ptr()
+			? std::move(mAllocated) : memory_type{}, element_count());
+	}
 
 	/*==================================================================*/
 

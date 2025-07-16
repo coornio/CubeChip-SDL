@@ -64,7 +64,7 @@
     <ClCompile Include="src\FrontendHost.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Assistants\BasicAudioSpec.cpp">
+    <ClCompile Include="src\Assistants\GlobalAudioBase.cpp">
       <Filter>Source Files\Assistants</Filter>
     </ClCompile>
     <ClCompile Include="src\Assistants\BasicLogger.cpp">
@@ -166,7 +166,7 @@
     <ClCompile Include="src\Assistants\LifetimeWrapperSDL.cpp">
       <Filter>Source Files\Assistants</Filter>
     </ClCompile>
-    <ClCompile Include="src\Assistants\AudioSpecBlock.cpp">
+    <ClCompile Include="src\Assistants\AudioDevice.cpp">
       <Filter>Source Files\Assistants</Filter>
     </ClCompile>
     <ClCompile Include="src\Assistants\BasicInput.cpp">
@@ -175,9 +175,12 @@
     <ClCompile Include="src\Assistants\Millis.cpp">
       <Filter>Source Files\Assistants</Filter>
     </ClCompile>
+    <ClCompile Include="src\Assistants\AudioFilters.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Assistants\BasicAudioSpec.hpp">
+    <ClInclude Include="src\Assistants\GlobalAudioBase.hpp">
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
     <ClInclude Include="src\Assistants\BasicInput.hpp">
@@ -330,13 +333,17 @@
     <ClInclude Include="src\Assistants\FrontendInterface.hpp">
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
-    <ClInclude Include="src\Assistants\AudioSpecBlock.hpp">
+    <ClInclude Include="src\Assistants\AudioDevice.hpp">
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
     <ClInclude Include="src\Assistants\FriendlyUnique.hpp">
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
     <ClInclude Include="src\Assistants\Millis.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\AudioFilters.hpp" />
+    <ClInclude Include="src\Assistants\Voice.hpp">
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
   </ItemGroup>

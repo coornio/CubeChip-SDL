@@ -37,7 +37,7 @@ class MEGACHIP final : public Chip8_CoreInterface {
 
 /*==================================================================*/
 
-	Map2D<u8>   mDisplayBuffer[1];
+	Map2D<u8>   mDisplayBuffer;
 
 	Map2D<RGBA> mForegroundBuffer;
 	Map2D<RGBA> mBackgroundBuffer;
@@ -54,39 +54,43 @@ class MEGACHIP final : public Chip8_CoreInterface {
 		s32 opacity{ 0xFF };
 	} mTexture;
 
-	RGBA blendPixel(RGBA src, RGBA dst) const noexcept;
-
 	enum BlendMode {
 		ALPHA_BLEND  = 0,
 		LINEAR_DODGE = 4,
 		MULTIPLY     = 5,
 	};
 
-	u8 (*intChannelBlend)(u8 src, u8 dst) noexcept {};
+	using BlendFunction = u8(*)(u8 src, u8 dst) noexcept;
+	BlendFunction mBlendFunc;
+
+	static RGBA blendPixel(RGBA src, RGBA dst, BlendFunction func, u8 alpha = 0xFF) noexcept;
 
 	void setNewBlendAlgorithm(s32 mode) noexcept;
 	void scrapAllVideoBuffers();
 	void flushAllVideoBuffers();
 	void blendAndFlushBuffers() const;
 
-	u32 mTrackStartIdx{};
-	s32 mTrackTotalLen{};
-	f64 mTrackStepping{};
-	f64 mTrackPosition{};
+	struct TrackData {
+		u8*  data{};
+		u32  size{};
+		bool loop{};
 
-	void resetAudioTrack() noexcept;
+		constexpr void reset() noexcept
+			{ *this = TrackData{}; }
+
+		constexpr bool isOn() const noexcept
+			{ return data != nullptr; }
+
+		constexpr auto pos(Phase head) const noexcept
+			{ return data[u32(head * size)] - 128; }
+	} mTrack;
+
 	void startAudioTrack(bool repeat) noexcept;
 
-	void pushByteAudio(u32 index) noexcept;
+	static void makeByteWave(f32* data, u32 size, Voice* voice, Stream*) noexcept;
 
 	std::array<u8, cTotalMemory + cSafezoneOOB>
 		mMemoryBank{};
-
-	template <std::integral T>
-	void writeMemory(T value, u32 pos) noexcept {
-		if (pos < cTotalMemory) [[likely]]
-			{ ::assign_cast(mMemoryBank[pos], value); }
-	}
 
 	template <std::integral T>
 	void writeMemoryI(T value, u32 pos) noexcept {

@@ -11,6 +11,13 @@
 
 /*==================================================================*/
 
+template <IsContiguousContainer Object>
+	requires (!std::is_rvalue_reference_v<Object>)
+inline s32 accumulate(Object& array, s32 val = {}) noexcept {
+	return std::accumulate(
+		std::begin(array), std::end(array), val);
+}
+
 template <IsContiguousContainer Object, typename V = ValueType<Object>>
 	requires (!std::is_rvalue_reference_v<Object> && std::convertible_to<V, ValueType<Object>>)
 inline void fill(Object& array, V val = {}) noexcept {
@@ -56,9 +63,50 @@ inline constexpr bool is_any_of(T value, Ts... other) noexcept
 
 /*==================================================================*/
 
-template <typename Dst, typename Src>
+template <typename Dst, typename Src> requires (std::convertible_to<Src, Dst>)
 inline constexpr void assign_cast(Dst& dst, Src&& src) noexcept
 	{ dst = static_cast<Dst>(std::forward<Src>(src)); }
+
+template <typename Dst, typename Src> requires (std::convertible_to<Src, Dst>)
+inline constexpr void assign_cast_add(Dst& dst, Src&& src) noexcept
+	{ dst += static_cast<Dst>(std::forward<Src>(src)); }
+
+template <typename Dst, typename Src> requires (std::convertible_to<Src, Dst>)
+inline constexpr void assign_cast_sub(Dst& dst, Src&& src) noexcept
+	{ dst -= static_cast<Dst>(std::forward<Src>(src)); }
+
+template <typename Dst, typename Src> requires (std::convertible_to<Src, Dst>)
+inline constexpr void assign_cast_mul(Dst& dst, Src&& src) noexcept
+	{ dst *= static_cast<Dst>(std::forward<Src>(src)); }
+
+template <typename Dst, typename Src> requires (std::convertible_to<Src, Dst>)
+inline constexpr void assign_cast_div(Dst& dst, Src&& src) noexcept
+	{ dst /= static_cast<Dst>(std::forward<Src>(src)); }
+
+template <std::integral Dst, typename Src> requires (std::convertible_to<Src, Dst>)
+inline constexpr void assign_cast_mod(Dst& dst, Src&& src) noexcept
+	{ dst %= static_cast<Dst>(std::forward<Src>(src)); }
+
+template <std::integral Dst, typename Src> requires (std::convertible_to<Src, Dst>)
+inline constexpr void assign_cast_xor(Dst& dst, Src&& src) noexcept
+	{ dst ^= static_cast<Dst>(std::forward<Src>(src)); }
+
+template <std::integral Dst, typename Src> requires (std::convertible_to<Src, Dst>)
+inline constexpr void assign_cast_and(Dst& dst, Src&& src) noexcept
+	{ dst &= static_cast<Dst>(std::forward<Src>(src)); }
+
+template <std::integral Dst, typename Src> requires (std::convertible_to<Src, Dst>)
+inline constexpr void assign_cast_or(Dst& dst, Src&& src) noexcept
+	{ dst |= static_cast<Dst>(std::forward<Src>(src)); }
+
+template <std::integral Dst, typename Src> requires (std::convertible_to<Src, Dst>)
+inline constexpr void assign_cast_shl(Dst& dst, Src&& src) noexcept
+	{ dst <<= static_cast<Dst>(std::forward<Src>(src)); }
+
+template <std::integral Dst, typename Src> requires (std::convertible_to<Src, Dst>)
+inline constexpr void assign_cast_shr(Dst& dst, Src&& src) noexcept
+	{ dst >>= static_cast<Dst>(std::forward<Src>(src)); }
+
 
 /*==================================================================*/
 
@@ -78,12 +126,11 @@ Unexpected<E> makeUnexpected(E&& value) {
 	return Unexpected<E>(std::forward<E>(value));
 }
 
-// factory for Expected<T, E> type, <E> should be able to override as a boolean.
+// factory for Expected<T, E> type, expects <E> to be convertible to boolean
 template <typename T, typename E>
 Expected<T, E> makeExpected(T&& value, E&& error) {
 	if (!error) { return std::forward<T>(value); }
 	else { return makeUnexpected<E>(std::forward<E>(error)); }
 }
-
 
 /*==================================================================*/

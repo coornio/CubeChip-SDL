@@ -12,7 +12,7 @@
 
 /*==================================================================*/
 
-class BasicAudioSpec final {
+class GlobalAudioBase final {
 	static inline std::atomic<float> mGlobalGain{};
 	static inline std::atomic<bool>  mIsMuted{};
 
@@ -34,14 +34,14 @@ public:
 	auto exportSettings() const noexcept -> Settings;
 
 private:
-	BasicAudioSpec(const Settings& settings) noexcept;
-	~BasicAudioSpec() noexcept;
-	BasicAudioSpec(const BasicAudioSpec&) = delete;
-	BasicAudioSpec& operator=(const BasicAudioSpec&) = delete;
+	GlobalAudioBase(const Settings& settings) noexcept;
+	~GlobalAudioBase() noexcept;
+	GlobalAudioBase(const GlobalAudioBase&) = delete;
+	GlobalAudioBase& operator=(const GlobalAudioBase&) = delete;
 
 public:
 	static auto* initialize(const Settings& settings) noexcept {
-		static BasicAudioSpec self(settings);
+		static GlobalAudioBase self(settings);
 		return &self;
 	}
 

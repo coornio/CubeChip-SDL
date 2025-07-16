@@ -22,7 +22,7 @@ template <typename T, typename U>
 concept SameValueTypes = std::same_as<ValueType<T>, ValueType<U>>;
 
 template <typename T, typename U>
-concept MatchingValueType = std::same_as<std::remove_cv_t<T>, std::remove_cv_t<typename U::value_type>>;
+concept MatchingValueType = std::same_as<std::remove_cv_t<T>, std::remove_cv_t<ValueType<U>>>;
 
 template<typename T>
 concept IsPlainOldData = std::is_trivial_v<T> && std::is_standard_layout_v<T>;
@@ -31,8 +31,12 @@ template <typename T>
 concept IsContiguousContainer = requires(const T& c) {
 	typename T::value_type;
 	requires std::same_as<
-		std::remove_cv_t<typename T::value_type>,
+		std::remove_cv_t<ValueType<T>>,
 		std::remove_cv_t<std::remove_pointer_t<decltype(std::data(c))>>
 	>;
 	{ std::size(c) } -> std::convertible_to<std::size_t>;
 };
+
+template <typename T, typename U>
+concept IsContiguousContainerOf = (IsContiguousContainer<T> && std::same_as \
+	<std::remove_cv_t<ValueType<T>>, std::remove_cv_t<U>>);

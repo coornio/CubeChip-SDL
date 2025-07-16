@@ -13,13 +13,14 @@
 class GameBoy_CoreInterface : public SystemsInterface {
 
 protected:
-	enum STREAM {
-		CHANN0, CHANN1, CHANN2, CHANN3, COUNT
+	enum STREAM { MAIN };
+	enum VOICE {
+		ID_0, ID_1, ID_2, ID_3, COUNT
 	};
 
 	static inline Path sSavestatePath{};
 
-	AudioSpecBlock mAudio;
+	AudioDevice mAudioDevice;
 
 	std::vector<SimpleKeyMapping> mCustomBinds;
 
