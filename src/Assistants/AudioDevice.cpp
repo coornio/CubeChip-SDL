@@ -31,7 +31,7 @@ bool AudioDevice::addAudioStream(
 	unsigned streamID, unsigned frequency,
 	unsigned channels, unsigned device
 ) {
-	SDL_AudioSpec spec{ SDL_AUDIO_F32, channels, frequency };
+	SDL_AudioSpec spec{ SDL_AUDIO_F32, signed(channels), signed(frequency) };
 
 	auto* ptr{ SDL_OpenAudioDeviceStream(
 		device ? device : SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK

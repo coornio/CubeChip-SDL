@@ -47,8 +47,8 @@ SystemsInterface::~SystemsInterface() noexcept {}
 
 /*==================================================================*/
 
-void SystemsInterface::setViewportSizes(bool cond, s32 W, s32 H, s32 mult, s32 ppad) noexcept {
-	if (cond) { BVS->setViewportSizes(W, H, mult, ppad); }
+void SystemsInterface::setViewportSizes(bool cond, u32 W, u32 H, u32 mult, u32 ppad) noexcept {
+	if (cond) { BVS->setViewportSizes(s32(W), s32(H), s32(mult), s32(ppad)); }
 }
 
 void SystemsInterface::setDisplayBorderColor(u32 color) noexcept {

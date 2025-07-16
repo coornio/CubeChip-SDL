@@ -126,7 +126,7 @@ public:
 	void setSystemFramerate(f32 value) noexcept;
 
 protected:
-	void setViewportSizes(bool cond, s32 W, s32 H, s32 mult, s32 ppad) noexcept;
+	void setViewportSizes(bool cond, u32 W, u32 H, u32 mult, u32 ppad) noexcept;
 
 	void setDisplayBorderColor(u32 color) noexcept;
 

@@ -26,9 +26,13 @@ CHIP8X::CHIP8X() {
 	setViewportSizes(true, cScreenSizeX, cScreenSizeY, cResSizeMult, 2);
 	setSystemFramerate(cRefreshRate);
 
+	mVoices[VOICE::UNIQUE].userdata = &mAudioTimers[VOICE::UNIQUE];
+	mVoices[VOICE::BUZZER].userdata = &mAudioTimers[VOICE::BUZZER];
+
 	mCurrentPC = cStartOffset;
 	mTargetCPF = cInstSpeedHi;
 
+	// test first color rect as the original hardware did
 	mColoredBuffer(0, 0) = cForeColor[2];
 }
 

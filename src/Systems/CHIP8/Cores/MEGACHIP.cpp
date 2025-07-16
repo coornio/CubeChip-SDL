@@ -29,6 +29,9 @@ MEGACHIP::MEGACHIP()
 	setViewportSizes(true, cScreenSizeX, cScreenSizeY, cResSizeMult, 2);
 	setSystemFramerate(cRefreshRate);
 
+	mVoices[VOICE::UNIQUE].userdata = &mAudioTimers[VOICE::UNIQUE];
+	mVoices[VOICE::BUZZER].userdata = &mAudioTimers[VOICE::BUZZER];
+
 	mCurrentPC = cStartOffset;
 	
 	prepDisplayArea(Resolution::LO);

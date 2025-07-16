@@ -26,6 +26,11 @@ CHIP8_MODERN::CHIP8_MODERN() {
 	setViewportSizes(true, cScreenSizeX, cScreenSizeY, cResSizeMult, 2);
 	setSystemFramerate(cRefreshRate);
 
+	mVoices[VOICE::ID_0].userdata = &mAudioTimers[VOICE::ID_0];
+	mVoices[VOICE::ID_1].userdata = &mAudioTimers[VOICE::ID_1];
+	mVoices[VOICE::ID_2].userdata = &mAudioTimers[VOICE::ID_2];
+	mVoices[VOICE::ID_3].userdata = &mAudioTimers[VOICE::ID_3];
+
 	mCurrentPC = cStartOffset;
 	mTargetCPF = Quirk.waitVblank ? cInstSpeedHi : cInstSpeedLo;
 }

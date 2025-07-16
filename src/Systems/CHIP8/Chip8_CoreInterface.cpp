@@ -23,7 +23,7 @@ Chip8_CoreInterface::Chip8_CoreInterface() noexcept {
 	if (const auto* path{ HDM->addSystemDir("permaRegs", "CHIP8") })
 		{ sPermaRegsPath = *path / HDM->getFileSHA1(); }
 
-	mAudioDevice.addAudioStream(STREAM::MAIN, 48'000, 1);
+	mAudioDevice.addAudioStream(STREAM::MAIN, 48'000);
 	mAudioDevice.resumeStreams();
 
 	loadPresetBinds();

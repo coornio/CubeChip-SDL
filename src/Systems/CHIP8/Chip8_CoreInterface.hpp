@@ -121,14 +121,16 @@ protected:
 
 	u32 mStackTop{};
 
-	inline static
+	static inline thread_local
 	std::array<u8, 16>
 		sPermRegsV{};
 
 	std::array<u8, 16>
 		mRegisterV{};
 
-	alignas(64)
+	u64 : (8 * 8); // padding
+	u64 : (8 * 8); // padding
+
 	std::array<u32, 16>
 		mStackBank{};
 
