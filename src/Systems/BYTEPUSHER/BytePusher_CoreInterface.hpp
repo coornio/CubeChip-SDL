@@ -6,11 +6,11 @@
 
 #pragma once
 
-#include "../SystemsInterface.hpp"
+#include "../SystemInterface.hpp"
 
 /*==================================================================*/
 
-class BytePusher_CoreInterface : public SystemsInterface {
+class BytePusher_CoreInterface : public SystemInterface {
 
 protected:
 	static inline Path sSavestatePath{};

@@ -27,7 +27,7 @@ class HomeDirManager;
 class GlobalAudioBase;
 class BasicVideoSpec;
 
-class SystemsInterface;
+class SystemInterface;
 
 union SDL_Event;
 
@@ -39,14 +39,12 @@ class FrontendHost final {
 	FrontendHost(const FrontendHost&) = delete;
 	FrontendHost& operator=(const FrontendHost&) = delete;
 
-	struct StopEmuCoreThread {
-		void operator()(SystemsInterface*) noexcept;
+	struct StopSystemThread {
+		void operator()(SystemInterface*) noexcept;
 	};
+	using SystemCore = std::unique_ptr<SystemInterface, StopSystemThread>;
 
-	std::unique_ptr<
-		SystemsInterface,
-		StopEmuCoreThread
-	> mSystemCore;
+	SystemCore mSystemCore;
 
 public:
 	static inline HomeDirManager*  HDM{};

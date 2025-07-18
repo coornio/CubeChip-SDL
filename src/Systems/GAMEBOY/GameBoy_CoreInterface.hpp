@@ -6,11 +6,11 @@
 
 #pragma once
 
-#include "../SystemsInterface.hpp"
+#include "../SystemInterface.hpp"
 
 /*==================================================================*/
 
-class GameBoy_CoreInterface : public SystemsInterface {
+class GameBoy_CoreInterface : public SystemInterface {
 
 protected:
 	enum STREAM { MAIN };

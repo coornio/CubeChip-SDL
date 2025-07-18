@@ -47,7 +47,7 @@ add_executable(${PROJECT_NAME}
   src/Assistants/Millis.cpp
   src/Assistants/SHA1.cpp
 
-  src/Systems/SystemsInterface.cpp
+  src/Systems/SystemInterface.cpp
   src/Systems/CoreRegistry.cpp
 
   src/Systems/BYTEPUSHER/BytePusher_CoreInterface.cpp

@@ -6,11 +6,11 @@
 
 #pragma once
 
-#include "../SystemsInterface.hpp"
+#include "../SystemInterface.hpp"
 
 /*==================================================================*/
 
-class Chip8_CoreInterface : public SystemsInterface {
+class Chip8_CoreInterface : public SystemInterface {
 	
 protected:
 	enum STREAM : u32 { MAIN };
@@ -108,7 +108,7 @@ protected:
 		s32 W{}, H{};
 		constexpr s32 pixels() const noexcept { return W * H; }
 		constexpr void clear() noexcept { W = H = 0; }
-		constexpr void set(s32 w, s32 h) noexcept { W = w; H = h; }
+		constexpr void set(u32 w, u32 h) noexcept { W = w; H = h; }
 	} mDisplay;
 
 	u32 mCurrentPC{};

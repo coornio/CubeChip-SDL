@@ -37,12 +37,17 @@ class MEGACHIP final : public Chip8_CoreInterface {
 
 /*==================================================================*/
 
-	Map2D<u8>   mDisplayBuffer;
+	FixedMap2D<u8, cScreenSizeX, cScreenSizeY>
+		mDisplayBuffer; // legacy 128x64 buffer
 
-	Map2D<RGBA> mForegroundBuffer;
-	Map2D<RGBA> mBackgroundBuffer;
-	Map2D<u8>   mCollisionMap;
-	Map2D<RGBA> mColorPalette;
+	FixedMap2D<RGBA, cScreenMegaX, cScreenMegaY>
+		mLastRenderBuffer; // buffer of last rendered frame
+	FixedMap2D<RGBA, cScreenMegaX, cScreenMegaY>
+		mBackgroundBuffer; // primary draw buffer
+	FixedMap2D<u8, cScreenMegaX, cScreenMegaY>
+		mCollisionMap; // collision detection map based on palette index
+	FixedMap2D<RGBA, 256, 1>
+		mColorPalette; // 256-color palette
 
 	std::array<RGBA, 10> mFontColor{};
 

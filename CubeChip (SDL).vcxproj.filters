@@ -82,7 +82,7 @@
     <ClCompile Include="src\Assistants\SHA1.cpp">
       <Filter>Source Files\Assistants</Filter>
     </ClCompile>
-    <ClCompile Include="src\Systems\SystemsInterface.cpp">
+    <ClCompile Include="src\Systems\SystemInterface.cpp">
       <Filter>Source Files\Systems</Filter>
     </ClCompile>
     <ClCompile Include="src\Systems\CoreRegistry.cpp">
@@ -219,7 +219,7 @@
     <ClInclude Include="src\FrontendHost.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Systems\SystemsInterface.hpp">
+    <ClInclude Include="src\Systems\SystemInterface.hpp">
       <Filter>Source Files\Systems</Filter>
     </ClInclude>
     <ClInclude Include="src\Systems\CoreRegistry.hpp">
@@ -342,8 +342,10 @@
     <ClInclude Include="src\Assistants\Millis.hpp">
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
-    <ClInclude Include="src\Assistants\AudioFilters.hpp" />
     <ClInclude Include="src\Assistants\Voice.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\AudioFilters.hpp">
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
   </ItemGroup>

@@ -35,9 +35,9 @@ enum class GameFileType {
 
 /*==================================================================*/
 
-class SystemsInterface;
+class SystemInterface;
 
-using CoreConstructor = SystemsInterface* (*)();
+using CoreConstructor = SystemInterface* (*)();
 using ProgramTester   = bool (*)(const char*, ust);
 using FileExtList     = std::vector<Str>;
 
@@ -66,8 +66,9 @@ using Json        = nlohmann::json;
 #define REGISTER_CORE(CoreType, ...) \
 static auto CONCAT_TOKENS(sCoreRegID_, __COUNTER__) = \
 	CoreRegistry::registerCore( \
-		[]() -> SystemsInterface* { return new CoreType(); }, \
-		CoreType::validateProgram, { __VA_ARGS__ } \
+		[]() -> SystemInterface* { \
+			return new (std::align_val_t(HDIS), std::nothrow) CoreType(); \
+		}, CoreType::validateProgram, { __VA_ARGS__ } \
 	);
 
 /*==================================================================*/
@@ -104,7 +105,7 @@ public:
 	static const CoreRegList* findEligibleCores(const Str& ext) noexcept;
 
 	[[nodiscard]]
-	static SystemsInterface* constructCore(size_type idx = 0) noexcept;
+	static SystemInterface* constructCore(size_type idx = 0) noexcept;
 
 	/*==================================================================*/
 

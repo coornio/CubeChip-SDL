@@ -14,10 +14,13 @@
 
 #include "RangeIterator.hpp"
 
-
 /*==================================================================*/
 
-#define MAX_ALIGN 0x1000
+#ifndef MAX_ALIGN
+	#define MAX_ALIGN HDIS * 2
+#endif
+
+/*==================================================================*/
 
 template<typename T>
 concept Allocatable = std::is_object_v<T> && !std::is_abstract_v<T>;
@@ -29,7 +32,7 @@ concept Allocatable = std::is_object_v<T> && !std::is_abstract_v<T>;
  * @param[in] size :: The amount of elements this Deleter is managing.
  */
 template <Allocatable T, std::size_t N>
-class AlignedTypeDeleter {
+class AlignedTypeArrayDeleter {
 	static_assert((N & (N - 1)) == 0,
 		"N must be a power of two.");
 	static_assert(N <= MAX_ALIGN,
@@ -40,8 +43,8 @@ class AlignedTypeDeleter {
 	std::size_t mSize{};
 
 public:
-	constexpr AlignedTypeDeleter() noexcept = default;
-	constexpr AlignedTypeDeleter(std::size_t size) noexcept : mSize{ size } {}
+	constexpr AlignedTypeArrayDeleter() noexcept = default;
+	constexpr AlignedTypeArrayDeleter(std::size_t size) noexcept : mSize{ size } {}
 
 	void operator()(T* ptr) const
 		noexcept(std::is_nothrow_destructible_v<T>)
@@ -50,7 +53,7 @@ public:
 		::operator delete[](ptr, std::align_val_t(N));
 	}
 
-	friend constexpr void swap(AlignedTypeDeleter& lhs, AlignedTypeDeleter& rhs) noexcept
+	friend constexpr void swap(AlignedTypeArrayDeleter& lhs, AlignedTypeArrayDeleter& rhs) noexcept
 		{ std::swap(lhs.mSize, rhs.mSize); }
 };
 
@@ -60,7 +63,7 @@ public:
  * @tparam N :: The alignment offset (optional). Must be a power of two.
  */
 template <Allocatable T, std::size_t N>
-class AlignedLiteDeleter {
+class AlignedLiteArrayDeleter {
 	static_assert((N& (N - 1)) == 0,
 		"N must be a power of two.");
 	static_assert(N <= MAX_ALIGN,
@@ -69,13 +72,13 @@ class AlignedLiteDeleter {
 		"Deleter expects trivially-destructible types.");
 
 public:
-	constexpr AlignedLiteDeleter() noexcept = default;
-	constexpr AlignedLiteDeleter(std::size_t) noexcept {};
+	constexpr AlignedLiteArrayDeleter() noexcept = default;
+	constexpr AlignedLiteArrayDeleter(std::size_t) noexcept {};
 
 	void operator()(T* ptr) const noexcept
 		{ ::operator delete[](ptr, std::align_val_t(N)); }
 
-	friend constexpr void swap(AlignedLiteDeleter&, AlignedLiteDeleter&) noexcept {}
+	friend constexpr void swap(AlignedLiteArrayDeleter&, AlignedLiteArrayDeleter&) noexcept {}
 };
 
 /*==================================================================*/
@@ -86,20 +89,23 @@ public:
  * @tparam N :: The alignment offset (optional). Must be a power of two.
  */
 template <Allocatable T, std::size_t N = HDIS>
-using AlignedUnique = std::unique_ptr<T[], std::conditional_t<
+using AlignedUniqueArray = std::unique_ptr<T[], std::conditional_t<
 	std::is_trivially_destructible_v<T>,
-	AlignedLiteDeleter<T, N>, AlignedTypeDeleter<T, N>
+	AlignedLiteArrayDeleter<T, N>,
+	AlignedTypeArrayDeleter<T, N>
 >>;
 
 template <Allocatable T, std::size_t N>
 class AlignedMemoryBlock;
 
 template <Allocatable T, std::size_t N>
-AlignedMemoryBlock<T, N> allocate(std::size_t) noexcept;
+AlignedMemoryBlock<T, N> allocate_n(std::size_t) noexcept;
+
+/*==================================================================*/
 
 template <Allocatable T, std::size_t N>
 class AlignedContainer {
-	using memory_type = AlignedUnique<T, N>;
+	using memory_type = AlignedUniqueArray<T, N>;
 	using self = AlignedContainer;
 
 public:
@@ -186,9 +192,11 @@ public:
 	constexpr const_reverse_iterator crend()   const noexcept { return std::make_reverse_iterator(cbegin()); }
 };
 
+/*==================================================================*/
+
 template <Allocatable T, std::size_t N>
 class AlignedMemoryBlock {
-	using memory_type = AlignedUnique<T, N>;
+	using memory_type = AlignedUniqueArray<T, N>;
 	using self = AlignedMemoryBlock;
 	using size_type = std::size_t;
 
@@ -197,7 +205,7 @@ class AlignedMemoryBlock {
 	size_type mOffset{};
 
 private:
-	friend self allocate<T, N>(std::size_t) noexcept;
+	friend self allocate_n<T, N>(std::size_t) noexcept;
 
 	AlignedMemoryBlock(T* ptr, size_type size) noexcept
 		: mAllocated{ ptr, { size } }, mSize{ size }
@@ -350,8 +358,10 @@ public:
 	}
 };
 
+/*==================================================================*/
+
 template<Allocatable T, std::size_t N = HDIS>
-inline AlignedMemoryBlock<T, N> allocate(std::size_t size) noexcept {
+inline AlignedMemoryBlock<T, N> allocate_n(std::size_t size) noexcept {
 	static_assert((N & (N - 1)) == 0u,
 		"N must be a power of two.");
 	static_assert(N <= MAX_ALIGN,
@@ -360,6 +370,31 @@ inline AlignedMemoryBlock<T, N> allocate(std::size_t size) noexcept {
 	void* ptr{ size ? ::operator new[](size * sizeof(T), std::align_val_t(N), std::nothrow) : nullptr };
 	return { static_cast<T*>(ptr), { ptr != nullptr ? size : 0 } };
 }
+
+/*==================================================================*/
+
+template <Allocatable T, std::size_t N>
+struct AlignedDeleter {
+	static_assert((N & (N - 1)) == 0,
+		"N must be power of two.");
+	static_assert(N <= MAX_ALIGN,
+		"Exceeded maximum alignment.");
+
+	void operator()(T* ptr) const noexcept {
+		if (ptr) { ptr->~T(); }
+		::operator delete(ptr, std::align_val_t(N));
+	}
+};
+
+template <Allocatable T, std::size_t N = HDIS>
+using AlignedUnique = std::unique_ptr<T, AlignedDeleter<T, N>>;
+
+template <Allocatable T, std::size_t N = HDIS, typename... Args>
+AlignedUnique<T, N> allocate(Args&&... args) noexcept {
+	return { new (std::align_val_t(N), std::nothrow) T(std::forward<Args>(args)...), {} };
+}
+
+/*==================================================================*/
 
 #ifdef MAX_ALIGN
 	#undef MAX_ALIGN

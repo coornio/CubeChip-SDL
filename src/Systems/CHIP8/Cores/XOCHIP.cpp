@@ -311,15 +311,10 @@ void XOCHIP::prepDisplayArea(const Resolution mode) {
 	mDisplayBuffer[3].resizeClean(W, H);
 };
 
-void XOCHIP::setColorBit332(s32 bit, s32 color) noexcept {
-	static constexpr u8 map3b[]{ 0x00, 0x20, 0x40, 0x60, 0x80, 0xA0, 0xC0, 0xFF };
-	static constexpr u8 map2b[]{ 0x00,             0x60,       0xA0,       0xFF };
+void XOCHIP::setColorBit332(s32 bit, s32 index) noexcept {
 
-	mBitColors[bit & 0xF] = {
-		map3b[color >> 5 & 0x7], // R
-		map3b[color >> 2 & 0x7], // G
-		map2b[color      & 0x3], // B
-	};
+
+	mBitColors[bit & 0xF] = sColorPalette[index];
 }
 
 void XOCHIP::setPatternPitch(s32 pitch) noexcept {
@@ -598,10 +593,7 @@ void XOCHIP::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region D instruction branch
 
-	void XOCHIP::drawByte(
-		s32 X, s32 Y, s32 P,
-		u32 DATA
-	) noexcept {
+	void XOCHIP::drawByte(s32 X, s32 Y, s32 P, u32 DATA) noexcept {
 		switch (DATA) {
 			[[unlikely]]
 			case 0b00000000:

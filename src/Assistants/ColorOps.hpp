@@ -12,6 +12,8 @@
 #include <concepts>
 #include <algorithm>
 
+/*==================================================================*/
+
 #ifndef __cpp_constexpr
 	#define __cpp_constexpr 0
 #endif
@@ -47,8 +49,6 @@ class WaveForms {
 
 	static constexpr Type_F calc_period(Millis p, Millis t) noexcept
 		{ return p ? Type_F(t % p) / p : 0.0; }
-
-	/*==================================================================*/
 
 public:
 	class Bipolar {
@@ -172,20 +172,20 @@ inline CONSTEXPR_MATH RGBA  to_RGBA (OKLCH in) noexcept;
 /*==================================================================*/
 
 struct alignas(4) RGBA {
-	using type_C = std::uint8_t;
+	using Type_C = std::uint8_t;
 	using Packed = std::uint32_t;
 	using Weight = EzMaths::Weight;
 
-	type_C R{}, G{}, B{}, A{};
+	Type_C R{}, G{}, B{}, A{};
 
 	constexpr RGBA() noexcept = default;
 	constexpr RGBA(Packed color) noexcept
-		: R{ type_C(color >> 24) }
-		, G{ type_C(color >> 16) }
-		, B{ type_C(color >>  8) }
-		, A{ type_C(color >>  0) }
+		: R{ Type_C(color >> 24) }
+		, G{ Type_C(color >> 16) }
+		, B{ Type_C(color >>  8) }
+		, A{ Type_C(color >>  0) }
 	{}
-	constexpr RGBA(type_C R, type_C G, type_C B, type_C A = 0xFF) noexcept
+	constexpr RGBA(Type_C R, Type_C G, Type_C B, Type_C A = 0xFF) noexcept
 		: R{ R }, G{ G }, B{ B }, A{ A }
 	{}
 
@@ -215,26 +215,26 @@ struct alignas(4) RGBA {
 /*==================================================================*/
 
 struct alignas(4) HSV {
-	using type_H = std::int16_t;
-	using type_S = std::uint8_t;
-	using type_V = type_S;
+	using Type_H = std::int16_t;
+	using Type_S = std::uint8_t;
+	using Type_V = Type_S;
 	using Packed = std::uint32_t;
 	using Weight = EzMaths::Weight;
 
-	static constexpr auto full_hue{ type_H(0x600u) };
-	static constexpr auto half_hue{ type_H(full_hue >> 1) };
+	static constexpr auto full_hue{ Type_H(0x600u) };
+	static constexpr auto half_hue{ Type_H(full_hue >> 1) };
 
-	type_H H{};
-	type_S S{};
-	type_V V{};
+	Type_H H{};
+	Type_S S{};
+	Type_V V{};
 
 	constexpr HSV() noexcept = default;
 	constexpr HSV(Packed color) noexcept
-		: H{ type_H(color >> 16) }
-		, S{ type_S(color >>  8) }
-		, V{ type_V(color >>  0) }
+		: H{ Type_H(color >> 16) }
+		, S{ Type_S(color >>  8) }
+		, V{ Type_V(color >>  0) }
 	{}
-	constexpr HSV(type_H H, type_S S, type_V V) noexcept
+	constexpr HSV(Type_H H, Type_S S, Type_V V) noexcept
 		: H{ H }, S{ S }, V{ V }
 	{}
 
@@ -251,21 +251,21 @@ struct alignas(4) HSV {
 /*==================================================================*/
 
 struct OKLAB {
-	using type_F = EzMaths::Type_F;
+	using Type_F = EzMaths::Type_F;
 	using Weight = EzMaths::Weight;
 
-	type_F L{}, A{}, B{};
+	Type_F L{}, A{}, B{};
 
 	constexpr OKLAB() noexcept = default;
-	constexpr OKLAB(type_F L, type_F A, type_F B) noexcept
+	constexpr OKLAB(Type_F L, Type_F A, Type_F B) noexcept
 		: L{ L }, A{ A }, B{ B }
 	{}
 
-	static CONSTEXPR_MATH type_F gamma_def(type_F x) noexcept {
+	static CONSTEXPR_MATH Type_F gamma_def(Type_F x) noexcept {
 		return x <= 0.0404500 ? x / 12.92 : std::pow((x + 0.055) / 1.055, 2.4);
 		//return std::pow(x, 2.2); // quick path
 	}
-	static CONSTEXPR_MATH type_F gamma_inv(type_F x) noexcept {
+	static CONSTEXPR_MATH Type_F gamma_inv(Type_F x) noexcept {
 		return x <= 0.0031308 ? x * 12.92 : 1.055 * std::pow(x, 1.0 / 2.4) - 0.055;
 		//return std::pow(x, 1.0 / 2.2); // quick path
 	}
@@ -283,13 +283,13 @@ struct OKLAB {
 };
 
 struct OKLCH {
-	using type_F = OKLAB::type_F;
+	using Type_F = OKLAB::Type_F;
 	using Weight = OKLAB::Weight;
 
-	type_F L{}, C{}, H{};
+	Type_F L{}, C{}, H{};
 
 	constexpr OKLCH() noexcept = default;
-	constexpr OKLCH(type_F L, type_F C, type_F H) noexcept
+	constexpr OKLCH(Type_F L, Type_F C, Type_F H) noexcept
 		: L{ L }, C{ C }, H{ H }
 	{}
 
@@ -330,8 +330,8 @@ inline constexpr HSV to_HSV(RGBA in) noexcept {
 	else if (maxV == in.B)
 		{ hueV = 0x400 + ((in.R - in.G) * 0x100 / diff); }
 
-	return HSV(HSV::type_H((hueV + HSV::full_hue) % HSV::full_hue), \
-		HSV::type_S((diff * 0xFF + (maxV >> 1)) / maxV), HSV::type_V(maxV));
+	return HSV(HSV::Type_H((hueV + HSV::full_hue) % HSV::full_hue), \
+		HSV::Type_S((diff * 0xFF + (maxV >> 1)) / maxV), HSV::Type_V(maxV));
 }
 
 inline constexpr RGBA to_RGBA(HSV in) noexcept {
@@ -340,9 +340,9 @@ inline constexpr RGBA to_RGBA(HSV in) noexcept {
 
 	const auto hueV{ in.H & 0xFF };
 
-	const auto valP{ RGBA::type_C((in.V * (0x00FF - in.S)                  + 0x007F) / 0x00FF) };
-	const auto valQ{ RGBA::type_C((in.V * (0xFF00 - in.S *          hueV)  + 0x7FFF) / 0xFF00) };
-	const auto valT{ RGBA::type_C((in.V * (0xFF00 - in.S * (0x100 - hueV)) + 0x7FFF) / 0xFF00) };
+	const auto valP{ RGBA::Type_C((in.V * (0x00FF - in.S)                  + 0x007F) / 0x00FF) };
+	const auto valQ{ RGBA::Type_C((in.V * (0xFF00 - in.S *          hueV)  + 0x7FFF) / 0xFF00) };
+	const auto valT{ RGBA::Type_C((in.V * (0xFF00 - in.S * (0x100 - hueV)) + 0x7FFF) / 0xFF00) };
 
 	switch (in.H >> 8) {
 		case 0:  return RGBA(in.V, valT, valP);
@@ -393,9 +393,9 @@ inline CONSTEXPR_MATH RGBA to_RGBA(OKLAB in) noexcept {
 	const auto B{ -0.00439 * L - 0.70342 * M + 1.70758 * S };
 	
 	return RGBA(
-		RGBA::type_C(EzMaths::round(255.0 * OKLAB::gamma_inv(R))),
-		RGBA::type_C(EzMaths::round(255.0 * OKLAB::gamma_inv(G))),
-		RGBA::type_C(EzMaths::round(255.0 * OKLAB::gamma_inv(B)))
+		RGBA::Type_C(EzMaths::round(255.0 * OKLAB::gamma_inv(R))),
+		RGBA::Type_C(EzMaths::round(255.0 * OKLAB::gamma_inv(G))),
+		RGBA::Type_C(EzMaths::round(255.0 * OKLAB::gamma_inv(B)))
 	);
 }
 

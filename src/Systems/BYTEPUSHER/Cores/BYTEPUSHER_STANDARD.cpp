@@ -47,7 +47,7 @@ void BYTEPUSHER_STANDARD::instructionLoop() noexcept {
 
 void BYTEPUSHER_STANDARD::renderAudioData() {
 	const auto samplesOffset{ mMemoryBank.data() + (readData<2>(6) << 8) };
-	auto buffer{ ::allocate<f32>(cAudioLength).as_value().release_as_container() };
+	auto buffer{ ::allocate_n<f32>(cAudioLength).as_value().release_as_container() };
 
 	static constexpr auto master_gain{ 0.22f };
 

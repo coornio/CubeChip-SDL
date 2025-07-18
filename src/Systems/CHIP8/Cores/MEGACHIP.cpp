@@ -16,13 +16,7 @@ REGISTER_CORE(MEGACHIP, ".mc8")
 
 /*==================================================================*/
 
-MEGACHIP::MEGACHIP()
-	: mDisplayBuffer{ cScreenSizeX, cScreenSizeY }
-	, mForegroundBuffer{ cScreenMegaX, cScreenMegaY }
-	, mBackgroundBuffer{ cScreenMegaX, cScreenMegaY }
-	, mCollisionMap{ cScreenMegaX, cScreenMegaY }
-	, mColorPalette{ 256 }
-{
+MEGACHIP::MEGACHIP() {
 	copyGameToMemory(mMemoryBank.data() + cGameLoadPos);
 	copyFontToMemory(mMemoryBank.data(), 0xB4);
 
@@ -441,21 +435,22 @@ void MEGACHIP::setNewBlendAlgorithm(s32 mode) noexcept {
 }
 
 void MEGACHIP::scrapAllVideoBuffers() {
+	mLastRenderBuffer.initialize();
 	mBackgroundBuffer.initialize();
 	mCollisionMap.initialize();
 }
 
 void MEGACHIP::flushAllVideoBuffers() {
-	mForegroundBuffer = mBackgroundBuffer;
+	BVS->displayBuffer.write(mBackgroundBuffer);
+
+	mLastRenderBuffer = mBackgroundBuffer;
 	mBackgroundBuffer.initialize();
 	mCollisionMap.initialize();
-
-	BVS->displayBuffer.write(mForegroundBuffer);
 }
 
 void MEGACHIP::blendAndFlushBuffers() const {
 	BVS->displayBuffer.write(
-		mForegroundBuffer,
+		mLastRenderBuffer,
 		mBackgroundBuffer,
 		[this](RGBA src, RGBA dst) noexcept {
 			return blendPixel(src, dst, \
@@ -501,19 +496,19 @@ void MEGACHIP::makeByteWave(f32* data, u32 size, Voice* voice, Stream*) noexcept
 }
 
 void MEGACHIP::scrollBuffersUP(s32 N) {
-	mForegroundBuffer.shift(0, -N);
+	mLastRenderBuffer.shift(0, -N);
 	blendAndFlushBuffers();
 }
 void MEGACHIP::scrollBuffersDN(s32 N) {
-	mForegroundBuffer.shift(0, +N);
+	mLastRenderBuffer.shift(0, +N);
 	blendAndFlushBuffers();
 }
 void MEGACHIP::scrollBuffersLT() {
-	mForegroundBuffer.shift(-4, 0);
+	mLastRenderBuffer.shift(-4, 0);
 	blendAndFlushBuffers();
 }
 void MEGACHIP::scrollBuffersRT() {
-	mForegroundBuffer.shift(+4, 0);
+	mLastRenderBuffer.shift(+4, 0);
 	blendAndFlushBuffers();
 }
 

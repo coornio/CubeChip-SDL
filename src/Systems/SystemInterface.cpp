@@ -10,23 +10,23 @@
 #include "../Assistants/BasicInput.hpp"
 #include "../Assistants/Well512.hpp"
 
-#include "SystemsInterface.hpp"
+#include "SystemInterface.hpp"
 
 /*==================================================================*/
 
-void SystemsInterface::startWorker() noexcept {
+void SystemInterface::startWorker() noexcept {
 	if (mCoreThread.joinable()) { return; }
 	mCoreThread = Thread([this](StopToken token) { threadEntry(token); });
 }
 
-void SystemsInterface::stopWorker() noexcept {
+void SystemInterface::stopWorker() noexcept {
 	if (mCoreThread.joinable()) {
 		mCoreThread.request_stop();
 		mCoreThread.join();
 	}
 }
 
-void SystemsInterface::threadEntry(StopToken token) {
+void SystemInterface::threadEntry(StopToken token) {
 	thread_affinity::set_affinity(~0b11ull);
 	SDL_SetCurrentThreadPriority(SDL_THREAD_PRIORITY_HIGH);
 
@@ -34,7 +34,7 @@ void SystemsInterface::threadEntry(StopToken token) {
 		[[likely]] { mainSystemLoop(); }
 }
 
-SystemsInterface::SystemsInterface() noexcept
+SystemInterface::SystemInterface() noexcept
 	: mOverlayData{ std::make_shared<Str>() }
 	, Pacer{ std::make_unique<FrameLimiter>() }
 	, Input{ std::make_unique<BasicKeyboard>() }
@@ -43,32 +43,32 @@ SystemsInterface::SystemsInterface() noexcept
 	RNG = &sWell512;
 }
 
-SystemsInterface::~SystemsInterface() noexcept {}
+SystemInterface::~SystemInterface() noexcept {}
 
 /*==================================================================*/
 
-void SystemsInterface::setViewportSizes(bool cond, u32 W, u32 H, u32 mult, u32 ppad) noexcept {
+void SystemInterface::setViewportSizes(bool cond, u32 W, u32 H, u32 mult, u32 ppad) noexcept {
 	if (cond) { BVS->setViewportSizes(s32(W), s32(H), s32(mult), s32(ppad)); }
 }
 
-void SystemsInterface::setDisplayBorderColor(u32 color) noexcept {
+void SystemInterface::setDisplayBorderColor(u32 color) noexcept {
 	BVS->setBorderColor(color);
 }
 
-f32 SystemsInterface::getSystemFramerate() const noexcept {
+f32 SystemInterface::getSystemFramerate() const noexcept {
 	return mTargetFPS.load(mo::relaxed);
 }
 
-void SystemsInterface::setSystemFramerate(f32 value) noexcept {
+void SystemInterface::setSystemFramerate(f32 value) noexcept {
 	mTargetFPS.store(value, mo::relaxed);
 	Pacer->setLimiter(value);
 }
 
-void SystemsInterface::saveOverlayData(const Str* data) {
+void SystemInterface::saveOverlayData(const Str* data) {
 	mOverlayData.store(std::make_shared<Str>(*data), mo::release);
 }
 
-Str* SystemsInterface::makeOverlayData() {
+Str* SystemInterface::makeOverlayData() {
 	const auto frameMS{ Pacer->getElapsedMillisLast() };
 	const auto elapsed{ Pacer->getElapsedMicrosSince() / 1000.0f };
 
@@ -83,12 +83,12 @@ Str* SystemsInterface::makeOverlayData() {
 	return getOverlayDataBuffer();
 }
 
-void SystemsInterface::pushOverlayData() {
+void SystemInterface::pushOverlayData() {
 	if (Pacer->getValidFrameCounter() & 0x1) [[likely]] {
-		saveOverlayData(SystemsInterface::makeOverlayData());
+		saveOverlayData(SystemInterface::makeOverlayData());
 	}
 }
 
-Str SystemsInterface::copyOverlayData() const noexcept {
+Str SystemInterface::copyOverlayData() const noexcept {
 	return *mOverlayData.load(mo::acquire);
 }

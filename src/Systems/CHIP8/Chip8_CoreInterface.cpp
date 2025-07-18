@@ -96,21 +96,20 @@ void Chip8_CoreInterface::handlePreFrameInterrupt() noexcept {
 	{
 		case Interrupt::FRAME:
 			mInterrupt = Interrupt::CLEAR;
-			mTargetCPF *= mTargetCPF < 0 ? -1 : 0;
+			mTargetCPF *= mTargetCPF < 0 ? -1 : 1;
 			return;
 
 		case Interrupt::SOUND:
 			for (auto& timer : mAudioTimers)
-				{ if (timer.get()) return; }
+				{ if (timer.get()) { return; } }
 			mInterrupt = Interrupt::WAIT1;
 			mTargetCPF = 0;
 			return;
 
 		case Interrupt::DELAY:
-			if (!mDelayTimer) {
-				mInterrupt = Interrupt::CLEAR;
-				mTargetCPF *= mTargetCPF < 0 ? -1 : 0;
-			}
+			if (mDelayTimer) { return; }
+			mInterrupt = Interrupt::CLEAR;
+			mTargetCPF *= mTargetCPF < 0 ? -1 : 1;
 			return;
 
 		default:
@@ -124,7 +123,7 @@ void Chip8_CoreInterface::handleEndFrameInterrupt() noexcept {
 		case Interrupt::INPUT:
 			if (keyPressed(mInputReg)) {
 				mInterrupt = Interrupt::CLEAR;
-				mTargetCPF *= mTargetCPF < 0 ? -1 : 0;
+				mTargetCPF *= mTargetCPF < 0 ? -1 : 1;
 				startVoiceAt(VOICE::BUZZER, 2);
 			}
 			return;
@@ -191,17 +190,18 @@ void Chip8_CoreInterface::mainSystemLoop() {
 }
 
 Str* Chip8_CoreInterface::makeOverlayData() {
+	static constexpr auto half_of_pi{ f32(std::numbers::pi / 2.0) };
 	const auto currentFrameTime{ Pacer->getElapsedMicrosSince() / 1000.0f };
 	const auto frameTimeBias{ currentFrameTime * 1.025f / Pacer->getFramespan() };
-	const auto workCycleBias{ 1e5f * std::sin((1 - frameTimeBias) * 1.5707963f) };
+	const auto workCycleBias{ 120'000.0f * std::cos(frameTimeBias * half_of_pi) };
 
 	if (mInterrupt == Interrupt::CLEAR) [[likely]]
-		{ mTargetCPF += static_cast<s32>(workCycleBias); }
+		{ ::assign_cast_add(mTargetCPF, workCycleBias); }
 
 	*getOverlayDataBuffer() = fmt::format(
 		" ::  MIPS:{:8.2f}\n{}",
 		mTargetCPF * getSystemFramerate() / 1'000'000.0f,
-		*SystemsInterface::makeOverlayData()
+		*SystemInterface::makeOverlayData()
 	);
 	return getOverlayDataBuffer();
 }
@@ -209,7 +209,7 @@ Str* Chip8_CoreInterface::makeOverlayData() {
 void Chip8_CoreInterface::pushOverlayData() {
 	if (getSystemState() & EmuState::BENCH) [[likely]]
 		{ saveOverlayData(makeOverlayData()); }
-	else { SystemsInterface::pushOverlayData(); }
+	else { SystemInterface::pushOverlayData(); }
 }
 
 /*==================================================================*/
@@ -232,7 +232,7 @@ void Chip8_CoreInterface::startVoiceAt(u32 voice_index, u32 duration, u32 tone) 
 void Chip8_CoreInterface::mixAudioData(VoiceGenerators processors) noexcept {
 	if (auto* stream{ mAudioDevice.at(STREAM::MAIN) }) {
 
-		auto buffer{ ::allocate<f32>(stream->getNextBufferSize(getSystemFramerate()))
+		auto buffer{ ::allocate_n<f32>(stream->getNextBufferSize(getSystemFramerate()))
 			.as_value().release_as_container() };
 
 		for (auto& bundle : processors)

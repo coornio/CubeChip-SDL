@@ -43,7 +43,7 @@
 template <typename U>
 	requires (std::is_trivially_copyable_v<U>)
 class TripleBuffer {
-	using Buffer = AlignedUnique<U>;
+	using Buffer = AlignedUniqueArray<U>;
 
 	alignas(HDIS) Buffer pWorkBuffer;
 	alignas(HDIS) Buffer pSwapBuffer;
@@ -57,9 +57,9 @@ class TripleBuffer {
 
 public:
 	constexpr TripleBuffer(std::size_t buffer_size = 0)
-		: pWorkBuffer{ ::allocate<U>(buffer_size).as_value().release() }
-		, pSwapBuffer{ ::allocate<U>(buffer_size).as_value().release() }
-		, pReadBuffer{ ::allocate<U>(buffer_size).as_value().release() }
+		: pWorkBuffer{ ::allocate_n<U>(buffer_size).as_value().release() }
+		, pSwapBuffer{ ::allocate_n<U>(buffer_size).as_value().release() }
+		, pReadBuffer{ ::allocate_n<U>(buffer_size).as_value().release() }
 		, mSize(pWorkBuffer && pSwapBuffer && pReadBuffer ? buffer_size : 0)
 	{}
 
@@ -75,9 +75,9 @@ public:
 	// pointers or references to the previous buffers, causing undefined behavior.
 	void resize(std::size_t buffer_size) {
 		mSize = buffer_size;
-		pWorkBuffer.reset(); pWorkBuffer = ::allocate<U>(buffer_size).as_value().release();
-		pSwapBuffer.reset(); pSwapBuffer = ::allocate<U>(buffer_size).as_value().release();
-		pReadBuffer.reset(); pReadBuffer = ::allocate<U>(buffer_size).as_value().release();
+		pWorkBuffer.reset(); pWorkBuffer = ::allocate_n<U>(buffer_size).as_value().release();
+		pSwapBuffer.reset(); pSwapBuffer = ::allocate_n<U>(buffer_size).as_value().release();
+		pReadBuffer.reset(); pReadBuffer = ::allocate_n<U>(buffer_size).as_value().release();
 		assert(pWorkBuffer && pSwapBuffer && pReadBuffer);
 	}
 
@@ -97,7 +97,7 @@ public:
 	// Copy the contents of the TripleBuffer to a new Buffer object and return it.
 	Buffer copy(std::size_t N = 0u) {
 		const auto new_count{ std::min(size(), N ? N : size()) };
-		auto temp{ ::allocate<U>(new_count).by_copy(acquireReadBuffer(), new_count).as_value() };
+		auto temp{ ::allocate_n<U>(new_count).by_copy(acquireReadBuffer(), new_count).as_value() };
 		return temp.is_constructed() ? temp.release() : Buffer{};
 	}
 

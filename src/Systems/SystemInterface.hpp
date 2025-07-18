@@ -13,6 +13,7 @@
 #include <utility>
 #include <fstream>
 #include <numeric>
+#include <numbers>
 #include <cstring>
 #include <atomic>
 #include <memory>
@@ -64,7 +65,7 @@ class Well512;
 
 /*==================================================================*/
 
-class SystemsInterface {
+class SystemInterface {
 
 	Thread mCoreThread;
 	Str mOverlayDataBuffer{};
@@ -96,10 +97,10 @@ protected:
 	Atom<u32> mGlobalState{ EmuState::NORMAL };
 
 protected:
-	SystemsInterface() noexcept;
+	SystemInterface() noexcept;
 
 public:
-	virtual ~SystemsInterface() noexcept;
+	virtual ~SystemInterface() noexcept;
 
 public:
 	static void assignComponents(

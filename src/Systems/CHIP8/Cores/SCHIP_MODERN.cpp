@@ -477,10 +477,7 @@ void SCHIP_MODERN::scrollDisplayRT() {
 /*==================================================================*/
 	#pragma region D instruction branch
 
-	void SCHIP_MODERN::drawByte(
-		s32 X, s32 Y,
-		u32 DATA
-	) noexcept {
+	void SCHIP_MODERN::drawByte(s32 X, s32 Y, u32 DATA) noexcept {
 		switch (DATA) {
 			[[unlikely]]
 			case 0b00000000:

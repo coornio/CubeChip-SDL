@@ -16,13 +16,13 @@
 
 #include "FrontendHost.hpp"
 #include "Fonts/RobotoMono.hpp"
-#include "Systems/SystemsInterface.hpp"
+#include "Systems/SystemInterface.hpp"
 #include "Systems/CoreRegistry.hpp"
 
 /*==================================================================*/
 
 FrontendHost::FrontendHost(const Path& gamePath) noexcept {
-	SystemsInterface::assignComponents(HDM, BVS);
+	SystemInterface::assignComponents(HDM, BVS);
 	HDM->setValidator(CoreRegistry::validateProgram);
 	CoreRegistry::loadProgramDB();
 
@@ -30,8 +30,12 @@ FrontendHost::FrontendHost(const Path& gamePath) noexcept {
 	if (!mSystemCore) { BVS->setMainWindowTitle(AppName, "Waiting for file..."); }
 }
 
-void FrontendHost::StopEmuCoreThread::operator()(SystemsInterface* ptr) noexcept {
-	if (ptr) { ptr->stopWorker(); delete ptr; }
+void FrontendHost::StopSystemThread::operator()(SystemInterface* ptr) noexcept {
+	if (ptr) {
+		ptr->stopWorker();
+		ptr->~SystemInterface();
+		::operator delete(ptr, std::align_val_t(HDIS));
+	}
 }
 
 /*==================================================================*/

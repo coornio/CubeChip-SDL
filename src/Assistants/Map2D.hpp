@@ -19,6 +19,12 @@
 
 /*==================================================================*/
 
+#ifndef MAX_ALIGN
+	#define MAX_ALIGN HDIS * 2
+#endif
+
+/*==================================================================*/
+
 template <typename T>
 	requires (std::is_default_constructible_v<T>)
 class Map2D final {
@@ -46,7 +52,7 @@ public:
 private:
 	axis_size mCols;
 	axis_size mRows;
-	AlignedUnique<T> pData;
+	AlignedUniqueArray<T> pData;
 
 public:
 	constexpr size_type size()       const noexcept { return mRows * mCols; }
@@ -78,9 +84,9 @@ public:
 
 	#pragma region Trivial Ctor
 	constexpr Map2D(size_type cols = 1u, size_type rows = 1u)
-		: mCols{ std::max(1u, static_cast<axis_size>(cols)) }
-		, mRows{ std::max(1u, static_cast<axis_size>(rows)) }
-		, pData{ ::allocate<T>(size()).as_value().release() }
+		: mCols{ std::max(1u, axis_size(cols)) }
+		, mRows{ std::max(1u, axis_size(rows)) }
+		, pData{ ::allocate_n<T>(size()).as_value().release() }
 	{}
 	#pragma endregion
 	
@@ -174,7 +180,7 @@ public:
 		const auto minCols{ std::min(cols, lenX()) };
 		const auto minRows{ std::min(rows, lenY()) };
 
-		auto pCopy{ ::allocate<T>(rows * cols).as_value().release() };
+		auto pCopy{ ::allocate_n<T>(rows * cols).as_value().release() };
 		if (!pCopy) { return *this; }
 		
 		for (size_type row{ 0u }; row < minRows; ++row) {
@@ -184,8 +190,8 @@ public:
 				srcIdx, srcIdx + minCols, dstIdx);
 		}
 
-		mRows = rows;
-		mCols = cols;
+		mRows = axis_size(rows);
+		mCols = axis_size(cols);
 
 		pData = std::move(pCopy);
 		return *this;
@@ -194,11 +200,11 @@ public:
 	
 	#pragma region resizeClean()
 	constexpr self& resizeClean(size_type cols, size_type rows) {
-		mCols = static_cast<axis_size>(cols);
-		mRows = static_cast<axis_size>(rows);
+		mCols = axis_size(cols);
+		mRows = axis_size(rows);
 
 		pData.reset();
-		pData = ::allocate<T>(size()).as_value().release();
+		pData = ::allocate_n<T>(size()).as_value().release();
 		return *this;
 	}
 	#pragma endregion
@@ -466,12 +472,18 @@ public:
 
 /*==================================================================*/
 
-template <typename T, std::size_t X, std::size_t Y>
+template <typename T, std::size_t X, std::size_t Y, std::size_t N = sizeof(T)>
 	requires (std::is_default_constructible_v<T>)
-class FixedMap2D final {
-	static_assert(X* Y >= 1, "Map2D must have X and Y of at least 1.");
+class alignas(N) FixedMap2D final {
+	static_assert(X * Y >= 1,
+		"FixedMap2D must have X and Y of at least 1.");
+	static_assert((N & (N - 1)) == 0u,
+		"N must be a power of two.");
+	static_assert(N <= MAX_ALIGN,
+		"Exceeded maximum allowed alignment.");
+
 	using self = FixedMap2D;
-	using self_flip = FixedMap2D<T, Y, X>;
+	using self_flip = FixedMap2D<T, Y, X, N>;
 
 public:
 	using element_type = T;
@@ -492,7 +504,7 @@ public:
 	using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
 private:
-	alignas(HDIS) std::array<T, X* Y> pData{};
+	std::array<T, X * Y> pData{};
 
 public:
 	constexpr size_type size()       const noexcept { return X * Y; }
@@ -503,16 +515,16 @@ public:
 	constexpr size_type lenX() const noexcept { return X; }
 	constexpr size_type lenY() const noexcept { return Y; }
 
-	constexpr pointer   data() { return pData.data(); }
+	constexpr pointer   data()  { return pData.data(); }
 	constexpr reference front() { return data()[0]; }
-	constexpr reference back() { return data()[size() - 1]; }
+	constexpr reference back()  { return data()[size() - 1]; }
 
 	constexpr const_pointer   data()  const { return pData.data(); }
 	constexpr const_reference front() const { return data()[0]; }
 	constexpr const_reference back()  const { return data()[size() - 1]; }
 
 	constexpr auto first(size_type count) const { return RangeProxy(data(), count); }
-	constexpr auto last(size_type count) const { return RangeProxy(data(), size() - count); }
+	constexpr auto last(size_type count)  const { return RangeProxy(data(), size() - count); }
 
 	constexpr auto makeRowIter(size_type row)  const { return RangeIterator(data() + row * lenX(), lenX()); }
 	constexpr auto makeRowProxy(size_type row) const { return *makeRowIter(row); }
@@ -778,34 +790,63 @@ public:
 	#pragma endregion
 
 public:
-	constexpr reference at(size_type idx) const {
-		if (idx >= size()) { throw std::out_of_range("Map2D.at() index out of range"); }
+	constexpr reference at(size_type idx) {
+		if (idx >= size()) { throw std::out_of_range("FixedMap2D.at() index out of range"); }
 		return data()[idx];
 	}
-	constexpr reference at(size_type col, size_type row) const {
-		if (col >= lenX()) { throw std::out_of_range("Map2D.at() col out of range"); }
-		if (row >= lenY()) { throw std::out_of_range("Map2D.at() row out of range"); }
+	constexpr reference at(size_type col, size_type row) {
+		if (col >= lenX()) { throw std::out_of_range("FixedMap2D.at() col out of range"); }
+		if (row >= lenY()) { throw std::out_of_range("FixedMap2D.at() row out of range"); }
+		return data()[row * lenX() + col];
+	}
+	constexpr const_reference at(size_type idx) const {
+		if (idx >= size()) { throw std::out_of_range("FixedMap2D.at() index out of range"); }
+		return data()[idx];
+	}
+	constexpr const_reference at(size_type col, size_type row) const {
+		if (col >= lenX()) { throw std::out_of_range("FixedMap2D.at() col out of range"); }
+		if (row >= lenY()) { throw std::out_of_range("FixedMap2D.at() row out of range"); }
 		return data()[row * lenX() + col];
 	}
 
-	constexpr reference operator()(size_type idx) const {
-		assert(idx < size() && "Map2D.operator() index out of bounds");
+	constexpr reference operator()(size_type idx) {
+		assert(idx < size() && "FixedMap2D.operator() index out of bounds");
 		return data()[idx];
 	}
-	constexpr reference operator[](size_type idx) const {
-		assert(idx < size() && "Map2D.operator[] index out of bounds");
+	constexpr reference operator[](size_type idx) {
+		assert(idx < size() && "FixedMap2D.operator[] index out of bounds");
+		return data()[idx];
+	}
+	constexpr const_reference operator()(size_type idx) const {
+		assert(idx < size() && "FixedMap2D.operator() index out of bounds");
+		return data()[idx];
+	}
+	constexpr const_reference operator[](size_type idx) const {
+		assert(idx < size() && "FixedMap2D.operator[] index out of bounds");
 		return data()[idx];
 	}
 
-	constexpr reference operator()(size_type col, size_type row) const {
-		assert(col < lenX() && "Map2D.operator[] col out of bounds");
-		assert(row < lenY() && "Map2D.operator[] row out of bounds");
+	constexpr reference operator()(size_type col, size_type row) {
+		assert(col < lenX() && "FixedMap2D.operator[] col out of bounds");
+		assert(row < lenY() && "FixedMap2D.operator[] row out of bounds");
 		return data()[row * lenX() + col];
 	}
 	#ifndef _MSC_VER
-	constexpr reference operator[](size_type col, size_type row) const {
-		assert(col < lenX() && "Map2D.operator[] col out of bounds");
-		assert(row < lenY() && "Map2D.operator[] row out of bounds");
+	constexpr reference operator[](size_type col, size_type row) {
+		assert(col < lenX() && "FixedMap2D.operator[] col out of bounds");
+		assert(row < lenY() && "FixedMap2D.operator[] row out of bounds");
+		return data()[row * lenX() + col];
+	}
+	#endif
+	constexpr const_reference operator()(size_type col, size_type row) const {
+		assert(col < lenX() && "FixedMap2D.operator[] col out of bounds");
+		assert(row < lenY() && "FixedMap2D.operator[] row out of bounds");
+		return data()[row * lenX() + col];
+	}
+	#ifndef _MSC_VER
+	constexpr const_reference operator[](size_type col, size_type row) const {
+		assert(col < lenX() && "FixedMap2D.operator[] col out of bounds");
+		assert(row < lenY() && "FixedMap2D.operator[] row out of bounds");
 		return data()[row * lenX() + col];
 	}
 	#endif
@@ -826,3 +867,7 @@ public:
 	constexpr const_reverse_iterator crbegin() const noexcept { return std::make_reverse_iterator(cend()); }
 	constexpr const_reverse_iterator crend()   const noexcept { return std::make_reverse_iterator(cbegin()); }
 };
+
+#ifdef MAX_ALIGN
+	#undef MAX_ALIGN
+#endif
