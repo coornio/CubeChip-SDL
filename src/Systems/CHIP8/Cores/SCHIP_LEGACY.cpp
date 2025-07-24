@@ -5,7 +5,7 @@
 */
 
 #include "SCHIP_LEGACY.hpp"
-#ifdef ENABLE_SCHIP_LEGACY
+#if defined(ENABLE_CHIP8_SYSTEM) && defined(ENABLE_SCHIP_LEGACY)
 
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/GlobalAudioBase.hpp"

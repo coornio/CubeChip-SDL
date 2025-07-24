@@ -6,6 +6,9 @@
 
 #pragma once
 
+#define ENABLE_CHIP8_SYSTEM
+#ifdef ENABLE_CHIP8_SYSTEM
+
 #include "../SystemInterface.hpp"
 
 /*==================================================================*/
@@ -237,7 +240,7 @@ protected:
 	static inline thread_local std::array<u8, 240> sFontsData{ cFontsData };
 
 	static constexpr std::array<RGBA, 16> cBitColors{ { // 0-1 monochrome, 0-15 palette color
-		0x0C121800, 0xE4DCD400, 0x8C888400, 0x403C3800,
+		0x10161C00, 0xE4DCD400, 0x8C888400, 0x403C3800,
 		0xD8201000, 0x40D02000, 0x1040D000, 0xE0C81800,
 		0x50101000, 0x10501000, 0x50B0C000, 0xF0801000,
 		0xE0609000, 0xE0F09000, 0xB050F000, 0x70402000,
@@ -269,3 +272,5 @@ protected:
 	#undef PX_3
 	#undef PX_4
 };
+
+#endif

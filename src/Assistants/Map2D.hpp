@@ -602,8 +602,8 @@ public:
 	 *
 	 * @warning Cannot check if target array has sufficient data.
 	 */
-	template <size_type N>
-	constexpr self& linearCopy(T(&other)[N], size_type len = N) {
+	template <size_type L>
+	constexpr self& linearCopy(T(&other)[L], size_type len = L) {
 		std::copy_n(EXEC_POLICY(unseq)
 			other, std::min(len, size()), begin());
 		return *this;

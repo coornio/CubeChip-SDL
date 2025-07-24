@@ -5,7 +5,7 @@
 */
 
 #include "XOCHIP.hpp"
-#ifdef ENABLE_XOCHIP
+#if defined(ENABLE_CHIP8_SYSTEM) && defined(ENABLE_XOCHIP)
 
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/GlobalAudioBase.hpp"
@@ -624,42 +624,63 @@ void XOCHIP::scrollDisplayRT() {
 		}
 	}
 
-	void XOCHIP::instruction_DxyN(s32 X, s32 Y, s32 N) noexcept {
-		if (!mPlanarMask) {
-			mRegisterV[0xF] = 0;
-			return;
-		}
+	template <std::size_t P>
+	void XOCHIP::drawSingleRow(s32 X, s32 Y) noexcept {
+		drawByte(X, Y, P, readMemoryI(sPlaneMult[P][mPlanarMask]));
+	}
 
+	template <std::size_t P>
+	void XOCHIP::drawDoubleRow(s32 X, s32 Y) noexcept {
+		const auto I{ sPlaneMult[P][mPlanarMask] * 32 };
+
+		for (auto H{ 0 }; H < 16; ++H) {
+			drawByte(X + 0, Y, P, readMemoryI(I + H * 2 + 0));
+			drawByte(X + 8, Y, P, readMemoryI(I + H * 2 + 1));
+
+			if (!Quirk.wrapSprite && Y == (mDisplay.H - 1)) { break; }
+			else { ++Y &= (mDisplay.H - 1); }
+		}
+	}
+
+	template <std::size_t P>
+	void XOCHIP::drawMultiRow(s32 X, s32 Y, s32 N) noexcept {
+		const auto I{ sPlaneMult[P][mPlanarMask] * N };
+
+		for (auto H{ 0 }; H < N; ++H) {
+			drawByte(X, Y, P, readMemoryI(I + H));
+
+			if (!Quirk.wrapSprite && Y == (mDisplay.H - 1)) { break; }
+			else { ++Y &= (mDisplay.H - 1); }
+		}
+	}
+
+	void XOCHIP::instruction_DxyN(s32 X, s32 Y, s32 N) noexcept {
 		const auto pX{ mRegisterV[X] & (mDisplay.W - 1) };
 		const auto pY{ mRegisterV[Y] & (mDisplay.H - 1) };
 
 		mRegisterV[0xF] = 0;
 
-		if (N == 0) {
-			for (auto P{ 0 }, I{ 0 }; P < 4; ++P) {
-				if (mPlanarMask & 1 << P) {
-					for (auto tN{ 0 }, tY{ pY }; tN < 16; ++tN) {
-						drawByte(pX + 0, tY, P, readMemoryI(I + tN * 2 + 0));
-						drawByte(pX + 8, tY, P, readMemoryI(I + tN * 2 + 1));
+		switch (N) {
+			case 0:
+				if (mPlanarMask & P0M) { drawDoubleRow<P0>(pX, pY); }
+				if (mPlanarMask & P1M) { drawDoubleRow<P1>(pX, pY); }
+				if (mPlanarMask & P2M) { drawDoubleRow<P2>(pX, pY); }
+				if (mPlanarMask & P3M) { drawDoubleRow<P3>(pX, pY); }
+				break;
 
-						if (!Quirk.wrapSprite && tY == (mDisplay.H - 1)) { break; }
-						else { ++tY &= (mDisplay.H - 1); }
-					}
-					I += 32;
-				}
-			}
-		} else [[likely]] {
-			for (auto P{ 0 }, I{ 0 }; P < 4; ++P) {
-				if (mPlanarMask & 1 << P) {
-					for (auto tN{ 0 }, tY{ pY }; tN < N; ++tN) {
-						drawByte(pX, tY, P, readMemoryI(I + tN));
+			case 1:
+				if (mPlanarMask & P0M) { drawSingleRow<P0>(pX, pY); }
+				if (mPlanarMask & P1M) { drawSingleRow<P1>(pX, pY); }
+				if (mPlanarMask & P2M) { drawSingleRow<P2>(pX, pY); }
+				if (mPlanarMask & P3M) { drawSingleRow<P3>(pX, pY); }
+				break;
 
-						if (!Quirk.wrapSprite && tY == (mDisplay.H - 1)) { break; }
-						else { ++tY &= (mDisplay.H - 1); }
-					}
-					I += N;
-				}
-			}
+			default:
+				if (mPlanarMask & P0M) { drawMultiRow<P0>(pX, pY, N); }
+				if (mPlanarMask & P1M) { drawMultiRow<P1>(pX, pY, N); }
+				if (mPlanarMask & P2M) { drawMultiRow<P2>(pX, pY, N); }
+				if (mPlanarMask & P3M) { drawMultiRow<P3>(pX, pY, N); }
+				break;
 		}
 	}
 

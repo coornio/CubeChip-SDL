@@ -5,7 +5,7 @@
 */
 
 #include "MEGACHIP.hpp"
-#ifdef ENABLE_MEGACHIP
+#if defined(ENABLE_CHIP8_SYSTEM) && defined(ENABLE_MEGACHIP)
 
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/GlobalAudioBase.hpp"

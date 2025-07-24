@@ -5,11 +5,12 @@
 */
 
 #pragma once
-#define ENABLE_GAMEBOY_CLASSIC
-#ifdef ENABLE_GAMEBOY_CLASSIC
 
 #include "../GameBoy_CoreInterface.hpp"
 #include "../../../Assistants/BasicLogger.hpp"
+
+#define ENABLE_GAMEBOY_CLASSIC
+#if defined(ENABLE_GAMEBOY_SYSTEM) && defined(ENABLE_GAMEBOY_CLASSIC)
 
 #include <initializer_list>
 

@@ -15,6 +15,8 @@ union SDL_Event;
 
 class FrontendInterface {
 
+public:
+	static inline void (*FnHook_OpenFile)() {};
 
 public:
 	static void Initialize(SDL_Window*, SDL_Renderer*);

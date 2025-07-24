@@ -171,6 +171,12 @@ public:
 
 /*==================================================================*/
 
+	SDL_Window* getMainWindow() const noexcept
+		{ return mMainWindow; }
+
+	SDL_Renderer* getMainRenderer() const noexcept
+		{ return mMainRenderer; }
+
 	bool isIntegerScaling()     const noexcept { return mIntegerScaling; }
 	void isIntegerScaling(bool state) noexcept { mIntegerScaling = state; }
 	void toggleIntegerScaling()       noexcept { mIntegerScaling = !mIntegerScaling; }

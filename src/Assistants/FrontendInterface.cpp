@@ -10,13 +10,12 @@
 #include <string>
 
 #include "FrontendInterface.hpp"
+#include "HomeDirManager.hpp"
 
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "../Libraries/imgui/imgui.h"
 #include "../Libraries/imgui/imgui_impl_sdl3.h"
 #include "../Libraries/imgui/imgui_impl_sdlrenderer3.h"
-
-#include <SDL3/SDL.h>
 
 /*==================================================================*/
 
@@ -202,18 +201,14 @@ void FrontendInterface::PrepareViewport(
 	);
 	ImGui::PopStyleVar();
 
+	struct OpenFileContextBlock {
+		
+	};
+
 	if (ImGui::BeginMainMenuBar()) {
 		if (ImGui::BeginMenu("File")) {
 			if (ImGui::MenuItem("Open...")) {
-				//SDL_ShowOpenFileDialog(
-				//	SDL_DialogFileCallback callback,
-				//	void* userdata,
-				//	SDL_Window* window,
-				//	const SDL_DialogFileFilter* filters,
-				//	int nfilters,
-				//	const char* default_location,
-				//	bool allow_many
-				//);
+				FnHook_OpenFile();
 			}
 			ImGui::EndMenu();
 		}

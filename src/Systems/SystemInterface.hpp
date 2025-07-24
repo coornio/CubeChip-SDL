@@ -26,11 +26,12 @@
 #include <span>
 #include <bit>
 
-#include "../Assistants/AudioDevice.hpp"
-#include "../Assistants/Voice.hpp"
 #include "../Assistants/Typedefs.hpp"
 #include "../Assistants/Concepts.hpp"
 #include "../Assistants/Misc.hpp"
+
+#include "../Assistants/AudioDevice.hpp"
+#include "../Assistants/Voice.hpp"
 
 #include "CoreRegistry.hpp"
 

@@ -5,7 +5,7 @@
 */
 
 #include "CHIP8X.hpp"
-#ifdef ENABLE_CHIP8X
+#if defined(ENABLE_CHIP8_SYSTEM) && defined(ENABLE_CHIP8X)
 
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/GlobalAudioBase.hpp"

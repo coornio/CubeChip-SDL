@@ -6,6 +6,9 @@
 
 #pragma once
 
+#define ENABLE_GAMEBOY_SYSTEM
+#ifdef ENABLE_GAMEBOY_SYSTEM
+
 #include "../SystemInterface.hpp"
 
 /*==================================================================*/
@@ -46,3 +49,5 @@ protected:
 public:
 	void mainSystemLoop() override;
 };
+
+#endif

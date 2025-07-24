@@ -6,6 +6,9 @@
 
 #pragma once
 
+#define ENABLE_BYTEPUSHER_SYSTEM
+#ifdef ENABLE_BYTEPUSHER_SYSTEM
+
 #include "../SystemInterface.hpp"
 
 /*==================================================================*/
@@ -111,3 +114,5 @@ protected:
 		0x000000FF, 0x000000FF, 0x000000FF, 0x000000FF,
 	};
 };
+
+#endif

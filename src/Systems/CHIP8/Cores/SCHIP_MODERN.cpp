@@ -5,7 +5,7 @@
 */
 
 #include "SCHIP_MODERN.hpp"
-#ifdef ENABLE_SCHIP_MODERN
+#if defined(ENABLE_CHIP8_SYSTEM) && defined(ENABLE_SCHIP_MODERN)
 
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/GlobalAudioBase.hpp"

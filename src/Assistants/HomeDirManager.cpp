@@ -13,6 +13,8 @@
 #include "DefaultConfig.hpp"
 #include "PathGetters.hpp"
 
+#include <algorithm>
+
 #include <SDL3/SDL_messagebox.h>
 
 /*==================================================================*/
@@ -216,7 +218,7 @@ bool HomeDirManager::validateGameFile(const Path& gamePath) noexcept {
 	const auto tempSHA1{ SHA1::from_data(getFileData(), getFileSize()) };
 	blog.newEntry(BLOG::INFO, "File SHA1: {}", tempSHA1);
 
-	if (checkGame(
+	if (sCheckGame(
 		getFileData(), getFileSize(),
 		gamePath.extension().string(), tempSHA1
 	)) {

@@ -46,6 +46,8 @@ class FrontendHost final {
 
 	SystemCore mSystemCore;
 
+	static void openFileDialog() noexcept;
+
 public:
 	static inline HomeDirManager*  HDM{};
 	static inline GlobalAudioBase* GAB{};

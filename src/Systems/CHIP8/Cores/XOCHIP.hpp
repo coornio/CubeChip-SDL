@@ -5,12 +5,12 @@
 */
 
 #pragma once
-#define ENABLE_XOCHIP
-#ifdef ENABLE_XOCHIP
 
 #include "../../../Assistants/Map2D.hpp"
-
 #include "../Chip8_CoreInterface.hpp"
+
+#define ENABLE_XOCHIP
+#if defined(ENABLE_CHIP8_SYSTEM) && defined(ENABLE_XOCHIP)
 
 /*==================================================================*/
 
@@ -403,6 +403,32 @@ private:
 	#pragma region D instruction branch
 
 	void drawByte(s32 X, s32 Y, s32 P, u32 DATA) noexcept;
+
+	enum Plane {
+		P0, P1, P2, P3,
+		P0M = 1 << P0,
+		P1M = 1 << P1,
+		P2M = 1 << P2,
+		P3M = 1 << P3,
+	};
+
+	// For planar mask N (0000 to 1111), count set bits
+	// to the right of bit (currently drawn plane) 0..3
+	static constexpr u8 sPlaneMult[4][16] = {
+		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, // Plane 0
+		{0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1}, // Plane 1
+		{0,1,1,2,0,1,1,2,0,1,1,2,0,1,1,2}, // Plane 2
+		{0,1,1,2,1,2,2,3,0,1,1,2,1,2,2,3}, // Plane 3
+	};
+
+	template <std::size_t P>
+	void drawSingleRow(s32 X, s32 Y) noexcept;
+
+	template <std::size_t P>
+	void drawDoubleRow(s32 X, s32 Y) noexcept;
+
+	template <std::size_t P>
+	void drawMultiRow (s32 X, s32 Y, s32 N) noexcept;
 
 	// DXYN - draw N sprite rows at VX and VY
 	void instruction_DxyN(s32 X, s32 Y, s32 N) noexcept;

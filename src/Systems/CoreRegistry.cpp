@@ -73,7 +73,7 @@ bool CoreRegistry::registerCore(CoreConstructor&& ctor, ProgramTester&& tester, 
 }
 
 const CoreRegList* CoreRegistry::findEligibleCores(const Str& ext) noexcept {
-	auto it = sRegistry.find(ext);
+	auto it{ sRegistry.find(ext) };
 	return it != sRegistry.end() ? &it->second : nullptr;
 }
 

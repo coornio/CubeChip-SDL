@@ -11,6 +11,8 @@
 
 #include "BytePusher_CoreInterface.hpp"
 
+#ifdef ENABLE_BYTEPUSHER_SYSTEM
+
 /*==================================================================*/
 
 BytePusher_CoreInterface::BytePusher_CoreInterface() noexcept {
@@ -63,3 +65,5 @@ void BytePusher_CoreInterface::copyGameToMemory(u8* dest) noexcept {
 	std::copy_n(EXEC_POLICY(unseq)
 		HDM->getFileData(), HDM->getFileSize(), dest);
 }
+
+#endif

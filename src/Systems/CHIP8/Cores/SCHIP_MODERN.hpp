@@ -5,11 +5,12 @@
 */
 
 #pragma once
-#define ENABLE_SCHIP_MODERN
-#ifdef ENABLE_SCHIP_MODERN
 
 #include "../../../Assistants/Map2D.hpp"
 #include "../Chip8_CoreInterface.hpp"
+
+#define ENABLE_SCHIP_MODERN
+#if defined(ENABLE_CHIP8_SYSTEM) && defined(ENABLE_SCHIP_MODERN)
 
 /*==================================================================*/
 

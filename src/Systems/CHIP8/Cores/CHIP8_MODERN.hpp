@@ -5,10 +5,11 @@
 */
 
 #pragma once
-#define ENABLE_CHIP8_MODERN
-#ifdef ENABLE_CHIP8_MODERN
 
 #include "../Chip8_CoreInterface.hpp"
+
+#define ENABLE_CHIP8_MODERN
+#if defined(ENABLE_CHIP8_SYSTEM) && defined(ENABLE_CHIP8_MODERN)
 
 /*==================================================================*/
 

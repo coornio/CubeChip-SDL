@@ -6,12 +6,11 @@
 
 #pragma once
 
-#include <span>
-#include <vector>
-#include <algorithm>
-
 #include "Typedefs.hpp"
 #include "SettingWrapper.hpp"
+
+#include <span>
+#include <vector>
 
 #define TOML_EXCEPTIONS 0
 #include "../Libraries/toml++/toml.hpp"
@@ -44,9 +43,23 @@ class HomeDirManager final {
 	std::vector<Path>
 		mDirectories{};
 
-	GameValidator checkGame{};
+	static inline AtomSharedPtr<Str>
+		mProbableFile{};
 
-	inline static toml::table sMainAppConfig{};
+public:
+	[[nodiscard]]
+	static auto const getProbableFile() noexcept
+		{ return mProbableFile.exchange(nullptr, mo::relaxed); }
+
+	static void setProbableFile(StrV file) noexcept
+		{ mProbableFile.store(std::make_shared<Str>(file), mo::relaxed); }
+
+	static void probableFileCallback(void*, const char* const* filelist, int) noexcept
+		{ if (filelist && filelist[0]) { setProbableFile(filelist[0]); } }
+
+private:
+	inline static GameValidator sCheckGame{};
+	inline static toml::table   sMainAppConfig{};
 
 private:
 	Str  sHomePath{};
@@ -98,7 +111,7 @@ public:
 	auto getFileData() const noexcept { return mFileData.data(); }
 	auto getFileSHA1() const noexcept { return mFileSHA1; }
 
-	void setValidator(GameValidator func) noexcept { checkGame = func; }
+	void setValidator(GameValidator func) noexcept { sCheckGame = func; }
 
 	void clearCachedFileData() noexcept;
 	bool validateGameFile(const Path& gamePath) noexcept;

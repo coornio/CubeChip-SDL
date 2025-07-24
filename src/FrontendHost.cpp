@@ -6,10 +6,12 @@
 
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_events.h>
+#include <SDL3/SDL_dialog.h>
 
 #include "Assistants/BasicLogger.hpp"
 #include "Assistants/BasicInput.hpp"
 #include "Assistants/HomeDirManager.hpp"
+#include "Assistants/FrontendInterface.hpp"
 #include "Assistants/BasicVideoSpec.hpp"
 #include "Assistants/GlobalAudioBase.hpp"
 #include "Assistants/DefaultConfig.hpp"
@@ -25,6 +27,7 @@ FrontendHost::FrontendHost(const Path& gamePath) noexcept {
 	SystemInterface::assignComponents(HDM, BVS);
 	HDM->setValidator(CoreRegistry::validateProgram);
 	CoreRegistry::loadProgramDB();
+	FrontendInterface::FnHook_OpenFile = openFileDialog;
 
 	if (!gamePath.empty()) { loadGameFile(gamePath); }
 	if (!mSystemCore) { BVS->setMainWindowTitle(AppName, "Waiting for file..."); }
@@ -163,13 +166,21 @@ s32  FrontendHost::processEvents(SDL_Event* event) noexcept {
 /*==================================================================*/
 
 void FrontendHost::processFrame() {
+	checkForHotkeys();
+
+	const auto dialogResult{ HDM->getProbableFile() };
+	if (dialogResult) { loadGameFile(*dialogResult); }
+
 	if (!BVS->isSuccessful())
 		[[unlikely]] { return; }
 
-	checkForHotkeys();
-
 	BVS->renderPresent(!!mSystemCore, mSystemCore && mShowOverlay
 		? mSystemCore->copyOverlayData().c_str() : nullptr);
+}
+
+void FrontendHost::openFileDialog() noexcept {
+	SDL_ShowOpenFileDialog(HomeDirManager::probableFileCallback,
+		nullptr, BVS->getMainWindow(), nullptr, 0, nullptr, false);
 }
 
 void FrontendHost::checkForHotkeys() {

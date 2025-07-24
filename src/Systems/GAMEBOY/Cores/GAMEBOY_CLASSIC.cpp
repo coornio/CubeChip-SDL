@@ -5,7 +5,7 @@
 */
 
 #include "GAMEBOY_CLASSIC.hpp"
-#ifdef ENABLE_GAMEBOY_CLASSIC
+#if defined(ENABLE_GAMEBOY_SYSTEM) && defined(ENABLE_GAMEBOY_CLASSIC)
 
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/GlobalAudioBase.hpp"

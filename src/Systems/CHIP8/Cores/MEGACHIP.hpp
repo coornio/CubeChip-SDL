@@ -5,12 +5,12 @@
 */
 
 #pragma once
-#define ENABLE_MEGACHIP
-#ifdef ENABLE_MEGACHIP
 
 #include "../../../Assistants/Map2D.hpp"
-
 #include "../Chip8_CoreInterface.hpp"
+
+#define ENABLE_MEGACHIP
+#if defined(ENABLE_CHIP8_SYSTEM) && defined(ENABLE_MEGACHIP)
 
 /*==================================================================*/
 

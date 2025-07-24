@@ -111,11 +111,11 @@ public:
 	constexpr self& setPhase(Phase phase) noexcept { mPhase = phase; return *this; }
 	
 	// Peek the next raw phase without wrapping it, default is 1 step ahead.
-	constexpr auto  peekRawPhase(u32 steps = 1u) const noexcept -> f64
+	constexpr f64   peekRawPhase(u32 steps = 1u) const noexcept
 		{ return mPhase + mStep * steps; }
 
 	// Peek the next phase without modifying it, default is 1 step ahead.
-	constexpr auto  peekPhase(u32 steps = 1u) const noexcept -> Phase
+	constexpr Phase peekPhase(u32 steps = 1u) const noexcept
 		{ return peekRawPhase(steps); }
 
 	// Advance the phase by a number of steps, default is 1 step ahead.
