@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <numeric>
+
 #include "Typedefs.hpp"
 #include "Concepts.hpp"
 
@@ -54,12 +56,6 @@ inline void generate_n(Object& array, size_type offset, size_type count, Generat
 			std::forward<Generator>(lambda));
 	}
 }
-
-/*==================================================================*/
-
-template<typename T, typename... Ts>
-inline constexpr bool is_any_of(T value, Ts... other) noexcept
-	{ return ((value == other) || ...); }
 
 /*==================================================================*/
 
