@@ -11,9 +11,9 @@
 
 /*==================================================================*/
 
-#ifdef __GCC__
-	#pragma gcc diagnostic push
-	#pragma gcc diagnostic ignored "-Winterference-size"
+#ifdef __GNUC__
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Winterference-size"
 #endif
 
 #ifdef __cpp_lib_hardware_interference_size
@@ -24,6 +24,6 @@
 	constexpr static auto HCIS{ std::size_t(64) };
 #endif
 
-#ifdef __GCC__
-	#pragma gcc diagnostic pop
+#ifdef __GNUC__
+	#pragma GCC diagnostic pop
 #endif

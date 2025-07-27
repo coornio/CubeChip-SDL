@@ -50,20 +50,3 @@ using namespace std::string_view_literals;
 inline constexpr auto KiB(size_type n) noexcept { return 1024ull * n; }
 inline constexpr auto MiB(size_type n) noexcept { return 1024ull * KiB(n); }
 inline constexpr auto GiB(size_type n) noexcept { return 1024ull * MiB(n); }
-
-/*==================================================================*/
-
-#if defined(__clang__)
-	#define SUGGEST_VECTORIZABLE_LOOP _Pragma("clang loop vectorize(enable)")
-#elif defined(__GNUC__)
-	#define SUGGEST_VECTORIZABLE_LOOP _Pragma("GCC ivdep")
-#elif defined(_MSC_VER)
-	#define SUGGEST_VECTORIZABLE_LOOP _Pragma("loop(ivdep)")
-#else
-	#define SUGGEST_VECTORIZABLE_LOOP
-#endif
-
-/*==================================================================*/
-
-#define CONCAT_TOKENS_INTERNAL(x, y) x##y
-#define CONCAT_TOKENS(x, y) CONCAT_TOKENS_INTERNAL(x, y)

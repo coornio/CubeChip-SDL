@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34112.27
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CubeChip (SDL)", "CubeChip (SDL).vcxproj", "{B515900D-AFB3-4BDA-922D-19300026241E}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CubeChip", "CubeChip (SDL).vcxproj", "{B515900D-AFB3-4BDA-922D-19300026241E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,12 +15,10 @@ Global
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{B515900D-AFB3-4BDA-922D-19300026241E}.Debug|x64.ActiveCfg = Debug|x64
 		{B515900D-AFB3-4BDA-922D-19300026241E}.Debug|x64.Build.0 = Debug|x64
-		{B515900D-AFB3-4BDA-922D-19300026241E}.Debug|x86.ActiveCfg = Debug|Win32
-		{B515900D-AFB3-4BDA-922D-19300026241E}.Debug|x86.Build.0 = Debug|Win32
+		{B515900D-AFB3-4BDA-922D-19300026241E}.Debug|x86.ActiveCfg = Debug|x64
 		{B515900D-AFB3-4BDA-922D-19300026241E}.Release|x64.ActiveCfg = Release|x64
 		{B515900D-AFB3-4BDA-922D-19300026241E}.Release|x64.Build.0 = Release|x64
-		{B515900D-AFB3-4BDA-922D-19300026241E}.Release|x86.ActiveCfg = Release|Win32
-		{B515900D-AFB3-4BDA-922D-19300026241E}.Release|x86.Build.0 = Release|Win32
+		{B515900D-AFB3-4BDA-922D-19300026241E}.Release|x86.ActiveCfg = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

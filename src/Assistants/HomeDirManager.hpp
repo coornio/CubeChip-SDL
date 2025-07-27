@@ -50,7 +50,7 @@ class HomeDirManager final {
 
 public:
 	[[nodiscard]]
-	static auto const getProbableFile() noexcept
+	static auto getProbableFile() noexcept
 		{ return mProbableFile.exchange(nullptr, mo::relaxed); }
 
 	static void setProbableFile(StrV file) noexcept

@@ -594,13 +594,11 @@ void CHIP8X::drawHiresColor(s32 X, s32 Y, s32 idx, s32 N) noexcept {
 		writeMemoryI(__N, 2);
 	}
 	void CHIP8X::instruction_FN55(s32 N) noexcept {
-		SUGGEST_VECTORIZABLE_LOOP
 		for (auto idx{ 0 }; idx <= N; ++idx) { writeMemoryI(mRegisterV[idx], idx); }
 		mRegisterI = !Quirk.idxRegNoInc ? (mRegisterI + N + 1) & 0xFFF : mRegisterI;
 		//if (!Quirk.idxRegNoInc) [[likely]] { mRegisterI = (mRegisterI + N + 1) & 0xFFF; }
 	}
 	void CHIP8X::instruction_FN65(s32 N) noexcept {
-		SUGGEST_VECTORIZABLE_LOOP
 		for (auto idx{ 0 }; idx <= N; ++idx) { mRegisterV[idx] = readMemoryI(idx); }
 		mRegisterI = !Quirk.idxRegNoInc ? (mRegisterI + N + 1) & 0xFFF : mRegisterI;
 		//if (!Quirk.idxRegNoInc) [[likely]] { mRegisterI = (mRegisterI + N + 1) & 0xFFF; }

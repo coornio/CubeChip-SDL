@@ -10,9 +10,10 @@
 #include <vector>
 #include <unordered_map>
 
+#include "../Macros.hpp"
 #include "../Assistants/Typedefs.hpp"
-#include "../Libraries/nlohmann/json_fwd.hpp"
 #include "../IncludeMacros/HDIS_HCIS.hpp"
+#include "../Libraries/nlohmann/json_fwd.hpp"
 
 /*==================================================================*/
 

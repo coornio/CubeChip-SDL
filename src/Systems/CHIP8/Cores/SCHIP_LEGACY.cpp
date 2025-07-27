@@ -618,13 +618,11 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 		writeMemoryI(__N, 2);
 	}
 	void SCHIP_LEGACY::instruction_FN55(s32 N) noexcept {
-		SUGGEST_VECTORIZABLE_LOOP
 		for (auto idx{ 0 }; idx <= N; ++idx) { writeMemoryI(mRegisterV[idx], idx); }
 		mRegisterI = Quirk.idxRegMinus ? (mRegisterI + N) & 0xFFF : mRegisterI;
 		//if (Quirk.idxRegMinus) [[likely]] { mRegisterI = (mRegisterI + N) & 0xFFF; }
 	}
 	void SCHIP_LEGACY::instruction_FN65(s32 N) noexcept {
-		SUGGEST_VECTORIZABLE_LOOP
 		for (auto idx{ 0 }; idx <= N; ++idx) { mRegisterV[idx] = readMemoryI(idx); }
 		mRegisterI = Quirk.idxRegMinus ? (mRegisterI + N) & 0xFFF : mRegisterI;
 		//if (Quirk.idxRegMinus) [[likely]] { mRegisterI = (mRegisterI + N) & 0xFFF; }
