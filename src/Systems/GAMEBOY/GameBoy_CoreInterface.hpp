@@ -27,7 +27,7 @@ protected:
 
 	std::vector<SimpleKeyMapping> mCustomBinds;
 
-	u32  getKeyStates() const;
+	u32  getKeyStates();
 	void loadPresetBinds();
 
 	template <IsContiguousContainer T> requires

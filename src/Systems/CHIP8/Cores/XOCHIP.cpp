@@ -9,7 +9,6 @@
 
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/GlobalAudioBase.hpp"
-#include "../../../Assistants/Well512.hpp"
 #include "../../CoreRegistry.hpp"
 
 REGISTER_CORE(XOCHIP, ".xo8")
@@ -257,7 +256,6 @@ void XOCHIP::instructionLoop() noexcept {
 				break;
 		}
 	}
-	mElapsedCycles += cycleCount;
 }
 
 void XOCHIP::renderAudioData() {
@@ -584,7 +582,7 @@ void XOCHIP::scrollDisplayRT() {
 	#pragma region C instruction branch
 
 	void XOCHIP::instruction_CxNN(s32 X, s32 NN) noexcept {
-		::assign_cast(mRegisterV[X], RNG->next() & NN);
+		::assign_cast(mRegisterV[X], RNG.next() & NN);
 	}
 
 	#pragma endregion

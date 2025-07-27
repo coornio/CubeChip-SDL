@@ -16,6 +16,8 @@
 #include "Assistants/GlobalAudioBase.hpp"
 #include "Assistants/DefaultConfig.hpp"
 
+#include "IncludeMacros/HDIS_HCIS.hpp"
+
 #include "FrontendHost.hpp"
 #include "Fonts/RobotoMono.hpp"
 #include "Systems/SystemInterface.hpp"

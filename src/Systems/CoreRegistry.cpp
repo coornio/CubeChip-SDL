@@ -17,7 +17,7 @@ Json CoreRegistry::sCoreConfig{};
 
 /*==================================================================*/
 
-bool CoreRegistry::validateProgramByHash(const char* fileData, ust fileSize, const Str& fileSHA1) noexcept {
+bool CoreRegistry::validateProgramByHash(const char* fileData, size_type fileSize, const Str& fileSHA1) noexcept {
 	/* placeholder logic */
 	[[maybe_unused]] const auto& _1{ fileData };
 	[[maybe_unused]] const auto& _2{ fileSize };
@@ -25,7 +25,7 @@ bool CoreRegistry::validateProgramByHash(const char* fileData, ust fileSize, con
 	return false;
 }
 
-bool CoreRegistry::validateProgramByType(const char* fileData, ust fileSize, const Str& fileType) noexcept {
+bool CoreRegistry::validateProgramByType(const char* fileData, size_type fileSize, const Str& fileType) noexcept {
 	const auto matchingCores{ findEligibleCores(fileType) };
 
 	if (!matchingCores || matchingCores->empty()) {
@@ -50,7 +50,7 @@ bool CoreRegistry::validateProgramByType(const char* fileData, ust fileSize, con
 	}
 }
 
-bool CoreRegistry::validateProgram(const char* fileData, ust fileSize, const Str& fileType, const Str& fileSHA1) noexcept {
+bool CoreRegistry::validateProgram(const char* fileData, size_type fileSize, const Str& fileType, const Str& fileSHA1) noexcept {
 	if (fileSHA1.empty()) {
 		return validateProgramByType(fileData, fileSize, fileType);
 	} else {

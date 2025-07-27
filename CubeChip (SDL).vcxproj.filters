@@ -56,6 +56,9 @@
     <Filter Include="Source Files\Libraries\cxxopts">
       <UniqueIdentifier>{42f46bcb-6584-4cee-9502-e00bfec53b8a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\IncludeMacros">
+      <UniqueIdentifier>{5bf65e71-e461-45b1-a7ae-9bc4ffd554f2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\CubeChip.cpp">
@@ -176,7 +179,7 @@
       <Filter>Source Files\Assistants</Filter>
     </ClCompile>
     <ClCompile Include="src\Assistants\AudioFilters.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Assistants</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -273,13 +276,7 @@
     <ClInclude Include="src\Systems\CHIP8\Cores\CHIP8X.hpp">
       <Filter>Source Files\Systems\CHIP8\Cores</Filter>
     </ClInclude>
-    <ClInclude Include="src\Assistants\Misc.hpp">
-      <Filter>Source Files\Assistants</Filter>
-    </ClInclude>
     <ClInclude Include="src\Assistants\ColorOps.hpp">
-      <Filter>Source Files\Assistants</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Assistants\AtomicSharedProxy.hpp">
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
     <ClInclude Include="src\Libraries\imgui\imconfig.h">
@@ -347,6 +344,27 @@
     </ClInclude>
     <ClInclude Include="src\Assistants\AudioFilters.hpp">
       <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\AssignCast.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\ArrayOps.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\IncludeMacros\Expected.hpp">
+      <Filter>Source Files\IncludeMacros</Filter>
+    </ClInclude>
+    <ClInclude Include="src\IncludeMacros\ExecPolicy.hpp">
+      <Filter>Source Files\IncludeMacros</Filter>
+    </ClInclude>
+    <ClInclude Include="src\IncludeMacros\AtomSharedPtr.hpp">
+      <Filter>Source Files\IncludeMacros</Filter>
+    </ClInclude>
+    <ClInclude Include="src\IncludeMacros\Thread.hpp">
+      <Filter>Source Files\IncludeMacros</Filter>
+    </ClInclude>
+    <ClInclude Include="src\IncludeMacros\HDIS_HCIS.hpp">
+      <Filter>Source Files\IncludeMacros</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

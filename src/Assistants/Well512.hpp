@@ -17,8 +17,8 @@ public:
 	using result_type = unsigned;
 
 private:
-	result_type mIndex{};
 	result_type mState[16];
+	result_type mIndex{};
 
 public:
 	static constexpr result_type min() noexcept { return 0x00000000; }

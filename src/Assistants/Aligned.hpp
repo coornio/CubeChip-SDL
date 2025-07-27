@@ -7,12 +7,12 @@
 #pragma once
 
 #include <span>
-#include <execution>
-#include <cstdlib>
 #include <cassert>
 #include <memory>
+#include <stdexcept>
 
-#include "RangeIterator.hpp"
+#include "../IncludeMacros/HDIS_HCIS.hpp"
+#include "../IncludeMacros/ExecPolicy.hpp"
 
 /*==================================================================*/
 

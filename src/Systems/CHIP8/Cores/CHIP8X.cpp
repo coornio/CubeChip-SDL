@@ -9,7 +9,6 @@
 
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/GlobalAudioBase.hpp"
-#include "../../../Assistants/Well512.hpp"
 #include "../../CoreRegistry.hpp"
 
 REGISTER_CORE(CHIP8X, ".c8x")
@@ -208,7 +207,6 @@ void CHIP8X::instructionLoop() noexcept {
 				break;
 		}
 	}
-	mElapsedCycles += cycleCount;
 }
 
 void CHIP8X::renderAudioData() {
@@ -464,7 +462,7 @@ void CHIP8X::drawHiresColor(s32 X, s32 Y, s32 idx, s32 N) noexcept {
 	#pragma region C instruction branch
 
 	void CHIP8X::instruction_CxNN(s32 X, s32 NN) noexcept {
-		::assign_cast(mRegisterV[X], RNG->next() & NN);
+		::assign_cast(mRegisterV[X], RNG.next() & NN);
 	}
 
 	#pragma endregion

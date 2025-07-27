@@ -6,11 +6,13 @@
 
 #pragma once
 
+#include <span>
+#include <vector>
+
 #include "Typedefs.hpp"
 #include "SettingWrapper.hpp"
 
-#include <span>
-#include <vector>
+#include "../IncludeMacros/AtomSharedPtr.hpp"
 
 #define TOML_EXCEPTIONS 0
 #include "../Libraries/toml++/toml.hpp"
@@ -29,7 +31,7 @@ class HomeDirManager final {
 
 	using GameValidator = bool (*)(
 		const char* fileData,
-		const ust   fileSize,
+		const size_type   fileSize,
 		const Str&  fileExts,
 		const Str&  fileSHA1
 	) noexcept;

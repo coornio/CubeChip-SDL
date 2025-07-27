@@ -7,11 +7,16 @@
 #pragma once
 
 #include <array>
+#include <atomic>
+#include <memory>
+#include <utility>
 #include <mutex>
 #include <shared_mutex>
-#include <utility>
+#include <type_traits>
 
-#include "Typedefs.hpp"
+#include "../IncludeMacros/HDIS_HCIS.hpp"
+#include "../IncludeMacros/AtomSharedPtr.hpp"
+#include "../IncludeMacros/ExecPolicy.hpp"
 
 /*==================================================================*/
 
@@ -39,6 +44,7 @@ class SimpleRingBuffer {
 	static_assert(N >= 8, "Buffer size (N) must be at least 8.");
 
 	using self = SimpleRingBuffer;
+	using mo = std::memory_order;
 
 	alignas(HDIS) std::array<AtomSharedPtr<T>, N> mBuffer{};
 	alignas(HDIS) std::atomic<std::size_t>        mPushHead{ 0 };

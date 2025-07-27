@@ -42,7 +42,6 @@ void BYTEPUSHER_STANDARD::instructionLoop() noexcept {
 		mMemoryBank[readData<3>(progPointer + 0)];
 		progPointer = readData<3>(progPointer + 6);
 	}
-	mElapsedCycles += cycleCount;
 }
 
 void BYTEPUSHER_STANDARD::renderAudioData() {

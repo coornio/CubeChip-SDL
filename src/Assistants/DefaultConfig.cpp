@@ -24,7 +24,8 @@ auto config::parseFromFile(
 	const char* filename
 ) noexcept -> toml::parse_result {
 	const auto rawData{ ::readFileData(filename ? filename : "") };
-	const StrV tableData{ rawData ? StrV{rawData.value().data(), rawData.value().size() } : "" };
+	const std::string_view tableData{ rawData
+		? std::string_view{ rawData.value().data(), rawData.value().size() } : "" };
 
 	return toml::parse(tableData);
 }

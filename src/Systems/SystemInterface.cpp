@@ -6,9 +6,6 @@
 
 #include "../Assistants/ThreadAffinity.hpp"
 #include "../Assistants/BasicVideoSpec.hpp"
-#include "../Assistants/FrameLimiter.hpp"
-#include "../Assistants/BasicInput.hpp"
-#include "../Assistants/Well512.hpp"
 
 #include "SystemInterface.hpp"
 
@@ -36,14 +33,7 @@ void SystemInterface::threadEntry(StopToken token) {
 
 SystemInterface::SystemInterface() noexcept
 	: mOverlayData{ std::make_shared<Str>() }
-	, Pacer{ std::make_unique<FrameLimiter>() }
-	, Input{ std::make_unique<BasicKeyboard>() }
-{
-	static Well512 sWell512;
-	RNG = &sWell512;
-}
-
-SystemInterface::~SystemInterface() noexcept {}
+{}
 
 /*==================================================================*/
 
@@ -61,7 +51,7 @@ f32 SystemInterface::getSystemFramerate() const noexcept {
 
 void SystemInterface::setSystemFramerate(f32 value) noexcept {
 	mTargetFPS.store(value, mo::relaxed);
-	Pacer->setLimiter(value);
+	Pacer.setLimiter(value);
 }
 
 void SystemInterface::saveOverlayData(const Str* data) {
@@ -69,22 +59,22 @@ void SystemInterface::saveOverlayData(const Str* data) {
 }
 
 Str* SystemInterface::makeOverlayData() {
-	const auto frameMS{ Pacer->getElapsedMillisLast() };
-	const auto elapsed{ Pacer->getElapsedMicrosSince() / 1000.0f };
+	const auto frameMS{ Pacer.getElapsedMillisLast() };
+	const auto elapsed{ Pacer.getElapsedMicrosSince() / 1000.0f };
 
 	*getOverlayDataBuffer() = fmt::format(
 		"Framerate:{:9.3f} fps |{:9.3f}ms\n"
 		"Frametime:{:9.3f} ms ({:3.2f}%)\n",
-		frameMS < Epsilon::f32 ? getSystemFramerate()
+		frameMS <= 0.0f ? getSystemFramerate()
 			: std::round(1000.0f / frameMS * 100.0f) / 100.0f,
-		frameMS, elapsed, elapsed / Pacer->getFramespan() * 100.0f
+		frameMS, elapsed, elapsed / Pacer.getFramespan() * 100.0f
 	);
 
 	return getOverlayDataBuffer();
 }
 
 void SystemInterface::pushOverlayData() {
-	if (Pacer->getValidFrameCounter() & 0x1) [[likely]] {
+	if (Pacer.getValidFrameCounter() & 0x1) [[likely]] {
 		saveOverlayData(SystemInterface::makeOverlayData());
 	}
 }

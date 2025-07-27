@@ -25,7 +25,7 @@ protected:
 	enum STREAM { MAIN };
 	enum VOICE { ID_0, COUNT };
 
-	u32  getKeyStates() const;
+	u32  getKeyStates();
 	void loadPresetBinds();
 
 	template <IsContiguousContainer T>

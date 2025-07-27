@@ -11,15 +11,15 @@
 
 #include <bit>
 #include <fstream>
+#include <sstream>
 #include <iomanip>
-#include <utility>
 
 /*==================================================================*/
 
-static constexpr ust BLOCK_INTS  { 16 }; // number of 32-bit integers per SHA1 block
-static constexpr ust BLOCK_BYTES { BLOCK_INTS * 4 };
+static constexpr std::size_t BLOCK_INTS  { 16 }; // number of 32-bit integers per SHA1 block
+static constexpr std::size_t BLOCK_BYTES { BLOCK_INTS * 4 };
 
-inline static u32 blk(u32* block, ust i) {
+inline static std::uint32_t blk(std::uint32_t* block, std::size_t i) {
 	return std::rotl(
 		block[(i + 0xD) & 0xF] ^
 		block[(i + 0x8) & 0xF] ^
@@ -32,18 +32,18 @@ inline static u32 blk(u32* block, ust i) {
 /*------------------------------------------------------------------*/
 
 inline static void R0(
-	u32* block,
-	u32 v, u32& w, u32 x,
-	u32 y, u32& z, ust i
+	std::uint32_t* block,
+	std::uint32_t v, std::uint32_t& w, std::uint32_t x,
+	std::uint32_t y, std::uint32_t& z, std::size_t i
 ) {
 	z += ((w & (x ^ y)) ^ y) + block[i] + 0x5A827999 + std::rotl(v, 5);
 	w  = std::rotl(w, 30);
 }
 
 inline static void R1(
-	u32* block,
-	u32 v, u32& w, u32 x,
-	u32 y, u32& z, ust i
+	std::uint32_t* block,
+	std::uint32_t v, std::uint32_t& w, std::uint32_t x,
+	std::uint32_t y, std::uint32_t& z, std::size_t i
 ) {
 	block[i] = blk(block, i);
 	z += ((w & (x ^ y)) ^ y) + block[i] + 0x5A827999 + std::rotl(v, 5);
@@ -51,9 +51,9 @@ inline static void R1(
 }
 
 inline static void R2(
-	u32* block,
-	u32 v, u32& w, u32 x,
-	u32 y, u32& z, ust i
+	std::uint32_t* block,
+	std::uint32_t v, std::uint32_t& w, std::uint32_t x,
+	std::uint32_t y, std::uint32_t& z, std::size_t i
 ) {
 	block[i] = blk(block, i);
 	z += (w ^ x ^ y) + block[i] + 0x6ED9EBA1 + std::rotl(v, 5);
@@ -61,9 +61,9 @@ inline static void R2(
 }
 
 inline static void R3(
-	u32* block,
-	u32 v, u32& w, u32 x,
-	u32 y, u32& z, ust i
+	std::uint32_t* block,
+	std::uint32_t v, std::uint32_t& w, std::uint32_t x,
+	std::uint32_t y, std::uint32_t& z, std::size_t i
 ) {
 	block[i] = blk(block, i);
 	z += (((w | x) & y) | (w & x)) + block[i] + 0x8F1BBCDC + std::rotl(v, 5);
@@ -71,9 +71,9 @@ inline static void R3(
 }
 
 inline static void R4(
-	u32* block,
-	u32 v, u32& w, u32 x,
-	u32 y, u32& z, ust i
+	std::uint32_t* block,
+	std::uint32_t v, std::uint32_t& w, std::uint32_t x,
+	std::uint32_t y, std::uint32_t& z, std::size_t i
 ) {
 	block[i] = blk(block, i);
 	z += (w ^ x ^ y) + block[i] + 0xCA62C1D6 + std::rotl(v, 5);
@@ -84,7 +84,7 @@ inline static void R4(
 /*  SHA1 class member functions										*/
 /*------------------------------------------------------------------*/
 
-void SHA1::transform(u32* block) {
+void SHA1::transform(std::uint32_t* block) {
 	// copy digest[] to working vars
 	auto a{ digest[0] };
 	auto b{ digest[1] };
@@ -126,9 +126,10 @@ void SHA1::transform(u32* block) {
 }
 
 // Hash a single 512-bit block
-void SHA1::buffer_to_block(u32* block) {
-	// convert the string (byte buffer) to a u32 array (MSB)
-	for (ust i{ 0 }; i < BLOCK_INTS; ++i) {
+void SHA1::buffer_to_block(std::uint32_t* block) {
+
+	// convert the string (byte buffer) to a std::uint32_t array (MSB)
+	for (std::size_t i{ 0 }; i < BLOCK_INTS; ++i) {
 		block[i] = (buffer[4 * i + 3] & 0xFF)
 				 | (buffer[4 * i + 2] & 0xFF) <<  8
 				 | (buffer[4 * i + 1] & 0xFF) << 16
@@ -147,7 +148,7 @@ void SHA1::reset() noexcept {
 	transforms = 0;
 }
 
-void SHA1::update(const Str& s) {
+void SHA1::update(const std::string& s) {
 	std::istringstream is(s);
 	update(is);
 }
@@ -158,18 +159,18 @@ void SHA1::update(std::istream& is) {
 		const auto chunksize{ BLOCK_BYTES - buffer.size() };
 		is.read(sbuf, static_cast<std::streamsize>(chunksize));
 
-		buffer.append(sbuf, static_cast<ust>(is.gcount()));
+		buffer.append(sbuf, static_cast<std::size_t>(is.gcount()));
 		if (buffer.size() != BLOCK_BYTES) { return; }
 
-		u32 block[BLOCK_INTS]{};
+		std::uint32_t block[BLOCK_INTS]{};
 		buffer_to_block(block);
 		transform(block);
 		buffer.clear();
 	}
 }
 
-void SHA1::update(const char* data, ust size) {
-	ust offset{};
+void SHA1::update(const char* data, std::size_t size) {
+	std::size_t offset{};
 
 	while (offset < size) {
 		const auto chunksize{ std::min(BLOCK_BYTES - buffer.size(), size - offset) };
@@ -178,7 +179,7 @@ void SHA1::update(const char* data, ust size) {
 		offset += chunksize;
 
 		if (buffer.size() == BLOCK_BYTES) {
-			u32 block[BLOCK_INTS]{};
+			std::uint32_t block[BLOCK_INTS]{};
 			buffer_to_block(block);
 			transform(block);
 			buffer.clear();
@@ -186,26 +187,26 @@ void SHA1::update(const char* data, ust size) {
 	}
 }
 
-Str SHA1::final() {
+std::string SHA1::final() {
 	// total number of hashed bits
-	const u64 total_bits{ (transforms * BLOCK_BYTES + buffer.size()) * 8 };
+	const auto total_bits{ (transforms * BLOCK_BYTES + buffer.size()) * 8 };
 
 	// add padding
 	buffer += static_cast<char>(0x80);
-	const ust orig_size{ buffer.size() };
+	const std::size_t orig_size{ buffer.size() };
 	while (buffer.size() < BLOCK_BYTES)
 		{ buffer += static_cast<char>(0x00); }
 
-	u32 block[BLOCK_INTS]{};
+	std::uint32_t block[BLOCK_INTS]{};
 	buffer_to_block(block);
 
 	if (orig_size > BLOCK_BYTES - 8) {
 		transform(block);
-		for (ust i{ 0 }; i < BLOCK_INTS - 2; ++i)
+		for (std::size_t i{ 0 }; i < BLOCK_INTS - 2; ++i)
 			{ block[i] = 0; }
 	}
 
-	// append total_bits, split this u64 into two u32
+	// append total_bits, split this u64 into two std::uint32_t
 	block[BLOCK_INTS - 1] = total_bits       & 0xFFFFFFFF;
 	block[BLOCK_INTS - 2] = total_bits >> 32 & 0xFFFFFFFF;
 	transform(block);
@@ -221,14 +222,14 @@ Str SHA1::final() {
 	return result.str();
 }
 
-Str SHA1::from_file(const Path& filePath) {
+std::string SHA1::from_file(const std::filesystem::path& filePath) {
 	std::ifstream stream(filePath, std::ios::binary);
 	SHA1 checksum;
 	checksum.update(stream);
 	return checksum.final();
 }
 
-Str SHA1::from_data(const char* data, ust size) {
+std::string SHA1::from_data(const char* data, std::size_t size) {
 	SHA1 checksum;
 	checksum.update(data, size);
 	return checksum.final();

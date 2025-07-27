@@ -23,8 +23,6 @@ constexpr inline float transientFall(unsigned iter, float step = 0.01f) noexcept
 /*==================================================================*/
 
 struct TransienceGain {
-	using u32 = std::uint32_t;
-
 	bool intro : 1;
 	bool outro : 1;
 	bool fallback : 1;
@@ -34,7 +32,7 @@ struct TransienceGain {
 		: intro{ intro }, outro{ outro }, fallback{ fallback }
 	{}
 
-	constexpr auto calculate(u32 sample_idx) const noexcept {
+	constexpr auto calculate(unsigned sample_idx) const noexcept {
 		return  intro ? ::transientGain(sample_idx) :
 				outro ? ::transientFall(sample_idx) : fallback;
 	}
@@ -48,15 +46,13 @@ struct TransienceGain {
 * gain calculations, but they're not useful for data-driven voices.
 */
 class AudioTimer {
-	using u32 = std::uint32_t;
-
-	u32 timer_old{};
-	u32 timer_new{};
+	unsigned timer_old{};
+	unsigned timer_new{};
 
 public:
-	constexpr u32  get()   const noexcept { return timer_new; }
-	constexpr void set(u32 time) noexcept { timer_old = std::exchange(timer_new, time); }
-	constexpr void dec()         noexcept { set(timer_new ? timer_new - 1 : 0); }
+	constexpr unsigned get()        const noexcept { return timer_new; }
+	constexpr void     set(unsigned time) noexcept { timer_old = std::exchange(timer_new, time); }
+	constexpr void     dec()              noexcept { set(timer_new ? timer_new - 1 : 0); }
 
 	// Check if the timer is currently rising (intro)
 	constexpr bool intro() const noexcept { return timer_new && !timer_old; }
@@ -64,7 +60,7 @@ public:
 	// Check if the timer is currently falling (outro)
 	constexpr bool outro() const noexcept { return !timer_new && timer_old; }
 
-	constexpr operator u32() const noexcept { return timer_new; }
+	constexpr operator unsigned() const noexcept { return timer_new; }
 
 	constexpr operator TransienceGain() const noexcept
 		{ return TransienceGain{ intro(), outro(), !!timer_new }; }
@@ -75,34 +71,29 @@ public:
 class Voice {
 	using self = Voice;
 
-public:
-	using f32 = float;
-	using f64 = double;
-	using u32 = std::uint32_t;
-
 protected:
-	f64 mPhase{}; // [0..1) range.
-	f64 mStep{};  // [0..1) range.
-	f32 mVolumeGain{}; // System-facing volume control, to be controlled by a system.
-	f32 mMasterGain{}; // Mastering volume control to manually balance against other voices.
+	double mPhase{}; // [0..1) range.
+	double mStep{};  // [0..1) range.
+	float  mVolumeGain{}; // System-facing volume control, to be controlled by a system.
+	float  mMasterGain{}; // Mastering volume control to manually balance against other voices.
 	
 public:
 	// Pass along additional data to a voice processor, if needed.
 	void* userdata{};
 
-	Voice(f32 master_gain = 0.2f) noexcept
+	Voice(float master_gain = 0.2f) noexcept
 		: mVolumeGain{ 1.0f }
 	{ setMasterGain(master_gain); }
 
 	// Get the volume of the voice, in range of: [0..1]
-	constexpr f32   getVolume()   const noexcept { return mVolumeGain; }
+	constexpr float getVolume()     const noexcept { return mVolumeGain; }
 	// Set the volume of the voice, clamped to: [0..1]
-	constexpr self& setVolume(f32 gain) noexcept { mVolumeGain = std::clamp(gain, 0.0f, 2.0f); return *this; }
+	constexpr self& setVolume(float gain) noexcept { mVolumeGain = std::clamp(gain, 0.0f, 2.0f); return *this; }
 
 	// Get the mastering volume of the voice, in range of: [0..1]
-	constexpr f32   getMasterGain()   const noexcept { return mMasterGain; }
+	constexpr float getMasterGain()     const noexcept { return mMasterGain; }
 	// Set the mastering volume of the voice, clamped to: [0..1]
-	constexpr self& setMasterGain(f32 gain) noexcept { mMasterGain = std::clamp(gain, 0.0f, 1.0f); return *this; }
+	constexpr self& setMasterGain(float gain) noexcept { mMasterGain = std::clamp(gain, 0.0f, 1.0f); return *this; }
 
 	constexpr Phase getStep()     const noexcept { return mStep; }
 	constexpr self& setStep(Phase step) noexcept { mStep = step; return *this; }
@@ -111,19 +102,19 @@ public:
 	constexpr self& setPhase(Phase phase) noexcept { mPhase = phase; return *this; }
 	
 	// Peek the next raw phase without wrapping it, default is 1 step ahead.
-	constexpr f64   peekRawPhase(u32 steps = 1u) const noexcept
+	constexpr double peekRawPhase(unsigned steps = 1u) const noexcept
 		{ return mPhase + mStep * steps; }
 
 	// Peek the next phase without modifying it, default is 1 step ahead.
-	constexpr Phase peekPhase(u32 steps = 1u) const noexcept
+	constexpr Phase peekPhase(unsigned steps = 1u) const noexcept
 		{ return peekRawPhase(steps); }
 
 	// Advance the phase by a number of steps, default is 1 step ahead.
-	constexpr self& stepPhase(u32 steps = 1u) noexcept
+	constexpr self& stepPhase(unsigned steps = 1u) noexcept
 		{ mPhase = peekPhase(steps); return *this; }
 
 	// Get the current level of the voice sample, optionally with transience gain calculation.
-	constexpr f32   getLevel(u32 sample_idx, TransienceGain transience = {}) const noexcept
+	constexpr float getLevel(unsigned sample_idx, TransienceGain transience = {}) const noexcept
 		{ return transience.calculate(sample_idx) * getVolume() * getMasterGain(); }
 };
 

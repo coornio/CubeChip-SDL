@@ -9,31 +9,30 @@
 
 #pragma once
 
-#include <sstream>
-
-#include "Typedefs.hpp"
+#include <string>
+#include <filesystem>
 
 /*==================================================================*/
 
 class SHA1 {
-	u32 digest[5]{};
-	Str buffer{};
-	u64 transforms{};
+	std::string   buffer{};
+	std::uint32_t digest[5]{};
+	std::uint64_t transforms{};
 
-	void transform(u32* block);
-	void buffer_to_block(u32* block);
+	void transform(std::uint32_t* block);
+	void buffer_to_block(std::uint32_t* block);
 
 public:
 	SHA1() noexcept { reset(); }
 
 	void reset() noexcept;
 
-	void update(const Str& s);
+	void update(const std::string& s);
 	void update(std::istream& is);
-	void update(const char* data, ust size);
+	void update(const char* data, std::size_t size);
 
-	Str final();
+	std::string final();
 
-	static Str from_file(const Path& filePath);
-	static Str from_data(const char* data, ust size);
+	static std::string from_file(const std::filesystem::path& filePath);
+	static std::string from_data(const char* data, std::size_t size);
 };

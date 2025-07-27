@@ -6,9 +6,6 @@
 
 #pragma once
 
-#include "RangeIterator.hpp"
-#include "Aligned.hpp"
-
 #include <span>
 #include <array>
 #include <cmath>
@@ -16,6 +13,11 @@
 #include <memory>
 #include <algorithm>
 #include <utility>
+
+#include "RangeIterator.hpp"
+#include "Aligned.hpp"
+#include "../IncludeMacros/HDIS_HCIS.hpp"
+#include "../IncludeMacros/ExecPolicy.hpp"
 
 /*==================================================================*/
 

@@ -295,7 +295,7 @@ void BasicVideoSpec::setBorderColor(u32 color) noexcept {
 }
 
 void BasicVideoSpec::scaleInterface(const void* data, size_type size) {
-	FrontendInterface::UpdateFontScale(data, static_cast<s32>(size), SDL_GetWindowDisplayScale(mMainWindow));
+	FrontendInterface::UpdateFontScale(data, s32(size), SDL_GetWindowDisplayScale(mMainWindow));
 }
 
 void BasicVideoSpec::processInterfaceEvent(SDL_Event* event) const noexcept {

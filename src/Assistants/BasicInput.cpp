@@ -7,15 +7,7 @@
 #include <algorithm>
 
 #include "BasicInput.hpp"
-
-/*==================================================================*/
-
-#ifdef __APPLE__
-	#define EXEC_POLICY(policy)
-#else
-	#include <execution>
-	#define EXEC_POLICY(policy) std::execution::policy,
-#endif
+#include "../IncludeMacros/ExecPolicy.hpp"
 
 /*==================================================================*/
 

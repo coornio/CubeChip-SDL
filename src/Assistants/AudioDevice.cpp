@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <cassert>
 
-#include "Misc.hpp"
+#include "AssignCast.hpp"
 #include "GlobalAudioBase.hpp"
 #include "AudioDevice.hpp"
 #include "LifetimeWrapperSDL.hpp"

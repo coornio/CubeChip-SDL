@@ -6,7 +6,6 @@
 
 #include "HomeDirManager.hpp"
 
-#include "Misc.hpp"
 #include "SHA1.hpp"
 #include "SimpleFileIO.hpp"
 #include "BasicLogger.hpp"

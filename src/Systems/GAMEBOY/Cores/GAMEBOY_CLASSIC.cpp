@@ -9,7 +9,6 @@
 
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/GlobalAudioBase.hpp"
-#include "../../../Assistants/Well512.hpp"
 #include "../../CoreRegistry.hpp"
 
 REGISTER_CORE(GAMEBOY_CLASSIC, ".gb")

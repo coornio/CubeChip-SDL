@@ -9,12 +9,17 @@
 #include <vector>
 #include <fstream>
 #include <utility>
+#include <cstddef>
+#include <filesystem>
 
-#include "Misc.hpp"
+#include "Concepts.hpp"
+#include "../IncludeMacros/Expected.hpp"
 
 /*==================================================================*/
 
 namespace fs {
+	using Path = std::filesystem::path;
+
 	/* Get last modification date of file at the designated path, if any. */
 	[[maybe_unused]]
 	inline auto last_write_time(const Path& filePath) noexcept {
@@ -112,7 +117,7 @@ namespace fs {
  */
 [[maybe_unused]]
 inline auto readFileData(
-	const Path& filePath, ust dataReadSize = 0,
+	const fs::Path& filePath, std::size_t dataReadSize = 0,
 	std::streamoff dataReadOffset = 0
 ) noexcept -> Expected<std::vector<char>, std::error_code> {
 	try {
@@ -156,7 +161,7 @@ inline auto readFileData(
 template <typename T>
 [[maybe_unused]]
 inline auto writeFileData(
-	const Path& filePath, const T* fileData, ust dataWriteSize,
+	const fs::Path& filePath, const T* fileData, std::size_t dataWriteSize,
 	std::streamoff dataWriteOffset = 0
 ) noexcept -> Expected<bool, std::error_code> {
 	try {
@@ -177,7 +182,7 @@ inline auto writeFileData(
 template <IsContiguousContainer T>
 [[maybe_unused]]
 inline auto writeFileData(
-	const Path& filePath, const T& fileData, ust dataWriteSize = 0,
+	const fs::Path& filePath, const T& fileData, std::size_t dataWriteSize = 0,
 	std::streamoff dataWriteOffset = 0
 ) noexcept {
 	return writeFileData(
@@ -187,10 +192,10 @@ inline auto writeFileData(
 	);
 }
 
-template <typename T, size_type N>
+template <typename T, std::size_t N>
 [[maybe_unused]]
 inline auto writeFileData(
-	const Path& filePath, const T(&fileData)[N],
+	const fs::Path& filePath, const T(&fileData)[N],
 	std::streamoff dataWriteOffset = 0
 ) noexcept {
 	return writeFileData(filePath, fileData, N, dataWriteOffset);

@@ -8,11 +8,14 @@
 
 #include <utility>
 #include <optional>
-#include <execution>
+#include <algorithm>
 
+#include "Typedefs.hpp"
 #include "TripleBuffer.hpp"
 #include "LifetimeWrapperSDL.hpp"
 #include "SettingWrapper.hpp"
+
+/*==================================================================*/
 
 union  SDL_Event;
 

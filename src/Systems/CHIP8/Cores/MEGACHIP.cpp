@@ -9,7 +9,6 @@
 
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/GlobalAudioBase.hpp"
-#include "../../../Assistants/Well512.hpp"
 #include "../../CoreRegistry.hpp"
 
 REGISTER_CORE(MEGACHIP, ".mc8")
@@ -293,7 +292,6 @@ void MEGACHIP::instructionLoop() noexcept {
 				break;
 		}
 	}
-	mElapsedCycles = cycleCount;
 }
 
 void MEGACHIP::renderAudioData() {
@@ -772,7 +770,7 @@ void MEGACHIP::scrollBuffersRT() {
 	#pragma region C instruction branch
 
 	void MEGACHIP::instruction_CxNN(s32 X, s32 NN) noexcept {
-		::assign_cast(mRegisterV[X], RNG->next() & NN);
+		::assign_cast(mRegisterV[X], RNG.next() & NN);
 	}
 
 	#pragma endregion

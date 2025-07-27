@@ -6,7 +6,9 @@
 
 #pragma once
 
-#include "Misc.hpp"
+#include <string_view>
+
+#include "../IncludeMacros/Expected.hpp"
 
 #define TOML_EXCEPTIONS 0
 #include "../Libraries/toml++/toml.hpp"
@@ -18,27 +20,26 @@ namespace config {
 	void safeTableUpdate(toml::table& dst, const toml::table& src);
 	void safeTableInsert(toml::table& dst, const toml::table& src);
 
-	auto writeToFile(
-		const toml::table& table,
-		const char* filename
-	) noexcept -> Expected<bool, std::error_code>;
+	auto writeToFile(const toml::table& table, const char* filename) noexcept
+		-> Expected<bool, std::error_code>;
 
-	auto parseFromFile(const char* filename) noexcept -> toml::parse_result;
+	auto parseFromFile(const char* filename) noexcept
+		-> toml::parse_result;
 
 	template <typename T>
-	inline void get(const toml::table& src, StrV key, T& dst) {
+	inline void get(const toml::table& src, std::string_view key, T& dst) {
 		if (auto val = src.at_path(key).value<T>())
 			{ dst = static_cast<T>(*val); }
 	}
 
 	template <typename T>
-	inline void set(toml::table& dst, StrV key, T src = T{}) {
+	inline void set(toml::table& dst, std::string_view key, T src = T{}) {
 		auto* current{ &dst };
 		auto start{ key.begin() };
 
 		while (start != key.end()) {
 			auto end{ std::find(start, key.end(), '.') };
-			StrV subkey{ start, end };
+			std::string_view subkey{ start, end };
 
 			if (end == key.end()) {
 				current->insert_or_assign(subkey, src);

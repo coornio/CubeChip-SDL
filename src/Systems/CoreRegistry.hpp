@@ -6,11 +6,13 @@
 
 #pragma once
 
+#include <new>
 #include <vector>
 #include <unordered_map>
 
 #include "../Assistants/Typedefs.hpp"
 #include "../Libraries/nlohmann/json_fwd.hpp"
+#include "../IncludeMacros/HDIS_HCIS.hpp"
 
 /*==================================================================*/
 
@@ -38,7 +40,7 @@ enum class GameFileType {
 class SystemInterface;
 
 using CoreConstructor = SystemInterface* (*)();
-using ProgramTester   = bool (*)(const char*, ust);
+using ProgramTester   = bool (*)(const char*, size_type);
 using FileExtList     = std::vector<Str>;
 
 struct CoreDetails {
@@ -86,11 +88,11 @@ class CoreRegistry {
 	CoreRegistry(const CoreRegistry&)            = delete;
 	CoreRegistry& operator=(const CoreRegistry&) = delete;
 
-	static bool validateProgramByHash(const char* fileData, ust fileSize, const Str& fileSHA1) noexcept;
-	static bool validateProgramByType(const char* fileData, ust fileSize, const Str& fileType) noexcept;
+	static bool validateProgramByHash(const char* fileData, size_type fileSize, const Str& fileSHA1) noexcept;
+	static bool validateProgramByType(const char* fileData, size_type fileSize, const Str& fileType) noexcept;
 
 public:
-	static bool validateProgram(const char* fileData, ust fileSize, const Str& fileType, const Str& fileSHA1) noexcept;
+	static bool validateProgram(const char* fileData, size_type fileSize, const Str& fileType, const Str& fileSHA1) noexcept;
 
 public:
 	static void loadProgramDB(const Path& dbPath = {}) noexcept;

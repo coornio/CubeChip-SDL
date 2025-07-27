@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include "Typedefs.hpp"
 #include "Concepts.hpp"
 #include "Aligned.hpp"
 
@@ -44,6 +43,7 @@ template <typename U>
 	requires (std::is_trivially_copyable_v<U>)
 class TripleBuffer {
 	using Buffer = AlignedUniqueArray<U>;
+	using mo = std::memory_order;
 
 	alignas(HDIS) Buffer pWorkBuffer;
 	alignas(HDIS) Buffer pSwapBuffer;

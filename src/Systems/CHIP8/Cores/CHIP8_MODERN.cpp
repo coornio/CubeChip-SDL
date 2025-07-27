@@ -9,7 +9,6 @@
 
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/GlobalAudioBase.hpp"
-#include "../../../Assistants/Well512.hpp"
 #include "../../CoreRegistry.hpp"
 
 REGISTER_CORE(CHIP8_MODERN, ".ch8")
@@ -183,7 +182,6 @@ void CHIP8_MODERN::instructionLoop() noexcept {
 				break;
 		}
 	}
-	mElapsedCycles += cycleCount;
 }
 
 void CHIP8_MODERN::renderAudioData() {
@@ -381,7 +379,7 @@ void CHIP8_MODERN::renderVideoData() {
 	#pragma region C instruction branch
 
 	void CHIP8_MODERN::instruction_CxNN(s32 X, s32 NN) noexcept {
-		::assign_cast(mRegisterV[X], RNG->next() & NN);
+		::assign_cast(mRegisterV[X], RNG.next() & NN);
 	}
 
 	#pragma endregion

@@ -6,13 +6,13 @@
 
 #pragma once
 
-#include "Typedefs.hpp"
-#include "Concepts.hpp"
-
 #include <span>
 #include <array>
 #include <vector>
+#include <cstddef>
 #include <stdexcept>
+
+#include "Concepts.hpp"
 
 /*==================================================================*/
 

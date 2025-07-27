@@ -62,7 +62,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Assistants\Aligned.hpp" />
-    <ClInclude Include="src\Assistants\AtomicSharedProxy.hpp" />
+    <ClInclude Include="src\Assistants\ArrayOps.hpp" />
+    <ClInclude Include="src\Assistants\AssignCast.hpp" />
     <ClInclude Include="src\Assistants\AttachConsole.hpp" />
     <ClInclude Include="src\Assistants\AudioFilters.hpp" />
     <ClInclude Include="src\Assistants\AudioDevice.hpp" />
@@ -79,7 +80,6 @@
     <ClInclude Include="src\Assistants\LifetimeWrapperSDL.hpp" />
     <ClInclude Include="src\Assistants\Map2D.hpp" />
     <ClInclude Include="src\Assistants\Millis.hpp" />
-    <ClInclude Include="src\Assistants\Misc.hpp" />
     <ClInclude Include="src\Assistants\PathGetters.hpp" />
     <ClInclude Include="src\Assistants\RangeIterator.hpp" />
     <ClInclude Include="src\Assistants\ColorOps.hpp" />
@@ -93,6 +93,11 @@
     <ClInclude Include="src\Assistants\Voice.hpp" />
     <ClInclude Include="src\Assistants\Well512.hpp" />
     <ClInclude Include="src\FrontendHost.hpp" />
+    <ClInclude Include="src\IncludeMacros\AtomSharedPtr.hpp" />
+    <ClInclude Include="src\IncludeMacros\ExecPolicy.hpp" />
+    <ClInclude Include="src\IncludeMacros\Expected.hpp" />
+    <ClInclude Include="src\IncludeMacros\HDIS_HCIS.hpp" />
+    <ClInclude Include="src\IncludeMacros\Thread.hpp" />
     <ClInclude Include="src\Libraries\imgui\imconfig.h" />
     <ClInclude Include="src\Libraries\imgui\imgui.h" />
     <ClInclude Include="src\Libraries\imgui\imgui_impl_sdl3.h" />
@@ -180,20 +185,20 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>C:\VSlibs\SDL3-x64\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\VSlibs\SDL3-x64\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SDL3_DIR)\include;$(LibraryPath)</IncludePath>
+    <LibraryPath>$(SDL3_DIR)\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>C:\VSlibs\SDL3-x64\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\VSlibs\SDL3-x64\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SDL3_DIR)\include;$(LibraryPath)</IncludePath>
+    <LibraryPath>$(SDL3_DIR)\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LibraryPath>C:\VSlibs\SDL3-3.1.2\lib\x86;$(LibraryPath)</LibraryPath>
-    <IncludePath>C:\VSlibs\SDL3-3.1.2\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SDL3_DIR)\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SDL3_DIR)\include;$(LibraryPath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LibraryPath>C:\VSlibs\SDL3-3.1.2\lib\x86;$(LibraryPath)</LibraryPath>
-    <IncludePath>C:\VSlibs\SDL3-3.1.2\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SDL3_DIR)\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SDL3_DIR)\include;$(LibraryPath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

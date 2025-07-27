@@ -26,7 +26,7 @@ GameBoy_CoreInterface::GameBoy_CoreInterface() noexcept {
 /*==================================================================*/
 
 void GameBoy_CoreInterface::mainSystemLoop() {
-	if (Pacer->checkTime()) {
+	if (Pacer.checkTime()) {
 		if (!isSystemRunning())
 			[[unlikely]] { return; }
 
@@ -54,13 +54,13 @@ void GameBoy_CoreInterface::loadPresetBinds() {
 	loadCustomBinds(std::span(defaultKeyMappings));
 }
 
-u32  GameBoy_CoreInterface::getKeyStates() const {
+u32  GameBoy_CoreInterface::getKeyStates() {
 	auto keyStates{ 0u };
 
-	Input->updateStates();
+	Input.updateStates();
 
 	for (const auto& mapping : mCustomBinds) {
-		if (Input->areAnyHeld(mapping.key, mapping.alt)) {
+		if (Input.areAnyHeld(mapping.key, mapping.alt)) {
 			keyStates |= 1u << mapping.idx;
 		}
 	}

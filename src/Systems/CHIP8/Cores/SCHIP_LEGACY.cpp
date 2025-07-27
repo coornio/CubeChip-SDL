@@ -9,7 +9,6 @@
 
 #include "../../../Assistants/BasicVideoSpec.hpp"
 #include "../../../Assistants/GlobalAudioBase.hpp"
-#include "../../../Assistants/Well512.hpp"
 #include "../../CoreRegistry.hpp"
 
 REGISTER_CORE(SCHIP_LEGACY, ".sc8")
@@ -19,7 +18,7 @@ REGISTER_CORE(SCHIP_LEGACY, ".sc8")
 SCHIP_LEGACY::SCHIP_LEGACY()
 	: mDisplayBuffer{ {cDisplayResW, cDisplayResH} }
 {
-	::generate_n(mMemoryBank, 0, cTotalMemory, []() { return RNG->next<u8>(); });
+	::generate_n(mMemoryBank, 0, cTotalMemory, [&]() { return RNG.next<u8>(); });
 	::fill_n(mMemoryBank, cTotalMemory, cSafezoneOOB, 0xFF);
 
 	copyGameToMemory(mMemoryBank.data() + cGameLoadPos);
@@ -217,7 +216,6 @@ void SCHIP_LEGACY::instructionLoop() noexcept {
 				break;
 		}
 	}
-	mElapsedCycles += cycleCount;
 }
 
 void SCHIP_LEGACY::renderAudioData() {
@@ -451,7 +449,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 	#pragma region C instruction branch
 
 	void SCHIP_LEGACY::instruction_CxNN(s32 X, s32 NN) noexcept {
-		::assign_cast(mRegisterV[X], RNG->next() & NN);
+		::assign_cast(mRegisterV[X], RNG.next() & NN);
 	}
 
 	#pragma endregion

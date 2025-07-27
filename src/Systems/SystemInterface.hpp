@@ -28,10 +28,16 @@
 
 #include "../Assistants/Typedefs.hpp"
 #include "../Assistants/Concepts.hpp"
-#include "../Assistants/Misc.hpp"
+#include "../IncludeMacros/Thread.hpp"
+#include "../IncludeMacros/AtomSharedPtr.hpp"
+#include "../Assistants/AssignCast.hpp"
+#include "../Assistants/ArrayOps.hpp"
 
 #include "../Assistants/AudioDevice.hpp"
 #include "../Assistants/Voice.hpp"
+#include "../Assistants/FrameLimiter.hpp"
+#include "../Assistants/BasicInput.hpp"
+#include "../Assistants/Well512.hpp"
 
 #include "CoreRegistry.hpp"
 
@@ -60,19 +66,14 @@ class HomeDirManager;
 class BasicVideoSpec;
 class GlobalAudioBase;
 
-class BasicKeyboard;
-class FrameLimiter;
-class Well512;
-
 /*==================================================================*/
 
 class SystemInterface {
 
 	Thread mCoreThread;
+	
 	Str mOverlayDataBuffer{};
 
-	AtomSharedPtr<Str> mOverlayData;
-	
 protected:
 	Str* getOverlayDataBuffer() noexcept
 		{ return &mOverlayDataBuffer; }
@@ -80,8 +81,9 @@ protected:
 protected:
 	static inline HomeDirManager* HDM{};
 	static inline BasicVideoSpec* BVS{};
-	static inline Well512*        RNG{};
 
+	Well512 RNG{};
+	
 public:
 	void startWorker() noexcept;
 	void stopWorker() noexcept;
@@ -89,19 +91,23 @@ public:
 protected:
 	void threadEntry(StopToken token);
 
-	std::unique_ptr<FrameLimiter>  Pacer;
-	std::unique_ptr<BasicKeyboard> Input;
-
-	u64 mElapsedCycles{};
 	s32 mTargetCPF{};
 	Atom<f32> mTargetFPS{};
 	Atom<u32> mGlobalState{ EmuState::NORMAL };
+
+private:
+	AtomSharedPtr<Str>
+		mOverlayData;
+
+protected:
+	FrameLimiter  Pacer{};
+	BasicKeyboard Input{};
 
 protected:
 	SystemInterface() noexcept;
 
 public:
-	virtual ~SystemInterface() noexcept;
+	virtual ~SystemInterface() noexcept = default;
 
 public:
 	static void assignComponents(
