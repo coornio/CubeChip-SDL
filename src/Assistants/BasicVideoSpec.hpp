@@ -6,10 +6,7 @@
 
 #pragma once
 
-#include <utility>
-#include <optional>
 #include <algorithm>
-
 #include "Typedefs.hpp"
 #include "TripleBuffer.hpp"
 #include "LifetimeWrapperSDL.hpp"
@@ -165,9 +162,9 @@ public:
 /*==================================================================*/
 
 private:
-	auto computeOverlapArea(const SDL_Rect& a, const SDL_Rect& b) noexcept;
+	u64 computeOverlapArea(const SDL_Rect& a, const SDL_Rect& b) noexcept;
 
-	auto squaredDistance(s32 x1, s32 y1, s32 x2, s32 y2) noexcept;
+	u64 squaredDistance(s32 x1, s32 y1, s32 x2, s32 y2) noexcept;
 
 public:
 	void normalizeRectToDisplay(SDL_Rect& rect, SDL_Rect& deco, bool first_run) noexcept;

@@ -5,8 +5,6 @@
 */
 
 #include <cmath>
-#include <limits>
-#include <stdexcept>
 #include <algorithm>
 
 #ifdef _WIN32
@@ -79,7 +77,7 @@ BasicVideoSpec::BasicVideoSpec(const Settings& settings) noexcept {
 		nullptr, 64, 64, SDL_WINDOW_UTILITY | SDL_WINDOW_HIDDEN
 	) }) {
 		#ifndef __APPLE__
-		constexpr auto away{ std::numeric_limits<int>::min() };
+		constexpr auto away{ -(1 << 15) };
 		SDL_SetWindowPosition(dummy, away, away);
 		#endif
 		SDL_ShowWindow(dummy);
@@ -156,13 +154,13 @@ void BasicVideoSpec::showErrorBox(const char* const title) noexcept {
 	);
 }
 
-auto BasicVideoSpec::computeOverlapArea(const SDL_Rect& a, const SDL_Rect& b) noexcept {
+u64 BasicVideoSpec::computeOverlapArea(const SDL_Rect& a, const SDL_Rect& b) noexcept {
 	auto xOverlap{ std::max(0, std::min(a.x + a.w, b.x + b.w) - std::max(a.x, b.x)) };
 	auto yOverlap{ std::max(0, std::min(a.y + a.h, b.y + b.h) - std::max(a.y, b.y)) };
 	return xOverlap * yOverlap;
 }
 
-auto BasicVideoSpec::squaredDistance(s32 x1, s32 y1, s32 x2, s32 y2) noexcept {
+u64 BasicVideoSpec::squaredDistance(s32 x1, s32 y1, s32 x2, s32 y2) noexcept {
 	s64 dx{ x1 - x2 };
 	s64 dy{ y1 - y2 };
 	return dx * dx + dy * dy;
@@ -197,19 +195,19 @@ void BasicVideoSpec::normalizeRectToDisplay(SDL_Rect& rect, SDL_Rect& deco, bool
 
 	if (!first_run) {
 		// 4: find largest window/display overlap, if any
-		auto bestOverlap{ 0 };
-		for (auto i{ 0 }; i < static_cast<s32>(displayBounds.size()); ++i) {
+		auto bestOverlap{ 0ull };
+		for (auto i{ 0 }; i < s32(displayBounds.size()); ++i) {
 			const auto overlap{ computeOverlapArea(rect, displayBounds[i]) };
 			if (overlap > bestOverlap) { bestOverlap = overlap; bestDisplay = i; }
 		}
 	
 		// 5: fall back to searching for closest display
 		if (!(rectOverlap = bestOverlap != 0)) {
-			auto bestDistance{ std::numeric_limits<s64>::max() };
+			auto bestDistance{ u64(-1) };
 			const auto cx{ rect.x + rect.w / 2 };
 			const auto cy{ rect.y + rect.h / 2 };
 	
-			for (auto i{ 0 }; i < static_cast<s32>(displayBounds.size()); ++i) {
+			for (auto i{ 0 }; i < s32(displayBounds.size()); ++i) {
 				const auto tcx{ displayBounds[i].x + displayBounds[i].w / 2 };
 				const auto tcy{ displayBounds[i].y + displayBounds[i].h / 2 };
 				const auto distance{ squaredDistance(cx, cy, tcx, tcy) };
