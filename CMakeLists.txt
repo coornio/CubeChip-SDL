@@ -5,39 +5,30 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-# ==================================================================================== #
-
-include(CheckCXXCompilerFlag)
-check_cxx_compiler_flag("-std=c++20" SUPPORT_CPP20) # minimum required
-
-if(NOT SUPPORT_CPP20)
-	message(FATAL_ERROR "Compiler must support at least C++20. Aborting.")	
-endif()
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # ==================================================================================== #
 
-set(SDL3_REQUIRED_VERSION 3.2.18) # SDL3 version required
-find_package(SDL3 ${SDL3_REQUIRED_VERSION} QUIET) # check if present already
+include(FetchContent)
 
-if(NOT SDL3_FOUND)
-	include(FetchContent)
+set(SDL3_REQUIRED_VERSION 3.2.18)
+set(SDL_SHARED TRUE CACHE BOOL "Build SDL shared library" FORCE)
+
+FetchContent_Declare(
+	SDL3
+	GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+	GIT_TAG release-${SDL3_REQUIRED_VERSION}
+	GIT_SHALLOW TRUE
+	GIT_PROGRESS TRUE
+)
+
+FetchContent_GetProperties(SDL3)
+
+if(NOT SDL3_POPULATED)
 	message(STATUS "SDL3 ${SDL3_REQUIRED_VERSION} not found, fetching...")
-
-	set(SDL_SHARED TRUE CACHE BOOL "Build SDL shared library" FORCE)
-
-	FetchContent_Declare(
-		SDL3
-		GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-		GIT_TAG release-${SDL3_REQUIRED_VERSION}
-		GIT_SHALLOW TRUE
-		GIT_PROGRESS TRUE
-	)
-
-	FetchContent_GetProperties(SDL3)
-	if(SDL3_SOURCE_DIR)
-		set_property(DIRECTORY "${SDL3_SOURCE_DIR}" PROPERTY EXCLUDE_FROM_ALL TRUE)
-	endif()
 	FetchContent_MakeAvailable(SDL3)
+	message(STATUS "SDL3 ${SDL3_REQUIRED_VERSION} fetched successfully.")
 endif()
 
 # ==================================================================================== #
