@@ -102,8 +102,8 @@ add_executable(${PROJECT_NAME}
     ${SYSTEM_GAMEBOY_SOURCES}
 )
 
-target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_latest) # always attempt the latest
-target_include_directories(${PROJECT_NAME} PRIVATE src) # specify where all the headers are
+target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
+target_include_directories(${PROJECT_NAME} PRIVATE src)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
 	SDL3::SDL3-shared
