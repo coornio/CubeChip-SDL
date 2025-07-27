@@ -8,6 +8,7 @@
 
 #include <span>
 #include <cassert>
+#include <cstring>
 #include <memory>
 #include <stdexcept>
 
