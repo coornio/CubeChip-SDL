@@ -434,7 +434,7 @@ public:
 		assert(row < lenY() && "Map2D.operator() row out of bounds");
 		return data()[row * lenX() + col];
 	}
-	#ifndef _MSC_VER
+	#ifdef __cpp_multidimensional_subscript
 	constexpr reference operator[](size_type col, size_type row) {
 		assert(col < lenX() && "Map2D.operator[] col out of bounds");
 		assert(row < lenY() && "Map2D.operator[] row out of bounds");
@@ -447,7 +447,7 @@ public:
 		assert(row < lenY() && "Map2D.operator() row out of bounds");
 		return data()[row * lenX() + col];
 	}
-	#ifndef _MSC_VER
+	#ifdef __cpp_multidimensional_subscript
 	constexpr const_reference operator[](size_type col, size_type row) const {
 		assert(col < lenX() && "Map2D.operator[] col out of bounds");
 		assert(row < lenY() && "Map2D.operator[] row out of bounds");
@@ -833,7 +833,7 @@ public:
 		assert(row < lenY() && "FixedMap2D.operator[] row out of bounds");
 		return data()[row * lenX() + col];
 	}
-	#ifndef _MSC_VER
+	#ifdef __cpp_multidimensional_subscript
 	constexpr reference operator[](size_type col, size_type row) {
 		assert(col < lenX() && "FixedMap2D.operator[] col out of bounds");
 		assert(row < lenY() && "FixedMap2D.operator[] row out of bounds");
@@ -845,7 +845,7 @@ public:
 		assert(row < lenY() && "FixedMap2D.operator[] row out of bounds");
 		return data()[row * lenX() + col];
 	}
-	#ifndef _MSC_VER
+	#ifdef __cpp_multidimensional_subscript
 	constexpr const_reference operator[](size_type col, size_type row) const {
 		assert(col < lenX() && "FixedMap2D.operator[] col out of bounds");
 		assert(row < lenY() && "FixedMap2D.operator[] row out of bounds");
