@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.24)
+cmake_minimum_required(VERSION 3.25)
 project(CubeChip)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -14,6 +14,8 @@ include(FetchContent)
 
 set(SDL3_REQUIRED_VERSION 3.2.18)
 set(SDL_SHARED TRUE CACHE BOOL "Build SDL shared library" FORCE)
+set(SDL_TESTS OFF CACHE BOOL "" FORCE)
+set(SDL_EXAMPLES OFF CACHE BOOL "" FORCE)
 
 FetchContent_Declare(
 	SDL3
