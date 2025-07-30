@@ -193,13 +193,13 @@ if(MSVC)
 else()
 	target_compile_options(
 		"${PROJECT_NAME}" PRIVATE
-		$<$<CONFIG:Release>: -O3 -march=native -flto>
+		$<$<CONFIG:Release>: -O3 -march=native -flto=auto>
 		$<$<CONFIG:Debug>: -Og -g>
 	)
 
 	target_link_options(
 		"${PROJECT_NAME}" PRIVATE
-		$<$<CONFIG:Release>: -flto -s>
+		$<$<CONFIG:Release>: -flto=auto -s>
 		$<$<CONFIG:Debug>: >
 	)
 endif()
