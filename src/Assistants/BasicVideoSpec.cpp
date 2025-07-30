@@ -4,9 +4,6 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include <cmath>
-#include <algorithm>
-
 #ifdef _WIN32
 	#define NOMINMAX
 	#pragma warning(push)
@@ -24,12 +21,13 @@
 
 /*==================================================================*/
 
-auto BasicVideoSpec::Rect::frect() const noexcept -> SDL_FRect {
-	return SDL_FRect{ 0.0f, 0.0f, f32(W), f32(H) };
+static auto to_FRect(const EzMaths::Frame& rect) noexcept {
+	return SDL_FRect{ 0.0f, 0.0f, f32(rect.w), f32(rect.h) };
 }
 
-auto BasicVideoSpec::Viewport::frect() const noexcept -> SDL_FRect {
-	return SDL_FRect{ f32(ppad), f32(ppad), f32(rect.W * mult), f32(rect.H * mult) };
+static auto to_FRect(const BasicVideoSpec::Viewport& viewport) noexcept {
+	return SDL_FRect{ f32(viewport.pxpad), f32(viewport.pxpad),
+		f32(viewport.frame.w * viewport.multi), f32(viewport.frame.h * viewport.multi) };
 }
 
 /*==================================================================*/
@@ -71,7 +69,7 @@ BasicVideoSpec::BasicVideoSpec(const Settings& settings) noexcept {
 	}
 	#endif
 
-	SDL_Rect deco{};
+	EzMaths::Rect deco{};
 
 	if (SDL_Unique<SDL_Window> dummy{ SDL_CreateWindow(
 		nullptr, 64, 64, SDL_WINDOW_UTILITY | SDL_WINDOW_HIDDEN
@@ -86,14 +84,11 @@ BasicVideoSpec::BasicVideoSpec(const Settings& settings) noexcept {
 		SDL_GetWindowBordersSize(dummy, &deco.x, &deco.y, &deco.w, &deco.h);
 	}
 
-	SDL_Rect rect{
-		settings.window.x, settings.window.y,
-		settings.window.w, settings.window.h
-	};
-	normalizeRectToDisplay(rect, deco, settings.first_run);
+	auto window{ settings.window };
+	normalizeRectToDisplay(window, deco, settings.first_run);
 
-	SDL_SetWindowPosition(mMainWindow, rect.x, rect.y);
-	SDL_SetWindowSize(mMainWindow, rect.w, rect.h);
+	SDL_SetWindowPosition(mMainWindow, window.x, window.y);
+	SDL_SetWindowSize(mMainWindow, window.w, window.h);
 
 	mSuccessful = mMainRenderer = SDL_CreateRenderer(mMainWindow, nullptr);
 	if (!mSuccessful) {
@@ -112,13 +107,10 @@ BasicVideoSpec::~BasicVideoSpec() noexcept {
 	SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }
 
-auto BasicVideoSpec::getTextureSizeRect(SDL_Texture* texture) const noexcept -> BasicVideoSpec::Rect {
+auto BasicVideoSpec::getTextureSizeRect(SDL_Texture* texture) const noexcept -> EzMaths::Frame {
 	f32 w, h;
 	SDL_GetTextureSize(texture, &w, &h);
-	return Rect{
-		static_cast<s32>(w),
-		static_cast<s32>(h)
-	};
+	return EzMaths::Frame(s32(w), s32(h));
 }
 
 auto BasicVideoSpec::exportSettings() const noexcept -> Settings {
@@ -154,19 +146,7 @@ void BasicVideoSpec::showErrorBox(const char* const title) noexcept {
 	);
 }
 
-u64 BasicVideoSpec::computeOverlapArea(const SDL_Rect& a, const SDL_Rect& b) noexcept {
-	auto xOverlap{ std::max(0, std::min(a.x + a.w, b.x + b.w) - std::max(a.x, b.x)) };
-	auto yOverlap{ std::max(0, std::min(a.y + a.h, b.y + b.h) - std::max(a.y, b.y)) };
-	return xOverlap * yOverlap;
-}
-
-u64 BasicVideoSpec::squaredDistance(s32 x1, s32 y1, s32 x2, s32 y2) noexcept {
-	s64 dx{ x1 - x2 };
-	s64 dy{ y1 - y2 };
-	return dx * dx + dy * dy;
-}
-
-void BasicVideoSpec::normalizeRectToDisplay(SDL_Rect& rect, SDL_Rect& deco, bool first_run) noexcept {
+void BasicVideoSpec::normalizeRectToDisplay(EzMaths::Rect& rect, EzMaths::Rect& deco, bool first_run) noexcept {
 	auto numDisplays{  0 }; // count of displays SDL found
 	auto bestDisplay{ -1 }; // index of display our window will use
 	bool rectOverlap{};
@@ -177,14 +157,16 @@ void BasicVideoSpec::normalizeRectToDisplay(SDL_Rect& rect, SDL_Rect& deco, bool
 		{ rect = Settings::defaults; return; }
 
 	// 2: fill vector with usable display bounds rects
-	std::vector<SDL_Rect> displayBounds;
+	std::vector<EzMaths::Rect> displayBounds;
 	displayBounds.reserve(numDisplays);
 
 	for (auto i{ 0 }; i < numDisplays; ++i) {
 		if (displays[i] == SDL_GetPrimaryDisplay()) { bestDisplay = i; }
-		SDL_Rect usableBounds;
-		if (SDL_GetDisplayUsableBounds(displays[i], &usableBounds))
-			{ displayBounds.push_back(usableBounds); }
+		SDL_Rect display;
+		if (SDL_GetDisplayUsableBounds(displays[i], &display)) {
+			EzMaths::Rect bounds{ display.x, display.y, display.w, display.h };
+			displayBounds.push_back(std::move(bounds));
+		}
 	}
 	if (displayBounds.empty()) [[unlikely]]
 		{ rect = Settings::defaults; return; }
@@ -195,22 +177,20 @@ void BasicVideoSpec::normalizeRectToDisplay(SDL_Rect& rect, SDL_Rect& deco, bool
 
 	if (!first_run) {
 		// 4: find largest window/display overlap, if any
-		auto bestOverlap{ 0ull };
-		for (auto i{ 0 }; i < s32(displayBounds.size()); ++i) {
-			const auto overlap{ computeOverlapArea(rect, displayBounds[i]) };
-			if (overlap > bestOverlap) { bestOverlap = overlap; bestDisplay = i; }
+		auto bestOverlap{ u64(0) };
+		for (auto i{ 0u }; i < displayBounds.size(); ++i) {
+			const auto overlapArea{ EzMaths::intersect(rect, displayBounds[i]).area() };
+			if (overlapArea > bestOverlap) { bestOverlap = overlapArea; bestDisplay = i; }
 		}
 	
 		// 5: fall back to searching for closest display
 		if (!(rectOverlap = bestOverlap != 0)) {
 			auto bestDistance{ u64(-1) };
-			const auto cx{ rect.x + rect.w / 2 };
-			const auto cy{ rect.y + rect.h / 2 };
-	
-			for (auto i{ 0 }; i < s32(displayBounds.size()); ++i) {
-				const auto tcx{ displayBounds[i].x + displayBounds[i].w / 2 };
-				const auto tcy{ displayBounds[i].y + displayBounds[i].h / 2 };
-				const auto distance{ squaredDistance(cx, cy, tcx, tcy) };
+			const auto currentCenter{ rect.center() };
+
+			for (auto i{ 0u }; i < displayBounds.size(); ++i) {
+				const auto displayCenter{ displayBounds[i].center() };
+				const auto distance{ EzMaths::distance(currentCenter, displayCenter) };
 				if (distance < bestDistance) { bestDistance = distance; bestDisplay = i; }
 			}
 		}
@@ -292,7 +272,7 @@ void BasicVideoSpec::scaleInterface(const void* data, size_type size) {
 	FrontendInterface::UpdateFontScale(data, s32(size), SDL_GetWindowDisplayScale(mMainWindow));
 }
 
-void BasicVideoSpec::processInterfaceEvent(SDL_Event* event) const noexcept {
+void BasicVideoSpec::processInterfaceEvent(void* event) const noexcept {
 	FrontendInterface::ProcessEvent(event);
 }
 
@@ -306,7 +286,7 @@ void BasicVideoSpec::prepareWindowTexture() {
 			mMainRenderer,
 			SDL_PIXELFORMAT_ARGB8888,
 			SDL_TEXTUREACCESS_TARGET,
-			outerRect.W, outerRect.H
+			outerRect.w, outerRect.h
 		);
 
 		if (!mSuccessful) {
@@ -323,13 +303,13 @@ void BasicVideoSpec::prepareWindowTexture() {
 void BasicVideoSpec::prepareSystemTexture() {
 	if (!mWindowTexture) { return; }
 
-	if (getTextureSizeRect(mSystemTexture) != mCurViewport.rect) {
+	if (getTextureSizeRect(mSystemTexture) != mCurViewport.frame) {
 
 		mSuccessful = mSystemTexture = SDL_CreateTexture(
 			mMainRenderer,
 			SDL_PIXELFORMAT_RGBA8888,
 			SDL_TEXTUREACCESS_STREAMING,
-			mCurViewport.rect.W, mCurViewport.rect.H
+			mCurViewport.frame.w, mCurViewport.frame.h
 		);
 
 		if (!mSuccessful) {
@@ -350,32 +330,32 @@ void BasicVideoSpec::renderViewport() {
 
 		const RGBA Color{ mOutlineColor.load(mo::acquire) };
 		SDL_SetRenderDrawColor(mMainRenderer, Color.R, Color.G, Color.B, SDL_ALPHA_OPAQUE);
-		const auto outerFRect{ mCurViewport.padded().frect() };
+		const auto outerFRect{ to_FRect(mCurViewport.padded()) };
 		SDL_RenderFillRect(mMainRenderer, &outerFRect);
 	}
 
 	if (mSystemTexture) {
 		SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-		const auto innerFRect{ mCurViewport.frect() };
+		const auto innerFRect{ to_FRect(mCurViewport) };
 		SDL_RenderFillRect(mMainRenderer, &innerFRect);
 
 		{
 			void* pixels{}; s32 pitch;
 
 			SDL_LockTexture(mSystemTexture, nullptr, &pixels, &pitch);
-			displayBuffer.read(static_cast<u32*>(pixels), mCurViewport.rect);
+			displayBuffer.read(static_cast<u32*>(pixels), mCurViewport.frame.area());
 			SDL_UnlockTexture(mSystemTexture);
 		}
 
 		SDL_RenderTexture(mMainRenderer, mSystemTexture, nullptr, &innerFRect);
 
-		if (mUsingScanlines && mCurViewport.ppad >= 2) {
+		if (mUsingScanlines && mCurViewport.pxpad >= 2) {
 			SDL_SetRenderDrawBlendMode(mMainRenderer, SDL_BLENDMODE_BLEND);
 			SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, 0x20);
 
-			const auto outerFRect{ mCurViewport.padded().frect() };
+			const auto outerFRect{ to_FRect(mCurViewport.padded()) };
 			const auto drawLimit{ static_cast<s32>(outerFRect.h) };
-			for (auto y{ 0 }; y < drawLimit; y += mCurViewport.ppad) {
+			for (auto y{ 0 }; y < drawLimit; y += mCurViewport.pxpad) {
 				SDL_RenderLine(mMainRenderer,
 					outerFRect.x, static_cast<f32>(y),
 					outerFRect.w, static_cast<f32>(y));
@@ -397,13 +377,13 @@ void BasicVideoSpec::renderPresent(bool core, const char* overlay_data) {
 	FrontendInterface::NewFrame();
 
 	const auto outerRect{ mCurViewport.rotate_if(mViewportRotation & 1).padded() };
-	const auto frameHeight{ static_cast<s32>(FrontendInterface::GetFrameHeight()) };
+	const auto frameHeight{ s32(FrontendInterface::GetFrameHeight()) };
 
-	SDL_SetWindowMinimumSize(mMainWindow, outerRect.W, outerRect.H + frameHeight);
+	SDL_SetWindowMinimumSize(mMainWindow, outerRect.w, outerRect.h + frameHeight);
 
 	FrontendInterface::PrepareViewport(
 		mSuccessful && mWindowTexture, mIntegerScaling,
-		outerRect.W, outerRect.H, mViewportRotation,
+		outerRect.w, outerRect.h, mViewportRotation,
 		overlay_data, mWindowTexture
 	);
 	FrontendInterface::PrepareGeneralUI();
@@ -414,7 +394,3 @@ void BasicVideoSpec::renderPresent(bool core, const char* overlay_data) {
 
 	#pragma endregion
 /*VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV*/
-
-BasicVideoSpec::Settings::Window::operator SDL_Rect() const noexcept {
-	return SDL_Rect{ x, y, w, h };
-}

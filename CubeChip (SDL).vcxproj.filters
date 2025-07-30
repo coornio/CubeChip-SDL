@@ -124,30 +124,6 @@
     <ClCompile Include="src\Systems\CHIP8\Cores\CHIP8X.cpp">
       <Filter>Source Files\Systems\CHIP8\Cores</Filter>
     </ClCompile>
-    <ClCompile Include="src\Libraries\imgui\imgui.cpp">
-      <Filter>Source Files\Libraries\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Libraries\imgui\imgui_demo.cpp">
-      <Filter>Source Files\Libraries\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Libraries\imgui\imgui_draw.cpp">
-      <Filter>Source Files\Libraries\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Libraries\imgui\imgui_impl_sdl3.cpp">
-      <Filter>Source Files\Libraries\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Libraries\imgui\imgui_impl_sdlrenderer3.cpp">
-      <Filter>Source Files\Libraries\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Libraries\imgui\imgui_stdlib.cpp">
-      <Filter>Source Files\Libraries\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Libraries\imgui\imgui_tables.cpp">
-      <Filter>Source Files\Libraries\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Libraries\imgui\imgui_widgets.cpp">
-      <Filter>Source Files\Libraries\imgui</Filter>
-    </ClCompile>
     <ClCompile Include="src\Assistants\DefaultConfig.cpp">
       <Filter>Source Files\Assistants</Filter>
     </ClCompile>
@@ -180,6 +156,30 @@
     </ClCompile>
     <ClCompile Include="src\Assistants\AudioFilters.cpp">
       <Filter>Source Files\Assistants</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Libraries\imgui\imgui_stdlib.cpp">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Libraries\imgui\imgui.cpp">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Libraries\imgui\imgui_demo.cpp">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Libraries\imgui\imgui_draw.cpp">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Libraries\imgui\imgui_impl_sdl3.cpp">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Libraries\imgui\imgui_impl_sdlrenderer3.cpp">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Libraries\imgui\imgui_tables.cpp">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Libraries\imgui\imgui_widgets.cpp">
+      <Filter>Source Files\Libraries\imgui</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -279,33 +279,6 @@
     <ClInclude Include="src\Assistants\ColorOps.hpp">
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
-    <ClInclude Include="src\Libraries\imgui\imconfig.h">
-      <Filter>Source Files\Libraries\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Libraries\imgui\imgui.h">
-      <Filter>Source Files\Libraries\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Libraries\imgui\imgui_impl_sdl3.h">
-      <Filter>Source Files\Libraries\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Libraries\imgui\imgui_impl_sdlrenderer3.h">
-      <Filter>Source Files\Libraries\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Libraries\imgui\imgui_internal.h">
-      <Filter>Source Files\Libraries\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Libraries\imgui\imgui_stdlib.h">
-      <Filter>Source Files\Libraries\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Libraries\imgui\imstb_rectpack.h">
-      <Filter>Source Files\Libraries\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Libraries\imgui\imstb_textedit.h">
-      <Filter>Source Files\Libraries\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Libraries\imgui\imstb_truetype.h">
-      <Filter>Source Files\Libraries\imgui</Filter>
-    </ClInclude>
     <ClInclude Include="src\Assistants\ThreadAffinity.hpp">
       <Filter>Source Files\Assistants</Filter>
     </ClInclude>
@@ -368,6 +341,39 @@
     </ClInclude>
     <ClInclude Include="src\Macros.hpp">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\Waveforms.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Assistants\EzMaths.hpp">
+      <Filter>Source Files\Assistants</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\imgui\imstb_textedit.h">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\imgui\imstb_truetype.h">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\imgui\imgui_stdlib.h">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\imgui\imconfig.h">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\imgui\imgui.h">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\imgui\imgui_impl_sdl3.h">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\imgui\imgui_impl_sdlrenderer3.h">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\imgui\imgui_internal.h">
+      <Filter>Source Files\Libraries\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Libraries\imgui\imstb_rectpack.h">
+      <Filter>Source Files\Libraries\imgui</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

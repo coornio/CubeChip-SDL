@@ -6,152 +6,8 @@
 
 #pragma once
 
-#include <cmath>
-#include <cstdint>
-#include <numbers>
-#include <concepts>
-#include <algorithm>
-
-/*==================================================================*/
-
-#ifndef __cpp_constexpr
-	#define __cpp_constexpr 0
-#endif
-
-#if __cpp_constexpr >= 202211L
-	#define CONSTEXPR_MATH constexpr
-#else
-	#define CONSTEXPR_MATH
-#endif
-
-/*==================================================================*/
-
-struct Phase {
-	using Type_B = std::uint8_t;
-	using Type_F = double;
-
-private:
-	Type_F mPhase{};
-
-public:
-	template <std::integral AnyInt>
-	constexpr Phase(AnyInt value) noexcept : mPhase{ Type_B(value) * (1.0 / 255.0) } {}
-	constexpr Phase(Type_F value) noexcept : mPhase{ value - int(value) } {}
-	constexpr Phase() noexcept = default;
-
-	constexpr operator Type_F() const noexcept { return mPhase; }
-};
-
-class WaveForms {
-	using Millis = std::uint32_t;
-	using Type_B = Phase::Type_B;
-	using Type_F = Phase::Type_F;
-
-	static constexpr Type_F calc_period(Millis p, Millis t) noexcept
-		{ return p ? Type_F(t % p) / p : 0.0; }
-
-public:
-	class Bipolar {
-		Type_F mPhase{};
-
-	public:
-		constexpr Bipolar(Type_F value) noexcept : mPhase{ value } {}
-
-		// cast phase value to a 0..255 value and return
-		constexpr Type_B as_byte() const noexcept
-			{ return Type_B(mPhase * 127.5 + 128.0); }
-
-		// cast phase value to a 0..1 range and return
-		constexpr Type_F as_unipolar() const noexcept
-			{ return 0.5 * (mPhase + 1.0); }
-
-		constexpr operator Type_F() const noexcept { return mPhase; }
-	};
-
-	/*==================================================================*/
-
-	static CONSTEXPR_MATH Bipolar cosine(Phase phase) noexcept
-		{ return std::cos(std::numbers::pi * 2.0 * phase); }
-	static CONSTEXPR_MATH Bipolar cosine_t(Millis p, Millis t) noexcept
-		{ return cos(calc_period(p, t)); }
-	static CONSTEXPR_MATH Bipolar sine(Phase phase) noexcept
-		{ return std::sin(std::numbers::pi * 2.0 * phase); }
-	static CONSTEXPR_MATH Bipolar sine_t(Millis p, Millis t) noexcept
-		{ return sin(calc_period(p, t)); }
-
-
-	static constexpr Bipolar sawtooth(Phase phase) noexcept
-		{ return 2.0 * phase - 1.0; }
-	static constexpr Bipolar sawtooth_t(Millis p, Millis t) noexcept
-		{ return sawtooth(calc_period(p, t)); }
-	static constexpr Bipolar triangle(Phase phase) noexcept
-		{ return 4.0 * (phase >= 0.5 ? 1.0 - phase : +phase) - 1.0; }
-	static constexpr Bipolar triangle_t(Millis p, Millis t) noexcept
-		{ return triangle(calc_period(p, t)); }
-
-
-	static constexpr Bipolar pulse(Phase phase, Phase duty = 0.5) noexcept
-		{ return phase >= duty ? 1.0 : -1.0; }
-	static constexpr Bipolar pulse_t(Millis p, Millis t, Phase duty = 0.5) noexcept
-		{ return pulse(calc_period(p, t), duty); }
-	static constexpr Bipolar triangle_skew(Phase phase, Phase skew = 0.5) noexcept
-		{ return skew ? 2.0 * (phase < skew ? (phase / skew) : 1.0 - (phase - skew) / (1.0 - skew)) - 1.0 : -1.0; }
-	static constexpr Bipolar triangle_skew_t(Millis p, Millis t, Phase skew = 0.5) noexcept
-		{ return triangle_skew(calc_period(p, t), skew); }
-};
-
-/*==================================================================*/
-
-namespace EzMaths {
-	using Type_F = Phase::Type_F;
-	using Type_B = Phase::Type_B;
-
-	class Weight {
-		Type_F mWeight{};
-
-	public:
-		template <std::integral AnyInt>
-		constexpr Weight(AnyInt value) noexcept : Weight(value * (1.0 / 255.0)) {}
-		constexpr Weight(Type_F value) noexcept : mWeight{ std::clamp(value, 0.0, 1.0) } {}
-
-		// cast phase value to a 0..255 value and return
-		constexpr Type_B as_byte() const noexcept
-			{ return Type_B((mWeight + 1.0) * 127.5); }
-
-		constexpr operator Type_F() const noexcept { return mWeight; }
-	};
-
-	// simple constexpr-enabled fmod, internally allows s32-width division
-	template <std::floating_point T>
-	inline constexpr T fmod(T x, T y) noexcept
-		{ return y ? x - y * int(x / y) : x; }
-
-	template <std::floating_point T>
-	inline constexpr T round(T x) noexcept {
-		return x >= T(0)
-			? T(static_cast<long long>(x + T(0.5)))
-			: T(static_cast<long long>(x - T(0.5)));
-	}
-
-	// simple constexpr-enabled tanh approximation, mostly-par up to x of 3.0
-	template <std::floating_point T>
-	inline constexpr T fast_tanh(T x) noexcept
-		{ return x * (T(27) + x * x) / (T(27) + T(9) * x * x); }
-
-	inline constexpr Type_B fixedMul8(Type_B x, Type_B y) noexcept {
-		return Type_B(((x * (y | y << 8)) + 0x8080u) >> 16);
-	}
-
-	inline constexpr Type_B fixedLerp8(Type_B x, Type_B y, Weight w) noexcept {
-		return Type_B(fixedMul8(x, 255u - w.as_byte()) + fixedMul8(y, w.as_byte()));
-	}
-
-	template <std::integral T>
-	inline constexpr T fixedLerpN(T x, T y, Weight w, T full_hue, T half_hue) noexcept {
-		const auto shortest{ (y - x + half_hue) % full_hue - half_hue };
-		return T((x + T(shortest * w) + full_hue) % full_hue);
-	}
-}
+#include "Waveforms.hpp"
+#include "EzMaths.hpp"
 
 /*==================================================================*/
 
@@ -172,8 +28,8 @@ inline CONSTEXPR_MATH RGBA  to_RGBA (OKLCH in) noexcept;
 /*==================================================================*/
 
 struct alignas(4) RGBA {
-	using Type_C = std::uint8_t;
-	using Packed = std::uint32_t;
+	using Type_C = EzMaths::u8;
+	using Packed = EzMaths::u32;
 	using Weight = EzMaths::Weight;
 
 	Type_C R{}, G{}, B{}, A{};
@@ -220,10 +76,10 @@ constexpr RGBA operator"" _rgb(unsigned long long value) noexcept
 /*==================================================================*/
 
 struct alignas(4) HSV {
-	using Type_H = std::int16_t;
-	using Type_S = std::uint8_t;
+	using Type_H = EzMaths::s16;
+	using Type_S = EzMaths::u8;
 	using Type_V = Type_S;
-	using Packed = std::uint32_t;
+	using Packed = EzMaths::u32;
 	using Weight = EzMaths::Weight;
 
 	static constexpr auto full_hue{ Type_H(0x600u) };
@@ -256,7 +112,7 @@ struct alignas(4) HSV {
 /*==================================================================*/
 
 struct OKLAB {
-	using Type_F = EzMaths::Type_F;
+	using Type_F = EzMaths::f64;
 	using Weight = EzMaths::Weight;
 
 	Type_F L{}, A{}, B{};

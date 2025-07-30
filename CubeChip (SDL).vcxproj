@@ -59,6 +59,7 @@
     <ClInclude Include="src\Assistants\AttachConsole.hpp" />
     <ClInclude Include="src\Assistants\AudioFilters.hpp" />
     <ClInclude Include="src\Assistants\AudioDevice.hpp" />
+    <ClInclude Include="src\Assistants\EzMaths.hpp" />
     <ClInclude Include="src\Assistants\GlobalAudioBase.hpp" />
     <ClInclude Include="src\Assistants\BasicInput.hpp" />
     <ClInclude Include="src\Assistants\BasicLogger.hpp" />
@@ -83,6 +84,7 @@
     <ClInclude Include="src\Assistants\TripleBuffer.hpp" />
     <ClInclude Include="src\Assistants\Typedefs.hpp" />
     <ClInclude Include="src\Assistants\Voice.hpp" />
+    <ClInclude Include="src\Assistants\Waveforms.hpp" />
     <ClInclude Include="src\Assistants\Well512.hpp" />
     <ClInclude Include="src\FrontendHost.hpp" />
     <ClInclude Include="src\IncludeMacros\AtomSharedPtr.hpp" />

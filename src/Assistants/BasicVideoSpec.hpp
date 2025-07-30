@@ -6,18 +6,11 @@
 
 #pragma once
 
-#include <algorithm>
 #include "Typedefs.hpp"
 #include "TripleBuffer.hpp"
 #include "LifetimeWrapperSDL.hpp"
 #include "SettingWrapper.hpp"
-
-/*==================================================================*/
-
-union  SDL_Event;
-
-struct SDL_Rect;
-struct SDL_FRect;
+#include "EzMaths.hpp"
 
 /*==================================================================*/
 	#pragma region BasicVideoSpec Singleton Class
@@ -25,48 +18,34 @@ struct SDL_FRect;
 class BasicVideoSpec final {
 
 public:
-	struct Rect {
-		s32 W{}, H{};
-
-		constexpr Rect() noexcept = default;
-		constexpr Rect(s32 W, s32 H) noexcept
-			: W{ W < 0 ? 0 : W }
-			, H{ H < 0 ? 0 : H }
-		{}
-
-		auto frect() const noexcept -> SDL_FRect;
-
-		constexpr operator s32() const noexcept { return W * H; }
-	};
-
 	struct Viewport {
-		Rect rect{};
-		s32 mult{}, ppad{};
+		EzMaths::Frame frame{};
+		s32 multi{}, pxpad{};
 
-		constexpr Viewport(s32 W = 0, s32 H = 0, s32 mult = 0, s32 ppad = 0) noexcept
-			: rect{ std::clamp(W, 0x0, 0xFFF), std::clamp(H, 0x0, 0xFFF) }
-			, mult{ std::clamp(mult, 0x1, 0xF) }
-			, ppad{ std::clamp(ppad, 0x0, 0xF) }
+		constexpr Viewport(s32 w = 0, s32 h = 0, s32 multi = 0, s32 pxpad = 0) noexcept
+			: frame{ std::clamp(w, 0x0, 0xFFF), std::clamp(h, 0x0, 0xFFF) }
+			, multi{ std::clamp(multi, 0x1, 0xF) }
+			, pxpad{ std::clamp(pxpad, 0x0, 0xF) }
 		{}
 
 		constexpr auto rotate_if(bool cond) const noexcept {
 			return cond
-				? Viewport{ rect.H, rect.W, mult, ppad }
-				: Viewport{ rect.W, rect.H, mult, ppad };
+				? Viewport{ frame.h, frame.w, multi, pxpad }
+				: Viewport{ frame.w, frame.h, multi, pxpad };
 		}
 
 		constexpr auto scaled() const noexcept {
-			return Rect{ rect.W * mult, rect.H * mult };
+			return EzMaths::Frame{ frame.w * multi, frame.h * multi };
 		}
 		constexpr auto padded() const noexcept {
-			return Rect{ rect.W * mult + ppad * 2, rect.H * mult + ppad * 2 };
+			return EzMaths::Frame{ frame.w * multi + pxpad * 2, frame.h * multi + pxpad * 2 };
 		}
 
-		static constexpr auto pack(s32 W, s32 H, s32 mult, s32 ppad) noexcept {
-			return ((u32(W)     & 0xFFFu) << 00u) |
-				   ((u32(H)     & 0xFFFu) << 12u) |
-				   ((u32(mult)  & 0xFu)   << 24u) |
-				   ((u32(ppad)  & 0xFu)   << 28u);
+		static constexpr auto pack(s32 w, s32 h, s32 multi, s32 pxpad) noexcept {
+			return ((u32(w)     & 0xFFFu) << 00u) |
+				   ((u32(h)     & 0xFFFu) << 12u) |
+				   ((u32(multi)  & 0xFu)   << 24u) |
+				   ((u32(pxpad)  & 0xFu)   << 28u);
 		}
 
 		static constexpr auto unpack(u32 packed) noexcept {
@@ -77,8 +56,6 @@ public:
 				s32((packed >> 28u) & 0xFu)
 			};
 		}
-
-		auto frect() const noexcept -> SDL_FRect;
 	};
 
 private:
@@ -87,7 +64,7 @@ private:
 	SDL_Unique<SDL_Texture>  mWindowTexture{};
 	SDL_Unique<SDL_Texture>  mSystemTexture{};
 
-	auto getTextureSizeRect(SDL_Texture* texture) const noexcept -> Rect;
+	auto getTextureSizeRect(SDL_Texture* texture) const noexcept -> EzMaths::Frame;
 
 /*==================================================================*/
 
@@ -107,15 +84,10 @@ public:
 	TripleBuffer<u32> displayBuffer;
 
 	struct Settings {
-		struct Window {
-			s32 x{}, y{}, w{}, h{};
-			operator SDL_Rect() const noexcept;
-		};
-
-		static constexpr Window
+		static constexpr EzMaths::Rect
 			defaults{ 0, 0, 640, 480 };
 
-		Window window{ defaults };
+		EzMaths::Rect window{ defaults };
 		struct Viewport {
 			s32  filtering{ 0 };
 			bool int_scale{ true };
@@ -161,13 +133,8 @@ public:
 
 /*==================================================================*/
 
-private:
-	u64 computeOverlapArea(const SDL_Rect& a, const SDL_Rect& b) noexcept;
-
-	u64 squaredDistance(s32 x1, s32 y1, s32 x2, s32 y2) noexcept;
-
 public:
-	void normalizeRectToDisplay(SDL_Rect& rect, SDL_Rect& deco, bool first_run) noexcept;
+	void normalizeRectToDisplay(EzMaths::Rect& rect, EzMaths::Rect& deco, bool first_run) noexcept;
 
 /*==================================================================*/
 
@@ -209,7 +176,7 @@ public:
 		scaleInterface(appFont, N);
 	}
 
-	void processInterfaceEvent(SDL_Event* event) const noexcept;
+	void processInterfaceEvent(void* event) const noexcept;
 
 /*==================================================================*/
 

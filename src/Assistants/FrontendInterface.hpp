@@ -11,7 +11,6 @@
 struct SDL_Renderer;
 struct SDL_Texture;
 struct SDL_Window;
-union SDL_Event;
 
 class FrontendInterface {
 
@@ -22,7 +21,7 @@ public:
 	static void Initialize(SDL_Window*, SDL_Renderer*);
 	static void Shutdown();
 
-	static void ProcessEvent(SDL_Event* event);
+	static void ProcessEvent(void* event);
 	static void NewFrame();
 	static void RenderFrame(SDL_Renderer*);
 

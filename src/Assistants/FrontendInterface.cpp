@@ -5,7 +5,6 @@
 */
 
 #include <cmath>
-#include <limits>
 #include <algorithm>
 #include <string>
 
@@ -137,8 +136,8 @@ void FrontendInterface::Shutdown() {
 	ImGui::DestroyContext();
 }
 
-void FrontendInterface::ProcessEvent(SDL_Event* event) {
-	ImGui_ImplSDL3_ProcessEvent(event);
+void FrontendInterface::ProcessEvent(void* event) {
+	ImGui_ImplSDL3_ProcessEvent(reinterpret_cast<SDL_Event*>(event));
 }
 
 void FrontendInterface::NewFrame() {
@@ -160,7 +159,7 @@ void FrontendInterface::UpdateFontScale(const void* data, int size, float scale)
 	static auto currentScale{ 0.0f };
 
 	if (scale < 1.0f) { return; }
-	if (std::fabs(currentScale - scale) > std::numeric_limits<float>::epsilon()) {
+	if (std::fabs(currentScale - scale) > 0.0f) {
 		currentScale = scale;
 		auto& io{ ImGui::GetIO() };
 
