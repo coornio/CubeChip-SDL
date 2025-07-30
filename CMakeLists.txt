@@ -39,12 +39,7 @@ FetchContent_GetProperties(SDL3)
 
 if(NOT SDL3_POPULATED)
 	message(STATUS "Fetching SDL3 v${SDL3_REQUIRED_VERSION}...")
-	add_subdirectory(
-		"${SDL3_SOURCE_DIR}"
-		"${SDL3_BINARY_DIR}"
-		EXCLUDE_FROM_ALL
-	)
-	#FetchContent_MakeAvailable(SDL3)
+	FetchContent_MakeAvailable(SDL3)
 endif()
 
 # ==================================================================================== #
