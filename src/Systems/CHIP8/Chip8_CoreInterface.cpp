@@ -297,6 +297,7 @@ void Chip8_CoreInterface::setFilePermaRegs(u32 X) noexcept {
 }
 
 void Chip8_CoreInterface::getFilePermaRegs(u32 X) noexcept {
+	::assign_cast(X, std::min(X, u32(sPermRegsV.size())));
 	auto fileData{ ::readFileData(sPermaRegsPath, X) };
 	if (!fileData) {
 		blog.newEntry(BLOG::ERROR, "File IO error: \"{}\" [{}]",

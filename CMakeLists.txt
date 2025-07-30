@@ -188,7 +188,7 @@ if(MSVC)
 	target_link_options(
 		"${PROJECT_NAME}" PRIVATE
 		$<$<CONFIG:Release>: /LTCG /SUBSYSTEM:WINDOWS /INCREMENTAL:NO>
-		$<$<CONFIG:Debug>: /SUBSYSTEM:CONSOLE /INCREMENTAL:YES>
+		$<$<CONFIG:Debug>: /SUBSYSTEM:CONSOLE /INCREMENTAL>
 	)
 else()
 	target_compile_options(

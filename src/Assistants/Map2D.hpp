@@ -784,7 +784,7 @@ public:
 			other.begin(), other.end(),
 			[this, begin = other.data()](T& value) noexcept {
 				const auto i{ &value - begin };
-				value = (*this)[i % Y, i / Y];
+				value = (*this)(i % Y, i / Y);
 			});
 
 		return other;
