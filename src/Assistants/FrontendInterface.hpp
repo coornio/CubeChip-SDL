@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "Typedefs.hpp"
+
 /*==================================================================*/
 
 struct SDL_Renderer;
@@ -15,7 +17,8 @@ struct SDL_Window;
 class FrontendInterface {
 
 public:
-	static inline void (*FnHook_OpenFile)() {};
+	static inline Atom<void(*)()>
+		FnHook_OpenFile{};
 
 public:
 	static void Initialize(SDL_Window*, SDL_Renderer*);
@@ -28,6 +31,9 @@ public:
 	static float GetFrameHeight();
 
 	static void UpdateFontScale(const void* data, int size, float scale);
+	template <typename T, std::size_t N>
+	static void UpdateFontScale(T(&appFont)[N], float scale)
+		{ UpdateFontScale(appFont, N, scale); }
 
 	static void PrepareViewport(
 		bool enable, bool integer_scaling,

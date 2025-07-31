@@ -29,7 +29,9 @@ FrontendHost::FrontendHost(const Path& gamePath) noexcept {
 	SystemInterface::assignComponents(HDM, BVS);
 	HDM->setValidator(CoreRegistry::validateProgram);
 	CoreRegistry::loadProgramDB();
-	FrontendInterface::FnHook_OpenFile = openFileDialog;
+
+	FrontendInterface::FnHook_OpenFile
+		.store(openFileDialog, mo::relaxed);
 
 	if (!gamePath.empty()) { loadGameFile(gamePath); }
 	if (!mSystemCore) { BVS->setMainWindowTitle(AppName, "Waiting for file..."); }
@@ -135,7 +137,7 @@ bool FrontendHost::initApplication(
 }
 
 s32  FrontendHost::processEvents(SDL_Event* event) noexcept {
-	BVS->processInterfaceEvent(event);
+	FrontendInterface::ProcessEvent(event);
 
 	if (BVS->isMainWindowID(event->window.windowID)) {
 		switch (event->type) {
@@ -157,7 +159,9 @@ s32  FrontendHost::processEvents(SDL_Event* event) noexcept {
 
 			case SDL_EVENT_WINDOW_DISPLAY_CHANGED:
 			case SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED:
-				BVS->scaleInterface(AppFontData_Roboto_Mono);
+				FrontendInterface::UpdateFontScale(AppFontData_Roboto_Mono,
+					SDL_GetWindowDisplayScale(BVS->getMainWindow()));
+
 				break;
 		}
 	}

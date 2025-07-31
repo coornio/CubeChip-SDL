@@ -149,7 +149,7 @@ void BasicVideoSpec::showErrorBox(const char* const title) noexcept {
 void BasicVideoSpec::normalizeRectToDisplay(EzMaths::Rect& rect, EzMaths::Rect& deco, bool first_run) noexcept {
 	auto numDisplays{  0 }; // count of displays SDL found
 	auto bestDisplay{ -1 }; // index of display our window will use
-	bool rectOverlap{};
+	bool rectIntersectsDisplay{};
 	
 	// 1: fetch all eligible display IDs
 	SDL_Unique<SDL_DisplayID> displays{ SDL_GetDisplays(&numDisplays) };
@@ -184,7 +184,7 @@ void BasicVideoSpec::normalizeRectToDisplay(EzMaths::Rect& rect, EzMaths::Rect& 
 		}
 	
 		// 5: fall back to searching for closest display
-		if (!(rectOverlap = bestOverlap != 0)) {
+		if ((rectIntersectsDisplay = !!bestOverlap) == false) {
 			auto bestDistance{ u64(-1) };
 			const auto currentCenter{ rect.center() };
 
@@ -205,10 +205,12 @@ void BasicVideoSpec::normalizeRectToDisplay(EzMaths::Rect& rect, EzMaths::Rect& 
 	rect.w = std::min(rect.w, target.w - lt - rt);
 	rect.h = std::min(rect.h, target.h - up - dn);
 
-	if (!rectOverlap) { // 7a: if we didn't overlap before, center to display
+	if (!rectIntersectsDisplay) {
+		// 7a: if we didn't overlap before, center to display
 		rect.x = target.x + (target.w - lt - rt - rect.w) / 2 + lt;
 		rect.y = target.y + (target.h - up - dn - rect.h) / 2 + up;
-	} else {            // 7b: otherwise, clamp origin to lie within display bounds
+	} else {
+		// 7b: otherwise, clamp origin to lie within display bounds
 		rect.x = std::clamp(rect.x, target.x + lt, target.x + target.w - rt - rect.w);
 		rect.y = std::clamp(rect.y, target.y + up, target.y + target.h - dn - rect.h);
 	}
@@ -266,14 +268,6 @@ void BasicVideoSpec::cycleViewportScaleMode() noexcept {
 
 void BasicVideoSpec::setBorderColor(u32 color) noexcept {
 	mOutlineColor.store(color, mo::release);
-}
-
-void BasicVideoSpec::scaleInterface(const void* data, size_type size) {
-	FrontendInterface::UpdateFontScale(data, s32(size), SDL_GetWindowDisplayScale(mMainWindow));
-}
-
-void BasicVideoSpec::processInterfaceEvent(void* event) const noexcept {
-	FrontendInterface::ProcessEvent(event);
 }
 
 /*==================================================================*/

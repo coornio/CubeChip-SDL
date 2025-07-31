@@ -202,9 +202,8 @@ void FrontendInterface::PrepareViewport(
 
 	if (ImGui::BeginMainMenuBar()) {
 		if (ImGui::BeginMenu("File")) {
-			if (ImGui::MenuItem("Open...")) {
-				FnHook_OpenFile();
-			}
+			if (auto OpenFile{ FnHook_OpenFile.load(mo::relaxed) })
+				{ if (ImGui::MenuItem("Open...")) { OpenFile(); } }
 			ImGui::EndMenu();
 		}
 		ImGui::EndMainMenuBar();

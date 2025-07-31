@@ -168,19 +168,6 @@ public:
 /*==================================================================*/
 
 private:
-	void scaleInterface(const void* data, size_type size);
-
-public:
-	template <typename T, std::size_t N>
-	void scaleInterface(T(&appFont)[N]) {
-		scaleInterface(appFont, N);
-	}
-
-	void processInterfaceEvent(void* event) const noexcept;
-
-/*==================================================================*/
-
-private:
 	void prepareWindowTexture();
 	void prepareSystemTexture();
 	void renderViewport();
