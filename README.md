@@ -51,7 +51,7 @@ Some extension combinations aren't possible, see footnotes for now. Due to major
 - [x] Refactor system interfacing to allow interacting with multiple (and possibly concurrently active) systems, as well as specialized cores for each.
 - [x] Implement a triple-buffer middle-man between the frontend and backend worker.
 - [x] Allow fetching and displaying rudimentary OSD statistics on a per-system basis.
-- [ ] Implement File Picker dialog for when drag-n-drop doesn't work, for some reason.
+- [x] Implement File Picker dialog for when drag-n-drop doesn't work, for some reason.
 - [ ] Allow choosing desired core to boot when loading a program file that is eligible with multiple specialized cores.
 - [ ] Implement stepping controls for debugging, initially limited to simple full-frame and per-instruction stepping.
 - [ ] Implement (initially) a slot-in ImGUI interface where custom ImGUI code can be pointer'd to to execute, and defined elsewhere as desired.

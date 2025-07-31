@@ -30,9 +30,9 @@ set(SDL_STATIC ON CACHE BOOL "Build a static version of the library" FORCE)
 FetchContent_Declare(
 	SDL3
 	GIT_REPOSITORY "https://github.com/libsdl-org/SDL.git"
-	GIT_TAG "release-${SDL3_REQUIRED_VERSION}"
-	GIT_SHALLOW TRUE
-	GIT_PROGRESS TRUE
+	GIT_TAG        "release-${SDL3_REQUIRED_VERSION}"
+	GIT_SHALLOW    TRUE
+	GIT_PROGRESS   TRUE
 )
 
 FetchContent_GetProperties(SDL3)
@@ -45,11 +45,11 @@ endif()
 # ==================================================================================== #
 
 FetchContent_Declare(
-    imgui
-    GIT_REPOSITORY https://github.com/ocornut/imgui.git
-    GIT_TAG        docking
-	GIT_SHALLOW TRUE
-	GIT_PROGRESS TRUE
+	imgui
+	GIT_REPOSITORY https://github.com/ocornut/imgui.git
+	GIT_TAG        "docking"
+	GIT_SHALLOW    TRUE
+	GIT_PROGRESS   TRUE
 )
 
 message(STATUS "Fetching ImGUI: [docking] branch...")
@@ -58,25 +58,25 @@ FetchContent_MakeAvailable(imgui)
 add_library(
 	imgui STATIC
 	# Core ImGui source files
-    "${imgui_SOURCE_DIR}/imgui.cpp"
-    "${imgui_SOURCE_DIR}/imgui_demo.cpp"
-    "${imgui_SOURCE_DIR}/imgui_draw.cpp"
-    "${imgui_SOURCE_DIR}/imgui_tables.cpp"
-    "${imgui_SOURCE_DIR}/imgui_widgets.cpp"
+	"${imgui_SOURCE_DIR}/imgui.cpp"
+	"${imgui_SOURCE_DIR}/imgui_demo.cpp"
+	"${imgui_SOURCE_DIR}/imgui_draw.cpp"
+	"${imgui_SOURCE_DIR}/imgui_tables.cpp"
+	"${imgui_SOURCE_DIR}/imgui_widgets.cpp"
 
-    # Optional std::string support
-    "${imgui_SOURCE_DIR}/misc/cpp/imgui_stdlib.cpp"
+	# Optional std::string support
+	"${imgui_SOURCE_DIR}/misc/cpp/imgui_stdlib.cpp"
 
-    # Backend implementation files (SDL3 + SDLRenderer3)
-    "${imgui_SOURCE_DIR}/backends/imgui_impl_sdl3.cpp"
-    "${imgui_SOURCE_DIR}/backends/imgui_impl_sdlrenderer3.cpp"
+	# Backend implementation files (SDL3 + SDLRenderer3)
+	"${imgui_SOURCE_DIR}/backends/imgui_impl_sdl3.cpp"
+	"${imgui_SOURCE_DIR}/backends/imgui_impl_sdlrenderer3.cpp"
 )
 
 target_include_directories(
 	imgui PUBLIC
 	"${imgui_SOURCE_DIR}"
-    "${imgui_SOURCE_DIR}/backends"
-    "${imgui_SOURCE_DIR}/misc/cpp"
+	"${imgui_SOURCE_DIR}/backends"
+	"${imgui_SOURCE_DIR}/misc/cpp"
 	"${SDL3_INCLUDE_DIRS}"
 )
 
@@ -143,12 +143,12 @@ add_subdirectory(
 )
 
 add_executable("${PROJECT_NAME}"
-    ${MAIN_SOURCES}
-    ${ASSISTANTS_SOURCES}
-    ${SYSTEM_SOURCES}
-    ${SYSTEM_CHIP8_SOURCES}
-    ${SYSTEM_BYTEPUSHER_SOURCES}
-    ${SYSTEM_GAMEBOY_SOURCES}
+	${MAIN_SOURCES}
+	${ASSISTANTS_SOURCES}
+	${SYSTEM_SOURCES}
+	${SYSTEM_CHIP8_SOURCES}
+	${SYSTEM_BYTEPUSHER_SOURCES}
+	${SYSTEM_GAMEBOY_SOURCES}
 )
 
 target_compile_features("${PROJECT_NAME}" PRIVATE cxx_std_20)
