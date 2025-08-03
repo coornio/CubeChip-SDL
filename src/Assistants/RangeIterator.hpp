@@ -45,7 +45,7 @@ public:
 		: mData { data  }, mSize{ length }
 	{}
 
-	template <size_type N>
+	template <std::size_t N >
 	constexpr RangeProxy(T(&array)[N]) noexcept
 		: mData{ array }, mSize{ N }
 	{}
@@ -63,10 +63,7 @@ public:
 	constexpr size_type size_bytes() const noexcept { return size() * sizeof(element_type); }
 	constexpr bool      empty()      const noexcept { return size() == 0; }
 
-	template <typename U = T> requires (!std::is_const_v<U>)
-	constexpr void reseat(      U* data)  noexcept { mData = data; }
-	template <typename U = T> requires ( std::is_const_v<U>)
-	constexpr void reseat(const U* data)  noexcept { mData = data; }
+	constexpr void reseat(pointer data)   noexcept { mData = data; }
 	constexpr void resize(size_type size) noexcept { mSize = size; }
 
 	constexpr       reference front()       noexcept { return data()[0]; }
@@ -75,17 +72,17 @@ public:
 	constexpr const_reference back()  const noexcept { return data()[size() - 1]; }
 
 	constexpr auto first(size_type count) const { return RangeProxy(data(), count); }
-	constexpr auto last (size_type count) const { return RangeProxy(data(), size() - count); }
+	constexpr auto last (size_type count) const { return RangeProxy(data() + size() - count, count); }
 
 	constexpr       reference operator[](size_type idx)       { return data()[idx]; }
 	constexpr const_reference operator[](size_type idx) const { return data()[idx]; }
 
 	constexpr       reference at(size_type idx)       {
-		if constexpr (idx < size()) { return data()[idx]; }
+		if (idx < size()) { return data()[idx]; }
 		else { throw std::out_of_range("RangeProxy.at() :: Index out of range."); }
 	}
 	constexpr const_reference at(size_type idx) const {
-		if constexpr (idx < size()) { return data()[idx]; }
+		if (idx < size()) { return data()[idx]; }
 		else { throw std::out_of_range("RangeProxy.at() :: Index out of range."); }
 	}
 
@@ -141,7 +138,7 @@ public:
 		: mRange{ begin, length }
 	{}
 
-	template <size_type N>
+	template <std::size_t N>
 	explicit constexpr RangeIterator(T(&array)[N]) noexcept
 		: mRange{ array, N }
 	{}
@@ -236,11 +233,11 @@ public:
 	constexpr value_type back()  const noexcept { return value_type(data() + (lenY() - 1) * lenX()); }
 
 	constexpr value_type first(size_type count) const { return value_type(data(), count); }
-	constexpr value_type last (size_type count) const { return value_type(data(), size() - count); }
+	constexpr value_type last (size_type count) const { return value_type(data() + size() - count, count); }
 
 	constexpr value_type operator[](size_type idx) const { return value_type(data() + idx * lenX(), lenX()); }
 	constexpr value_type at(size_type idx) const {
-		if constexpr (idx < lenY()) { return value_type(data() + idx * lenX(), lenX()); }
+		if (idx < lenY()) { return value_type(data() + idx * lenX(), lenX()); }
 		else { throw std::out_of_range("RangeProxy2D.at() :: Index out of range."); }
 	}
 

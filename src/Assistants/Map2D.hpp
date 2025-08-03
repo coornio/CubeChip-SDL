@@ -74,12 +74,12 @@ public:
 	constexpr const_reference back()  const { return data()[size() - 1]; }
 
 	constexpr auto first(size_type count) const { return RangeProxy(data(), count); }
-	constexpr auto last (size_type count) const { return RangeProxy(data(), size() - count); }
+	constexpr auto last (size_type count) const { return RangeProxy(data() + size() - count, count); }
 
 	constexpr auto makeRowIter(size_type row)  const { return RangeIterator(data() + row * lenX(), lenX()); }
 	constexpr auto makeRowProxy(size_type row) const { return *makeRowIter(row); }
 
-	constexpr auto makeIter()  const { return RangeIterator<T>(data(), lenX()); }
+	constexpr auto makeIter()  const { return RangeIterator<T>(data(), size()); }
 	constexpr auto makeProxy() const { return *makeIter(); }
 
 	constexpr auto makeProxy2D() const { return RangeProxy2D(data(), lenX(), lenY()); }
@@ -526,12 +526,12 @@ public:
 	constexpr const_reference back()  const { return data()[size() - 1]; }
 
 	constexpr auto first(size_type count) const { return RangeProxy(data(), count); }
-	constexpr auto last(size_type count)  const { return RangeProxy(data(), size() - count); }
+	constexpr auto last (size_type count) const { return RangeProxy(data() + size() - count, count); }
 
 	constexpr auto makeRowIter(size_type row)  const { return RangeIterator(data() + row * lenX(), lenX()); }
 	constexpr auto makeRowProxy(size_type row) const { return *makeRowIter(row); }
 
-	constexpr auto makeIter()  const { return RangeIterator<T>(data(), lenX()); }
+	constexpr auto makeIter()  const { return RangeIterator(data(), size()); }
 	constexpr auto makeProxy() const { return *makeIter(); }
 
 	constexpr auto makeProxy2D() const { return RangeProxy2D(data(), lenX(), lenY()); }
