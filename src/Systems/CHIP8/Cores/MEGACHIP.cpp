@@ -19,7 +19,7 @@ MEGACHIP::MEGACHIP() {
 	copyGameToMemory(mMemoryBank.data() + cGameLoadPos);
 	copyFontToMemory(mMemoryBank.data(), 0xB4);
 
-	setViewportSizes(true, cScreenSizeX, cScreenSizeY, cResSizeMult, 2);
+	setViewportSizes(true, cScreenMegaX, cScreenMegaY, cResSizeMult, 2);
 	setSystemFramerate(cRefreshRate);
 
 	mVoices[VOICE::UNIQUE].userdata = &mAudioTimers[VOICE::UNIQUE];
@@ -317,18 +317,22 @@ void MEGACHIP::renderAudioData() {
 
 void MEGACHIP::renderVideoData() {
 	if (!isManualRefresh()) {
-		BVS->displayBuffer.write(mDisplayBuffer, isUsingPixelTrails()
-			? [](u32 pixel) noexcept {
-				return cPixelOpacity[pixel] | sBitColors[pixel != 0];
-			}
-			: [](u32 pixel) noexcept {
-				return 0xFFu | sBitColors[pixel >> 3];
-			}
-		);
+		for (auto i{ 0u }; i < mDisplayBuffer.size(); ++i) {
+			auto pixel{ mDisplayBuffer[i] };
+			auto color{ isUsingPixelTrails()
+				? (sBitColors[pixel != 0] | cPixelOpacity[pixel])
+				: (sBitColors[pixel >> 3] | 0xFFu) };
 
-		setViewportSizes(isResolutionChanged(false), cScreenSizeX, cScreenSizeY, cResSizeMult, 2);
-	} else {
-		setViewportSizes(isResolutionChanged(false), cScreenMegaX, cScreenMegaY, cResSizeMult / 2, 2);
+			auto x{ (i % cScreenSizeX) * 2 };
+			auto y{ (i / cScreenSizeX) * 2 + 32 };
+
+			mBackgroundBuffer(x + 0, y + 0) = color;
+			mBackgroundBuffer(x + 1, y + 0) = color;
+			mBackgroundBuffer(x + 0, y + 1) = color;
+			mBackgroundBuffer(x + 1, y + 1) = color;
+		}
+
+		BVS->displayBuffer.write(mBackgroundBuffer);
 	}
 }
 
@@ -337,14 +341,12 @@ void MEGACHIP::prepDisplayArea(Resolution mode) {
 	isResolutionChanged(wasManualRefresh != isManualRefresh());
 
 	if (isManualRefresh()) {
-		mDisplay.set(cScreenMegaX, cScreenMegaY);
 
 		Quirk.waitVblank = false;
 		mTargetCPF = cInstSpeedMC;
 	}
 	else {
 		isLargerDisplay(mode != Resolution::LO);
-		mDisplay.set(cScreenSizeX, cScreenSizeY);
 
 		Quirk.waitVblank = !isLargerDisplay();
 		mTargetCPF = isLargerDisplay() ? cInstSpeedLo : cInstSpeedHi;
@@ -585,12 +587,12 @@ void MEGACHIP::scrollBuffersRT() {
 		nextInstruction();
 	}
 	void MEGACHIP::instruction_02NN(s32 NN) noexcept {
-		for (auto pos{ 0 }, offset{ 0 }; pos < NN; offset += 4) {
+		for (auto pos{ 0 }, byte{ 0 }; pos < NN; byte += 4) {
 			mColorPalette(++pos) = {
-				readMemoryI(offset + 1),
-				readMemoryI(offset + 2),
-				readMemoryI(offset + 3),
-				readMemoryI(offset + 0),
+				readMemoryI(byte + 1),
+				readMemoryI(byte + 2),
+				readMemoryI(byte + 3),
+				readMemoryI(byte + 0),
 			};
 		}
 	}
@@ -840,12 +842,12 @@ void MEGACHIP::scrollBuffersRT() {
 
 			mRegisterV[0xF] = 0;
 
-			if (!Quirk.wrapSprite && originY >= mDisplay.H) { return; }
+			if (!Quirk.wrapSprite && originY >= cScreenMegaY) { return; }
 			if (mRegisterI >= 0xF0) [[likely]] { goto paintTexture; }
 
 			for (auto rowN{ 0 }, offsetY{ originY }; rowN < N; ++rowN)
 			{
-				if (Quirk.wrapSprite && offsetY >= mDisplay.H) { continue; }
+				if (Quirk.wrapSprite && offsetY >= cScreenMegaY) { continue; }
 				const auto octoPixelBatch{ readMemoryI(rowN) };
 
 				for (auto colN{ 7 }, offsetX{ originX }; colN >= 0; --colN)
@@ -864,18 +866,18 @@ void MEGACHIP::scrollBuffersRT() {
 							backbufCoord = mFontColor[rowN];
 						}
 					}
-					if (!Quirk.wrapSprite && offsetX == (mDisplay.W - 1)) { break; }
-					else { ++offsetX &= (mDisplay.W - 1); }
+					if (!Quirk.wrapSprite && offsetX == (cScreenMegaX - 1)) { break; }
+					else { ++offsetX &= (cScreenMegaX - 1); }
 				}
-				if (!Quirk.wrapSprite && offsetY == (mDisplay.W - 1)) { break; }
-				else { ++offsetY &= (mDisplay.W - 1); }
+				if (!Quirk.wrapSprite && offsetY == (cScreenMegaX - 1)) { break; }
+				else { ++offsetY &= (cScreenMegaX - 1); }
 			}
 			return;
 
 		paintTexture:
 			for (auto rowN{ 0 }, offsetY{ originY }; rowN < mTexture.H; ++rowN)
 			{
-				if (Quirk.wrapSprite && offsetY >= mDisplay.H) { continue; }
+				if (Quirk.wrapSprite && offsetY >= cScreenMegaY) { continue; }
 				const auto offsetI = rowN * mTexture.W;
 
 				for (auto colN{ 0 }, offsetX{ originX }; colN < mTexture.W; ++colN)
@@ -892,11 +894,11 @@ void MEGACHIP::scrollBuffersRT() {
 						backbufCoord = blendPixel(mColorPalette(sourceColorIdx), \
 							backbufCoord, mBlendFunc, u8(mTexture.opacity));
 					}
-					if (!Quirk.wrapSprite && offsetX == (mDisplay.W - 1)) { break; }
-					else { ++offsetX &= (mDisplay.W - 1); }
+					if (!Quirk.wrapSprite && offsetX == (cScreenMegaX - 1)) { break; }
+					else { ++offsetX &= (cScreenMegaX - 1); }
 				}
-				if (!Quirk.wrapSprite && offsetY == (mDisplay.H - 1)) { break; }
-				else { ++offsetY %= mDisplay.H; }
+				if (!Quirk.wrapSprite && offsetY == (cScreenMegaY - 1)) { break; }
+				else { ++offsetY %= cScreenMegaY; }
 			}
 		} else {
 			if (isLargerDisplay()) {
