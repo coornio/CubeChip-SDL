@@ -18,7 +18,7 @@ REGISTER_CORE(SCHIP_LEGACY, ".sc8")
 SCHIP_LEGACY::SCHIP_LEGACY()
 	: mDisplayBuffer{ {cDisplayResW, cDisplayResH} }
 {
-	::generate_n(mMemoryBank, 0, cTotalMemory, [&]() { return RNG.next<u8>(); });
+	::generate_n(mMemoryBank, 0, cTotalMemory, [&]() { return RNG->next<u8>(); });
 	::fill_n(mMemoryBank, cTotalMemory, cSafezoneOOB, 0xFF);
 
 	copyGameToMemory(mMemoryBank.data() + cGameLoadPos);
@@ -449,7 +449,7 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 	#pragma region C instruction branch
 
 	void SCHIP_LEGACY::instruction_CxNN(s32 X, s32 NN) noexcept {
-		::assign_cast(mRegisterV[X], RNG.next() & NN);
+		::assign_cast(mRegisterV[X], RNG->next() & NN);
 	}
 
 	#pragma endregion
@@ -457,14 +457,6 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 
 /*==================================================================*/
 	#pragma region D instruction branch
-
-	static u32 bitBloat(u32 byte) noexcept {
-		if (!byte) { return 0u; }
-		byte = (byte << 4u | byte) & 0x0F0Fu;
-		byte = (byte << 2u | byte) & 0x3333u;
-		byte = (byte << 1u | byte) & 0x5555u;
-		return  byte << 1u | byte;
-	}
 
 	bool SCHIP_LEGACY::drawSingleBytes(
 		s32 originX, s32 originY,
@@ -555,10 +547,8 @@ void SCHIP_LEGACY::scrollDisplayRT() {
 			for (auto rowN{ 0 }; rowN < lengthN; ++rowN) {
 				const auto offsetY{ originY + rowN * 2 };
 
-				collisions += drawDoubleBytes(
-					originX, offsetY, 0x20,
-					bitBloat(readMemoryI(rowN)) << offsetX
-				);
+				collisions += drawDoubleBytes(originX, offsetY, 0x20,
+					EzMaths::bitDup8(readMemoryI(rowN)) << offsetX);
 
 				if (offsetY == cDisplayResH - 2) { break; }
 			}

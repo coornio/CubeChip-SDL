@@ -377,7 +377,7 @@ void CHIP8_MODERN::renderVideoData() {
 	#pragma region C instruction branch
 
 	void CHIP8_MODERN::instruction_CxNN(s32 X, s32 NN) noexcept {
-		::assign_cast(mRegisterV[X], RNG.next() & NN);
+		::assign_cast(mRegisterV[X], RNG->next() & NN);
 	}
 
 	#pragma endregion

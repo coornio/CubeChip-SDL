@@ -73,6 +73,8 @@ class SystemInterface {
 	Thread mCoreThread;
 	
 	Str mOverlayDataBuffer{};
+	AtomSharedPtr<Str>
+		mOverlayData;
 
 protected:
 	Str* getOverlayDataBuffer() noexcept
@@ -82,8 +84,10 @@ protected:
 	static inline HomeDirManager* HDM{};
 	static inline BasicVideoSpec* BVS{};
 
-	Well512 RNG{};
-	
+	Well512*       RNG{};
+	FrameLimiter*  Pacer{};
+	BasicKeyboard* Input{};
+
 public:
 	void startWorker() noexcept;
 	void stopWorker() noexcept;
@@ -94,14 +98,6 @@ protected:
 	s32 mTargetCPF{};
 	Atom<f32> mTargetFPS{};
 	Atom<u32> mGlobalState{ EmuState::NORMAL };
-
-private:
-	AtomSharedPtr<Str>
-		mOverlayData;
-
-protected:
-	FrameLimiter  Pacer{};
-	BasicKeyboard Input{};
 
 protected:
 	SystemInterface() noexcept;

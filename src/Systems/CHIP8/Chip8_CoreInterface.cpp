@@ -32,13 +32,13 @@ Chip8_CoreInterface::Chip8_CoreInterface() noexcept {
 void Chip8_CoreInterface::updateKeyStates() {
 	if (!std::size(mCustomBinds)) { return; }
 
-	Input.updateStates();
+	Input->updateStates();
 
 	mKeysPrev = mKeysCurr;
 	mKeysCurr = 0;
 
 	for (const auto& mapping : mCustomBinds) {
-		if (Input.areAnyHeld(mapping.key, mapping.alt))
+		if (Input->areAnyHeld(mapping.key, mapping.alt))
 			{ mKeysCurr |= 1 << mapping.idx; }
 	}
 
@@ -60,7 +60,7 @@ void Chip8_CoreInterface::loadPresetBinds() {
 bool Chip8_CoreInterface::keyPressed(u8* returnKey) noexcept {
 	if (!std::size(mCustomBinds)) { return false; }
 
-	const auto mTickCurr{ u32(Pacer.getValidFrameCounter()) };
+	const auto mTickCurr{ u32(Pacer->getValidFrameCounter()) };
 	if (mTickCurr >= mTickLast + mTickSpan)
 		[[unlikely]] { mKeysPrev &= ~mKeysLoop; }
 
@@ -170,7 +170,7 @@ void Chip8_CoreInterface::performProgJump(u32 next) noexcept {
 /*==================================================================*/
 
 void Chip8_CoreInterface::mainSystemLoop() {
-	if (Pacer.checkTime()) {
+	if (Pacer->checkTime()) {
 		if (!isSystemRunning())
 			[[unlikely]] { return; }
 
@@ -189,8 +189,8 @@ void Chip8_CoreInterface::mainSystemLoop() {
 
 Str* Chip8_CoreInterface::makeOverlayData() {
 	static constexpr auto half_of_pi{ f32(std::numbers::pi / 2.0) };
-	const auto currentFrameTime{ Pacer.getElapsedMicrosSince() / 1000.0f };
-	const auto frameTimeBias{ currentFrameTime * 1.025f / Pacer.getFramespan() };
+	const auto currentFrameTime{ Pacer->getElapsedMicrosSince() / 1000.0f };
+	const auto frameTimeBias{ currentFrameTime * 1.025f / Pacer->getFramespan() };
 	const auto workCycleBias{ 120'000.0f * std::cos(frameTimeBias * half_of_pi) };
 
 	if (mInterrupt == Interrupt::CLEAR) [[likely]]

@@ -582,7 +582,7 @@ void XOCHIP::scrollDisplayRT() {
 	#pragma region C instruction branch
 
 	void XOCHIP::instruction_CxNN(s32 X, s32 NN) noexcept {
-		::assign_cast(mRegisterV[X], RNG.next() & NN);
+		::assign_cast(mRegisterV[X], RNG->next() & NN);
 	}
 
 	#pragma endregion

@@ -747,7 +747,7 @@ void MEGACHIP::scrollBuffersRT() {
 	#pragma region C instruction branch
 
 	void MEGACHIP::instruction_CxNN(s32 X, s32 NN) noexcept {
-		::assign_cast(mRegisterV[X], RNG.next() & NN);
+		::assign_cast(mRegisterV[X], RNG->next() & NN);
 	}
 
 	#pragma endregion
@@ -755,14 +755,6 @@ void MEGACHIP::scrollBuffersRT() {
 
 /*==================================================================*/
 	#pragma region D instruction branch
-
-	static u32 bitBloat(u32 byte) noexcept {
-		if (!byte) { return 0u; }
-		byte = (byte << 4u | byte) & 0x0F0Fu;
-		byte = (byte << 2u | byte) & 0x3333u;
-		byte = (byte << 1u | byte) & 0x5555u;
-		return  byte << 1u | byte;
-	}
 
 	bool MEGACHIP::drawSingleBytes(
 		s32 originX, s32 originY,
@@ -778,7 +770,7 @@ void MEGACHIP::scrollBuffersRT() {
 				auto& pixel{ mDisplayBuffer(offsetX, originY) };
 				if (!((pixel ^= 0x8) & 0x8)) { collided = true; }
 			}
-			if (offsetX == 0x7F) { return collided; }
+			if (offsetX == cScreenSizeX - 1) { return collided; }
 		}
 		return collided;
 	}
@@ -802,7 +794,7 @@ void MEGACHIP::scrollBuffersRT() {
 			} else {
 				pixelLO = pixelHI;
 			}
-			if (offsetX == 0x7F) { return collided; }
+			if (offsetX == cScreenSizeX - 1) { return collided; }
 		}
 		return collided;
 	}
@@ -892,10 +884,10 @@ void MEGACHIP::scrollBuffersRT() {
 
 						collisions += drawSingleBytes(
 							originX, offsetY, offsetX ? 24 : 16,
-							(readMemoryI(2 * rowN + 0) << 8 | \
+							(readMemoryI(2 * rowN + 0)  << 8 | \
 							 readMemoryI(2 * rowN + 1)) << offsetX
 						);
-						if (offsetY == 0x3F) { break; }
+						if (offsetY == cScreenSizeY - 1) { break; }
 					}
 				} else {
 					for (auto rowN{ 0 }; rowN < N; ++rowN) {
@@ -905,7 +897,7 @@ void MEGACHIP::scrollBuffersRT() {
 							originX, offsetY, offsetX ? 16 : 8,
 							readMemoryI(rowN) << offsetX
 						);
-						if (offsetY == 0x3F) { break; }
+						if (offsetY == cScreenSizeY - 1) { break; }
 					}
 				}
 				::assign_cast(mRegisterV[0xF], collisions);
@@ -921,11 +913,10 @@ void MEGACHIP::scrollBuffersRT() {
 				for (auto rowN{ 0 }; rowN < lengthN; ++rowN) {
 					const auto offsetY{ originY + rowN * 2 };
 
-					collisions += drawDoubleBytes(
-						originX, offsetY, 0x20,
-						bitBloat(readMemoryI(rowN)) << offsetX
-					);
-					if (offsetY == 0x3E) { break; }
+					collisions += drawDoubleBytes(originX, offsetY, 0x20,
+						EzMaths::bitDup8(readMemoryI(rowN)) << offsetX);
+
+					if (offsetY == cScreenSizeY - 2) { break; }
 				}
 				::assign_cast(mRegisterV[0xF], collisions != 0);
 			}

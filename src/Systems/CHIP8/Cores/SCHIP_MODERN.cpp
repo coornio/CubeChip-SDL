@@ -466,7 +466,7 @@ void SCHIP_MODERN::scrollDisplayRT() {
 	#pragma region C instruction branch
 
 	void SCHIP_MODERN::instruction_CxNN(s32 X, s32 NN) noexcept {
-		::assign_cast(mRegisterV[X], RNG.next() & NN);
+		::assign_cast(mRegisterV[X], RNG->next() & NN);
 	}
 
 	#pragma endregion

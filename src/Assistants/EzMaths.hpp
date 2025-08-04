@@ -32,6 +32,8 @@ namespace EzMaths {
 	using u64 = std::uint64_t;
 	using s64 = std::int64_t;
 
+	/*==================================================================*/
+
 	struct alignas(sizeof(s32) * 2) Point {
 		s32 x{}, y{};
 
@@ -79,7 +81,27 @@ namespace EzMaths {
 			{ return half() + getPoint(); }
 	};
 
-	constexpr auto intersect(const Rect& lhs, const Rect& rhs) noexcept {
+	// Lightweight, unprotected Weight class with 8-bit integer precision.
+	// Expected constructor ranges: [0..255] for integers, [0..1] for floats.
+	class Weight {
+		u8 mWeight{};
+
+	public:
+		template <std::integral Int>
+		constexpr Weight(Int value) noexcept : mWeight{ u8(value) } {}
+		constexpr Weight(f64 value) noexcept : mWeight{ u8(value * 255.0) } {}
+
+		// Cast weight to floating-point [0..1] value
+		constexpr auto as_fp() const noexcept {
+			return (1.0 / 255.0) * mWeight;
+		}
+
+		constexpr operator u8() const noexcept { return mWeight; }
+	};
+
+	/*==================================================================*/
+
+	inline constexpr auto intersect(const Rect& lhs, const Rect& rhs) noexcept {
 		auto x1{ std::max(lhs.x, rhs.x) };
 		auto y1{ std::max(lhs.y, rhs.y) };
 		auto x2{ std::min(lhs.x + lhs.w, rhs.x + rhs.w) };
@@ -93,28 +115,13 @@ namespace EzMaths {
 		return Rect(x, y, w, h);
 	}
 
-	constexpr auto distance(const Point& lhs, const Point& rhs) noexcept {
+	inline constexpr auto distance(const Point& lhs, const Point& rhs) noexcept {
 		s64 dx{ lhs.x - rhs.x };
 		s64 dy{ lhs.y - rhs.y };
 		return u64(dx * dx) + u64(dy * dy);
 	}
 
-	// Lightweight, unprotected Weight class with 8-bit integer precision.
-	// Expected constructor ranges: [0..255] for integers, [0..1] for floats.
-	class Weight {
-		u8 mWeight{};
-
-	public:
-		template <std::integral Int>
-		constexpr Weight(Int value) noexcept : mWeight{ u8(value) } {}
-		constexpr Weight(f64 value) noexcept : mWeight{ u8(value * 255.0) } {}
-
-		// Cast weight to floating-point [0..1] value
-		constexpr auto as_fp() const noexcept
-			{ return (1.0 / 255.0) * mWeight; }
-
-		constexpr operator u8() const noexcept { return mWeight; }
-	};
+	/*==================================================================*/
 
 	template <std::integral T> requires (std::is_signed_v<T>)
 	inline constexpr T abs(T x) noexcept
@@ -137,6 +144,8 @@ namespace EzMaths {
 	inline constexpr T fast_tanh(T x) noexcept
 		{ return x * (T(27) + x * x) / (T(27) + T(9) * x * x); }
 
+	/*==================================================================*/
+
 	inline constexpr u8 fixedMul8(u8 x, u8 y) noexcept {
 		return u8(((x * (y | y << 8)) + 0x8080u) >> 16);
 	}
@@ -149,6 +158,32 @@ namespace EzMaths {
 	inline constexpr T fixedLerpN(T x, T y, Weight w, T full_hue, T half_hue) noexcept {
 		const auto shortest{ (y - x + half_hue) % full_hue - half_hue };
 		return T((x + T(shortest * w.as_fp()) + full_hue) % full_hue);
+	}
+
+	/*==================================================================*/
+
+	inline constexpr u32 bitDup8(u32 data) noexcept {
+		data = (data << 4 | data) & 0x0F0Fu;
+		data = (data << 2 | data) & 0x3333u;
+		data = (data << 1 | data) & 0x5555u;
+		return (data << 1 | data) & 0xFFFFu;
+	}
+
+	inline constexpr u32 bitDup16(u32 data) noexcept {
+		data = (data << 8 | data) & 0x00FF00FFu;
+		data = (data << 4 | data) & 0x0F0F0F0Fu;
+		data = (data << 2 | data) & 0x33333333u;
+		data = (data << 1 | data) & 0x55555555u;
+		return  data << 1 | data;
+	}
+
+	inline constexpr u64 bitDup32(u64 data) noexcept {
+		data = (data << 16 | data) & 0x0000FFFF0000FFFFu;
+		data = (data <<  8 | data) & 0x00FF00FF00FF00FFu;
+		data = (data <<  4 | data) & 0x0F0F0F0F0F0F0F0Fu;
+		data = (data <<  2 | data) & 0x3333333333333333u;
+		data = (data <<  1 | data) & 0x5555555555555555u;
+		return  data <<  1 | data;
 	}
 }
 
