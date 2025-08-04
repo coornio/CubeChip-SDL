@@ -28,8 +28,7 @@ MEGACHIP::MEGACHIP() {
 	mCurrentPC = cStartOffset;
 	
 	prepDisplayArea(Resolution::LO);
-	setNewBlendAlgorithm(BlendMode::ALPHA_BLEND);
-	initializeFontColors();
+	
 }
 
 /*==================================================================*/
@@ -341,7 +340,6 @@ void MEGACHIP::prepDisplayArea(Resolution mode) {
 	isResolutionChanged(wasManualRefresh != isManualRefresh());
 
 	if (isManualRefresh()) {
-
 		Quirk.waitVblank = false;
 		mTargetCPF = cInstSpeedMC;
 	}
@@ -397,39 +395,19 @@ void MEGACHIP::initializeFontColors() noexcept {
 	}
 }
 
-RGBA MEGACHIP::blendPixel(RGBA src, RGBA dst, BlendFunction func, u8 opacity) noexcept {
-	if (auto alpha{ EzMaths::fixedMul8(src.A, opacity) }) [[likely]] {
-		RGBA blend{
-			func(src.R, dst.R),
-			func(src.G, dst.G),
-			func(src.B, dst.B)
-		};
-
-		if (alpha != 0xFFu) [[likely]] {
-			return RGBA::lerp(dst, blend, alpha);
-		} else {
-			return blend;
-		}
-	}
-	return dst;
-}
-
-void MEGACHIP::setNewBlendAlgorithm(s32 mode) noexcept {
+void MEGACHIP::selectBlendingAlgo(s32 mode) noexcept {
 	switch (mode) {
 		case BlendMode::LINEAR_DODGE:
-			mBlendFunc = [](u8 src, u8 dst)
-				noexcept { return u8(std::min(src + dst, 0xFF)); };
+			mBlendFunc = RGBA::Blend::LinearDodge;
 			break;
 
 		case BlendMode::MULTIPLY:
-			mBlendFunc = [](u8 src, u8 dst)
-				noexcept { return EzMaths::fixedMul8(src, dst); };
+			mBlendFunc = RGBA::Blend::Multiply;
 			break;
 
 		default:
 		case BlendMode::ALPHA_BLEND:
-			mBlendFunc = [](u8 src, u8)
-				noexcept { return src; };
+			mBlendFunc = RGBA::Blend::None;
 			break;
 	}
 }
@@ -452,10 +430,7 @@ void MEGACHIP::blendAndFlushBuffers() const {
 	BVS->displayBuffer.write(
 		mLastRenderBuffer,
 		mBackgroundBuffer,
-		[this](RGBA src, RGBA dst) noexcept {
-			return blendPixel(src, dst, \
-				mBlendFunc, u8(mTexture.opacity));
-		}
+		RGBA::simple_blend
 	);
 }
 
@@ -469,7 +444,8 @@ void MEGACHIP::startAudioTrack(bool repeat) noexcept {
 					| readMemoryI(4);
 
 		const bool oob{ mTrack.data + mTrack.size > &mMemoryBank.back() };
-		if (!mTrack.size || oob) { mTrack.reset(); } else {
+		if (!mTrack.size || oob) { mTrack.reset(); }
+		else {
 			mVoices[VOICE::UNIQUE].setPhase(0.0).setStep(
 				(readMemoryI(0) << 8 | readMemoryI(1)) / f64(mTrack.size) / stream->getFreq()
 			).userdata = &mTrack;
@@ -484,10 +460,10 @@ void MEGACHIP::makeByteWave(f32* data, u32 size, Voice* voice, Stream*) noexcept
 
 		for (auto i{ 0u }; i < size; ++i) {
 			const auto head{ voice->peekRawPhase(i) };
-			if (!track->loop && head >= 1.0f) {
+			if (!track->loop && head >= 1.0) {
 				track->reset(); return;
 			} else {
-				::assign_cast_add(data[i], (1.0f / 128) * \
+				::assign_cast_add(data[i], (1.0 / 128) * \
 					track->pos(head));
 			}
 		}
@@ -568,19 +544,18 @@ void MEGACHIP::scrollBuffersRT() {
 
 	void MEGACHIP::instruction_0010() noexcept {
 		triggerInterrupt(Interrupt::FRAME);
-
-		mTrack.reset();
-		flushAllVideoBuffers();
-
 		prepDisplayArea(Resolution::LO);
 	}
 	void MEGACHIP::instruction_0011() noexcept {
 		triggerInterrupt(Interrupt::FRAME);
+		prepDisplayArea(Resolution::MC);
 
-		mTrack.reset();
+		selectBlendingAlgo(BlendMode::ALPHA_BLEND);
+		initializeFontColors();
 		scrapAllVideoBuffers();
 
-		prepDisplayArea(Resolution::MC);
+		mTexture.reset();
+		mTrack.reset();
 	}
 	void MEGACHIP::instruction_01NN(s32 NN) noexcept {
 		mRegisterI = (NN << 16) | NNNN();
@@ -614,7 +589,7 @@ void MEGACHIP::scrollBuffersRT() {
 	void MEGACHIP::instruction_080N(s32 N) noexcept {
 		static constexpr u8 opacity[]{ 0xFF, 0x3F, 0x7F, 0xBF };
 		::assign_cast(mTexture.opacity, opacity[N > 3 ? 0 : N]);
-		setNewBlendAlgorithm(N);
+		selectBlendingAlgo(N);
 	}
 	void MEGACHIP::instruction_09NN(s32 NN) noexcept {
 		mTexture.collide = NN;
@@ -698,16 +673,16 @@ void MEGACHIP::scrollBuffersRT() {
 	#pragma region 8 instruction branch
 
 	void MEGACHIP::instruction_8xy0(s32 X, s32 Y) noexcept {
-		mRegisterV[X] = mRegisterV[Y];
+		::assign_cast(mRegisterV[X], mRegisterV[Y]);
 	}
 	void MEGACHIP::instruction_8xy1(s32 X, s32 Y) noexcept {
-		mRegisterV[X] |= mRegisterV[Y];
+		::assign_cast_or(mRegisterV[X], mRegisterV[Y]);
 	}
 	void MEGACHIP::instruction_8xy2(s32 X, s32 Y) noexcept {
-		mRegisterV[X] &= mRegisterV[Y];
+		::assign_cast_and(mRegisterV[X], mRegisterV[Y]);
 	}
 	void MEGACHIP::instruction_8xy3(s32 X, s32 Y) noexcept {
-		mRegisterV[X] ^= mRegisterV[Y];
+		::assign_cast_xor(mRegisterV[X], mRegisterV[Y]);
 	}
 	void MEGACHIP::instruction_8xy4(s32 X, s32 Y) noexcept {
 		const auto sum{ mRegisterV[X] + mRegisterV[Y] };
@@ -716,22 +691,22 @@ void MEGACHIP::scrollBuffersRT() {
 	}
 	void MEGACHIP::instruction_8xy5(s32 X, s32 Y) noexcept {
 		const bool nborrow{ mRegisterV[X] >= mRegisterV[Y] };
-		::assign_cast(mRegisterV[X], mRegisterV[X] - mRegisterV[Y]);
+		::assign_cast_sub(mRegisterV[X], mRegisterV[Y]);
 		::assign_cast(mRegisterV[0xF], nborrow);
 	}
 	void MEGACHIP::instruction_8xy7(s32 X, s32 Y) noexcept {
 		const bool nborrow{ mRegisterV[Y] >= mRegisterV[X] };
-		::assign_cast(mRegisterV[X], mRegisterV[Y] - mRegisterV[X]);
+		::assign_cast_rsub(mRegisterV[X], mRegisterV[Y]);
 		::assign_cast(mRegisterV[0xF], nborrow);
 	}
 	void MEGACHIP::instruction_8xy6(s32 X, s32  ) noexcept {
-		const bool lsb{ (mRegisterV[X] & 1) == 1 };
-		::assign_cast(mRegisterV[X], mRegisterV[X] >> 1);
+		const bool lsb{ (mRegisterV[X] & 0x01) != 0 };
+		::assign_cast_shr(mRegisterV[X], 1);
 		::assign_cast(mRegisterV[0xF], lsb);
 	}
 	void MEGACHIP::instruction_8xyE(s32 X, s32  ) noexcept {
-		const bool msb{ (mRegisterV[X] >> 7) == 1 };
-		::assign_cast(mRegisterV[X], mRegisterV[X] << 1);
+		const bool msb{ (mRegisterV[X] & 0x80) != 0 };
+		::assign_cast_shl(mRegisterV[X], 1);
 		::assign_cast(mRegisterV[0xF], msb);
 	}
 
@@ -843,7 +818,7 @@ void MEGACHIP::scrollBuffersRT() {
 			mRegisterV[0xF] = 0;
 
 			if (!Quirk.wrapSprite && originY >= cScreenMegaY) { return; }
-			if (mRegisterI >= 0xF0) [[likely]] { goto paintTexture; }
+			if (mTexture.fontOffset != mRegisterI) [[likely]] { goto paintTexture; }
 
 			for (auto rowN{ 0 }, offsetY{ originY }; rowN < N; ++rowN)
 			{
@@ -875,6 +850,9 @@ void MEGACHIP::scrollBuffersRT() {
 			return;
 
 		paintTexture:
+			if (mRegisterI + mTexture.W * mTexture.H >= cTotalMemory)
+				[[unlikely]] { mTexture.reset(); return; }
+
 			for (auto rowN{ 0 }, offsetY{ originY }; rowN < mTexture.H; ++rowN)
 			{
 				if (Quirk.wrapSprite && offsetY >= cScreenMegaY) { continue; }
@@ -891,7 +869,7 @@ void MEGACHIP::scrollBuffersRT() {
 							[[unlikely]] { mRegisterV[0xF] = 1; }
 
 						collideCoord = sourceColorIdx;
-						backbufCoord = blendPixel(mColorPalette(sourceColorIdx), \
+						backbufCoord = RGBA::blend(mColorPalette(sourceColorIdx), \
 							backbufCoord, mBlendFunc, u8(mTexture.opacity));
 					}
 					if (!Quirk.wrapSprite && offsetX == (cScreenMegaX - 1)) { break; }
@@ -986,16 +964,18 @@ void MEGACHIP::scrollBuffersRT() {
 		mDelayTimer = mRegisterV[X];
 	}
 	void MEGACHIP::instruction_Fx18(s32 X) noexcept {
-		startVoice(mRegisterV[X] + (mRegisterV[X] == 1));
+		startVoiceAt(VOICE::BUZZER, mRegisterV[X] + (mRegisterV[X] == 1));
 	}
 	void MEGACHIP::instruction_Fx1E(s32 X) noexcept {
 		mRegisterI = mRegisterI + mRegisterV[X];
 	}
 	void MEGACHIP::instruction_Fx29(s32 X) noexcept {
-		mRegisterI = (mRegisterV[X] & 0xF) * 5 + cSmallFontOffset;
+		mTexture.fontOffset = mRegisterI =
+			(mRegisterV[X] & 0xF) * 5 + cSmallFontOffset;
 	}
 	void MEGACHIP::instruction_Fx30(s32 X) noexcept {
-		mRegisterI = (mRegisterV[X] & 0xF) * 10 + cLargeFontOffset;
+		mTexture.fontOffset = mRegisterI =
+			(mRegisterV[X] & 0xF) * 10 + cLargeFontOffset;
 	}
 	void MEGACHIP::instruction_Fx33(s32 X) noexcept {
 		const auto N__{ mRegisterV[X] * 0x51EB851Full >> 37 };

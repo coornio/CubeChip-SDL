@@ -99,20 +99,26 @@ namespace EzMaths {
 		return u64(dx * dx) + u64(dy * dy);
 	}
 
+	// Lightweight, unprotected Weight class with 8-bit integer precision.
+	// Expected constructor ranges: [0..255] for integers, [0..1] for floats.
 	class Weight {
-		f64 mWeight{};
+		u8 mWeight{};
 
 	public:
 		template <std::integral Int>
-		constexpr Weight(Int value) noexcept : Weight(value * (1.0 / 255.0)) {}
-		constexpr Weight(f64 value) noexcept : mWeight{ std::clamp(value, 0.0, 1.0) } {}
+		constexpr Weight(Int value) noexcept : mWeight{ u8(value) } {}
+		constexpr Weight(f64 value) noexcept : mWeight{ u8(value * 255.0) } {}
 
-		// cast phase value to a 0..255 value and return
-		constexpr u8 as_byte() const noexcept
-			{ return u8((mWeight + 1.0) * 127.5); }
+		// Cast weight to floating-point [0..1] value
+		constexpr auto as_fp() const noexcept
+			{ return (1.0 / 255.0) * mWeight; }
 
-		constexpr operator f64() const noexcept { return mWeight; }
+		constexpr operator u8() const noexcept { return mWeight; }
 	};
+
+	template <std::integral T> requires (std::is_signed_v<T>)
+	inline constexpr T abs(T x) noexcept
+		{ return x < 0 ? -x : x; }
 
 	// simple constexpr-enabled fmod, internally allows s32-width division
 	template <std::floating_point T>
@@ -136,13 +142,13 @@ namespace EzMaths {
 	}
 
 	inline constexpr u8 fixedLerp8(u8 x, u8 y, Weight w) noexcept {
-		return u8(fixedMul8(x, 255u - w.as_byte()) + fixedMul8(y, w.as_byte()));
+		return u8(fixedMul8(x, u8(255) - w) + fixedMul8(y, w));
 	}
 
 	template <std::integral T>
 	inline constexpr T fixedLerpN(T x, T y, Weight w, T full_hue, T half_hue) noexcept {
 		const auto shortest{ (y - x + half_hue) % full_hue - half_hue };
-		return T((x + T(shortest * w) + full_hue) % full_hue);
+		return T((x + T(shortest * w.as_fp()) + full_hue) % full_hue);
 	}
 }
 

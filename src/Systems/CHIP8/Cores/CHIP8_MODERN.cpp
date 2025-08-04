@@ -197,12 +197,10 @@ void CHIP8_MODERN::renderAudioData() {
 
 void CHIP8_MODERN::renderVideoData() {
 	BVS->displayBuffer.write(mDisplayBuffer, isUsingPixelTrails()
-		? [](u32 pixel) noexcept {
-			return cPixelOpacity[pixel] | sBitColors[!!pixel];
-		}
-		: [](u32 pixel) noexcept {
-			return 0xFFu | sBitColors[pixel >> 3];
-		}
+		? [](u32 pixel) noexcept
+			{ return sBitColors[pixel != 0] | cPixelOpacity[pixel]; }
+		: [](u32 pixel) noexcept
+			{ return sBitColors[pixel >> 3] | 0xFFu; }
 	);
 
 	std::for_each(EXEC_POLICY(unseq)
@@ -321,24 +319,24 @@ void CHIP8_MODERN::renderVideoData() {
 	}
 	void CHIP8_MODERN::instruction_8xy5(s32 X, s32 Y) noexcept {
 		const bool nborrow{ mRegisterV[X] >= mRegisterV[Y] };
-		::assign_cast(mRegisterV[X], mRegisterV[X] - mRegisterV[Y]);
+		::assign_cast_sub(mRegisterV[X], mRegisterV[Y]);
 		::assign_cast(mRegisterV[0xF], nborrow);
 	}
 	void CHIP8_MODERN::instruction_8xy7(s32 X, s32 Y) noexcept {
 		const bool nborrow{ mRegisterV[Y] >= mRegisterV[X] };
-		::assign_cast(mRegisterV[X], mRegisterV[Y] - mRegisterV[X]);
+		::assign_cast_rsub(mRegisterV[X], mRegisterV[Y]);
 		::assign_cast(mRegisterV[0xF], nborrow);
 	}
 	void CHIP8_MODERN::instruction_8xy6(s32 X, s32 Y) noexcept {
-		::assign_cast(mRegisterV[X], Quirk.shiftVX ? mRegisterV[X] : mRegisterV[Y]);
-		const bool lsb{ (mRegisterV[X] & 1) == 1 };
-		::assign_cast(mRegisterV[X], mRegisterV[X] >> 1);
+		if (!Quirk.shiftVX) { ::assign_cast(mRegisterV[X], mRegisterV[Y]); }
+		const bool lsb{ (mRegisterV[X] & 0x01) != 0 };
+		::assign_cast_shr(mRegisterV[X], 1);
 		::assign_cast(mRegisterV[0xF], lsb);
 	}
 	void CHIP8_MODERN::instruction_8xyE(s32 X, s32 Y) noexcept {
-		::assign_cast(mRegisterV[X], Quirk.shiftVX ? mRegisterV[X] : mRegisterV[Y]);
-		const bool msb{ (mRegisterV[X] >> 7) == 1 };
-		::assign_cast(mRegisterV[X], mRegisterV[X] << 1);
+		if (!Quirk.shiftVX) { ::assign_cast(mRegisterV[X], mRegisterV[Y]); }
+		const bool msb{ (mRegisterV[X] & 0x80) != 0 };
+		::assign_cast_shl(mRegisterV[X], 1);
 		::assign_cast(mRegisterV[0xF], msb);
 	}
 

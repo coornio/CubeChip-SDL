@@ -28,20 +28,22 @@ inline CONSTEXPR_MATH RGBA  to_RGBA (OKLCH in) noexcept;
 /*==================================================================*/
 
 struct alignas(4) RGBA {
-	using Type_C = EzMaths::u8;
+	using u8     = EzMaths::u8;
 	using Packed = EzMaths::u32;
 	using Weight = EzMaths::Weight;
 
-	Type_C R{}, G{}, B{}, A{};
+	u8 R{}, G{}, B{}, A{};
+	static constexpr u8 Opaque{ 0xFF };
+	static constexpr u8 Transparent{ 0x00 };
 
 	constexpr RGBA() noexcept = default;
 	constexpr RGBA(Packed color) noexcept
-		: R{ Type_C(color >> 24) }
-		, G{ Type_C(color >> 16) }
-		, B{ Type_C(color >>  8) }
-		, A{ Type_C(color >>  0) }
+		: R{ u8(color >> 24) }
+		, G{ u8(color >> 16) }
+		, B{ u8(color >>  8) }
+		, A{ u8(color >>  0) }
 	{}
-	constexpr RGBA(Type_C R, Type_C G, Type_C B, Type_C A = 0xFF) noexcept
+	constexpr RGBA(u8 R, u8 G, u8 B, u8 A = Opaque) noexcept
 		: R{ R }, G{ G }, B{ B }, A{ A }
 	{}
 
@@ -65,6 +67,129 @@ struct alignas(4) RGBA {
 			EzMaths::fixedLerp8(x.G, y.G, w),
 			EzMaths::fixedLerp8(x.B, y.B, w),
 			EzMaths::fixedLerp8(x.A, y.A, w));
+	}
+
+	class Blend {
+		// Shortcut cast to invert a channel value
+		template <std::integral T>
+		[[nodiscard]] static constexpr
+		auto x8(T x) noexcept { return u8(~x); }
+
+		static constexpr auto MIN{   0 };
+		static constexpr auto MAX{ 255 };
+
+	public:
+		[[nodiscard]] static constexpr
+		u8 None(u8 src, u8) noexcept
+			{ return src; }
+
+		/*------------------------ LIGHTENING MODES ------------------------*/
+		
+		[[nodiscard]] static constexpr
+		u8 Lighten(u8 src, u8 dst) noexcept
+			{ return std::max(src, dst); }
+
+		[[nodiscard]] static constexpr
+		u8 Screen(u8 src, u8 dst) noexcept
+			{ return x8(EzMaths::fixedMul8(x8(src), x8(dst))); }
+
+		[[nodiscard]] static constexpr
+		u8 ColorDodge(u8 src, u8 dst) noexcept
+			{ return u8(src == MAX ? MAX : std::min((dst * MAX) / x8(src), MAX)); }
+
+		[[nodiscard]] static constexpr
+		u8 LinearDodge(u8 src, u8 dst) noexcept
+			{ return u8(std::min(src + dst, MAX)); }
+
+		/*------------------------ DARKENING MODES -------------------------*/
+
+		[[nodiscard]] static constexpr
+		u8 Darken(u8 src, u8 dst) noexcept
+			{ return std::min(src, dst); }
+
+		[[nodiscard]] static constexpr
+		u8 Multiply(u8 src, u8 dst) noexcept
+			{ return EzMaths::fixedMul8(src, dst); }
+
+		[[nodiscard]] static constexpr
+		u8 ColorBurn(u8 src, u8 dst) noexcept
+			{ return u8(src == MIN ? MIN : std::max(((src + dst - MAX) * MAX) / src, MIN)); }
+
+		[[nodiscard]] static constexpr
+		u8 LinearBurn(u8 src, u8 dst) noexcept
+			{ return u8(std::max(src + dst - MAX, MIN)); }
+
+		/*-------------------------- OTHER MODES ---------------------------*/
+		
+		[[nodiscard]] static constexpr
+		u8 Average(u8 src, u8 dst) noexcept
+			{ return u8((src + dst + 1) >> 1); }
+		
+		[[nodiscard]] static constexpr
+		u8 Difference(u8 src, u8 dst) noexcept
+			{ return u8(EzMaths::abs(src - dst)); }
+		
+		[[nodiscard]] static constexpr
+		u8 Negation(u8 src, u8 dst) noexcept
+			{ return x8(EzMaths::abs(MAX - (src + dst))); }
+				
+		[[nodiscard]] static constexpr
+		u8 Overlay(u8 src, u8 dst) noexcept {
+			return src < 128
+				? u8(EzMaths::fixedMul8(   src,     dst)  * 2)
+				: x8(EzMaths::fixedMul8(x8(src), x8(dst)) * 2);
+		}
+
+		[[nodiscard]] static constexpr
+		u8 Glow(u8 src, u8 dst) noexcept
+			{ return u8(dst == MAX ? MAX : std::min((EzMaths::fixedMul8(src, dst) * MAX) / x8(dst), MAX)); }
+
+		[[nodiscard]] static constexpr
+		u8 Reflect(u8 src, u8 dst) noexcept
+			{ return Glow(dst, src); }
+	};
+	
+	// Channel blend function type alias
+	using BlendFunc = u8(*)(u8 src, u8 dst) noexcept;
+
+	/**
+	 * @brief Blends two RGBA colors together. Uses the BlendFunc first, then applies alpha blending.
+	 * @param[in] src :: Source color.
+	 * @param[in] dst :: Destination color.
+	 * @param[in] func :: Function to blend each channel. Optional, defaults to Blend::None.
+	 * @param[in] opacity :: Weight to apply to source alpha. Optional, defaults to Opaque (255).
+	 */
+	[[nodiscard]] static constexpr
+	RGBA blend(RGBA src, RGBA dst, BlendFunc func, Weight opacity = Opaque) noexcept {
+		if (auto weight{ EzMaths::fixedMul8(src.A, opacity) }) [[likely]] {
+			RGBA result{ func(src.R, dst.R), func(src.G, dst.G), func(src.B, dst.B) };
+
+			switch (weight) {
+				case Opaque:      return result;
+				case Transparent: return dst;
+				default:          return lerp(dst, src, weight);
+			}
+		}
+		return dst;
+	}
+
+	// Overload of blend(): (src, dst, opacity[, func])
+	[[nodiscard]] static constexpr
+	RGBA blend(RGBA src, RGBA dst, Weight opacity, BlendFunc func = Blend::None) noexcept
+		{ return blend(src, dst, func, opacity); }
+
+	/**
+	 * @brief Alpha blends two RGBA colors together.
+	 * @param[in] src :: Source color.
+	 * @param[in] dst :: Destination color.
+	 */
+	[[nodiscard]] static constexpr
+	RGBA simple_blend(RGBA src, RGBA dst) noexcept {
+		switch (src.A) {
+			case Opaque:      return src;
+			case Transparent: return dst;
+			default:          return lerp(dst, src, src.A);
+		}
 	}
 };
 
@@ -133,9 +258,9 @@ struct OKLAB {
 
 	static constexpr OKLAB lerp(OKLAB x, OKLAB y, Weight w) noexcept {
 		return OKLAB(
-			std::lerp(x.L, y.L, w),
-			std::lerp(x.A, y.A, w),
-			std::lerp(x.B, y.B, w));
+			std::lerp(x.L, y.L, w.as_fp()),
+			std::lerp(x.A, y.A, w.as_fp()),
+			std::lerp(x.B, y.B, w.as_fp()));
 	}
 
 	static CONSTEXPR_MATH RGBA lerp(RGBA x, RGBA y, Weight w) noexcept {
@@ -158,8 +283,8 @@ struct OKLCH {
 		const auto delta{ EzMaths::fmod(y.H - x.H + \
 			std::numbers::pi * 3, std::numbers::pi * 2) - std::numbers::pi };
 		return OKLCH(
-			std::lerp(x.L, y.L, w),
-			std::lerp(x.C, y.C, w),
+			std::lerp(x.L, y.L, w.as_fp()),
+			std::lerp(x.C, y.C, w.as_fp()),
 			y.H + delta * w);
 	}
 
@@ -201,9 +326,9 @@ inline constexpr RGBA to_RGBA(HSV in) noexcept {
 
 	const auto hueV{ in.H & 0xFF };
 
-	const auto valP{ RGBA::Type_C((in.V * (0x00FF - in.S)                  + 0x007F) / 0x00FF) };
-	const auto valQ{ RGBA::Type_C((in.V * (0xFF00 - in.S *          hueV)  + 0x7FFF) / 0xFF00) };
-	const auto valT{ RGBA::Type_C((in.V * (0xFF00 - in.S * (0x100 - hueV)) + 0x7FFF) / 0xFF00) };
+	const auto valP{ RGBA::u8((in.V * (0x00FF - in.S)                  + 0x007F) / 0x00FF) };
+	const auto valQ{ RGBA::u8((in.V * (0xFF00 - in.S *          hueV)  + 0x7FFF) / 0xFF00) };
+	const auto valT{ RGBA::u8((in.V * (0xFF00 - in.S * (0x100 - hueV)) + 0x7FFF) / 0xFF00) };
 
 	switch (in.H >> 8) {
 		case 0:  return RGBA(in.V, valT, valP);
@@ -254,9 +379,9 @@ inline CONSTEXPR_MATH RGBA to_RGBA(OKLAB in) noexcept {
 	const auto B{ -0.00439 * L - 0.70342 * M + 1.70758 * S };
 	
 	return RGBA(
-		RGBA::Type_C(EzMaths::round(255.0 * OKLAB::gamma_inv(R))),
-		RGBA::Type_C(EzMaths::round(255.0 * OKLAB::gamma_inv(G))),
-		RGBA::Type_C(EzMaths::round(255.0 * OKLAB::gamma_inv(B)))
+		RGBA::u8(EzMaths::round(255.0 * OKLAB::gamma_inv(R))),
+		RGBA::u8(EzMaths::round(255.0 * OKLAB::gamma_inv(G))),
+		RGBA::u8(EzMaths::round(255.0 * OKLAB::gamma_inv(B)))
 	);
 }
 

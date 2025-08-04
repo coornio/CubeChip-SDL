@@ -36,26 +36,16 @@ class MEGACHIP final : public Chip8_CoreInterface {
 
 /*==================================================================*/
 
-	FixedMap2D<u8, cScreenSizeX, cScreenSizeY>
-		mDisplayBuffer; // legacy 128x64 buffer
-
-	FixedMap2D<RGBA, cScreenMegaX, cScreenMegaY>
-		mLastRenderBuffer; // buffer of last rendered frame
-	FixedMap2D<RGBA, cScreenMegaX, cScreenMegaY>
-		mBackgroundBuffer; // primary draw buffer
-	FixedMap2D<u8, cScreenMegaX, cScreenMegaY>
-		mCollisionMap; // collision detection map based on palette index
-	FixedMap2D<RGBA, 256, 1>
-		mColorPalette; // 256-color palette
-
-	std::array<RGBA, 10> mFontColor{};
-
 	void initializeFontColors() noexcept;
 
 	struct Texture {
 		s32 W{}, H{};
 		s32 collide{ 0xFF };
 		s32 opacity{ 0xFF };
+		u32 fontOffset{};
+
+		constexpr void reset() noexcept
+			{ *this = Texture{}; }
 	} mTexture;
 
 	enum BlendMode {
@@ -64,12 +54,10 @@ class MEGACHIP final : public Chip8_CoreInterface {
 		MULTIPLY     = 5,
 	};
 
-	using BlendFunction = u8(*)(u8 src, u8 dst) noexcept;
-	BlendFunction mBlendFunc;
+	RGBA::BlendFunc mBlendFunc;
 
-	static RGBA blendPixel(RGBA src, RGBA dst, BlendFunction func, u8 alpha = 0xFF) noexcept;
+	void selectBlendingAlgo(s32 mode) noexcept;
 
-	void setNewBlendAlgorithm(s32 mode) noexcept;
 	void scrapAllVideoBuffers();
 	void flushAllVideoBuffers();
 	void blendAndFlushBuffers() const;
@@ -92,6 +80,20 @@ class MEGACHIP final : public Chip8_CoreInterface {
 	void startAudioTrack(bool repeat) noexcept;
 
 	static void makeByteWave(f32* data, u32 size, Voice* voice, Stream*) noexcept;
+
+	FixedMap2D<u8, cScreenSizeX, cScreenSizeY>
+		mDisplayBuffer; // legacy 128x64 buffer
+
+	FixedMap2D<RGBA, cScreenMegaX, cScreenMegaY>
+		mLastRenderBuffer; // buffer of last rendered frame
+	FixedMap2D<RGBA, cScreenMegaX, cScreenMegaY>
+		mBackgroundBuffer; // primary draw buffer
+	FixedMap2D<u8, cScreenMegaX, cScreenMegaY>
+		mCollisionMap; // collision detection map based on palette index
+	FixedMap2D<RGBA, 256, 1>
+		mColorPalette; // 256-color palette
+
+	std::array<RGBA, 10> mFontColor{};
 
 	std::array<u8, cTotalMemory + cSafezoneOOB>
 		mMemoryBank{};

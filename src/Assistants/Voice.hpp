@@ -88,7 +88,7 @@ public:
 	// Get the volume of the voice, in range of: [0..1]
 	constexpr float getVolume()     const noexcept { return mVolumeGain; }
 	// Set the volume of the voice, clamped to: [0..1]
-	constexpr self& setVolume(float gain) noexcept { mVolumeGain = std::clamp(gain, 0.0f, 2.0f); return *this; }
+	constexpr self& setVolume(float gain) noexcept { mVolumeGain = std::clamp(gain, 0.0f, 1.0f); return *this; }
 
 	// Get the mastering volume of the voice, in range of: [0..1]
 	constexpr float getMasterGain()     const noexcept { return mMasterGain; }
