@@ -247,7 +247,7 @@ void BasicVideoSpec::setViewportScaleMode(s32 mode) noexcept {
 	switch (mode) {
 		case SDL_SCALEMODE_NEAREST:
 		case SDL_SCALEMODE_LINEAR:
-			SDL_SetTextureScaleMode(mWindowTexture,
+			SDL_SetTextureScaleMode(mSystemTexture,
 				static_cast<SDL_ScaleMode>(mode));
 			mViewportScaleMode = mode;
 			[[fallthrough]];
@@ -286,7 +286,7 @@ void BasicVideoSpec::prepareWindowTexture() {
 		if (!mSuccessful) {
 			showErrorBox("Failed to create Window texture!");
 		} else {
-			SDL_SetTextureScaleMode(mWindowTexture, static_cast<SDL_ScaleMode>(mViewportScaleMode));
+			SDL_SetTextureScaleMode(mWindowTexture, SDL_SCALEMODE_NEAREST);
 			SDL_SetRenderTarget(mMainRenderer, mWindowTexture);
 			SDL_SetRenderDrawColor(mMainRenderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 			SDL_RenderClear(mMainRenderer);

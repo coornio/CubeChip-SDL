@@ -32,9 +32,10 @@ struct alignas(4) RGBA {
 	using Packed = EzMaths::u32;
 	using Weight = EzMaths::Weight;
 
-	u8 R{}, G{}, B{}, A{};
 	static constexpr u8 Opaque{ 0xFF };
 	static constexpr u8 Transparent{ 0x00 };
+
+	u8 R{}, G{}, B{}, A{ Opaque };
 
 	constexpr RGBA() noexcept = default;
 	constexpr RGBA(Packed color) noexcept
