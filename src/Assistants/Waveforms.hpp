@@ -14,8 +14,8 @@
 /*==================================================================*/
 
 struct Phase {
-	using Byte_T  = EzMaths::u8;
-	using Float_T = EzMaths::f64;
+	using Byte_T  = ez::u8;
+	using Float_T = ez::f64;
 
 private:
 	Float_T mPhase{};
@@ -30,7 +30,7 @@ public:
 };
 
 class WaveForms {
-	using Millis  = EzMaths::u32;
+	using Millis  = ez::u32;
 	using Byte_T  = Phase::Byte_T;
 	using Float_T = Phase::Float_T;
 

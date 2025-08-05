@@ -21,7 +21,7 @@
 
 /*==================================================================*/
 
-static auto to_FRect(const EzMaths::Frame& rect) noexcept {
+static auto to_FRect(const ez::Frame& rect) noexcept {
 	return SDL_FRect{ 0.0f, 0.0f, f32(rect.w), f32(rect.h) };
 }
 
@@ -69,7 +69,7 @@ BasicVideoSpec::BasicVideoSpec(const Settings& settings) noexcept {
 	}
 	#endif
 
-	EzMaths::Rect deco{};
+	ez::Rect deco{};
 
 	if (SDL_Unique<SDL_Window> dummy{ SDL_CreateWindow(
 		nullptr, 64, 64, SDL_WINDOW_UTILITY | SDL_WINDOW_HIDDEN
@@ -107,10 +107,10 @@ BasicVideoSpec::~BasicVideoSpec() noexcept {
 	SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }
 
-auto BasicVideoSpec::getTextureSizeRect(SDL_Texture* texture) const noexcept -> EzMaths::Frame {
+auto BasicVideoSpec::getTextureSizeRect(SDL_Texture* texture) const noexcept -> ez::Frame {
 	f32 w, h;
 	SDL_GetTextureSize(texture, &w, &h);
-	return EzMaths::Frame(s32(w), s32(h));
+	return ez::Frame(s32(w), s32(h));
 }
 
 auto BasicVideoSpec::exportSettings() const noexcept -> Settings {
@@ -146,7 +146,7 @@ void BasicVideoSpec::showErrorBox(const char* const title) noexcept {
 	);
 }
 
-void BasicVideoSpec::normalizeRectToDisplay(EzMaths::Rect& rect, EzMaths::Rect& deco, bool first_run) noexcept {
+void BasicVideoSpec::normalizeRectToDisplay(ez::Rect& rect, ez::Rect& deco, bool first_run) noexcept {
 	auto numDisplays{  0 }; // count of displays SDL found
 	auto bestDisplay{ -1 }; // index of display our window will use
 	bool rectIntersectsDisplay{};
@@ -157,14 +157,14 @@ void BasicVideoSpec::normalizeRectToDisplay(EzMaths::Rect& rect, EzMaths::Rect& 
 		{ rect = Settings::defaults; return; }
 
 	// 2: fill vector with usable display bounds rects
-	std::vector<EzMaths::Rect> displayBounds;
+	std::vector<ez::Rect> displayBounds;
 	displayBounds.reserve(numDisplays);
 
 	for (auto i{ 0 }; i < numDisplays; ++i) {
 		if (displays[i] == SDL_GetPrimaryDisplay()) { bestDisplay = i; }
 		SDL_Rect display;
 		if (SDL_GetDisplayUsableBounds(displays[i], &display)) {
-			EzMaths::Rect bounds{ display.x, display.y, display.w, display.h };
+			ez::Rect bounds{ display.x, display.y, display.w, display.h };
 			displayBounds.push_back(std::move(bounds));
 		}
 	}
@@ -179,7 +179,7 @@ void BasicVideoSpec::normalizeRectToDisplay(EzMaths::Rect& rect, EzMaths::Rect& 
 		// 4: find largest window/display overlap, if any
 		auto bestOverlap{ u64(0) };
 		for (auto i{ 0u }; i < displayBounds.size(); ++i) {
-			const auto overlapArea{ EzMaths::intersect(rect, displayBounds[i]).area() };
+			const auto overlapArea{ ez::intersect(rect, displayBounds[i]).area() };
 			if (overlapArea > bestOverlap) { bestOverlap = overlapArea; bestDisplay = i; }
 		}
 	
@@ -190,7 +190,7 @@ void BasicVideoSpec::normalizeRectToDisplay(EzMaths::Rect& rect, EzMaths::Rect& 
 
 			for (auto i{ 0u }; i < displayBounds.size(); ++i) {
 				const auto displayCenter{ displayBounds[i].center() };
-				const auto distance{ EzMaths::distance(currentCenter, displayCenter) };
+				const auto distance{ ez::distance(currentCenter, displayCenter) };
 				if (distance < bestDistance) { bestDistance = distance; bestDisplay = i; }
 			}
 		}
@@ -278,7 +278,7 @@ void BasicVideoSpec::prepareWindowTexture() {
 	if (getTextureSizeRect(mWindowTexture) != outerRect) {
 		mSuccessful = mWindowTexture = SDL_CreateTexture(
 			mMainRenderer,
-			SDL_PIXELFORMAT_ARGB8888,
+			SDL_PIXELFORMAT_RGBX8888,
 			SDL_TEXTUREACCESS_TARGET,
 			outerRect.w, outerRect.h
 		);
@@ -301,7 +301,7 @@ void BasicVideoSpec::prepareSystemTexture() {
 
 		mSuccessful = mSystemTexture = SDL_CreateTexture(
 			mMainRenderer,
-			SDL_PIXELFORMAT_RGBA8888,
+			SDL_PIXELFORMAT_RGBX8888,
 			SDL_TEXTUREACCESS_STREAMING,
 			mCurViewport.frame.w, mCurViewport.frame.h
 		);

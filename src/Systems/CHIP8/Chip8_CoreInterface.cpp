@@ -237,7 +237,7 @@ void Chip8_CoreInterface::mixAudioData(VoiceGenerators processors) noexcept {
 			{ bundle.run(buffer, stream); }
 
 		for (auto& sample : buffer)
-			{ sample = EzMaths::fast_tanh(sample); }
+			{ sample = ez::fast_tanh(sample); }
 
 		stream->pushAudioData(buffer);
 	}

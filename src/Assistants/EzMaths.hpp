@@ -151,7 +151,7 @@ namespace EzMaths {
 	}
 
 	inline constexpr u8 fixedLerp8(u8 x, u8 y, Weight w) noexcept {
-		return u8(fixedMul8(x, u8(255) - w) + fixedMul8(y, w));
+		return u8(fixedMul8(x, u8(255 - w)) + fixedMul8(y, w));
 	}
 
 	template <std::integral T>
@@ -187,3 +187,4 @@ namespace EzMaths {
 	}
 }
 
+namespace ez = EzMaths;

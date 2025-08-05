@@ -19,7 +19,7 @@ class BasicVideoSpec final {
 
 public:
 	struct Viewport {
-		EzMaths::Frame frame{};
+		ez::Frame frame{};
 		s32 multi{}, pxpad{};
 
 		constexpr Viewport(s32 w = 0, s32 h = 0, s32 multi = 0, s32 pxpad = 0) noexcept
@@ -35,10 +35,10 @@ public:
 		}
 
 		constexpr auto scaled() const noexcept {
-			return EzMaths::Frame{ frame.w * multi, frame.h * multi };
+			return ez::Frame{ frame.w * multi, frame.h * multi };
 		}
 		constexpr auto padded() const noexcept {
-			return EzMaths::Frame{ frame.w * multi + pxpad * 2, frame.h * multi + pxpad * 2 };
+			return ez::Frame{ frame.w * multi + pxpad * 2, frame.h * multi + pxpad * 2 };
 		}
 
 		static constexpr auto pack(s32 w, s32 h, s32 multi, s32 pxpad) noexcept {
@@ -64,7 +64,7 @@ private:
 	SDL_Unique<SDL_Texture>  mWindowTexture{};
 	SDL_Unique<SDL_Texture>  mSystemTexture{};
 
-	auto getTextureSizeRect(SDL_Texture* texture) const noexcept -> EzMaths::Frame;
+	auto getTextureSizeRect(SDL_Texture* texture) const noexcept -> ez::Frame;
 
 /*==================================================================*/
 
@@ -84,10 +84,10 @@ public:
 	TripleBuffer<u32> displayBuffer;
 
 	struct Settings {
-		static constexpr EzMaths::Rect
+		static constexpr ez::Rect
 			defaults{ 0, 0, 640, 480 };
 
-		EzMaths::Rect window{ defaults };
+		ez::Rect window{ defaults };
 		struct Viewport {
 			s32  filtering{ 0 };
 			bool int_scale{ true };
@@ -134,7 +134,7 @@ public:
 /*==================================================================*/
 
 public:
-	void normalizeRectToDisplay(EzMaths::Rect& rect, EzMaths::Rect& deco, bool first_run) noexcept;
+	void normalizeRectToDisplay(ez::Rect& rect, ez::Rect& deco, bool first_run) noexcept;
 
 /*==================================================================*/
 

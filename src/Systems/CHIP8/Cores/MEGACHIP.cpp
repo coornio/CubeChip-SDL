@@ -388,9 +388,9 @@ void MEGACHIP::initializeFontColors() noexcept {
 		const auto mult{ 255 - 11 * i };
 		
 		mFontColor[i] = RGBA{
-			EzMaths::fixedMul8(0xFF, u8(std::min(mult * 264, 255))),
-			EzMaths::fixedMul8(0xFF, u8(std::min(mult * 291, 255))),
-			EzMaths::fixedMul8(0xFF, u8(std::min(mult * 309, 255))),
+			ez::fixedMul8(0xFF, u8(std::min(mult * 264, 255))),
+			ez::fixedMul8(0xFF, u8(std::min(mult * 291, 255))),
+			ez::fixedMul8(0xFF, u8(std::min(mult * 309, 255))),
 		};
 	}
 }
@@ -430,7 +430,7 @@ void MEGACHIP::blendAndFlushBuffers() const {
 	BVS->displayBuffer.write(
 		mLastRenderBuffer,
 		mBackgroundBuffer,
-		RGBA::simple_blend
+		RGBA::blendAlpha
 	);
 }
 
@@ -861,7 +861,7 @@ void MEGACHIP::scrollBuffersRT() {
 							[[unlikely]] { mRegisterV[0xF] = 1; }
 
 						collideCoord = sourceColorIdx;
-						backbufCoord = RGBA::blend(mColorPalette(sourceColorIdx), \
+						backbufCoord = RGBA::compositeBlend(mColorPalette(sourceColorIdx), \
 							backbufCoord, mBlendFunc, u8(mTexture.opacity));
 					}
 					if (!Quirk.wrapSprite && offsetX == (cScreenMegaX - 1)) { break; }
@@ -914,7 +914,7 @@ void MEGACHIP::scrollBuffersRT() {
 					const auto offsetY{ originY + rowN * 2 };
 
 					collisions += drawDoubleBytes(originX, offsetY, 0x20,
-						EzMaths::bitDup8(readMemoryI(rowN)) << offsetX);
+						ez::bitDup8(readMemoryI(rowN)) << offsetX);
 
 					if (offsetY == cScreenSizeY - 2) { break; }
 				}
