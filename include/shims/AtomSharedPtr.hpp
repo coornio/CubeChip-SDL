@@ -8,7 +8,7 @@
 
 /*==================================================================*/
 
-#ifndef __APPLE__
+#ifdef __APPLE__
 	#include <memory>
 	#include <mutex>
 	#include <shared_mutex>
