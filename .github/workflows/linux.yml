@@ -7,42 +7,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Install Misc Packages
-        run: |
-          sudo apt-get update
-          sudo apt install -y libx11-dev libxext-dev libgl1 libglx-mesa0 mesa-common-dev ccache
-
-      - name: Prepare build and ccache folders
-        run: |
-          mkdir -p build
-          mkdir -p ~/.ccache
-
-      - name: Cache ccache
-        uses: actions/cache@v3
-        with:
-          path: ~/.ccache
-          key: ccache-linux-${{ runner.os }}-${{ hashFiles('**/CMakeLists.txt') }}
-          restore-keys: |
-            ccache-linux-${{ runner.os }}-
-
-      - name: Cache build folder
-        uses: actions/cache@v3
-        with:
-          path: build
-          key: build-linux-${{ hashFiles('**/CMakeLists.txt') }}
-          restore-keys: |
-            build-linux-
-
+        run: sudo apt-get update && sudo apt install libx11-dev libxext-dev libgl1 libglx-mesa0 mesa-common-dev
+      - name: Install ccache
+        run: sudo apt-get install -y ccache
       - name: Build
-        env:
-          CCACHE_DIR: ~/.ccache
-          CC: ccache gcc
-          CXX: ccache g++
         run: |
           cmake -DCMAKE_BUILD_TYPE=Release -S . -B build
           cmake --build build
-
       - name: GH Release
         uses: actions/upload-artifact@v4
         with:

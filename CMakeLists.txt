@@ -1,11 +1,26 @@
 cmake_minimum_required(VERSION 3.25)
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "" FORCE)
 
-project(CubeChip LANGUAGES CXX)
-
 if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
     message(FATAL_ERROR "In-source builds are not allowed. Please create and use a separate build directory.")
 endif()
+
+find_program(CCACHE_PATH ccache)
+
+if(CCACHE_PATH)
+	set(CMAKE_CXX_COMPILER_LAUNCHER
+		"${CCACHE_PATH}"
+		CACHE FILEPATH "CXX compiler cache"
+	)
+	set(CMAKE_C_COMPILER_LAUNCHER
+		"${CCACHE_PATH}"
+		CACHE FILEPATH "C compiler cache"
+	)
+endif()
+
+# ==================================================================================== #
+
+project(CubeChip LANGUAGES CXX)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)

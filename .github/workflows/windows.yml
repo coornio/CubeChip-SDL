@@ -1,25 +1,16 @@
 
 name: Build Windows
-on: [push, pull_request]
+on: [push,pull_request]
 jobs:
   build-and-deploy:
     runs-on: windows-2025
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Cache build folder
-        uses: actions/cache@v3
-        with:
-          path: build
-          key: build-windows-${{ runner.os }}-${{ hashFiles('**/*.cpp', '**/*.hpp', '**/*.h', '**/*.inl', '**/*.cmake', '**/CMakeLists.txt') }}
-          restore-keys: build-windows-${{ runner.os }}-
-
       - name: Build
         run: |
           cmake -DCMAKE_BUILD_TYPE=Release -S . -B build
           cmake --build build
-
       - name: GH Release
         uses: actions/upload-artifact@v4
         with:
