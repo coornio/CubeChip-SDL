@@ -43,6 +43,7 @@ add_executable("${PROJECT_NAME}"
 	${SYSTEM_GAMEBOY_SOURCES}
 )
 
+target_sources("${PROJECT_NAME}" PRIVATE ${SHIMS_HEADERS})
 target_sources("${PROJECT_NAME}" PRIVATE ${FRONTEND_HEADERS}          ${FRONTEND_SOURCES})
 target_sources("${PROJECT_NAME}" PRIVATE ${COMPONENTS_HEADERS}        ${COMPONENTS_SOURCES})
 target_sources("${PROJECT_NAME}" PRIVATE ${UTILITIES_HEADERS}         ${UTILITIES_SOURCES})
@@ -61,6 +62,7 @@ target_include_directories(
 	"${PROJECT_INCLUDE_DIR}/services"
 	"${PROJECT_INCLUDE_DIR}/systems"
 	"${PROJECT_INCLUDE_DIR}/frontend"
+	"${PROJECT_VENDOR_DIR}/jthread" # hardcoded
 )
 
 target_link_libraries(

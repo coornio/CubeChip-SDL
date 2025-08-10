@@ -1,4 +1,15 @@
 
+set(SHIMS_HEADERS
+	"${PROJECT_INCLUDE_DIR}/shims/AtomSharedPtr.hpp"
+	"${PROJECT_INCLUDE_DIR}/shims/ExecPolicy.hpp"
+	"${PROJECT_INCLUDE_DIR}/shims/Expected.hpp"
+	"${PROJECT_INCLUDE_DIR}/shims/HDIS_HCIS.hpp"
+	"${PROJECT_INCLUDE_DIR}/shims/Thread.hpp"
+)
+source_group("Shims" FILES ${SHIMS_HEADERS})
+
+# ==================================================================================== #
+
 set(FRONTEND_HEADERS
 	"${PROJECT_INCLUDE_DIR}/frontend/FrontendHost.hpp"
 	"${PROJECT_INCLUDE_DIR}/frontend/FrontendInterface.hpp"
