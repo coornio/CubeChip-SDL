@@ -363,6 +363,30 @@ MigrationBackup/
 FodyWeavers.xsd
 /regdata
 
-# Ignore the build folder
-/build
-/imgui.ini
+# Custom
+generate.stamp*
+
+/CppProperties.json
+/cmake_install.cmake
+/CMakeCache.txt
+
+/CMakeFiles/
+/build*/
+/bin/
+/*.dir/
+/_deps/
+
+*.sln
+*.tlog
+*.log
+*.lastbuildstate
+*.recipe
+*.vcxproj*
+
+**/ZERO_CHECK/
+**/*.tlog/
+**/*.obj
+
+/include/vendor/*
+!/include/vendor/jthread/
+!/include/vendor/jthread/**

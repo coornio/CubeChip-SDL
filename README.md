@@ -7,13 +7,17 @@ This project simultaneously stands in as an experiment bed for all sorts of diff
 ## Supported Systems
 
 ### BytePusher
+
 Merely there for the sake of it being there, but useful as a test bed of changes.
 
 ### GameBoy
+
 Been on the backburner now for a long while, left in a hardly-started state, as I'm busy tackling refactors across the entire program and implementing more conveniences, required libraries, abstractions between the frontend and backend, and generally planning on how to handle a proper UI interface. See the Planned Features section below for a rough idea.
 
 ### CHIP-8
+
 Currently supports the following major variants:
+
 - CHIP-8 [^1]
 - SUPERCHIP [^2]
 - XOCHIP [^3]
@@ -25,6 +29,7 @@ Currently supports the following major variants:
 [^4]: Potentially officially the first emulator since Mega8 to [run the Mega8 demo properly](https://www.youtube.com/watch?v=Z215BO9Gkko).
 
 The following platform extensions/mods are available:
+
 - HIRES MPD [^5] (currently disabled)
 - CHIP-8E [^6] (currently disabled)
 - CHIP-8X [^7]
@@ -52,6 +57,7 @@ Some extension combinations aren't possible, see footnotes for now. Due to major
 - [x] Implement a triple-buffer middle-man between the frontend and backend worker.
 - [x] Allow fetching and displaying rudimentary OSD statistics on a per-system basis.
 - [x] Implement File Picker dialog for when drag-n-drop doesn't work, for some reason.
+- [x] Refactor cmake build script for smarter generation and cached vendoring of fetched third party libraries.
 - [ ] Allow choosing desired core to boot when loading a program file that is eligible with multiple specialized cores.
 - [ ] Implement stepping controls for debugging, initially limited to simple full-frame and per-instruction stepping.
 - [ ] Implement (initially) a slot-in ImGUI interface where custom ImGUI code can be pointer'd to to execute, and defined elsewhere as desired.
