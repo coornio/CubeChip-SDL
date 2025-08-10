@@ -68,7 +68,6 @@ target_include_directories(
 target_link_libraries(
 	"${PROJECT_NAME}" PRIVATE
 	max0x7ba::atomic_queue
-	SDL3::SDL3
 	imgui
 	tl::expected
 	cxxopts::cxxopts
@@ -87,13 +86,14 @@ if(WIN32)
 	target_link_libraries(
 		"${PROJECT_NAME}"
 		PRIVATE
-			"Dwmapi.lib"
+		"Dwmapi.lib"
 	)
 endif()
 
 # ==================================================================================== #
 
 if(MSVC)
+
 	set_property(
 		DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
 		PROPERTY VS_STARTUP_PROJECT "${PROJECT_NAME}"
@@ -110,7 +110,9 @@ if(MSVC)
 		$<$<CONFIG:Release>: /LTCG /SUBSYSTEM:WINDOWS /INCREMENTAL:NO>
 		$<$<CONFIG:Debug>: /SUBSYSTEM:CONSOLE /INCREMENTAL>
 	)
+
 else()
+
 	target_compile_options(
 		"${PROJECT_NAME}" PRIVATE
 		$<$<CONFIG:Release>: -O3 -march=native -flto=auto>
@@ -119,7 +121,24 @@ else()
 
 	target_link_options(
 		"${PROJECT_NAME}" PRIVATE
-		$<$<CONFIG:Release>: -flto=auto -s>
+		$<$<CONFIG:Release>: -flto=auto>
 		$<$<CONFIG:Debug>: >
 	)
+
+	if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+		if(UNIX AND NOT APPLE)
+			add_custom_command(
+				TARGET "${PROJECT_NAME}" POST_BUILD
+				COMMAND ${CMAKE_STRIP} $<TARGET_FILE:${PROJECT_NAME}>
+				COMMENT "Stripping symbols from $<TARGET_FILE_NAME:${PROJECT_NAME}>"
+			)
+		elseif(APPLE)
+			add_custom_command(
+				TARGET "${PROJECT_NAME}" POST_BUILD
+				COMMAND strip -x $<TARGET_FILE:${PROJECT_NAME}>
+				COMMENT "Stripping local symbols from $<TARGET_FILE_NAME:${PROJECT_NAME}>"
+			)
+		endif()
+	endif()
+
 endif()

@@ -31,6 +31,6 @@ target_include_directories(imgui
 )
 
 target_link_libraries(
-	imgui PRIVATE
+	imgui PUBLIC
 	SDL3::SDL3
 )
