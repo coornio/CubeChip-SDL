@@ -48,7 +48,7 @@ function(fetch_and_vendor GIT_REPO GIT_TAG DEST_DIR ADD_SUBDIRECTORY_AT_DEST)
 	else()
 		message(STATUS "Vendor copying fetched content ${LIB_NAME} to: ${DEST_DIR}")
 		file(REMOVE_RECURSE "${DEST_DIR}")
-		file(COPY "${${LIB_NAME}_SOURCE_DIR}./" DESTINATION "${DEST_DIR}")
+		file(COPY "${${LIB_NAME}_SOURCE_DIR}/" DESTINATION "${DEST_DIR}")
 
 		hash_directory("${DEST_DIR}" NEW_HASH)
 		if(NOT NEW_HASH STREQUAL FETCH_HASH)
