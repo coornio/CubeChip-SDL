@@ -1,3 +1,4 @@
+
 name: Build macOS
 on: [push, pull_request]
 jobs:
@@ -6,10 +7,20 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Cache CCache
+        uses: actions/cache@v3
+        with:
+          path: ~/.ccache
+          key: ccache-macos-${{ runner.os }}-${{ hashFiles('**/CMakeLists.txt') }}
+          restore-keys: |
+            ccache-macos-${{ runner.os }}-
+
       - name: Build
         run: |
           cmake -DCMAKE_BUILD_TYPE=Release -S . -B build
           cmake --build build
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
