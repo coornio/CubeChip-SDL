@@ -10,9 +10,8 @@ jobs:
         run: |
           cmake -DCMAKE_BUILD_TYPE=Release -S . -B build
           cmake --build build
-          
       - name: GH Release
         uses: actions/upload-artifact@v4
         with:
-           name: WindowsRelease
-           path: build/bin
+          name: WindowsRelease
+          path: build/bin

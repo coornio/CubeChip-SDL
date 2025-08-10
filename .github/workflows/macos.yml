@@ -1,19 +1,17 @@
-name: Build Linux
-on: [push,pull_request]
+name: Build macOS
+on: [push, pull_request]
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-24.04
+    runs-on: macos-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Install Misc Packages
-        run: sudo apt-get update && sudo apt install libx11-dev libxext-dev libgl1 libglx-mesa0 mesa-common-dev
       - name: Build
         run: |
           cmake -DCMAKE_BUILD_TYPE=Release -S . -B build
           cmake --build build
-      - name: GH Release
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: LinuxRelease
+          name: macOSRelease
           path: build/bin
