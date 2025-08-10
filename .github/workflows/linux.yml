@@ -1,6 +1,6 @@
 
 name: Build Linux
-on: [push, pull_request]
+on: [push,pull_request]
 jobs:
   build-and-deploy:
     runs-on: ubuntu-24.04
@@ -8,13 +8,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Cache build folder
-        uses: actions/cache@v3
-        with:
-          path: build
-          key: build-linux-${{ hashFiles('**/CMakeLists.txt') }}
-          restore-keys: |
-            build-linux-
+      - name: Install Misc Packages
+        run: |
+          sudo apt-get update
+          sudo apt install -y libx11-dev libxext-dev libgl1 libglx-mesa0 mesa-common-dev ccache
+
+      - name: Prepare build and ccache folders
+        run: |
+          mkdir -p build
+          mkdir -p ~/.ccache
 
       - name: Cache ccache
         uses: actions/cache@v3
@@ -24,16 +26,20 @@ jobs:
           restore-keys: |
             ccache-linux-${{ runner.os }}-
 
-      - name: Install Misc Packages
-        run: sudo apt-get update && sudo apt install libx11-dev libxext-dev libgl1 libglx-mesa0 mesa-common-dev ccache
+      - name: Cache build folder
+        uses: actions/cache@v3
+        with:
+          path: build
+          key: build-linux-${{ hashFiles('**/CMakeLists.txt') }}
+          restore-keys: |
+            build-linux-
 
-      - name: Configure and Build
+      - name: Build
         env:
           CCACHE_DIR: ~/.ccache
-          CCACHE_MAXSIZE: 1G
+          CC: ccache gcc
+          CXX: ccache g++
         run: |
-          export CC="ccache gcc"
-          export CXX="ccache g++"
           cmake -DCMAKE_BUILD_TYPE=Release -S . -B build
           cmake --build build
 
