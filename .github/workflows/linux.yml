@@ -1,17 +1,42 @@
+
 name: Build Linux
-on: [push,pull_request]
+on: [push, pull_request]
 jobs:
   build-and-deploy:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Cache build folder
+        uses: actions/cache@v3
+        with:
+          path: build
+          key: build-linux-${{ hashFiles('**/CMakeLists.txt') }}
+          restore-keys: |
+            build-linux-
+
+      - name: Cache ccache
+        uses: actions/cache@v3
+        with:
+          path: ~/.ccache
+          key: ccache-linux-${{ runner.os }}-${{ hashFiles('**/CMakeLists.txt') }}
+          restore-keys: |
+            ccache-linux-${{ runner.os }}-
+
       - name: Install Misc Packages
-        run: sudo apt-get update && sudo apt install libx11-dev libxext-dev libgl1 libglx-mesa0 mesa-common-dev
-      - name: Build
+        run: sudo apt-get update && sudo apt install libx11-dev libxext-dev libgl1 libglx-mesa0 mesa-common-dev ccache
+
+      - name: Configure and Build
+        env:
+          CCACHE_DIR: ~/.ccache
+          CCACHE_MAXSIZE: 1G
         run: |
+          export CC="ccache gcc"
+          export CXX="ccache g++"
           cmake -DCMAKE_BUILD_TYPE=Release -S . -B build
           cmake --build build
+
       - name: GH Release
         uses: actions/upload-artifact@v4
         with:
