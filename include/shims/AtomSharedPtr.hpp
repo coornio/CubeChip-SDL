@@ -6,10 +6,17 @@
 
 #pragma once
 
+#include <memory>
+#include <atomic>
+
 /*==================================================================*/
 
+using mo = std::memory_order;
+
+template <typename T>
+using Atom = std::atomic<T>;
+
 #ifdef __APPLE__
-	#include <memory>
 	#include <mutex>
 	#include <shared_mutex>
 
@@ -68,9 +75,6 @@
 	};
 
 #else
-	#include <atomic>
-	#include <memory>
-
 	template <typename T>
-	using AtomSharedPtr = std::atomic<std::shared_ptr<T>>;
+	using AtomSharedPtr = Atom<std::shared_ptr<T>>;
 #endif

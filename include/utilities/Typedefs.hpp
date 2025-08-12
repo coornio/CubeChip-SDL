@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include <atomic>
 #include <string>
 #include <cstdint>
 #include <cstddef>
@@ -18,8 +17,6 @@
 #include <fmt/format.h>
 
 /*==================================================================*/
-
-using mo = std::memory_order;
 
 using f64 = double;
 using f32 = float;
@@ -40,9 +37,6 @@ using s8  = std::int8_t;
 using Str  = std::string;
 using StrV = std::string_view;
 using Path = std::filesystem::path;
-
-template <typename T>
-using Atom = std::atomic<T>;
 
 using namespace std::string_literals;
 using namespace std::string_view_literals;
