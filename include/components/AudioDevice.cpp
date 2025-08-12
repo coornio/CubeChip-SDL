@@ -12,6 +12,7 @@
 #include "GlobalAudioBase.hpp"
 #include "AudioDevice.hpp"
 #include "LifetimeWrapperSDL.hpp"
+#include "BasicLogger.hpp"
 
 #include <SDL3/SDL_audio.h>
 
@@ -25,8 +26,6 @@ static float calculateGain(float streamGain) noexcept {
 /*==================================================================*/
 	#pragma region AudioDevice Class
 
-AudioDevice::~AudioDevice() noexcept {}
-
 bool AudioDevice::addAudioStream(
 	unsigned streamID, unsigned frequency,
 	unsigned channels, unsigned device
@@ -37,15 +36,20 @@ bool AudioDevice::addAudioStream(
 		device ? device : SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK
 		, &spec, nullptr, nullptr) };
 
-	if (audioStreams.contains(streamID)) {
-		audioStreams.at(streamID) =
-			Stream(ptr, spec.format, spec.freq, spec.channels);
-	} else {
-		audioStreams.emplace(streamID,
-			Stream(ptr, spec.format, spec.freq, spec.channels));
+	if (!ptr) {
+		blog.newEntry(BLOG::WARN, "Failed to open audio stream: {}", SDL_GetError());
+		return false;
 	}
 
-	return ptr != nullptr;
+	if (auto slot{ at(streamID) }) {
+		*slot = Stream(ptr, spec.format, spec.freq, spec.channels);
+		return true;
+	} else {
+		auto result{ audioStreams.try_emplace(streamID,
+			ptr, spec.format, spec.freq, spec.channels) };
+
+		return result.second;
+	}
 }
 
 /*==================================================================*/

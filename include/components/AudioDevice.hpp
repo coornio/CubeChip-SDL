@@ -89,11 +89,11 @@ public:
 	};
 
 private:
-	std::unordered_map<unsigned, Stream> audioStreams{};
+	std::unordered_map<unsigned, Stream>
+		audioStreams{};
 
 public:
 	AudioDevice() noexcept = default;
-	~AudioDevice() noexcept;
 
 	AudioDevice(const self&)  = delete;
 	self& operator=(const self&) = delete;
