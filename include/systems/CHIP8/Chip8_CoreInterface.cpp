@@ -4,10 +4,10 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include "BasicLogger.hpp"
 #include "HomeDirManager.hpp"
 #include "BasicVideoSpec.hpp"
 #include "GlobalAudioBase.hpp"
+#include "BasicLogger.hpp"
 #include "SimpleFileIO.hpp"
 
 #include "Chip8_CoreInterface.hpp"

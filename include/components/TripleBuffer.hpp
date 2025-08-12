@@ -6,27 +6,19 @@
 
 #pragma once
 
+#include <mutex>
+#include <shared_mutex>
+#include <cstdint>
+#include <algorithm>
+
 #include "Concepts.hpp"
 #include "Aligned.hpp"
+#include "AtomSharedPtr.hpp"
 
 #ifdef _MSC_VER
 	#pragma warning(push)
 	#pragma warning(disable: 4324)
 #endif
-
-#if false
-	#define USE_MUTEX
-#endif
-
-#define USE_MUTEX
-
-#if defined(USE_MUTEX)
-	#include <mutex>
-	#include <shared_mutex>
-#endif
-	#include <memory>
-	#include <atomic>
-	#include <algorithm>
 
 /*==================================================================*/
 

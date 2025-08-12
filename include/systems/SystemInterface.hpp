@@ -6,30 +6,18 @@
 
 #pragma once
 
-#include <shared_mutex>
-#include <functional>
-#include <execution>
-#include <iostream>
 #include <utility>
-#include <fstream>
-#include <numeric>
-#include <numbers>
-#include <cstring>
-#include <atomic>
-#include <memory>
-#include <string>
-#include <thread>
 #include <vector>
 #include <array>
-#include <cmath>
-#include <mutex>
 #include <span>
 #include <bit>
 
 #include "Typedefs.hpp"
 #include "Concepts.hpp"
-#include "Thread.hpp"
 #include "AtomSharedPtr.hpp"
+#include "ExecPolicy.hpp"
+#include "Thread.hpp"
+
 #include "AssignCast.hpp"
 #include "ArrayOps.hpp"
 #include "Map2D.hpp"

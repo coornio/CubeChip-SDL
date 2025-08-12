@@ -8,14 +8,14 @@
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_dialog.h>
 
+#include "HomeDirManager.hpp"
 #include "BasicLogger.hpp"
 #include "BasicInput.hpp"
-#include "HomeDirManager.hpp"
+
 #include "FrontendInterface.hpp"
 #include "BasicVideoSpec.hpp"
 #include "GlobalAudioBase.hpp"
 #include "DefaultConfig.hpp"
-
 #include "HDIS_HCIS.hpp"
 
 #include "FrontendHost.hpp"

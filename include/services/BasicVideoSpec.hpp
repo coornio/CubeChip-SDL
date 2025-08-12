@@ -7,6 +7,7 @@
 #pragma once
 
 #include "Typedefs.hpp"
+#include "AtomSharedPtr.hpp"
 #include "TripleBuffer.hpp"
 #include "LifetimeWrapperSDL.hpp"
 #include "SettingWrapper.hpp"

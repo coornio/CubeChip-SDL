@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "Typedefs.hpp"
+#include "AtomSharedPtr.hpp"
 
 /*==================================================================*/
 

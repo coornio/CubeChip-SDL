@@ -7,8 +7,6 @@
 #pragma once
 
 #include <array>
-#include <atomic>
-#include <memory>
 #include <utility>
 #include <mutex>
 #include <shared_mutex>
