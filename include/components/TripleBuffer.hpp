@@ -22,140 +22,295 @@
 
 /*==================================================================*/
 
-// TripleBuffer is a thread-safe buffer that allows for concurrent reading and writing
-// by using a work buffer, a swap buffer, and a read buffer. The work buffer is used
-// for writing data, the swap buffer is used to swap the work buffer with the read buffer,
-// and the read buffer is used for reading data. The swap is protected by a shared mutex
-// to ensure that only one thread can swap the buffers at a time, while allowing multiple
-// threads to read from the read buffer concurrently.
-// Access to read() or write() does not reserve the associated buffer, so there are no lock
-// or release calls required for either process, allowing single-call operations. Read fully
-// and write fully without worries. Same applies to copy().
-template <typename U>
-	requires (std::is_trivially_copyable_v<U>)
-class TripleBuffer {
-	using Buffer = AlignedUniqueArray<U>;
-	using mo = std::memory_order;
+/**
+ * @brief Thread-safe triple-buffer for concurrent reading and writing.
+ *
+ * @details
+ * TripleBuffer maintains three independent buffers:
+ * - **Work buffer**: receives writes from the producer.
+ * - **Read buffer**: supplies reads to the consumer.
+ * - **Swap buffer**: used internally to exchange data between work and read.
+ *
+ * Reads and writes are single-call operations that do not require manual
+ * lock management or buffer reservation. The buffer ensures that a full read
+ * or write operation completes without partial state exposure.
+ *
+ * All public methods that modify or read buffer contents acquire the
+ * appropriate shared or exclusive lock internally:
+ * - Read methods (`read()`, `copy()`) acquire a shared lock on the read buffer.
+ * - Write methods (`write()`) acquire an exclusive lock on the work buffer.
+ * - Resizing the buffer (`resize()`) acquires exclusive locks on both.
+ *
+ * @tparam T1 Element type stored in the buffer. Must be trivially copyable.
+ */
+template <typename T1>
+	requires (std::is_trivially_copyable_v<T1>)
+class alignas(HDIS) TripleBuffer {
+	using Buffer    = AlignedUniqueArray<T1>;
+	using AtomBuf   = Atom<Buffer*>;
+	using size_type = std::size_t;
 
-	alignas(HDIS) Buffer pWorkBuffer;
-	alignas(HDIS) Buffer pSwapBuffer;
-	alignas(HDIS) Buffer pReadBuffer;
+private:
+	struct alignas(sizeof(unsigned) * 2) Dimensions {
+		unsigned w{}, h{};
 
-	alignas(HDIS) std::shared_mutex mSwapLock{};
-	              std::atomic<bool> mBufferIsDirty{};
-	              std::size_t mSize{};
-	
-	/*==================================================================*/
+		constexpr Dimensions() noexcept = default;
+		constexpr Dimensions(unsigned width, unsigned height) noexcept
+			: w{ width }, h{ height }
+		{}
+
+		constexpr auto isRect() const noexcept { return w > 1 && h > 1; }
+		constexpr size_type size() const noexcept
+			{ return w * h; }
+	};
 
 public:
-	constexpr TripleBuffer(std::size_t buffer_size = 0)
-		: pWorkBuffer{ ::allocate_n<U>(buffer_size).as_value().release() }
-		, pSwapBuffer{ ::allocate_n<U>(buffer_size).as_value().release() }
-		, pReadBuffer{ ::allocate_n<U>(buffer_size).as_value().release() }
-		, mSize(pWorkBuffer && pSwapBuffer && pReadBuffer ? buffer_size : 0)
+	void setDimensions(unsigned width, unsigned height) noexcept
+		{ mDimensions.store(Dimensions(width, height), mo::release); }
+
+	Dimensions getDimensions() const noexcept
+		{ return mDimensions.load(mo::acquire); }
+
+private:
+	Buffer mWorkBuffer;
+	Buffer mReadBuffer;
+	Buffer mSwapBuffer;
+
+	std::shared_mutex mReadLock;
+	std::shared_mutex mWorkLock;
+	Atom<Dimensions>  mDimensions{};
+
+	alignas(HDIS) Buffer* mpWork{ &mWorkBuffer };
+	alignas(HDIS) Buffer* mpRead{ &mReadBuffer };
+	alignas(HDIS) AtomBuf mpSwap{ &mSwapBuffer };
+
+private:
+	static constexpr std::uintptr_t sNewDataFlag{ 1 };
+
+	constexpr bool getFlag(Buffer* ptr) const noexcept {
+		return reinterpret_cast<std::uintptr_t>(ptr) & sNewDataFlag;
+	}
+
+	constexpr Buffer* addFlag(Buffer* ptr) noexcept {
+		auto new_ptr{ reinterpret_cast<std::uintptr_t>(ptr) };
+		return reinterpret_cast<Buffer*>(new_ptr | sNewDataFlag);
+	}
+
+	constexpr Buffer* subFlag(Buffer* ptr) const noexcept {
+		auto new_ptr{ reinterpret_cast<std::uintptr_t>(ptr) };
+		return reinterpret_cast<Buffer*>(new_ptr & ~sNewDataFlag);
+	}
+
+/*==================================================================*/
+
+public:
+	TripleBuffer(unsigned w, unsigned h) noexcept
+		: mWorkBuffer{ ::allocate_n<T1>(w * h).as_value().release() }
+		, mReadBuffer{ ::allocate_n<T1>(w * h).as_value().release() }
+		, mSwapBuffer{ ::allocate_n<T1>(w * h).as_value().release() }
+		, mDimensions{ mWorkBuffer && mReadBuffer && mSwapBuffer \
+			? Dimensions(w, h) : Dimensions() }
 	{}
 
-	constexpr TripleBuffer(const TripleBuffer&)  = delete;
-	constexpr TripleBuffer(TripleBuffer&&)       = delete;
+	TripleBuffer(unsigned buffer_size = 0u) noexcept
+		: TripleBuffer(buffer_size, 1u)
+	{}
+
+	TripleBuffer(const TripleBuffer&) = delete;
+	TripleBuffer(TripleBuffer&&)      = delete;
 	TripleBuffer& operator=(const TripleBuffer&) = delete;
 	TripleBuffer& operator=(TripleBuffer&&)      = delete;
 
-	constexpr auto size() const noexcept { return mSize; }
+	auto size() const noexcept { return getDimensions().size(); }
 
-	// DO NOT CALL IF EITHER A CONSUMER OR PRODUCER IS ACTIVE!!
-	// This will reset the buffers to a new size, which will invalidate any
-	// pointers or references to the previous buffers, causing undefined behavior.
-	void resize(std::size_t buffer_size) {
-		mSize = buffer_size;
-		pWorkBuffer.reset(); pWorkBuffer = ::allocate_n<U>(buffer_size).as_value().release();
-		pSwapBuffer.reset(); pSwapBuffer = ::allocate_n<U>(buffer_size).as_value().release();
-		pReadBuffer.reset(); pReadBuffer = ::allocate_n<U>(buffer_size).as_value().release();
-		assert(pWorkBuffer && pSwapBuffer && pReadBuffer);
+	/**
+	 * @brief Resizes all internal buffers of the TripleBuffer to the specified size.
+	 *
+	 * @param buffer_size The new size (number of elements) for each buffer.
+	 *
+	 * @note Acquires exclusive locks for both read and work buffers.
+	 */
+	void resize(size_type buffer_size) {
+		std::unique_lock read_lock{ mReadLock };
+		std::unique_lock work_lock{ mWorkLock };
+
+		mWorkBuffer.reset(); mWorkBuffer = ::allocate_n<T1>(buffer_size).as_value().release();
+		mReadBuffer.reset(); mReadBuffer = ::allocate_n<T1>(buffer_size).as_value().release();
+		mSwapBuffer.reset(); mSwapBuffer = ::allocate_n<T1>(buffer_size).as_value().release();
+		mDimensions = mWorkBuffer && mReadBuffer && mSwapBuffer \
+			? Dimensions(unsigned(buffer_size), 1u) : Dimensions();
+		mpWork = &mWorkBuffer;
+		mpRead = &mReadBuffer;
+		mpSwap = &mSwapBuffer;
 	}
 
 	/*==================================================================*/
 
 private:
-	U* acquireReadBuffer() noexcept {
-		if (mBufferIsDirty.load(mo::acquire)) {
-			std::unique_lock lock{ mSwapLock };
-			std::swap(pReadBuffer, pSwapBuffer);
-			mBufferIsDirty.store(false, mo::release);
+	auto clamp_count(size_type count) const noexcept {
+		const auto limit{ size() };
+		return count ? std::min(count, limit) : limit;
+	}
+
+
+private:
+	T1* acquireReadBuffer() noexcept {
+		if (getFlag(mpSwap.load(mo::acquire))) {
+			mpRead = subFlag(mpSwap.exchange(mpRead, mo::acq_rel));
 		}
-		return pReadBuffer.get();
+		return mpRead->get();
 	}
 
 public:
-	// Copy the contents of the TripleBuffer to a new Buffer object and return it.
-	Buffer copy(std::size_t N = 0u) {
-		const auto new_count{ std::min(size(), N ? N : size()) };
-		auto temp{ ::allocate_n<U>(new_count).by_copy(acquireReadBuffer(), new_count).as_value() };
-		return temp.is_constructed() ? temp.release() : Buffer{};
+	/**
+	 * @brief Copies contents from the TripleBuffer into a heap-allocated container.
+	 *
+	 * @param count Size of returned container; if zero, matches the size of the buffer.
+	 * May be larger than the buffer size, extra elements will be value-initialized.
+	 * @return A heap-allocated container for the requested contents.
+	 * 
+	 * @note Acquires a shared lock on the read buffer.
+	 */
+	[[nodiscard]]
+	auto copy(size_type count = 0u) {
+		std::shared_lock lock{ mReadLock };
+		const auto new_count{ clamp_count(count) };
+		return ::allocate_n<T1>(count ? count : size()) \
+			.by_copy(acquireReadBuffer(), new_count).as_value() \
+			.release_as_container_if_constructed();
 	}
 
-	// Copy the contents of the TripleBuffer to a given array via raw pointer.
-	template <typename T>
-		requires (sizeof(T) == sizeof(U) && std::is_trivially_copyable_v<T>)
-	void read(T* output, std::size_t N = 0) noexcept {
+	/**
+	 * @brief Copies contents from the TripleBuffer into the provided output array.
+	 *
+	 * @tparam T2 Type of the output elements; must be copy-constructible and convertible from T1.
+	 * @param output Pointer to the output array where elements will be copied.
+	 * Maximum amount of copied elements is determined by the buffer size.
+	 * @param count Number of elements to read; if zero, reads the entire buffer.
+	 *
+	 * @note Acquires a shared lock on the read buffer.
+	 */
+	template <typename T2>
+	void read(T2* output, size_type count = 0)
+		noexcept(std::is_nothrow_convertible_v<T1, T2>)
+		requires(std::is_trivially_copyable_v<T2> && std::is_convertible_v<T1, T2>)
+	{
+		std::shared_lock lock{ mReadLock };
 		std::copy_n(EXEC_POLICY(unseq)
-			acquireReadBuffer(), std::min(size(), N ? N : size()), output);
+			acquireReadBuffer(), clamp_count(count), output);
 	}
 
-	// Copy the contents of the TripleBuffer to a given contiguous container.
-	template <IsContiguousContainer T>
-		requires MatchingValueType<T, U>
-	void read(T& output) noexcept {
+	/**
+	 * @brief Copies contents from the TripleBuffer into a contiguous container.
+	 *
+	 * @tparam T2 A contiguous container type with value_type convertible to T1.
+	 * @param output The container to copy data into.
+	 * 
+	 * @note Acquires a shared lock on the read buffer.
+	 */
+	template <IsContiguousContainer T2>
+	void read(T2& output)
+		noexcept(std::is_nothrow_convertible_v<T1, ValueType<T2>>)
+		requires(std::is_trivially_copyable_v<ValueType<T2>> && std::is_convertible_v<T1, ValueType<T2>>)
+	{
+		std::shared_lock lock{ mReadLock };
 		std::copy_n(EXEC_POLICY(unseq)
-			acquireReadBuffer(), size(), std::data(output));
+			acquireReadBuffer(), clamp_count(std::size(output)), std::data(output));
 	}
 
 	/*==================================================================*/
 
 private:
 	void commitWorkerChanges() noexcept {
-		std::swap(pWorkBuffer, pSwapBuffer);
-		mBufferIsDirty.store(true, mo::release);
+		mpWork = subFlag(mpSwap.exchange(addFlag(mpWork), mo::acq_rel));
 	}
 
 public:
-	// Write to the TripleBuffer by copying data from a raw pointer.
-	template <typename T, typename Lambda>
-	void write(const T* data, std::size_t N, Lambda&& function) {
-		std::unique_lock lock{ mSwapLock };
+	/**
+	 * @brief Writes to the TripleBuffer by transforming and copying data from a raw pointer.
+	 *
+	 * @tparam T2 Type of the input data elements.
+	 * @tparam Lambda Unary function applied to each input element before writing.
+	 * @param data Pointer to the source data.
+	 * @param count Number of elements to write. Maximum is clamped to the buffer size.
+	 * @param function Transformation function applied to each element before storing.
+	 *
+	 * @note Acquires an exclusive lock on the work buffer.
+	 */
+	template <typename T2, typename Lambda>
+	void write(const T2* data, size_type count, Lambda&& function)
+		noexcept(std::is_nothrow_convertible_v<T2, T1>)
+		requires(std::is_trivially_copyable_v<T2>&& std::is_convertible_v<T2, T1>)
+	{
+		std::unique_lock lock{ mWorkLock };
 		std::transform(EXEC_POLICY(unseq)
-			data, data + N, pWorkBuffer.get(), function);
-		
+			data, data + clamp_count(count), mpWork->get(), function);
+
 		commitWorkerChanges();
 	}
 
-	// Write to the TripleBuffer by copying data from a contiguous container.
-	template <IsContiguousContainer T>
-		requires (sizeof(ValueType<T>) == sizeof(U) && std::is_trivially_copyable_v<ValueType<T>>)
-	void write(const T& data) {
-		std::unique_lock lock{ mSwapLock };
+	/**
+	 * @brief Writes to the TripleBuffer by copying data from a contiguous container.
+	 *
+	 * @tparam T2 A contiguous container type whose element size matches T1 and is trivially copyable.
+	 * @param data The container whose contents will be copied into the buffer.
+	 *
+	 * @note Acquires an exclusive lock on the work buffer.
+	 */
+	template <IsContiguousContainer T2>
+	void write(const T2& data)
+		noexcept(std::is_nothrow_convertible_v<ValueType<T2>, T1>)
+		requires(std::is_trivially_copyable_v<ValueType<T2>>&& std::is_convertible_v<ValueType<T2>, T1>)
+	{
+		std::unique_lock lock{ mWorkLock };
 		std::copy(EXEC_POLICY(unseq)
-			std::begin(data), std::end(data), pWorkBuffer.get());
-		
+			std::begin(data), std::end(data), mpWork->get());
+
 		commitWorkerChanges();
 	}
 
-	// Write to the TripleBuffer by applying a unary function to each element of a contiguous container.
-	template <IsContiguousContainer T, typename Lambda>
-	void write(const T& data, Lambda&& function) {
-		std::unique_lock lock{ mSwapLock };
+	/**
+	 * @brief Writes to the TripleBuffer by applying a unary transformation to each element of a contiguous container.
+	 *
+	 * @tparam T2 A contiguous container type.
+	 * @tparam Lambda Unary function applied to each element before writing.
+	 * @param data The container whose elements will be transformed and written.
+	 * @param function Transformation function applied to each element before storing.
+	 *
+	 * @note Acquires an exclusive lock on the work buffer.
+	 */
+	template <IsContiguousContainer T2, typename Lambda>
+	void write(const T2& data, Lambda&& function)
+		noexcept(std::is_nothrow_convertible_v<ValueType<T2>, T1>)
+		requires(std::is_trivially_copyable_v<ValueType<T2>>&& std::is_convertible_v<ValueType<T2>, T1>)
+	{
+		std::unique_lock lock{ mWorkLock };
 		std::transform(EXEC_POLICY(unseq)
-			std::begin(data), std::end(data), pWorkBuffer.get(), function);
-		
+			std::begin(data), std::end(data), mpWork->get(), function);
+
 		commitWorkerChanges();
 	}
 
-	// Write to the TripleBuffer by applying a binary function to each element from two contiguous containers.
-	template <IsContiguousContainer T, typename Lambda>
-	void write(const T& data1, const T& data2, Lambda&& function) {
-		std::unique_lock lock{ mSwapLock };
+	/**
+	 * @brief Writes to the TripleBuffer by applying a binary transformation to elements from two contiguous containers.
+	 *
+	 * @tparam T2 A contiguous container type.
+	 * @tparam Lambda Binary function applied to corresponding elements from both containers before writing.
+	 * @param data1 The first input container.
+	 * @param data2 The second input container.
+	 * @param function Transformation function applied to each pair of elements before storing.
+	 *
+	 * @note Acquires an exclusive lock on the work buffer.
+	 */
+	template <IsContiguousContainer T2, typename Lambda>
+	void write(const T2& data1, const T2& data2, Lambda&& function)
+		noexcept(std::is_nothrow_convertible_v<ValueType<T2>, T1>)
+		requires(std::is_trivially_copyable_v<ValueType<T2>>&& std::is_convertible_v<ValueType<T2>, T1>)
+	{
+		std::unique_lock lock{ mWorkLock };
 		std::transform(EXEC_POLICY(unseq)
-			std::begin(data1), std::end(data1), std::begin(data2), pWorkBuffer.get(), function);
-		
+			std::begin(data1), std::end(data1), std::begin(data2), mpWork->get(), function);
+
 		commitWorkerChanges();
 	}
 };
