@@ -42,12 +42,11 @@ class SimpleRingBuffer {
 	static_assert(N >= 8, "Buffer size (N) must be at least 8.");
 
 	using self = SimpleRingBuffer;
-	using mo = std::memory_order;
 
-	alignas(HDIS) std::array<AtomSharedPtr<T>, N> mBuffer{};
-	alignas(HDIS) std::atomic<std::size_t>        mPushHead{ 0 };
-	alignas(HDIS) std::atomic<std::size_t>        mReadHead{ 0 };
-	alignas(HDIS) mutable std::shared_mutex       mGuard;
+	alignas(HDIS) AtomSharedPtr<T>  mBuffer[N]{};
+	alignas(HDIS) Atom<std::size_t> mPushHead{ 0 };
+	alignas(HDIS) Atom<std::size_t> mReadHead{ 0 };
+	alignas(HDIS) mutable std::shared_mutex mGuard;
 
 	static inline auto sDefaultT{ std::make_shared<T>(T{}) };
 
@@ -109,9 +108,8 @@ public:
 	void clear() noexcept {
 		std::unique_lock lock{ mGuard };
 
-		std::for_each(EXEC_POLICY(unseq)
-			mBuffer.begin(), mBuffer.end(),
-			[](auto& entry) noexcept {
+		std::for_each_n(EXEC_POLICY(unseq)
+			mBuffer, N, [](auto& entry) noexcept {
 				entry.store(sDefaultT, mo::relaxed); }
 		);
 	}
