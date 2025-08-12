@@ -48,7 +48,7 @@ protected:
 		mKeysPrev = mKeysCurr = mKeysLock = 0;
 	}
 
-	bool keyPressed(u8* returnKey) noexcept;
+	bool keyPressed(u8* keyReg) noexcept;
 	bool keyHeld_P1(u32 keyIndex) const noexcept;
 	bool keyHeld_P2(u32 keyIndex) const noexcept;
 

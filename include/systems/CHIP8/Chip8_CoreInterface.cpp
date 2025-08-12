@@ -57,7 +57,7 @@ void Chip8_CoreInterface::loadPresetBinds() {
 	loadCustomBinds(std::span(defaultKeyMappings));
 }
 
-bool Chip8_CoreInterface::keyPressed(u8* returnKey) noexcept {
+bool Chip8_CoreInterface::keyPressed(u8* keyReg) noexcept {
 	if (!std::size(mCustomBinds)) { return false; }
 
 	const auto mTickCurr{ u32(Pacer->getValidFrameCounter()) };
@@ -73,7 +73,7 @@ bool Chip8_CoreInterface::keyPressed(u8* returnKey) noexcept {
 		mTickLast  = mTickCurr;
 		mTickSpan  = validKeys != mKeysLoop ? 20 : 5;
 		mKeysLoop  = validKeys & ~(validKeys - 1);
-		*returnKey = std::countr_zero(mKeysLoop) & 0xFF;
+		::assign_cast(*keyReg, std::countr_zero(mKeysLoop));
 		//mKeyPitch = mKeysLoop ? std::min(mKeyPitch + 8, 80u) : 0;
 	}
 	return pressKeys;
