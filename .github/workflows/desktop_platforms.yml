@@ -13,6 +13,7 @@ jobs:
     strategy:
       matrix:
         os: [windows-2025, ubuntu-24.04, macos-latest]
+      fail-fast: false
 
     steps:
       - name: Checkout
@@ -47,8 +48,8 @@ jobs:
           GHASH=$(git rev-parse --short HEAD)
           echo "ghash=$GHASH" >> $GITHUB_OUTPUT
 
-          echo "with_date=0.${Y}.${M}.${D}"          >> $GITHUB_OUTPUT
-          echo "with_hash=0.${Y}.${M}.${D}.${GHASH}" >> $GITHUB_OUTPUT
+          echo "with_date=\"0.${Y}.${M}.${D}\""          >> $GITHUB_OUTPUT
+          echo "with_hash=\"0.${Y}.${M}.${D}.${GHASH}\"" >> $GITHUB_OUTPUT
 
       - name: Configure and Build
         shell: pwsh
@@ -60,7 +61,8 @@ jobs:
                 -DVERSION_GHASH=${{ steps.version.outputs.ghash }} `
                 -DVERSION_WITH_DATE=${{ steps.version.outputs.with_date }} `
                 -DVERSION_WITH_HASH=${{ steps.version.outputs.with_hash }} `
-                -DFROM_WORKFLOW -DCMAKE_BUILD_TYPE=Release -S . -B build
+                -DFROM_WORKFLOW=ON `
+                -DCMAKE_BUILD_TYPE=Release -S . -B build
           cmake --build build
 
       - name: GH Release
