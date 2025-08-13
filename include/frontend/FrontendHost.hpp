@@ -7,29 +7,42 @@
 #pragma once
 
 #include <memory>
-#include <atomic>
 
 #include "Typedefs.hpp"
 
 /*==================================================================*/
 
-#if !defined(NDEBUG) || defined(DEBUG)
-	constexpr auto* AppName{ "[DEBUG] CubeChip" };
-#else
-	constexpr auto* AppName{ "CubeChip" };
-#endif
+struct ProjectVersion {
+	constexpr static inline auto major{ PROJECT_VERSION_MAJOR };
+	constexpr static inline auto minor{ PROJECT_VERSION_MINOR };
+	constexpr static inline auto patch{ PROJECT_VERSION_PATCH };
+	constexpr static inline auto tweak{ PROJECT_VERSION_TWEAK };
 
-constexpr auto* AppVer{ __DATE__ };
+	constexpr static inline auto* major_s{ PROJECT_VERSION_MAJOR_S };
+	constexpr static inline auto* minor_s{ PROJECT_VERSION_MINOR_S };
+	constexpr static inline auto* patch_s{ PROJECT_VERSION_PATCH_S };
+	constexpr static inline auto* tweak_s{ PROJECT_VERSION_TWEAK_S };
+
+	constexpr static inline auto* ghash{ PROJECT_VERSION_GHASH };
+
+	constexpr static inline auto* with_date{ PROJECT_VERSION_WITH_DATE };
+	constexpr static inline auto* with_hash{ PROJECT_VERSION_WITH_HASH };
+};
+
+constexpr static inline auto AppVer{ ProjectVersion() };
+
+#if !defined(NDEBUG) || defined(DEBUG)
+	constexpr auto* AppName{ "[DEBUG] " PROJECT_NAME };
+#else
+	constexpr auto* AppName{ PROJECT_NAME };
+#endif
 
 /*==================================================================*/
 
 class HomeDirManager;
 class GlobalAudioBase;
 class BasicVideoSpec;
-
 class SystemInterface;
-
-union SDL_Event;
 
 /*==================================================================*/
 

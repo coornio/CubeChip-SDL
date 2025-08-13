@@ -1,0 +1,69 @@
+
+name: Build Desktop Platforms
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-2025, ubuntu-24.04, macos-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Misc Packages (Linux)
+        if: ${{ runner.os == 'Linux' }}
+        run: sudo apt-get update && sudo apt install -y libx11-dev libxext-dev libgl1 libglx-mesa0 mesa-common-dev
+
+      - name: Ccache for Github Actions
+        uses: hendrikmuhs/ccache-action@v1.2.18
+
+      - name: Make version from date
+        id: version
+        shell: bash
+        run: |
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            D=$(powershell -Command "(Get-Date).Day.ToString('00')")
+            M=$(powershell -Command "(Get-Date).Month.ToString('00')")
+            Y=$(powershell -Command "(Get-Date).Year")
+          else
+            D=$(date +%d)
+            M=$(date +%m)
+            Y=$(date +%Y)
+          fi
+
+          echo "major=0"  >> $GITHUB_OUTPUT
+          echo "minor=$Y" >> $GITHUB_OUTPUT
+          echo "patch=$M" >> $GITHUB_OUTPUT
+          echo "tweak=$D" >> $GITHUB_OUTPUT
+
+          GHASH=$(git rev-parse --short HEAD)
+          echo "ghash=$GHASH" >> $GITHUB_OUTPUT
+
+          echo "with_date=0.${Y}.${M}.${D}"          >> $GITHUB_OUTPUT
+          echo "with_hash=0.${Y}.${M}.${D}.${GHASH}" >> $GITHUB_OUTPUT
+
+      - name: Configure and Build
+        run: |
+          cmake -DVERSION_MAJOR=${{ steps.version.outputs.major }} \
+                -DVERSION_MINOR=${{ steps.version.outputs.minor }} \
+                -DVERSION_PATCH=${{ steps.version.outputs.patch }} \
+                -DVERSION_TWEAK=${{ steps.version.outputs.tweak }} \
+                -DVERSION_GHASH=${{ steps.version.outputs.ghash }} \
+                -DVERSION_WITH_DATE=${{ steps.version.outputs.with_date }} \
+                -DVERSION_WITH_HASH=${{ steps.version.outputs.with_hash }} \
+                -DFROM_WORKFLOW -DCMAKE_BUILD_TYPE=Release -S . -B build
+          cmake --build build
+
+      - name: GH Release
+        uses: actions/upload-artifact@v4
+        with:
+          name: "${{ runner.os }} v${{ steps.version.outputs.fullg }}"
+          path: build/bin

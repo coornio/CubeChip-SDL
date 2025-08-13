@@ -45,7 +45,7 @@ SDL_AppResult SDL_AppInit(void **Host, int argc, char *argv[]) {
 
 	SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1");
 	SDL_SetHint(SDL_HINT_APP_NAME, AppName);
-	SDL_SetAppMetadata(AppName, AppVer, nullptr);
+	SDL_SetAppMetadata(AppName, AppVer.with_hash, nullptr);
 
 	cxxopts::Options options(AppName, "Cross-platform multi-system emulator");
 
@@ -94,7 +94,8 @@ SDL_AppResult SDL_AppInit(void **Host, int argc, char *argv[]) {
 
 	if (result.count("version")) {
 		Console::Attach();
-		fmt::println("{} compiled on: {}", AppName, AppVer);
+		fmt::println("{} compiled on: {} ({})",
+			AppName, AppVer.with_date, AppVer.ghash);
 
 		return SDL_APP_SUCCESS;
 	}

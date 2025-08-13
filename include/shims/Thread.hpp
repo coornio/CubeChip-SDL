@@ -8,8 +8,9 @@
 
 /*==================================================================*/
 
-#if defined(__has_include) && __has_include(<stop_token>) \
-&& defined(__cpp_lib_jthread)
+#include <version>
+
+#if defined(__cpp_lib_jthread) && __cpp_lib_jthread >= 201911L
 	#include <thread>
 
 	using Thread    = std::jthread;

@@ -5,22 +5,16 @@ if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
     message(FATAL_ERROR "In-source builds are not allowed. Please create and use a separate build directory.")
 endif()
 
-find_program(CCACHE_PATH ccache)
-
-if(CCACHE_PATH)
-	set(CMAKE_CXX_COMPILER_LAUNCHER
-		"${CCACHE_PATH}"
-		CACHE FILEPATH "CXX compiler cache"
-	)
-	set(CMAKE_C_COMPILER_LAUNCHER
-		"${CCACHE_PATH}"
-		CACHE FILEPATH "C compiler cache"
-	)
+find_program(CCACHE_PROGRAM ccache)
+if(CCACHE_PROGRAM)
+    set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_PROGRAM}" CACHE STRING "")
+    set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}" CACHE STRING "")
 endif()
 
 # ==================================================================================== #
 
-project(CubeChip LANGUAGES CXX)
+project("CubeChip" LANGUAGES CXX)
+add_definitions(-DPROJECT_NAME=\"${PROJECT_NAME}\")
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -33,17 +27,18 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(PROJECT_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include")
 set(PROJECT_VENDOR_DIR "${PROJECT_INCLUDE_DIR}/vendor")
 
-include(cmake/_project_filelist.cmake)
-include(cmake/_vendor_utils.cmake)
+include("cmake/_project_filelist.cmake")
+include("cmake/_vendor_utils.cmake")
+include("cmake/_versioning.cmake")
 
-include(cmake/sdl3.cmake)
-include(cmake/imgui.cmake)
-include(cmake/atomic_queue.cmake)
-include(cmake/tl-expected.cmake)
-include(cmake/cxxopts.cmake)
-include(cmake/fmt.cmake)
-include(cmake/tomlplusplus.cmake)
-include(cmake/nlohmann-json.cmake)
+include("cmake/atomic_queue.cmake")
+include("cmake/tl-expected.cmake")
+include("cmake/cxxopts.cmake")
+include("cmake/fmt.cmake")
+include("cmake/tomlplusplus.cmake")
+include("cmake/nlohmann-json.cmake")
+include("cmake/sdl3.cmake")
+include("cmake/imgui.cmake")
 
 # ==================================================================================== #
 
@@ -83,26 +78,29 @@ target_include_directories(
 target_link_libraries(
 	"${PROJECT_NAME}" PRIVATE
 	max0x7ba::atomic_queue
-	imgui
-	tl::expected
-	cxxopts::cxxopts
-	fmt::fmt
 	tomlplusplus::tomlplusplus
 	nlohmann_json::nlohmann_json
+	cxxopts::cxxopts
+	tl::expected
+	fmt::fmt
+	imgui
 )
 
 # ==================================================================================== #
 
 if(WIN32)
+
 	if (CMAKE_SYSTEM_VERSION VERSION_LESS "10.0.22000.0")
 		message(WARNING "Windows SDK version is lower than 22000. Some features may be disabled.")
 		add_definitions(-DOLD_WINDOWS_SDK)
 	endif()
+	
 	target_link_libraries(
 		"${PROJECT_NAME}"
 		PRIVATE
 		"Dwmapi.lib"
 	)
+
 endif()
 
 # ==================================================================================== #
