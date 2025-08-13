@@ -1,5 +1,13 @@
 
-include("${CMAKE_CURRENT_LIST_DIR}/__gitversion.cmake")
+set(VERSION_MAJOR "0" CACHE STRING "")
+set(VERSION_MINOR "0" CACHE STRING "")
+set(VERSION_PATCH "0" CACHE STRING "")
+set(VERSION_TWEAK "0" CACHE STRING "")
+set(VERSION_GHASH "0" CACHE STRING "")
+
+if(NOT DEFINED FROM_WORKFLOW)
+	include("${CMAKE_CURRENT_LIST_DIR}/__gitversion.cmake")
+endif()
 
 # ==================================================================================== #
 
@@ -17,6 +25,9 @@ message(STATUS "| MINOR: '${VERSION_MINOR}'")
 message(STATUS "| PATCH: '${VERSION_PATCH}'")
 message(STATUS "| TWEAK: '${VERSION_TWEAK}'")
 message(STATUS "| GHASH: '${VERSION_GHASH}'")
+
+set(VERSION_FULL_DATE "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}.${VERSION_TWEAK}" CACHE INTERNAL "")
+set(VERSION_FULL_HASH "${VERSION_FULL_DATE}.${VERSION_GHASH}" CACHE INTERNAL "")
 
 message(STATUS "| FULL_DATE: '${VERSION_FULL_DATE}'")
 message(STATUS "| WITH_HASH: '${VERSION_FULL_HASH}'")
