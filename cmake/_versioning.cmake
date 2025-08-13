@@ -10,18 +10,28 @@ math(EXPR VERSION_TWEAK_I "${VERSION_TWEAK}")
 
 # ==================================================================================== #
 
+message(STATUS "Version Information:")
+
+message(STATUS "| MAJOR: '${VERSION_MAJOR}'")
+message(STATUS "| MINOR: '${VERSION_MINOR}'")
+message(STATUS "| PATCH: '${VERSION_PATCH}'")
+message(STATUS "| TWEAK: '${VERSION_TWEAK}'")
+message(STATUS "| GHASH: '${VERSION_GHASH}'")
+
+message(STATUS "| FULL_DATE: '${VERSION_FULL_DATE}'")
+message(STATUS "| WITH_HASH: '${VERSION_FULL_HASH}'")
+
 # integrals
-add_definitions(-DPROJECT_VERSION_MAJOR=${VERSION_MAJOR_I})
-add_definitions(-DPROJECT_VERSION_MINOR=${VERSION_MINOR_I})
-add_definitions(-DPROJECT_VERSION_PATCH=${VERSION_PATCH_I})
-add_definitions(-DPROJECT_VERSION_TWEAK=${VERSION_TWEAK_I})
+add_definitions(-DPROJECT_VERSION_MAJOR_I=${VERSION_MAJOR_I})
+add_definitions(-DPROJECT_VERSION_MINOR_I=${VERSION_MINOR_I})
+add_definitions(-DPROJECT_VERSION_PATCH_I=${VERSION_PATCH_I})
+add_definitions(-DPROJECT_VERSION_TWEAK_I=${VERSION_TWEAK_I})
 
 # strings (zero-padded)
-add_definitions(-DPROJECT_VERSION_MAJOR_S=\"${VERSION_MAJOR}\")
-add_definitions(-DPROJECT_VERSION_MINOR_S=\"${VERSION_MINOR}\")
-add_definitions(-DPROJECT_VERSION_PATCH_S=\"${VERSION_PATCH}\")
-add_definitions(-DPROJECT_VERSION_TWEAK_S=\"${VERSION_TWEAK}\")
-
+add_definitions(-DPROJECT_VERSION_MAJOR=\"${VERSION_MAJOR}\")
+add_definitions(-DPROJECT_VERSION_MINOR=\"${VERSION_MINOR}\")
+add_definitions(-DPROJECT_VERSION_PATCH=\"${VERSION_PATCH}\")
+add_definitions(-DPROJECT_VERSION_TWEAK=\"${VERSION_TWEAK}\")
 add_definitions(-DPROJECT_VERSION_GHASH=\"${VERSION_GHASH}\")
 
 # full version string

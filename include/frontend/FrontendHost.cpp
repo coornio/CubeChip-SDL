@@ -136,17 +136,18 @@ bool FrontendHost::initApplication(
 	return true;
 }
 
-s32  FrontendHost::processEvents(SDL_Event* event) noexcept {
+s32  FrontendHost::processEvents(void* event) noexcept {
 	FrontendInterface::ProcessEvent(event);
 
-	if (BVS->isMainWindowID(event->window.windowID)) {
-		switch (event->type) {
+	auto sdl_event{ reinterpret_cast<SDL_Event*>(event) };
+	if (BVS->isMainWindowID(sdl_event->window.windowID)) {
+		switch (sdl_event->type) {
 			case SDL_EVENT_QUIT:
 			case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
 				return SDL_APP_SUCCESS;
 
 			case SDL_EVENT_DROP_FILE:
-				loadGameFile(event->drop.data);
+				loadGameFile(sdl_event->drop.data);
 				break;
 
 			case SDL_EVENT_WINDOW_MINIMIZED:

@@ -13,15 +13,15 @@
 /*==================================================================*/
 
 struct ProjectVersion {
-	constexpr static inline auto major{ PROJECT_VERSION_MAJOR };
-	constexpr static inline auto minor{ PROJECT_VERSION_MINOR };
-	constexpr static inline auto patch{ PROJECT_VERSION_PATCH };
-	constexpr static inline auto tweak{ PROJECT_VERSION_TWEAK };
+	constexpr static inline auto major_i{ PROJECT_VERSION_MAJOR_I };
+	constexpr static inline auto minor_i{ PROJECT_VERSION_MINOR_I };
+	constexpr static inline auto patch_i{ PROJECT_VERSION_PATCH_I };
+	constexpr static inline auto tweak_i{ PROJECT_VERSION_TWEAK_I };
 
-	constexpr static inline auto* major_s{ PROJECT_VERSION_MAJOR_S };
-	constexpr static inline auto* minor_s{ PROJECT_VERSION_MINOR_S };
-	constexpr static inline auto* patch_s{ PROJECT_VERSION_PATCH_S };
-	constexpr static inline auto* tweak_s{ PROJECT_VERSION_TWEAK_S };
+	constexpr static inline auto* major{ PROJECT_VERSION_MAJOR };
+	constexpr static inline auto* minor{ PROJECT_VERSION_MINOR };
+	constexpr static inline auto* patch{ PROJECT_VERSION_PATCH };
+	constexpr static inline auto* tweak{ PROJECT_VERSION_TWEAK };
 
 	constexpr static inline auto* ghash{ PROJECT_VERSION_GHASH };
 
@@ -55,7 +55,8 @@ class FrontendHost final {
 	struct StopSystemThread {
 		void operator()(SystemInterface*) noexcept;
 	};
-	using SystemCore = std::unique_ptr<SystemInterface, StopSystemThread>;
+	using SystemCore = std::unique_ptr
+		<SystemInterface, StopSystemThread>;
 
 	SystemCore mSystemCore;
 
@@ -87,7 +88,7 @@ public:
 		bool forcePortable, StrV org, StrV app
 	) noexcept;
 
-	s32  processEvents(SDL_Event* event) noexcept;
+	s32  processEvents(void* event) noexcept;
 
 	void hideMainWindow(bool state) noexcept;
 	void pauseSystem(bool state) noexcept;
