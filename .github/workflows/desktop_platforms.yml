@@ -68,5 +68,5 @@ jobs:
       - name: GH Release
         uses: actions/upload-artifact@v4
         with:
-          name: "CubeChip_${{ runner.os }})_v${{ steps.version.outputs.with_hash }}"
+          name: "CubeChip_(${{ runner.os }})_v${{ steps.version.outputs.with_hash }}"
           path: build/bin

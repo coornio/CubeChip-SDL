@@ -113,8 +113,8 @@ if(MSVC)
 	)
 	set_target_properties(
 		"${PROJECT_NAME}" PROPERTIES
-        PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/pdb"
-    )
+		PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/pdb"
+	)
 
 	target_compile_options(
 		"${PROJECT_NAME}" PRIVATE
