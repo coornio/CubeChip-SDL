@@ -51,14 +51,15 @@ jobs:
           echo "with_hash=0.${Y}.${M}.${D}.${GHASH}" >> $GITHUB_OUTPUT
 
       - name: Configure and Build
+        shell: pwsh
         run: |
-          cmake -DVERSION_MAJOR=${{ steps.version.outputs.major }} \
-                -DVERSION_MINOR=${{ steps.version.outputs.minor }} \
-                -DVERSION_PATCH=${{ steps.version.outputs.patch }} \
-                -DVERSION_TWEAK=${{ steps.version.outputs.tweak }} \
-                -DVERSION_GHASH=${{ steps.version.outputs.ghash }} \
-                -DVERSION_WITH_DATE=${{ steps.version.outputs.with_date }} \
-                -DVERSION_WITH_HASH=${{ steps.version.outputs.with_hash }} \
+          cmake -DVERSION_MAJOR=${{ steps.version.outputs.major }} `
+                -DVERSION_MINOR=${{ steps.version.outputs.minor }} `
+                -DVERSION_PATCH=${{ steps.version.outputs.patch }} `
+                -DVERSION_TWEAK=${{ steps.version.outputs.tweak }} `
+                -DVERSION_GHASH=${{ steps.version.outputs.ghash }} `
+                -DVERSION_WITH_DATE=${{ steps.version.outputs.with_date }} `
+                -DVERSION_WITH_HASH=${{ steps.version.outputs.with_hash }} `
                 -DFROM_WORKFLOW -DCMAKE_BUILD_TYPE=Release -S . -B build
           cmake --build build
 
