@@ -111,6 +111,10 @@ if(MSVC)
 		DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
 		PROPERTY VS_STARTUP_PROJECT "${PROJECT_NAME}"
 	)
+	set_target_properties(
+		"${PROJECT_NAME}" PROPERTIES
+        PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/pdb"
+    )
 
 	target_compile_options(
 		"${PROJECT_NAME}" PRIVATE

@@ -40,6 +40,7 @@ jobs:
             Y=$(date +%Y)
           fi
 
+          echo "major=0"  >> $GITHUB_OUTPUT
           echo "minor=$Y" >> $GITHUB_OUTPUT
           echo "patch=$M" >> $GITHUB_OUTPUT
           echo "tweak=$D" >> $GITHUB_OUTPUT
@@ -47,20 +48,25 @@ jobs:
           GHASH=$(git rev-parse --short HEAD)
           echo "ghash=$GHASH" >> $GITHUB_OUTPUT
 
+          echo "with_date=0.${Y}.${M}.${D}"          >> $GITHUB_OUTPUT
+          echo "with_hash=0.${Y}.${M}.${D}.${GHASH}" >> $GITHUB_OUTPUT
+
       - name: Configure and Build
         shell: pwsh
         run: |
           cmake -DFROM_WORKFLOW=ON `
-                -DVERSION_MAJOR=0 `
-                -DVERSION_MINOR=${{ steps.version.outputs.minor }} `
-                -DVERSION_PATCH=${{ steps.version.outputs.patch }} `
-                -DVERSION_TWEAK=${{ steps.version.outputs.tweak }} `
-                -DVERSION_GHASH=${{ steps.version.outputs.ghash }} `
+                -DVERSION_MAJOR="${{ steps.version.outputs.major }}" `
+                -DVERSION_MINOR="${{ steps.version.outputs.minor }}" `
+                -DVERSION_PATCH="${{ steps.version.outputs.patch }}" `
+                -DVERSION_TWEAK="${{ steps.version.outputs.tweak }}" `
+                -DVERSION_GHASH="${{ steps.version.outputs.ghash }}" `
+                -DVERSION_WITH_DATE="${{ steps.version.outputs.with_date }}" `
+                -DVERSION_WITH_HASH="${{ steps.version.outputs.with_hash }}" `
                 -DCMAKE_BUILD_TYPE=Release -S . -B build
           cmake --build build
 
       - name: GH Release
         uses: actions/upload-artifact@v4
         with:
-          name: "${{ runner.os }} v0.${{ steps.version.outputs.minor }}.${{ steps.version.outputs.patch }}.${{ steps.version.outputs.tweak }}.${{ steps.version.outputs.ghash }}"
+          name: "CubeChip_${{ runner.os }})_v${{ steps.version.outputs.with_hash }}"
           path: build/bin
