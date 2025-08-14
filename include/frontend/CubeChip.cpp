@@ -64,7 +64,6 @@ SDL_AppResult SDL_AppInit(void **Host, int argc, char *argv[]) {
 			cxxopts::value<bool>()->default_value("false"));
 
 	options.add_options("General")
-		("debug",   "Print application SDL debuf info.")
 		("version", "Print application version info.")
 		("help",    "List application options.");
 
@@ -72,25 +71,6 @@ SDL_AppResult SDL_AppInit(void **Host, int argc, char *argv[]) {
 	options.positional_help("program_file");
 
 	auto result{ options.parse(argc, argv) };
-
-	if (result.count("debug")) {
-		Console::Attach();
-		fmt::println("SDL3 dev version tested: 23/03/25 (dd/mm/yy)");
-
-		const auto compiled{ SDL_VERSION }; /* hardcoded number from SDL headers */
-		const auto linked{ SDL_GetVersion() }; /* reported by linked SDL library */
-
-		fmt::println("Compiled with SDL version: {}.{}.{}",
-			SDL_VERSIONNUM_MAJOR(compiled),
-			SDL_VERSIONNUM_MINOR(compiled),
-			SDL_VERSIONNUM_MICRO(compiled));
-		fmt::println("Linked with SDL version: {}.{}.{}",
-			SDL_VERSIONNUM_MAJOR(linked),
-			SDL_VERSIONNUM_MINOR(linked),
-			SDL_VERSIONNUM_MICRO(linked));
-
-		return SDL_APP_SUCCESS;
-	}
 
 	if (result.count("version")) {
 		Console::Attach();
@@ -110,7 +90,7 @@ SDL_AppResult SDL_AppInit(void **Host, int argc, char *argv[]) {
 	if (!FrontendHost::initApplication(
 		result.count("homedir")  ? result["homedir"].as<Str>() : ""s,
 		result.count("config")   ? result["config"] .as<Str>() : ""s,
-		result.count("portable") ? true : false, "", AppName
+		result.count("portable") ? true : false
 	)) { return SDL_APP_FAILURE; }
 
 	*Host = FrontendHost::initialize(result.count("program") ? result["program"].as<Str>() : ""s);
@@ -123,7 +103,7 @@ SDL_AppResult SDL_AppInit(void **Host, int argc, char *argv[]) {
 /*==================================================================*/
 
 SDL_AppResult SDL_AppIterate(void *pHost) {
-	auto Host{ static_cast<FrontendHost*>(pHost) };
+	auto* Host{ static_cast<FrontendHost*>(pHost) };
 
 	Host->processFrame();
 
@@ -133,7 +113,7 @@ SDL_AppResult SDL_AppIterate(void *pHost) {
 /*==================================================================*/
 
 SDL_AppResult SDL_AppEvent(void *pHost, SDL_Event *event) {
-	auto Host{ static_cast<FrontendHost*>(pHost) };
+	auto* Host{ static_cast<FrontendHost*>(pHost) };
 
 	return static_cast<SDL_AppResult>(Host->processEvents(event));
 }
@@ -142,7 +122,7 @@ SDL_AppResult SDL_AppEvent(void *pHost, SDL_Event *event) {
 
 void SDL_AppQuit(void *pHost, SDL_AppResult) {
 	if (pHost) {
-		auto Host{ static_cast<FrontendHost*>(pHost) };
+		auto* Host{ static_cast<FrontendHost*>(pHost) };
 		Host->quitApplication();
 	}
 }

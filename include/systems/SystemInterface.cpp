@@ -24,11 +24,13 @@ void SystemInterface::stopWorker() noexcept {
 }
 
 void SystemInterface::threadEntry(StopToken token) {
-	thread_affinity::set_affinity(~0b11ull);
-	SDL_SetCurrentThreadPriority(SDL_THREAD_PRIORITY_HIGH);
+	SDL_SetCurrentThreadPriority(SDL_THREAD_PRIORITY_TIME_CRITICAL);
+	static thread_local thread_affinity::Manager thread{ 15, 0b11ull };
 
-	while (!token.stop_requested())
-		[[likely]] { mainSystemLoop(); }
+	while (!token.stop_requested()) [[likely]] {
+		thread.refresh_affinity();
+		if (Pacer->checkTime()) { mainSystemLoop(); }
+	}
 }
 
 SystemInterface::SystemInterface() noexcept

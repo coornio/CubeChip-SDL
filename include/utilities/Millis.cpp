@@ -10,16 +10,16 @@
 
 /*==================================================================*/
 
-static const auto sInitialTimestamp \
+static const auto sInitialTimestamp
 	{ std::chrono::steady_clock::now() };
 
 /*==================================================================*/
 
-auto Millis::get() const noexcept -> return_type {
-	return std::chrono::duration_cast<std::chrono::milliseconds> \
+long long Millis::now() noexcept {
+	return std::chrono::duration_cast<std::chrono::milliseconds>
 		(std::chrono::steady_clock::now() - sInitialTimestamp).count();
 }
 
-auto Millis::getSince(return_type past_millis) const noexcept -> return_type {
-	return get() - past_millis;
+long long Millis::since(long long past_millis) noexcept {
+	return now() - past_millis;
 }

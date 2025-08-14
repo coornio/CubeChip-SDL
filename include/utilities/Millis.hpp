@@ -9,10 +9,8 @@
 /*==================================================================*/
 
 struct Millis final {
-	using return_type = long long;
-
 	Millis() = delete;
 
-	auto get() const noexcept -> return_type;
-	auto getSince(return_type past_millis) const noexcept -> return_type;
+	static long long now() noexcept;
+	static long long since(long long past_millis) noexcept;
 };

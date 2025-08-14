@@ -111,11 +111,9 @@ void FrontendHost::quitApplication() noexcept {
 	);
 }
 
-bool FrontendHost::initApplication(
-	StrV overrideHome, StrV configName,
-	bool forcePortable, StrV org, StrV app
-) noexcept {
-	HDM = HomeDirManager::initialize(overrideHome, configName, forcePortable, org, app);
+bool FrontendHost::initApplication(StrV overrideHome, StrV configName, bool forcePortable) noexcept {
+	HDM = HomeDirManager::initialize(
+		overrideHome, configName, forcePortable, OrgName, AppName);
 	if (!HDM) { return false; }
 
 	GlobalAudioBase::Settings GAB_settings;

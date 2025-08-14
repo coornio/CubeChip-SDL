@@ -26,16 +26,14 @@ GameBoy_CoreInterface::GameBoy_CoreInterface() noexcept {
 /*==================================================================*/
 
 void GameBoy_CoreInterface::mainSystemLoop() {
-	if (Pacer->checkTime()) {
-		if (!isSystemRunning())
-			[[unlikely]] { return; }
+	if (!isSystemRunning())
+		[[unlikely]] { return; }
 
-		updateKeyStates();
-		instructionLoop();
-		renderAudioData();
-		renderVideoData();
-		pushOverlayData();
-	}
+	updateKeyStates();
+	instructionLoop();
+	renderAudioData();
+	renderVideoData();
+	pushOverlayData();
 }
 
 void GameBoy_CoreInterface::loadPresetBinds() {

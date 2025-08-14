@@ -25,15 +25,13 @@ BytePusher_CoreInterface::BytePusher_CoreInterface() noexcept {
 /*==================================================================*/
 
 void BytePusher_CoreInterface::mainSystemLoop() {
-	if (Pacer->checkTime()) {
-		if (!isSystemRunning())
-			[[unlikely]] { return; }
+	if (!isSystemRunning())
+		[[unlikely]] { return; }
 
-		instructionLoop();
-		renderAudioData();
-		renderVideoData();
-		pushOverlayData();
-	}
+	instructionLoop();
+	renderAudioData();
+	renderVideoData();
+	pushOverlayData();
 }
 
 void BytePusher_CoreInterface::loadPresetBinds() {

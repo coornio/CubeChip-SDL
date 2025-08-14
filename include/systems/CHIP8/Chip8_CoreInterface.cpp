@@ -170,21 +170,19 @@ void Chip8_CoreInterface::performProgJump(u32 next) noexcept {
 /*==================================================================*/
 
 void Chip8_CoreInterface::mainSystemLoop() {
-	if (Pacer->checkTime()) {
-		if (!isSystemRunning())
-			[[unlikely]] { return; }
+	if (!isSystemRunning())
+		[[unlikely]] { return; }
 
-		updateKeyStates();
+	updateKeyStates();
 
-		handleTimerTick();
-		handlePreFrameInterrupt();
-		instructionLoop();
-		handleEndFrameInterrupt();
+	handleTimerTick();
+	handlePreFrameInterrupt();
+	instructionLoop();
+	handleEndFrameInterrupt();
 
-		renderAudioData();
-		renderVideoData();
-		pushOverlayData();
-	}
+	renderAudioData();
+	renderVideoData();
+	pushOverlayData();
 }
 
 Str* Chip8_CoreInterface::makeOverlayData() {

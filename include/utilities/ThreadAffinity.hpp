@@ -51,4 +51,42 @@ namespace thread_affinity {
 	 */
 	inline bool set_affinity(unsigned long long, void* = nullptr) noexcept { return false; }
 #endif
+
+/*==================================================================*/
+
+	/**
+	 * @brief
+	 * Manages thread affinity by pinning a thread to a logical core group (hyperthread siblings)
+	 * every time the system scheduler migrates the thread to a different core group, effective
+	 * for a defined cooldown period. An affinity mask can be provided to avoid specific cores.
+	 *
+	 * Usage:
+	 * - Construct a Manager object (ideally TLS) at the start of a thread or section of code.
+	 * - Call `refresh_affinity()` periodically to enforce the pinning policy.
+	 *
+	 * Example:
+	 * @code
+	 * thread_affinity::Manager ag(100, 0b11); // 100 sec cooldown, avoid first two cores
+	 * if (ag.refresh_affinity()) {
+	 *     // thread was newly pinned, do something special
+	 * }
+	 * @endcode
+	 */
+	class Manager {
+		long long timestamp{};
+		unsigned  cooldown_p{};
+
+		bool is_thread_pinned{ true };
+
+		unsigned long long avoid_mask{};
+		unsigned long long last_group{};
+
+	public:
+		Manager(
+			unsigned           cooldown_p,
+			unsigned long long avoid_mask = 0ull
+		) noexcept;
+
+		bool refresh_affinity() noexcept;
+	};
 }

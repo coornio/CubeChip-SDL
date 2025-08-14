@@ -36,6 +36,7 @@ constexpr static inline auto AppVer{ ProjectVersion() };
 #else
 	constexpr auto* AppName{ PROJECT_NAME };
 #endif
+	constexpr auto* OrgName{ "" };
 
 /*==================================================================*/
 
@@ -83,10 +84,7 @@ public:
 		return &self;
 	}
 
-	static bool initApplication(
-		StrV overrideHome, StrV configName,
-		bool forcePortable, StrV org, StrV app
-	) noexcept;
+	static bool initApplication(StrV overrideHome, StrV configName, bool forcePortable) noexcept;
 
 	s32  processEvents(void* event) noexcept;
 

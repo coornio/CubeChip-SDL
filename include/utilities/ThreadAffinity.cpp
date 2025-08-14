@@ -5,6 +5,7 @@
 */
 
 #include "ThreadAffinity.hpp"
+#include "Millis.hpp"
 
 #if defined(_WIN32)
 	#define NOMINMAX
@@ -77,3 +78,38 @@ unsigned thread_affinity::get_current_core() noexcept {
 			&chosen_tag, THREAD_AFFINITY_POLICY_COUNT) == KERN_SUCCESS;
 	}
 #endif
+
+/*==================================================================*/
+
+static auto get_core_group() noexcept {
+	const auto core_affinity_group{ thread_affinity::get_current_core() & ~1u };
+	return 1ull << core_affinity_group | 1ull << (core_affinity_group + 1);
+}
+
+thread_affinity::Manager::Manager(
+	unsigned           cooldown_p,
+	unsigned long long avoid_mask
+) noexcept
+	: timestamp{ -Millis::now() }
+	, cooldown_p{ cooldown_p * 1000 }
+	, avoid_mask{ avoid_mask }
+{}
+
+bool thread_affinity::Manager::refresh_affinity() noexcept {
+	if (is_thread_pinned) {
+		if (Millis::since(timestamp) >= cooldown_p) {
+			set_affinity(~avoid_mask);
+			is_thread_pinned = false;
+		}
+	} else {
+		auto this_group{ ::get_core_group() };
+		if (this_group != last_group) {
+			last_group = this_group;
+			timestamp = Millis::now();
+			set_affinity(this_group);
+			is_thread_pinned = true;
+			return true;
+		}
+	}
+	return false;
+}
