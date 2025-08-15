@@ -9,8 +9,8 @@
 #include <version>
 
 #if defined(__cpp_lib_execution) && (__cpp_lib_execution >= 201902L)
-	#define EXEC_POLICY(policy)
-#else
 	#include <execution>
 	#define EXEC_POLICY(policy) std::execution::policy,
+#else
+	#define EXEC_POLICY(policy)
 #endif
