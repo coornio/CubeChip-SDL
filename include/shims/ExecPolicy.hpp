@@ -6,7 +6,9 @@
 
 #pragma once
 
-#ifdef __APPLE__
+#include <version>
+
+#if defined(__cpp_lib_execution) && (__cpp_lib_execution >= 201603)
 	#define EXEC_POLICY(policy)
 #else
 	#include <execution>

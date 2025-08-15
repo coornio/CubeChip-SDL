@@ -14,10 +14,10 @@ auto config::writeToFile(
 	const char* filename
 ) noexcept -> Expected<bool, std::error_code> {
 	std::ofstream outFile(filename, std::ios::out);
-	if (!outFile) { return makeUnexpected(std::make_error_code(std::errc::permission_denied)); }
+	if (!outFile) { return Unexpected(std::make_error_code(std::errc::permission_denied)); }
 
 	try { if (outFile << table) { return true; } else { throw std::exception(); } }
-	catch (...) { return makeUnexpected(std::make_error_code(std::errc::io_error)); }
+	catch (...) { return Unexpected(std::make_error_code(std::errc::io_error)); }
 }
 
 auto config::parseFromFile(

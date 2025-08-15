@@ -6,6 +6,10 @@
 
 #pragma once
 
+#include <version>
+#include <utility>
+#include <type_traits>
+
 /*==================================================================*/
 
 #if defined(__has_include) && __has_include(<expected>) \
@@ -28,15 +32,22 @@
 #endif
 
 /*==================================================================*/
-	
-template <typename E>
-Unexpected<E> makeUnexpected(E&& value) {
-	return Unexpected<E>(std::forward<E>(value));
-}
 
-// factory for Expected<T, E> type, expects <E> to be convertible to boolean
+/**
+ * @brief Creates an Expected<T, E> object from a value and an error.
+ * If the error evaluates to false, it returns the value.
+ * Otherwise, it returns an Unexpected<E> object with the error.
+ *
+ * @tparam T Type of the value.
+ * @tparam E Type of the error.
+ * @param value The value to be wrapped in Expected.
+ * @param error The error to be checked and possibly wrapped in Unexpected.
+ * @return An Expected<T, E> object containing either the value or the error.
+ * @warning Currently does not work with lvalue E types, std::move them first.
+ */
 template <typename T, typename E>
-Expected<T, E> makeExpected(T&& value, E&& error) {
+	requires (requires (E e) { !e; })
+inline constexpr Expected<T, E> make_expected(T&& value, E&& error) {
 	if (!error) { return std::forward<T>(value); }
-	else { return makeUnexpected<E>(std::forward<E>(error)); }
+	else { return Unexpected(std::forward<E>(error)); }
 }

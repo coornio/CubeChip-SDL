@@ -25,7 +25,7 @@ namespace fs {
 	inline auto last_write_time(const Path& filePath) noexcept {
 		std::error_code error;
 		auto value{ std::filesystem::last_write_time(filePath, error) };
-		return makeExpected(std::move(value), std::move(error));
+		return ::make_expected(std::move(value), std::move(error));
 	}
 
 	/* Get size of file at the designated path, if any. */
@@ -33,7 +33,7 @@ namespace fs {
 	inline auto file_size(const Path& filePath) noexcept {
 		std::error_code error;
 		auto value{ std::filesystem::file_size(filePath, error) };
-		return makeExpected(std::move(value), std::move(error));
+		return ::make_expected(std::move(value), std::move(error));
 	}
 
 	/*==================================================================*/
@@ -43,7 +43,7 @@ namespace fs {
 	inline auto rename(const Path& filePath1, const Path& filePath2) noexcept {
 		std::error_code error;
 		std::filesystem::rename(filePath1, filePath2, error);
-		return makeExpected(true, std::move(error));
+		return ::make_expected(true, std::move(error));
 	}
 
 	/* Removes file or empty folder at the designated path, if any. */
@@ -51,7 +51,7 @@ namespace fs {
 	inline auto remove(const Path& filePath) noexcept {
 		std::error_code error;
 		auto value{ std::filesystem::remove(filePath, error) };
-		return makeExpected(std::move(value), std::move(error));
+		return ::make_expected(std::move(value), std::move(error));
 	}
 
 	/* Removes all files/folders at the designated path, if any. */
@@ -59,21 +59,21 @@ namespace fs {
 	inline auto remove_all(const Path& filePath) noexcept {
 		std::error_code error;
 		auto value{ std::filesystem::remove_all(filePath, error) };
-		return makeExpected(std::move(value), std::move(error));
+		return ::make_expected(std::move(value), std::move(error));
 	}
 
 	[[maybe_unused]]
 	inline auto create_directory(const Path& filePath) noexcept {
 		std::error_code error;
 		auto value{ std::filesystem::create_directory(filePath, error) };
-		return makeExpected(std::move(value), std::move(error));
+		return ::make_expected(std::move(value), std::move(error));
 	}
 
 	[[maybe_unused]]
 	inline auto create_directory(const Path& filePath1, const Path& filePath2) noexcept {
 		std::error_code error;
 		auto value{ std::filesystem::create_directory(filePath1, filePath2, error) };
-		return makeExpected(std::move(value), std::move(error));
+		return ::make_expected(std::move(value), std::move(error));
 	}
 
 	/* Create all required directories up to the designated path. */
@@ -81,7 +81,7 @@ namespace fs {
 	inline auto create_directories(const Path& filePath) noexcept {
 		std::error_code error;
 		auto value{ std::filesystem::create_directories(filePath, error) };
-		return makeExpected(std::move(value), std::move(error));
+		return ::make_expected(std::move(value), std::move(error));
 	}
 
 	/* Check if the designated path leads to an existing location. */
@@ -89,7 +89,7 @@ namespace fs {
 	inline auto exists(const Path& filePath) noexcept {
 		std::error_code error;
 		auto value{ std::filesystem::exists(filePath, error) };
-		return makeExpected(std::move(value), std::move(error));
+		return ::make_expected(std::move(value), std::move(error));
 	}
 
 	/* Check if the designated path leads to an existing, regular file. */
@@ -97,7 +97,7 @@ namespace fs {
 	inline auto is_regular_file(const Path& filePath) noexcept {
 		std::error_code error;
 		auto value{ std::filesystem::is_regular_file(filePath, error) };
-		return makeExpected(std::move(value), std::move(error));
+		return ::make_expected(std::move(value), std::move(error));
 	}
 }
 
@@ -111,9 +111,6 @@ namespace fs {
  * @param[in] dataReadSize   :: Amount of bytes to read. If 0, reads the entire file.
  *                              If non-zero, it will attempt to read the requested amount of bytes, and if the read reaches EOF, will not throw an error.
  * @param[in] dataReadOffset :: Absolute read position offset.
- *
- * @warning There are no limiters in place. You can repeat a pattern if you wish.
- * @warning Elements in the View matrix must be dereferenced to be used.
  */
 [[maybe_unused]]
 inline auto readFileData(
@@ -122,13 +119,13 @@ inline auto readFileData(
 ) noexcept -> Expected<std::vector<char>, std::error_code> {
 	try {
 		auto fileModStampBegin{ fs::last_write_time(filePath) };
-		if (!fileModStampBegin) { return makeUnexpected(std::move(fileModStampBegin.error())); }
+		if (!fileModStampBegin) { return Unexpected(std::move(fileModStampBegin.error())); }
 
 		std::ifstream inFile(filePath, std::ios::binary | std::ios::in);
-		if (!inFile) { return makeUnexpected(std::make_error_code(std::errc::permission_denied)); }
+		if (!inFile) { return Unexpected(std::make_error_code(std::errc::permission_denied)); }
 
 		inFile.seekg(static_cast<std::streampos>(dataReadOffset));
-		if (!inFile) { return makeUnexpected(std::make_error_code(std::errc::invalid_argument)); }
+		if (!inFile) { return Unexpected(std::make_error_code(std::errc::invalid_argument)); }
 		
 		std::vector<char> fileData{};
 
@@ -140,19 +137,19 @@ inline auto readFileData(
 				fileData.assign(std::istreambuf_iterator(inFile), {});
 				if (!inFile.good()) { throw std::exception{}; }
 			} catch (const std::exception&) {
-				return makeUnexpected(std::make_error_code(std::errc::not_enough_memory));
+				return Unexpected(std::make_error_code(std::errc::not_enough_memory));
 			}
 		}
 
 		auto fileModStampEnd{ fs::last_write_time(filePath) };
-		if (!fileModStampEnd) { return makeUnexpected(std::move(fileModStampEnd.error())); }
+		if (!fileModStampEnd) { return Unexpected(std::move(fileModStampEnd.error())); }
 
 		if (fileModStampBegin.value() != fileModStampEnd.value()) {
-			return makeUnexpected(std::make_error_code(std::errc::interrupted));
+			return Unexpected(std::make_error_code(std::errc::interrupted));
 		} else { return fileData; }
 	}
 	catch (const std::exception&) {
-		return makeUnexpected(std::make_error_code(std::errc::io_error));
+		return Unexpected(std::make_error_code(std::errc::io_error));
 	}
 }
 
@@ -166,16 +163,16 @@ inline auto writeFileData(
 ) noexcept -> Expected<bool, std::error_code> {
 	try {
 		std::ofstream outFile(filePath, std::ios::binary | std::ios::out);
-		if (!outFile) { return makeUnexpected(std::make_error_code(std::errc::permission_denied)); }
+		if (!outFile) { return Unexpected(std::make_error_code(std::errc::permission_denied)); }
 
 		outFile.seekp(static_cast<std::streampos>(dataWriteOffset));
-		if (!outFile) { return makeUnexpected(std::make_error_code(std::errc::invalid_argument)); }
+		if (!outFile) { return Unexpected(std::make_error_code(std::errc::invalid_argument)); }
 
 		if (outFile.write(reinterpret_cast<const char*>(fileData), dataWriteSize * sizeof(T)))
 			{ return true; } else { throw std::exception{}; }
 	}
 	catch (const std::exception&) {
-		return makeUnexpected(std::make_error_code(std::errc::io_error));
+		return Unexpected(std::make_error_code(std::errc::io_error));
 	}
 }
 
