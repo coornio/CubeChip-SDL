@@ -49,5 +49,5 @@ template <typename T, typename E>
 	requires (requires (E e) { !e; })
 inline constexpr Expected<T, E> make_expected(T&& value, E&& error) {
 	if (!error) { return std::forward<T>(value); }
-	else { return Unexpected(std::forward<E>(error)); }
+	else { return Unexpected<E>(std::forward<E>(error)); }
 }
