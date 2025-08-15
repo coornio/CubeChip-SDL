@@ -21,7 +21,7 @@ BYTEPUSHER_STANDARD::BYTEPUSHER_STANDARD() {
 	setDisplayBorderColor(cBitsColor[0]);
 
 	setViewportSizes(true, cScreenSizeX, cScreenSizeY, cResSizeMult, 2);
-	setSystemFramerate(cRefreshRate);
+	setBaseSystemFramerate(cRefreshRate);
 
 	mAudioDevice.addAudioStream(STREAM::MAIN, u32(cRefreshRate * cAudioLength));
 	mAudioDevice.resumeStreams();

@@ -20,7 +20,7 @@ MEGACHIP::MEGACHIP() {
 	copyFontToMemory(mMemoryBank.data(), 0xB4);
 
 	setViewportSizes(true, cScreenMegaX, cScreenMegaY, cResSizeMult, 2);
-	setSystemFramerate(cRefreshRate);
+	setBaseSystemFramerate(cRefreshRate);
 
 	mVoices[VOICE::UNIQUE].userdata = &mAudioTimers[VOICE::UNIQUE];
 	mVoices[VOICE::BUZZER].userdata = &mAudioTimers[VOICE::BUZZER];
@@ -446,9 +446,9 @@ void MEGACHIP::startAudioTrack(bool repeat) noexcept {
 		const bool oob{ mTrack.data + mTrack.size > &mMemoryBank.back() };
 		if (!mTrack.size || oob) { mTrack.reset(); }
 		else {
-			mVoices[VOICE::UNIQUE].setPhase(0.0).setStep(
+			mVoices[VOICE::UNIQUE].setPhase(0.0).setStep(getFramerateMultiplier() * (
 				(readMemoryI(0) << 8 | readMemoryI(1)) / f64(mTrack.size) / stream->getFreq()
-			).userdata = &mTrack;
+			)).userdata = &mTrack;
 		}
 	}
 }

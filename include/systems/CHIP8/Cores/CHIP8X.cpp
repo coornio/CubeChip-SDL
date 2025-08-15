@@ -23,7 +23,7 @@ CHIP8X::CHIP8X() {
 
 	mDisplay.set(cScreenSizeX, cScreenSizeY);
 	setViewportSizes(true, cScreenSizeX, cScreenSizeY, cResSizeMult, 2);
-	setSystemFramerate(cRefreshRate);
+	setBaseSystemFramerate(cRefreshRate);
 
 	mVoices[VOICE::UNIQUE].userdata = &mAudioTimers[VOICE::UNIQUE];
 	mVoices[VOICE::BUZZER].userdata = &mAudioTimers[VOICE::BUZZER];
@@ -265,7 +265,7 @@ void CHIP8X::setBuzzerPitch(s32 pitch) noexcept {
 	if (auto* stream{ mAudioDevice.at(STREAM::MAIN) }) {
 		mVoices[VOICE::UNIQUE].setStep((sTonalOffset + (
 			(0xFF - (pitch ? pitch : 0x80)) >> 3 << 4)
-		) / stream->getFreq());
+		) / stream->getFreq() * getFramerateMultiplier());
 	}
 }
 

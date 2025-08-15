@@ -33,7 +33,7 @@ XOCHIP::XOCHIP()
 
 	mDisplay.set(cScreenSizeX, cScreenSizeY);
 	setViewportSizes(true, cScreenSizeX, cScreenSizeY, cResSizeMult, 2);
-	setSystemFramerate(cRefreshRate);
+	setBaseSystemFramerate(cRefreshRate);
 
 	setPatternPitch(64);
 
@@ -310,15 +310,13 @@ void XOCHIP::prepDisplayArea(const Resolution mode) {
 };
 
 void XOCHIP::setColorBit332(s32 bit, s32 index) noexcept {
-
-
 	mBitColors[bit & 0xF] = sColorPalette[index];
 }
 
 void XOCHIP::setPatternPitch(s32 pitch) noexcept {
 	if (auto* stream{ mAudioDevice.at(STREAM::MAIN) }) {
 		mVoices[VOICE::UNIQUE].setStep(std::bit_cast<f32>
-			(sPitchFreqLUT[pitch]) / stream->getFreq());
+			(sPitchFreqLUT[pitch]) / stream->getFreq() * getFramerateMultiplier());
 	}
 }
 

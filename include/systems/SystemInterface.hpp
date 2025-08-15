@@ -84,7 +84,8 @@ protected:
 	void threadEntry(StopToken token);
 
 	s32 mTargetCPF{};
-	Atom<f32> mTargetFPS{};
+	Atom<f32> mBaseSystemFramerate{};
+	Atom<f32> mFramerateMultiplier{ 1.0f };
 	Atom<u32> mGlobalState{ EmuState::NORMAL };
 
 protected:
@@ -114,8 +115,16 @@ public:
 	virtual s32 getMaxDisplayH() const noexcept = 0;
 	virtual s32 getDisplaySize() const noexcept { return getMaxDisplayW() * getMaxDisplayH(); }
 
-	f32  getSystemFramerate() const noexcept;
-	void setSystemFramerate(f32 value) noexcept;
+public:
+	f32  getBaseSystemFramerate() const noexcept;
+	f32  getCurrSystemFramerate() const noexcept;
+	f32  getFramerateMultiplier() const noexcept;
+public:
+	void setFramerateMultiplier(f32 value) noexcept;
+protected:
+	void setBaseSystemFramerate(f32 value) noexcept;
+private:
+	void setPacerFramerate() noexcept;
 
 protected:
 	void setViewportSizes(bool cond, u32 W, u32 H, u32 mult, u32 ppad) noexcept;

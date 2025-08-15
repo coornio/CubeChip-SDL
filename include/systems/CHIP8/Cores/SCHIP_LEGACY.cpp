@@ -26,7 +26,7 @@ SCHIP_LEGACY::SCHIP_LEGACY()
 
 	mDisplay.set(cDisplayResW, cDisplayResH);
 	setViewportSizes(true, cDisplayResW, cDisplayResH, cResSizeMult, 2);
-	setSystemFramerate(cRefreshRate);
+	setBaseSystemFramerate(cRefreshRate);
 
 	mVoices[VOICE::ID_0].userdata = &mAudioTimers[VOICE::ID_0];
 	mVoices[VOICE::ID_1].userdata = &mAudioTimers[VOICE::ID_1];

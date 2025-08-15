@@ -23,7 +23,7 @@ CHIP8_MODERN::CHIP8_MODERN() {
 
 	mDisplay.set(cScreenSizeX, cScreenSizeY);
 	setViewportSizes(true, cScreenSizeX, cScreenSizeY, cResSizeMult, 2);
-	setSystemFramerate(cRefreshRate);
+	setBaseSystemFramerate(cRefreshRate);
 
 	mVoices[VOICE::ID_0].userdata = &mAudioTimers[VOICE::ID_0];
 	mVoices[VOICE::ID_1].userdata = &mAudioTimers[VOICE::ID_1];

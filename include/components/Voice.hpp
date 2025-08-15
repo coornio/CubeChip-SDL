@@ -102,15 +102,15 @@ public:
 	constexpr self& setPhase(Phase phase) noexcept { mPhase = phase; return *this; }
 	
 	// Peek the next raw phase without wrapping it, default is 1 step ahead.
-	constexpr double peekRawPhase(unsigned steps = 1u) const noexcept
+	constexpr double peekRawPhase(double steps = 1.0) const noexcept
 		{ return mPhase + mStep * steps; }
 
 	// Peek the next phase without modifying it, default is 1 step ahead.
-	constexpr Phase peekPhase(unsigned steps = 1u) const noexcept
+	constexpr Phase peekPhase(double steps = 1.0) const noexcept
 		{ return peekRawPhase(steps); }
 
 	// Advance the phase by a number of steps, default is 1 step ahead.
-	constexpr self& stepPhase(unsigned steps = 1u) noexcept
+	constexpr self& stepPhase(double steps = 1.0) noexcept
 		{ mPhase = peekPhase(steps); return *this; }
 
 	// Get the current level of the voice sample, optionally with transience gain calculation.

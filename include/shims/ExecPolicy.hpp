@@ -8,7 +8,7 @@
 
 #include <version>
 
-#if defined(__cpp_lib_execution) && (__cpp_lib_execution >= 201603)
+#if defined(__cpp_lib_execution) && (__cpp_lib_execution >= 201902L)
 	#define EXEC_POLICY(policy)
 #else
 	#include <execution>

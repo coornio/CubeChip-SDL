@@ -54,13 +54,30 @@ void SystemInterface::setDisplayBorderColor(u32 color) noexcept {
 	BVS->setBorderColor(color);
 }
 
-f32 SystemInterface::getSystemFramerate() const noexcept {
-	return mTargetFPS.load(mo::relaxed);
+f32 SystemInterface::getBaseSystemFramerate() const noexcept {
+	return mBaseSystemFramerate.load(mo::relaxed);
 }
 
-void SystemInterface::setSystemFramerate(f32 value) noexcept {
-	mTargetFPS.store(value, mo::relaxed);
-	Pacer->setLimiter(value);
+f32 SystemInterface::getCurrSystemFramerate() const noexcept {
+	return getBaseSystemFramerate() * getFramerateMultiplier();
+}
+
+f32 SystemInterface::getFramerateMultiplier() const noexcept {
+	return mFramerateMultiplier.load(mo::relaxed);
+}
+
+void SystemInterface::setFramerateMultiplier(f32 value) noexcept {
+	mFramerateMultiplier.store(value, mo::relaxed);
+	setPacerFramerate();
+}
+
+void SystemInterface::setBaseSystemFramerate(f32 value) noexcept {
+	mBaseSystemFramerate.store(value, mo::relaxed);
+	setPacerFramerate();
+}
+
+void SystemInterface::setPacerFramerate() noexcept {
+	Pacer->setLimiter(getCurrSystemFramerate());
 }
 
 void SystemInterface::saveOverlayData(const Str* data) {
@@ -74,7 +91,7 @@ Str* SystemInterface::makeOverlayData() {
 	*getOverlayDataBuffer() = fmt::format(
 		"Framerate:{:9.3f} fps |{:9.3f}ms\n"
 		"Frametime:{:9.3f} ms ({:3.2f}%)\n",
-		frameMS <= 0.0f ? getSystemFramerate()
+		frameMS <= 0.0f ? getCurrSystemFramerate()
 			: std::round(1000.0f / frameMS * 100.0f) / 100.0f,
 		frameMS, elapsed, elapsed / Pacer->getFramespan() * 100.0f
 	);

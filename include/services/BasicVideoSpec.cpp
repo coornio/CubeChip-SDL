@@ -17,6 +17,7 @@
 #include "BasicVideoSpec.hpp"
 #include "ColorOps.hpp"
 
+#include <vector>
 #include <SDL3/SDL.h>
 
 /*==================================================================*/
