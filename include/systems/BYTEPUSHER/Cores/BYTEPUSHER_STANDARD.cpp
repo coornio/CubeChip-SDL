@@ -23,7 +23,7 @@ BYTEPUSHER_STANDARD::BYTEPUSHER_STANDARD() {
 	setViewportSizes(true, cScreenSizeX, cScreenSizeY, cResSizeMult, 2);
 	setBaseSystemFramerate(cRefreshRate);
 
-	mAudioDevice.addAudioStream(STREAM::MAIN, u32(cRefreshRate * cAudioLength));
+	mAudioDevice.addAudioStream(STREAM::MAIN, u32(getRealSystemFramerate() * cAudioLength));
 	mAudioDevice.resumeStreams();
 }
 
@@ -45,18 +45,20 @@ void BYTEPUSHER_STANDARD::instructionLoop() noexcept {
 }
 
 void BYTEPUSHER_STANDARD::renderAudioData() {
-	const auto samplesOffset{ mMemoryBank.data() + (readData<2>(6) << 8) };
-	auto buffer{ ::allocate_n<f32>(cAudioLength).as_value().release_as_container() };
+	if (auto* stream{ mAudioDevice.at(STREAM::MAIN) }) {
+		const auto samplesOffset{ mMemoryBank.data() + (readData<2>(6) << 8) };
+		auto buffer{ ::allocate_n<f32>(stream->getNextBufferSize(getRealSystemFramerate()))
+			.as_value().release_as_container() };
 
-	static constexpr auto master_gain{ 0.22f };
+		static constexpr auto master_gain{ 0.22f };
 
-	std::transform(EXEC_POLICY(unseq)
-		samplesOffset, samplesOffset + cAudioLength, buffer.data(),
-		[](const auto sample) noexcept
-			{ return s8(sample) * (master_gain / 127.0f); }
-	);
+		std::transform(EXEC_POLICY(unseq)
+			samplesOffset, samplesOffset + cAudioLength, buffer.data(),
+			[](const auto sample) noexcept { return s8(sample) * (master_gain / 127.0f); }
+		);
 
-	mAudioDevice[STREAM::MAIN].pushAudioData(buffer);
+		mAudioDevice[STREAM::MAIN].pushAudioData(buffer);
+	}
 }
 
 void BYTEPUSHER_STANDARD::renderVideoData() {

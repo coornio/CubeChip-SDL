@@ -31,9 +31,11 @@ namespace EzMaths {
 	using s32 = std::int32_t;
 	using u64 = std::uint64_t;
 	using s64 = std::int64_t;
+}
 
-	/*==================================================================*/
+/*==================================================================*/
 
+namespace EzMaths {
 	struct alignas(sizeof(s32) * 2) Point {
 		s32 x{}, y{};
 
@@ -98,9 +100,11 @@ namespace EzMaths {
 
 		constexpr operator u8() const noexcept { return mWeight; }
 	};
+}
 
-	/*==================================================================*/
+/*==================================================================*/
 
+namespace EzMaths {
 	inline constexpr auto intersect(const Rect& lhs, const Rect& rhs) noexcept {
 		auto x1{ std::max(lhs.x, rhs.x) };
 		auto y1{ std::max(lhs.y, rhs.y) };
@@ -120,9 +124,11 @@ namespace EzMaths {
 		s64 dy{ lhs.y - rhs.y };
 		return u64(dx * dx) + u64(dy * dy);
 	}
+}
 
-	/*==================================================================*/
+/*==================================================================*/
 
+namespace EzMaths {
 	template <std::integral T> requires (std::is_signed_v<T>)
 	inline constexpr T abs(T x) noexcept
 		{ return x < 0 ? -x : x; }
@@ -143,9 +149,11 @@ namespace EzMaths {
 	template <std::floating_point T>
 	inline constexpr T fast_tanh(T x) noexcept
 		{ return x * (T(27) + x * x) / (T(27) + T(9) * x * x); }
+}
 
-	/*==================================================================*/
+/*==================================================================*/
 
+namespace EzMaths {
 	inline constexpr u8 fixedMul8(u8 x, u8 y) noexcept {
 		return u8(((x * (y | y << 8)) + 0x8080u) >> 16);
 	}
@@ -159,9 +167,11 @@ namespace EzMaths {
 		const auto shortest{ (y - x + half_hue) % full_hue - half_hue };
 		return T((x + T(shortest * w.as_fp()) + full_hue) % full_hue);
 	}
+}
 
-	/*==================================================================*/
+/*==================================================================*/
 
+namespace EzMaths {
 	inline constexpr u32 bitDup8(u32 data) noexcept {
 		data = (data << 4 | data) & 0x0F0Fu;
 		data = (data << 2 | data) & 0x3333u;

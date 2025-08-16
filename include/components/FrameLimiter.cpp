@@ -4,19 +4,22 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include "FrameLimiter.hpp"
 #include <cmath>
+#include <chrono>
+#include <thread>
+#include <algorithm>
+
+#include "FrameLimiter.hpp"
 
 /*==================================================================*/
 
-void FrameLimiter::setLimiter(
-	const float               framerate,
-	const std::optional<bool> firstpass,
-	const std::optional<bool> lostframe
-) noexcept {
-	timeFrequency = 1000.0f / std::clamp(framerate, 0.5f, 1000.0f);
-	if (firstpass) { skipFirstPass = *firstpass; }
-	if (lostframe) { skipLostFrame = *lostframe; }
+void FrameLimiter::setLimiter(float framerate) noexcept
+	{ timeFrequency = 1000.0f / std::clamp(framerate, 0.5f, 1000.0f); }
+
+void FrameLimiter::setLimiter(float framerate, bool firstpass, bool lostframe) noexcept {
+	setLimiter(framerate);
+	skipFirstPass = firstpass;
+	skipLostFrame = lostframe;
 }
 
 /*==================================================================*/
@@ -24,11 +27,11 @@ void FrameLimiter::setLimiter(
 bool FrameLimiter::checkTime() {
 	if (isValidFrame()) { return true; }
 
-	if (getRemainder() >= 2.0f) {
-		std::this_thread::sleep_for(millis(1));
-	} else {
-		std::this_thread::yield();
-	}
+	if (getRemainder() >= 2.0f)
+		{ std::this_thread::sleep_for(millis(1)); }
+	else
+		{ std::this_thread::yield(); }
+
 	return false;
 }
 
@@ -54,12 +57,11 @@ inline bool FrameLimiter::isValidFrame() noexcept {
 		(timeAtCurrent - timePastFrame).count()
 	};
 
-	if (timeVariation < timeFrequency) [[likely]] {
-		return false;
-	}
+	if (timeVariation < timeFrequency)
+		[[likely]] { return false; }
 
 	if (skipLostFrame) {
-		lastFrameLost = timeVariation >= timeFrequency * 1.003f;
+		lastFrameLost = timeVariation >= timeFrequency + 0.050f;
 		timeOvershoot = std::fmod(timeVariation, timeFrequency);
 	} else {
 		timeOvershoot = timeVariation - timeFrequency;

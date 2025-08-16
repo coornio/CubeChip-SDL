@@ -196,7 +196,7 @@ Str* Chip8_CoreInterface::makeOverlayData() {
 
 	*getOverlayDataBuffer() = fmt::format(
 		" ::  MIPS:{:8.2f}\n{}",
-		mTargetCPF * getCurrSystemFramerate() / 1'000'000.0f,
+		mTargetCPF * getRealSystemFramerate() / 1'000'000.0f,
 		*SystemInterface::makeOverlayData()
 	);
 	return getOverlayDataBuffer();
@@ -228,7 +228,7 @@ void Chip8_CoreInterface::startVoiceAt(u32 voice_index, u32 duration, u32 tone) 
 void Chip8_CoreInterface::mixAudioData(VoiceGenerators processors) noexcept {
 	if (auto* stream{ mAudioDevice.at(STREAM::MAIN) }) {
 
-		auto buffer{ ::allocate_n<f32>(stream->getNextBufferSize(getCurrSystemFramerate()))
+		auto buffer{ ::allocate_n<f32>(stream->getNextBufferSize(getRealSystemFramerate()))
 			.as_value().release_as_container() };
 
 		for (auto& bundle : processors)

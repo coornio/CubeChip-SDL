@@ -6,20 +6,14 @@
 
 #pragma once
 
-#include <cmath>
 #include <chrono>
-#include <ratio>
-#include <thread>
-#include <cstdint>
-#include <optional>
-#include <algorithm>
 
 /*==================================================================*/
 
 class FrameLimiter final {
 	using chrono = std::chrono::steady_clock::time_point;
 	using millis = std::chrono::milliseconds;
-	using uint64 = std::uint64_t;
+	using uint64 = unsigned long long;
 
 	bool   initTimeCheck{}; // forces timestamp update on first check only
 	bool   skipFirstPass{}; // forces valid frame return on first check only
@@ -33,9 +27,8 @@ class FrameLimiter final {
 	uint64 validFrameCnt{}; // counter of successful frame checks performed
 
 	inline bool isValidFrame() noexcept;
-	inline auto getElapsedTime() const noexcept {
-		return std::chrono::steady_clock::now() - timePastFrame;
-	}
+	inline auto getElapsedTime() const noexcept
+		{ return std::chrono::steady_clock::now() - timePastFrame; }
 
 /*==================================================================*/
 
@@ -54,11 +47,8 @@ public:
 		, timeFrequency{ other.timeFrequency }
 	{}
 
-	void setLimiter(
-		float               framerate,
-		std::optional<bool> firstpass = std::nullopt,
-		std::optional<bool> lostframe = std::nullopt
-	) noexcept;
+	void setLimiter(float framerate) noexcept;
+	void setLimiter(float framerate, bool firstpass, bool lostframe) noexcept;
 
 /*==================================================================*/
 
