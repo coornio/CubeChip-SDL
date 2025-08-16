@@ -34,6 +34,20 @@
 /*==================================================================*/
 
 /**
+ * @brief Creates an Unexpected<E> object from an error.
+ *
+ * @tparam E Type of the error.
+ * @param error The error to be wrapped in Unexpected.
+ * @return An Unexpected<E> object containing the error.
+ * @warning Currently does not work with lvalue E types, std::move them first.
+ */
+template <typename E>
+	requires (requires (E e) { !e; })
+inline constexpr Unexpected<E> make_unexpected(E&& error) {
+	return Unexpected<E>(std::forward<E>(error));
+}
+
+/**
  * @brief Creates an Expected<T, E> object from a value and an error.
  * If the error evaluates to false, it returns the value.
  * Otherwise, it returns an Unexpected<E> object with the error.
