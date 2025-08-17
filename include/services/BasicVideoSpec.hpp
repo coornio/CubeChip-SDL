@@ -43,18 +43,18 @@ public:
 		}
 
 		static constexpr auto pack(s32 w, s32 h, s32 multi, s32 pxpad) noexcept {
-			return ((u32(w)     & 0xFFFu) << 00u) |
-				   ((u32(h)     & 0xFFFu) << 12u) |
-				   ((u32(multi)  & 0xFu)   << 24u) |
-				   ((u32(pxpad)  & 0xFu)   << 28u);
+			return ((u32(w)     & 0xFFFu) <<  0) |
+				   ((u32(h)     & 0xFFFu) << 12) |
+				   ((u32(multi) & 0xFu)   << 24) |
+				   ((u32(pxpad) & 0xFu)   << 28);
 		}
 
 		static constexpr auto unpack(u32 packed) noexcept {
 			return Viewport{
-				s32((packed >> 00u) & 0xFFFu),
-				s32((packed >> 12u) & 0xFFFu),
-				s32((packed >> 24u) & 0xFu),
-				s32((packed >> 28u) & 0xFu)
+				s32((packed >>  0) & 0xFFFu),
+				s32((packed >> 12) & 0xFFFu),
+				s32((packed >> 24) & 0xFu),
+				s32((packed >> 28) & 0xFu)
 			};
 		}
 	};
@@ -64,8 +64,6 @@ private:
 	SDL_Unique<SDL_Renderer> mMainRenderer{};
 	SDL_Unique<SDL_Texture>  mWindowTexture{};
 	SDL_Unique<SDL_Texture>  mSystemTexture{};
-
-	auto getTextureSizeRect(SDL_Texture* texture) const noexcept -> ez::Frame;
 
 /*==================================================================*/
 

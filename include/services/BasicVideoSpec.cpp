@@ -31,6 +31,12 @@ static auto to_FRect(const BasicVideoSpec::Viewport& viewport) noexcept {
 		f32(viewport.frame.w * viewport.multi), f32(viewport.frame.h * viewport.multi) };
 }
 
+static auto to_Frame(SDL_Texture* texture) noexcept {
+	f32 w, h;
+	SDL_GetTextureSize(texture, &w, &h);
+	return ez::Frame(s32(w), s32(h));
+}
+
 /*==================================================================*/
 	#pragma region BasicVideoSpec Singleton Class
 
@@ -106,12 +112,6 @@ BasicVideoSpec::~BasicVideoSpec() noexcept {
 	FrontendInterface::Shutdown();
 
 	SDL_QuitSubSystem(SDL_INIT_VIDEO);
-}
-
-auto BasicVideoSpec::getTextureSizeRect(SDL_Texture* texture) const noexcept -> ez::Frame {
-	f32 w, h;
-	SDL_GetTextureSize(texture, &w, &h);
-	return ez::Frame(s32(w), s32(h));
 }
 
 auto BasicVideoSpec::exportSettings() const noexcept -> Settings {
@@ -276,7 +276,7 @@ void BasicVideoSpec::setBorderColor(u32 color) noexcept {
 void BasicVideoSpec::prepareWindowTexture() {
 	const auto outerRect{ mCurViewport.padded() };
 
-	if (getTextureSizeRect(mWindowTexture) != outerRect) {
+	if (to_Frame(mWindowTexture) != outerRect) {
 		mSuccessful = mWindowTexture = SDL_CreateTexture(
 			mMainRenderer,
 			SDL_PIXELFORMAT_RGBX8888,
@@ -298,7 +298,7 @@ void BasicVideoSpec::prepareWindowTexture() {
 void BasicVideoSpec::prepareSystemTexture() {
 	if (!mWindowTexture) { return; }
 
-	if (getTextureSizeRect(mSystemTexture) != mCurViewport.frame) {
+	if (to_Frame(mSystemTexture) != mCurViewport.frame) {
 
 		mSuccessful = mSystemTexture = SDL_CreateTexture(
 			mMainRenderer,
