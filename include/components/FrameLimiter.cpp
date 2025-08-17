@@ -27,7 +27,7 @@ void FrameLimiter::setLimiter(float framerate, bool firstpass, bool lostframe) n
 bool FrameLimiter::checkTime() {
 	if (isValidFrame()) { return true; }
 
-	if (getRemainder() >= 2.0f)
+	if (getRemainder() >= 2.3f)
 		{ std::this_thread::sleep_for(millis(1)); }
 	else
 		{ std::this_thread::yield(); }
