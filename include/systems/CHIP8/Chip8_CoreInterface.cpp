@@ -92,6 +92,10 @@ bool Chip8_CoreInterface::keyHeld_P2(u32 keyIndex) const noexcept {
 void Chip8_CoreInterface::handlePreFrameInterrupt() noexcept {
 	switch (mInterrupt)
 	{
+		case Interrupt::CLEAR:
+			mTargetCPF *= mTargetCPF < 0 ? -1 : 1;
+			return;
+
 		case Interrupt::FRAME:
 			mInterrupt = Interrupt::CLEAR;
 			mTargetCPF *= mTargetCPF < 0 ? -1 : 1;
@@ -186,13 +190,16 @@ void Chip8_CoreInterface::mainSystemLoop() {
 }
 
 Str* Chip8_CoreInterface::makeOverlayData() {
-	static constexpr auto half_of_pi{ f32(std::numbers::pi / 2.0) };
-	const auto currentFrameTime{ Pacer->getElapsedMicrosSince() / 1000.0f };
-	const auto frameTimeBias{ currentFrameTime * 1.025f / Pacer->getFramespan() };
-	const auto workCycleBias{ 120'000.0f * std::cos(frameTimeBias * half_of_pi) };
+	static constexpr std::array<f32, 5> cpf
+		{ { 1.5e6f, 1.0e6f, 0.6e6f, 0.3e6f, 1.0e5f } };
+
+	const auto frameTime{ Pacer->getElapsedMicrosSince() / 1000.0f };
+	const auto timePhase{ std::min(frameTime * 1.025f / Pacer->getFramespan(), 2.0f) };
+	const auto newStride{ ez::peak_mirror_fold(u32(timePhase / 0.2f), cpf.size()) };
+	const auto cycleBias{ cpf[newStride] * std::cos(timePhase * f32(std::numbers::pi / 2)) };
 
 	if (mInterrupt == Interrupt::CLEAR) [[likely]]
-		{ ::assign_cast_add(mTargetCPF, workCycleBias); }
+		{ ::assign_cast_add(mTargetCPF, cycleBias); }
 
 	*getOverlayDataBuffer() = fmt::format(
 		" ::  MIPS:{:8.2f}\n{}",
