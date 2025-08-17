@@ -149,6 +149,14 @@ namespace EzMaths {
 	template <std::floating_point T>
 	inline constexpr T fast_tanh(T x) noexcept
 		{ return x * (T(27) + x * x) / (T(27) + T(9) * x * x); }
+
+	// Simple mirror folding function with repeating peaks
+	template<typename T>
+		requires (std::is_unsigned_v<T>)
+	inline constexpr T peak_mirror_fold(T value, std::size_t max) noexcept {
+		auto wrapped{ value % (max * 2) };
+		return T(wrapped < max ? wrapped : (2 * max - 1) - wrapped);
+	}
 }
 
 /*==================================================================*/
