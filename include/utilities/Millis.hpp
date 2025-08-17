@@ -8,9 +8,20 @@
 
 /*==================================================================*/
 
-struct Millis final {
-	Millis() = delete;
+namespace Millis {
+	/**
+	 * @brief Returns the current time in milliseconds since application start.
+	 */
+	[[nodiscard]]
+	long long now() noexcept;
 
-	static long long now() noexcept;
-	static long long since(long long past_millis) noexcept;
+	/**
+	 * @brief Returns the difference between now() and past_millis in milliseconds.
+	 */
+	long long since(long long past_millis) noexcept;
+
+	/**
+	 * @brief Sleeps/spins the current thread for X milliseconds.
+	 */
+	void sleep(unsigned long long millis) noexcept;
 };
